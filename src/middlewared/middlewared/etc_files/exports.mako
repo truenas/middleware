@@ -3,9 +3,9 @@
     import socket
     from collections.abc import Sequence
     from pathlib import Path
-    from middlewared.api.current import NFSEntry
     from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
     from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
+    from middlewared.api.current import GroupGetGroupObj, NFSEntry
     from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
 
     def do_map(share: dict[str, str], map_type: str, map_ids: dict[str, int | str], alert_shares: dict[str, list[str]]) -> list[str]:
@@ -24,7 +24,9 @@
 
         if grpname := share[f'{map_type}_group']:
             try:
-                gid = middleware.call_sync('group.get_group_obj', {'groupname': grpname})['gr_gid']
+                gid = middleware.call_sync2(
+                    middleware.services.group.get_group_obj, GroupGetGroupObj(groupname=grpname),
+                ).gr_gid
                 map_ids[f'{map_type}_group'] = gid
                 output.append(f'anongid={gid}')
             except KeyError:

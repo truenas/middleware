@@ -11,16 +11,14 @@ from middlewared.api.base import (
     LocalUID,
     NonEmptyString,
     excluded_field,
-    single_argument_args,
-    single_argument_result,
 )
 
-__all__ = ["GroupEntry",
+__all__ = ["GroupEntry", "GroupCreate", "GroupUpdate",
            "GroupCreateArgs", "GroupCreateResult",
            "GroupUpdateArgs", "GroupUpdateResult",
-           "GroupDeleteArgs", "GroupDeleteResult",
+           "GroupDeleteArgs", "GroupDeleteOptions", "GroupDeleteResult",
            "GroupGetNextGidArgs", "GroupGetNextGidResult",
-           "GroupGetGroupObjArgs", "GroupGetGroupObjResult",
+           "GroupGetGroupObj", "GroupGetGroupObjArgs", "GroupGetGroupObjData", "GroupGetGroupObjResult",
            "GroupHasPasswordEnabledUserArgs", "GroupHasPasswordEnabledUserResult"]
 
 
@@ -179,15 +177,20 @@ class GroupGetNextGidResult(BaseModel):
     result: int = Field(description="The next available group ID number.")
 
 
-@single_argument_args("get_group_obj")
-class GroupGetGroupObjArgs(BaseModel):
+class GroupGetGroupObj(BaseModel):
     groupname: str | None = Field(default=None, description="Name of the group to look up or `null`.")
     gid: int | None = Field(default=None, description="Group ID to look up or `null`.")
     sid_info: bool = Field(default=False, description="Whether to include SID information in the response.")
 
 
-@single_argument_result
-class GroupGetGroupObjResult(BaseModel):
+class GroupGetGroupObjArgs(BaseModel):
+    get_group_obj: GroupGetGroupObj = Field(
+        default_factory=GroupGetGroupObj,
+        description="GroupGetGroupObj parameters.",
+    )
+
+
+class GroupGetGroupObjData(BaseModel):
     gr_name: str = Field(description="Name of the group.")
     gr_gid: int = Field(description="Group ID of the group.")
     gr_mem: list[str] = Field(description="List of group names that are members of the group.")
@@ -205,6 +208,10 @@ class GroupGetGroupObjResult(BaseModel):
         ),
     )
     local: bool = Field(description="This group is local to the NAS or provided by a directory service.")
+
+
+class GroupGetGroupObjResult(BaseModel):
+    result: GroupGetGroupObjData = Field(description="Group information from the name service switch.")
 
 
 class GroupHasPasswordEnabledUserArgs(BaseModel):

@@ -4,6 +4,7 @@ import truenas_pylibzfs
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    GroupGetGroupObj,
     PoolDatasetGetQuotaArgs,
     PoolDatasetGetQuotaResult,
     PoolDatasetSetQuotaArgs,
@@ -218,13 +219,21 @@ class PoolDatasetService(Service):
                     q['quota_value'] = None
 
                 xid = None
-                id_type = 'user' if quota_type.startswith('user') else 'group'
+                if quota_type.startswith('user'):
+                    id_type = 'user'
+                else:
+                    id_type = 'group'
+
                 if not q['id'].isdigit():
                     try:
-                        xid = (await self.middleware.call(
-                            f'{id_type}.get_{id_type}_obj',
-                            {f'{id_type}name': q['id']}
-                        ))['pw_uid' if id_type == 'user' else 'gr_gid']
+                        if id_type == 'user':
+                            xid = (await self.middleware.call(
+                                'user.get_user_obj', {'username': q['id']},
+                            ))['pw_uid']
+                        else:
+                            xid = (await self.call2(
+                                self.s.group.get_group_obj, GroupGetGroupObj(groupname=q['id']),
+                            )).gr_gid
                     except Exception:
                         self.logger.debug('Failed to convert %s [%s] to id.', id_type, q['id'], exc_info=True)
                         raise ValidationError(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')

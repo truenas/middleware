@@ -89,19 +89,19 @@ class ACLTemplateService(CRUDService):
 
             match ace['tag']:
                 case 'USER':
-                    entry = await self.middleware.call('user.query', [['username', '=', ace['who']]])
-                    entry_key = 'uid'
+                    users = await self.middleware.call('user.query', [['username', '=', ace['who']]])
+                    xids = [user['uid'] for user in users]
                 case 'GROUP':
-                    entry = await self.middleware.call('group.query', [['group', '=', ace['who']]])
-                    entry_key = 'gid'
+                    groups = await self.call2(self.s.group.query, [['group', '=', ace['who']]])
+                    xids = [group.gid for group in groups]
                 case _:
                     raise TypeError(f'{ace["tag"]}: unexpected ace tag.')
 
-            if not entry:
+            if not xids:
                 verrors.add(f'{schema}.{idx}.who', f'{ace["who"]}: {ace["tag"].lower()} does not exist')
                 continue
 
-            ace['id'] = entry[0][entry_key]
+            ace['id'] = xids[0]
 
         if acltype is FS_ACL_Type.POSIX1E:
             try:

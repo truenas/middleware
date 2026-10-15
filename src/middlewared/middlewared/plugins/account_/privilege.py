@@ -5,6 +5,7 @@ import wbclient
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
+    GroupEntry,
     PrivilegeBecomeReadonlyArgs,
     PrivilegeBecomeReadonlyResult,
     PrivilegeCreateArgs,
@@ -14,6 +15,8 @@ from middlewared.api.current import (
     PrivilegeEntry,
     PrivilegeUpdateArgs,
     PrivilegeUpdateResult,
+    QueryOptions,
+    UnmappedGroupEntry,
     UserWebUiLoginDisabledAddedEvent,
 )
 from middlewared.plugins.account import unixhash_is_valid
@@ -104,12 +107,15 @@ class PrivilegeService(CRUDService):
         audit_callback(old["name"])
 
         new = old.copy()
-        new["local_groups"] = [g["gid"] for g in new["local_groups"]]
+        new["local_groups"] = [g.gid for g in new["local_groups"]]
 
         # Preference is for SID values rather than GIDS because they are universally unique
         new["ds_groups"] = []
         for g in old["ds_groups"]:
-            new["ds_groups"].append(g["gid"] if not g["sid"] else g["sid"])
+            if g.sid:
+                new["ds_groups"].append(g.sid)
+            else:
+                new["ds_groups"].append(g.gid)
 
         new.update(data)
 
@@ -130,7 +136,7 @@ class PrivilegeService(CRUDService):
                         "among grantees of the \"Local Administrator\" privilege."
                     )
 
-                if not await self.middleware.call("group.has_password_enabled_user", new["local_groups"]):
+                if not await self.call2(self.s.group.has_password_enabled_user, new["local_groups"]):
                     verrors.add(
                         "privilege_update.local_groups",
                         "None of the members of these groups has password login enabled. At least one grantee of "
@@ -196,7 +202,7 @@ class PrivilegeService(CRUDService):
                 continue
 
             # Currently only local groups may have privileges
-            if groups['by_gid'][local_group_id]['userns_idmap']:
+            if groups['by_gid'][local_group_id].userns_idmap:
                 verrors.add(
                     f"privilege_update.local_groups.{i}",
                     "Privileges may not be granted to groups that have a user namespace idmap "
@@ -219,12 +225,12 @@ class PrivilegeService(CRUDService):
         verrors.check()
 
     async def _groups(self):
-        groups = await self.middleware.call("group.query")
-        by_gid = {group["gid"]: group for group in groups}
+        groups = await self.call2(self.s.group.query)
+        by_gid = {group.gid: group for group in groups}
         by_sid = {
-            group["sid"]: group
+            group.sid: group
             for group in groups
-            if group["sid"] is not None and not group["local"]
+            if group.sid is not None and not group.local
         }
 
         return {'by_gid': by_gid, 'by_sid': by_sid}
@@ -233,15 +239,11 @@ class PrivilegeService(CRUDService):
         result = []
         for gid in local_groups:
             if group := groups['by_gid'].get(gid):
-                if group["local"]:
+                if group.local:
                     result.append(group)
             else:
                 if include_nonexistent:
-                    result.append({
-                        "gid": gid,
-                        "group": None,
-                        "sid": None,
-                    })
+                    result.append(UnmappedGroupEntry(gid=gid, sid=None, group=None))
 
         return result
 
@@ -278,22 +280,24 @@ class PrivilegeService(CRUDService):
 
             if group is None:
                 try:
-                    group = await self.middleware.call(
-                        "group.query",
-                        [["gid", "=", gid]],
-                        {"get": True},
+                    group = await self.call2(
+                        self.s.group.query, [["gid", "=", gid]], QueryOptions(get=True),
                     )
                 except MatchNotFound:
                     if include_nonexistent:
-                        result.append({
-                            "gid": None if gid == -1 else gid,
-                            "sid": xid if is_sid else None,
-                            "group": None,
-                        })
+                        unmapped_gid = None
+                        if gid != -1:
+                            unmapped_gid = gid
+
+                        unmapped_sid = None
+                        if is_sid:
+                            unmapped_sid = xid
+
+                        result.append(UnmappedGroupEntry(gid=unmapped_gid, sid=unmapped_sid, group=None))
 
                     continue
 
-            if group["local"]:
+            if group.local:
                 continue
 
             result.append(group)
@@ -318,17 +322,18 @@ class PrivilegeService(CRUDService):
             'account.privilege',
             [['builtin_name', '=', 'LOCAL_ADMINISTRATOR']],
         ):
-            if not await self.middleware.call('group.has_password_enabled_user', privilege['local_groups'],
-                                              [user['id']]):
+            if not await self.call2(
+                self.s.group.has_password_enabled_user, privilege['local_groups'], [user['id']],
+            ):
                 raise CallError(
                     f'{error_text} will have built-in privilege {privilege["name"]!r}.',
                     errno.EACCES,
                 )
 
     @private
-    async def before_group_delete(self, group):
+    async def before_group_delete(self, group: GroupEntry):
         for privilege in await self.middleware.call('datastore.query', 'account.privilege'):
-            if group['gid'] in privilege['local_groups']:
+            if group.gid in privilege['local_groups']:
                 raise CallError(
                     f'This group is used by privilege {privilege["name"]!r}. Please remove it from that privilege '
                     'first, then delete the group.',
@@ -448,7 +453,7 @@ class PrivilegeService(CRUDService):
         if users is None:
             users = await self.middleware.call('user.query', [['local', '=', True]])
         if groups is None:
-            groups = await self.middleware.call('group.query', [['local', '=', True]])
+            groups = await self.call2(self.s.group.query, [['local', '=', True]])
 
         root_user = next(u for u in users if u['username'] == 'root')
         users = await self.local_administrators([root_user['id']], users, groups)
@@ -472,7 +477,7 @@ class PrivilegeService(CRUDService):
         if users is None:
             users = await self.middleware.call('user.query', [['local', '=', True]])
         if groups is None:
-            groups = await self.middleware.call('group.query', [['local', '=', True]])
+            groups = await self.call2(self.s.group.query, [['local', '=', True]])
 
         local_administrator_privilege = await self.middleware.call(
             'datastore.query',
@@ -480,8 +485,8 @@ class PrivilegeService(CRUDService):
             [['builtin_name', '=', BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
             {'get': True},
         )
-        local_administrators = await self.middleware.call(
-            'group.get_password_enabled_users',
+        local_administrators = await self.call2(
+            self.s.group.get_password_enabled_users,
             local_administrator_privilege['local_groups'],
             exclude_user_ids,
             groups,

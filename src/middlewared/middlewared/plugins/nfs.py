@@ -7,6 +7,7 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.alert.source.nfs_host import NFSHostListExcessiveAlert, NFSNetworkListExcessiveAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
+    GroupGetGroupObj,
     SharingNFSCreateArgs,
     SharingNFSCreateResult,
     SharingNFSDeleteArgs,
@@ -236,7 +237,7 @@ class SharingNFSService(SharingService):
 
                 if map_group:
                     try:
-                        await self.middleware.call('group.get_group_obj', {'groupname': map_group})
+                        await self.call2(self.s.group.get_group_obj, GroupGetGroupObj(groupname=map_group))
                     except KeyError:
                         verrors.add(f"{schema_name}.{k}_group", f"Group not found: {map_group}")
 

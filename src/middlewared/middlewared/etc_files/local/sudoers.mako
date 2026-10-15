@@ -28,8 +28,8 @@ ${user['username']} ALL=(ALL) ${sudo_entry(user['sudo_commands'], user['sudo_com
 % endif
 % endfor
 % for group in groups:
-% if group['sudo_commands'] or group['sudo_commands_nopasswd']:
-${f'%{group["group"]}'} ALL=(ALL) ${sudo_entry(group['sudo_commands'], group['sudo_commands_nopasswd'])}
+% if group.sudo_commands or group.sudo_commands_nopasswd:
+${f'%{group.group}'} ALL=(ALL) ${sudo_entry(group.sudo_commands, group.sudo_commands_nopasswd)}
 % endif
 % endfor
 Defaults syslog_goodpri = debug

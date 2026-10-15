@@ -254,10 +254,10 @@ def _build_default_idmap_items(
         ['roles', '=', []],
     ]
     users = context.middleware.call_sync('user.query', idmap_filters)
-    groups = context.middleware.call_sync('group.query', idmap_filters)
+    groups = context.call_sync2(context.s.group.query, idmap_filters)
 
     uid_passthroughs = [_resolve_target(u['uid'], u['userns_idmap']) for u in users]
-    gid_passthroughs = [_resolve_target(g['gid'], g['userns_idmap']) for g in groups]
+    gid_passthroughs = [_resolve_target(g.gid, g.userns_idmap) for g in groups]
 
     return _build_idmap_items(uid_passthroughs), _build_idmap_items(gid_passthroughs)
 

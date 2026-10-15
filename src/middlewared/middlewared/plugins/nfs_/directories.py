@@ -33,16 +33,16 @@ def name_to_id_conversion(context: ServiceContext, name: BuiltinName, name_type:
     if not isinstance(name, str):
         return name
 
-    if name_type == "user":
-        method = "user.get_builtin_user_id"
-    elif name_type == "group":
-        method = "group.get_builtin_group_id"
-    else:
+    if name_type not in ("user", "group"):
         context.logger.error("Unexpected name_type (%r)", name_type)
         return name
 
     try:
-        resolved: BuiltinName = context.middleware.call_sync(method, name)
+        resolved: BuiltinName
+        if name_type == "user":
+            resolved = context.middleware.call_sync("user.get_builtin_user_id", name)
+        else:
+            resolved = context.call_sync2(context.s.group.get_builtin_group_id, name)
     except Exception as e:
         if getattr(e, "errno", None) == errno.ENOENT:
             context.logger.error("Failed to resolve builtin %s %r", name_type, name)
