@@ -9,7 +9,6 @@ from middlewared.pytest.unit.middleware import Middleware
 
 OLD_V2 = {"id": "v2-old", "issued_at": "2026-01-01T00:00:00Z"}
 NEW_V2 = {"id": "v2-new", "issued_at": "2026-06-01T00:00:00Z"}
-LEGACY = {"id": "legacy_A1-12345", "issued_at": "2026-09-01"}
 SYSTEM_GENERATED = {"id": "system", "issued_at": None}
 INVALID = SimpleNamespace(valid=False, test=False, issued_at=None)
 
@@ -29,6 +28,7 @@ def push(monkeypatch, local, remote):
             return remote
 
     m = Middleware()
+    m["truenas.license.propagate_pending"] = lambda: False
     m["truenas.license.installed_pem"] = lambda: "PEM"
     m["failover.call_remote"] = call_remote
     m["alert.alert_source_clear_run"] = Mock()
@@ -55,9 +55,8 @@ def test_no_push_that_could_replace_a_newer_or_production_license(monkeypatch, c
     clear.assert_not_called()
 
 
-@pytest.mark.parametrize("remote", [OLD_V2, LEGACY])
-def test_newer_v2_license_reaches_a_stale_peer(monkeypatch, remote):
-    uploads, clear = push(monkeypatch, valid(NEW_V2), remote)
+def test_newer_v2_license_reaches_a_stale_peer(monkeypatch):
+    uploads, clear = push(monkeypatch, valid(NEW_V2), OLD_V2)
 
     assert uploads == [["PEM", {"ha_propagate": False}]]
     clear.assert_called_once_with("LicenseStatus")

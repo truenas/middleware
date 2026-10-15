@@ -1,10 +1,14 @@
 import asyncio
+from typing import TYPE_CHECKING, Any
 
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.common.license import LicenseDelegate
 from middlewared.service import Service, private
 from middlewared.utils.zfs.event import ZfsConfigSyncEvent, ZfsEvent
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 SED_UPDATE_LOCK = asyncio.Lock()
 
@@ -16,7 +20,7 @@ class PoolService(Service):
         event_send = False
 
     @private
-    async def ha_update_all_sed_attr(self):
+    async def ha_update_all_sed_attr(self) -> None:
         if await self.middleware.call('system.sed_enabled'):
             await self.update_all_sed_attr()
         else:
@@ -24,12 +28,12 @@ class PoolService(Service):
                 await self.middleware.call('datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False})
 
     @private
-    async def update_all_sed_attr(self, skip_all_sed_check=False, filter_pool=None):
+    async def update_all_sed_attr(self, skip_all_sed_check: bool = False, filter_pool: str | None = None) -> None:
         async with SED_UPDATE_LOCK:
             return await self.update_all_sed_attr_impl(skip_all_sed_check, filter_pool)
 
     @private
-    async def update_all_sed_attr_impl(self, skip_all_sed_check, filter_pool):
+    async def update_all_sed_attr_impl(self, skip_all_sed_check: bool, filter_pool: str | None) -> None:
         # We will scan all pools here with relevant disks and make sure that if any pool has all disks which are
         # SED based, we will update that pool in the db to reflect reality
         # How we will do this is that we will get disks from pool topology and then check if all of them are SED
@@ -88,7 +92,7 @@ class PoolService(Service):
                 )
 
     @private
-    async def get_disks_from_topology(self, pool_id_or_pool):
+    async def get_disks_from_topology(self, pool_id_or_pool: int | dict[str, Any]) -> set[str]:
         pool = await self.middleware.call(
             'pool.get_instance', pool_id_or_pool
         ) if isinstance(pool_id_or_pool, int) else pool_id_or_pool
@@ -98,7 +102,7 @@ class PoolService(Service):
         }
 
 
-async def zfs_events_hook(middleware, event: ZfsEvent):
+async def zfs_events_hook(middleware: "Middleware", event: ZfsEvent) -> None:
     if isinstance(event, ZfsConfigSyncEvent):
         if await middleware.call('system.sed_enabled') and (
             pool := await middleware.call("pool.query", [["name", "=", event.pool]], {'force_sql_filters': True})
@@ -118,5 +122,5 @@ class SEDLicenseDelegate(LicenseDelegate):
             await self.middleware.call('pool.update_all_sed_attr', True)
 
 
-async def setup(middleware):
+async def setup(middleware: "Middleware") -> None:
     middleware.register_hook('zfs.pool.events', zfs_events_hook)

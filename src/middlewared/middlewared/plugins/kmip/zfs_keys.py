@@ -33,7 +33,8 @@ if TYPE_CHECKING:
 
 def zfs_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool | None) -> bool:
     if push is None:
-        return False
+        # The direction is unknown, so a key pending either way is pending.
+        return zfs_keys_pending_sync(context, store, True) or zfs_keys_pending_sync(context, store, False)
     for ds in context.middleware.call_sync('datastore.query', 'storage.encrypteddataset'):
         if push and (ds['encryption_key'] or ds['name'] not in store.zfs_keys):
             return True

@@ -11,7 +11,6 @@ import os
 import shutil
 import stat
 import time
-from typing import Any
 
 from truenas_pylicensed import verify
 from truenas_pylicensed.features import LicenseFeature
@@ -43,7 +42,7 @@ from middlewared.api.current import (
     ZFSResourceEncryptionUnlockArgsData,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.common.license import LicenseDelegate
+from middlewared.common.license import LicenseDelegate, Verb
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.device_.vrrp_events import _start_stop_vrrp_threads
@@ -427,20 +426,6 @@ class FailoverService(ConfigService):
             return
 
         if os.path.exists(LEGACY_LICENSE_FILE):
-            with open(LEGACY_LICENSE_FILE, 'r') as f:
-                blob = f.read()
-
-            try:
-                self.middleware.call_sync('failover.call_remote', 'truenas.license.install_legacy', [blob])
-                return
-            except Exception as e:
-                if not (isinstance(e, CallError) and e.errno == CallError.ENOMETHOD):
-                    self.logger.error(
-                        '%s: call failed on the remote node', 'truenas.license.install_legacy', exc_info=True,
-                    )
-                    return
-
-            # The peer runs an older release that has no install_legacy.
             self.send_small_file(LEGACY_LICENSE_FILE)
             try:
                 self.middleware.call_sync(
@@ -452,6 +437,10 @@ class FailoverService(ConfigService):
     @private
     def push_license_if_newer(self):
         try:
+            if self.middleware.call_sync('truenas.license.propagate_pending'):
+                self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
+                return
+
             status = verify()
             if not status.valid or status.test:
                 return
@@ -460,10 +449,7 @@ class FailoverService(ConfigService):
             if remote is None or remote['issued_at'] is None:
                 return
 
-            # Legacy `issued_at` is a support contract start date, not comparable to a v2 timestamp.
-            if not remote['id'].startswith('legacy_') and (
-                datetime.fromisoformat(status.issued_at) <= datetime.fromisoformat(remote['issued_at'])
-            ):
+            if datetime.fromisoformat(status.issued_at) <= datetime.fromisoformat(remote['issued_at']):
                 return
 
             pem = self.middleware.call_sync('truenas.license.installed_pem')
@@ -1371,24 +1357,26 @@ class HALicenseDelegate(LicenseDelegate):
         # Each step is independent, so one failure must not leave the others unconverged.
         failures: list[str] = []
 
-        async def attempt(step: Awaitable[Any]) -> Any:
+        async def attempt[T](step: Awaitable[T]) -> T | None:
             try:
                 return await step
-            except CallError as e:
-                failures.append(e.errmsg)
+            except Exception as e:
+                failures.append(e.errmsg if isinstance(e, CallError) else f'{type(e).__name__}: {e}')
                 return None
 
         granted = changes[LicenseFeature.HA]
         if granted:
-            await _start_stop_vrrp_threads(self.middleware)
+            await attempt(_start_stop_vrrp_threads(self.middleware))
             await attempt(self.middleware.call('failover.ensure_remote_client'))
         # Without the VRRP threads a node with failover VIPs no longer reacts to keepalived events.
-        elif not await self.middleware.call('interface.query', [['failover_virtual_aliases', '!=', []]]):
-            await _start_stop_vrrp_threads(self.middleware)
+        elif await attempt(self.middleware.call('interface.query', [['failover_virtual_aliases', '!=', []]])) == []:
+            await attempt(_start_stop_vrrp_threads(self.middleware))
 
-        await attempt(self.render('rc', 'keepalived', 'cron'))
+        for group in ('rc', 'keepalived', 'cron'):
+            await attempt(self.render(group))
+        ctdb: Verb
         if granted:
-            ctdb = 'RESTART' if await self.call2(self.s.service.started, 'ctdb') else 'START'
+            ctdb = 'RESTART' if await attempt(self.call2(self.s.service.started, 'ctdb')) else 'START'
         else:
             ctdb = 'STOP'
 

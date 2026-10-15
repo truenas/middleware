@@ -205,9 +205,16 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         restore_legacy_parent_mountpoints(self.context, pool)
 
 
-class ContainerLicenseDelegate(WorkloadDelegate):
+class ContainerLicenseDelegate(WorkloadDelegate[ContainerService]):
     features = (LicenseFeature.CONTAINERS,)
     namespace = 'container'
+
+    @property
+    def service(self) -> ContainerService:
+        return self.s.container
+
+    async def start(self, id_: int) -> None:
+        await self.call2(self.s.container.start, id_)
 
 
 async def __event_system_ready(middleware: Middleware, event_type: str, args: Any) -> None:

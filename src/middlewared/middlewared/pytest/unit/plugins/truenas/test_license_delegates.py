@@ -10,8 +10,9 @@ import pytest
 from truenas_pylicensed import LicenseError
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.common.license import LicenseDelegate, WorkloadDelegate
+from middlewared.common.license import LicenseDelegate
 from middlewared.plugins.truenas.license import ALERT_ONLY, TrueNASLicenseService, setup, snapshot
+from middlewared.plugins.vm import VMLicenseDelegate
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import FakeJob, Middleware, fake_service_control
 from middlewared.service_exception import CallError
@@ -23,6 +24,8 @@ DELEGATE_KINDS = {"LicenseDelegate", "ConvergeDelegate", "WorkloadDelegate"}
 
 
 def _base_name(base):
+    if isinstance(base, ast.Subscript):
+        base = base.value
     if isinstance(base, ast.Name):
         return base.id
     if isinstance(base, ast.Attribute):
@@ -101,7 +104,7 @@ def live(**entitled):
 
 @pytest.mark.asyncio
 async def test_two_feature_delegate_is_applied_once(registry):
-    """One restart per change for a delegate that owns two keys, not one per key."""
+    """One restart per change for a delegate that owns several keys, not one per key."""
     calls = make_delegate(LicenseFeature.S3_AUDIT, LicenseFeature.S3_VERSIONING)
     service = await license_service(Middleware())
 
@@ -230,10 +233,6 @@ def test_snapshot_refuses_daemon_errors(code):
     assert e.value.errno == errno.EAGAIN
 
 
-class FakeWorkloadDelegate(WorkloadDelegate):
-    namespace = "vm"
-
-
 def vm_row(id_, autostart, state):
     return {"id": id_, "name": f"vm{id_}", "autostart": autostart, "status": {"state": state}}
 
@@ -248,7 +247,7 @@ def workload(rows, start_errors=(), running_after_error=()):
             for row in filter_list(rows, filters)
         ]
 
-    def start(id_):
+    def start(id_, options):
         started.append(id_)
         if id_ in running_after_error:
             filter_list(rows, [["id", "=", id_]], {"get": True})["status"]["state"] = "RUNNING"
@@ -259,10 +258,10 @@ def workload(rows, start_errors=(), running_after_error=()):
     middleware["failover.in_progress"] = Mock(return_value=False)
     middleware["failover.status.get_local"] = Mock(return_value="SINGLE")
     middleware["interface.query"] = Mock(return_value=[])
-    middleware["vm.query"] = query
-    middleware["vm.get_instance"] = lambda id_: query([["id", "=", id_]])[0]
-    middleware["vm.start"] = start
-    return FakeWorkloadDelegate(middleware), started
+    middleware.services.vm.query = query
+    middleware.services.vm.get_instance = lambda id_: query([["id", "=", id_]])[0]
+    middleware.services.vm.start = start
+    return VMLicenseDelegate(middleware), started
 
 
 @pytest.mark.asyncio
@@ -277,7 +276,7 @@ async def test_workload_grant_starts_only_stopped_autostart_instances():
 
 @pytest.mark.asyncio
 async def test_workload_grant_ignores_a_start_error_once_the_instance_is_up():
-    """vm.start can raise after the VM is up; only an instance left STOPPED is a failure."""
+    """A start that raises but leaves the VM running is not a failure."""
     d, started = workload(
         [vm_row(1, True, "STOPPED"), vm_row(2, True, "STOPPED")], start_errors={1, 2}, running_after_error={1}
     )

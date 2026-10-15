@@ -8,7 +8,7 @@ from middlewared.service_exception import CallError
 
 
 def test_start_refuses_when_unlicensed():
-    """Containers starting on a system whose licence does not grant them."""
+    """Containers starting on a system whose license does not grant them."""
     context = Mock()
     context.call2 = AsyncMock(return_value=Mock(entitled=False))
     context.run_coroutine = asyncio.run

@@ -41,14 +41,14 @@ class UnlicensedFeaturesInUseAlertSource(AlertSource):
         if (await self.middleware.run_in_thread(verify)).code in DAEMON_ERRORS:
             return []
 
-        usage = await self.middleware.call("truenas.entitlements.usage")
+        usage = await self.call2(self.s.truenas.entitlements.usage)
         lines = [
             f"{FEATURE_DISPLAY_NAMES[key]}: {entry['message']}"
             for key, entry in usage.items()
             # HA's "use" is the hardware itself, which nobody can remove.
             if key != LicenseFeature.HA and not entry["entitled"] and entry["in_use"]
         ]
-        lines.extend(await self.middleware.call("truenas.license.revoke_pending"))
+        lines.extend(await self.call2(self.s.truenas.license.revoke_pending))
         if not lines:
             return []
 

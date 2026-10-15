@@ -101,7 +101,7 @@ def _support_tier(contract_type_name: str) -> str:
         return SupportTier.BRONZE.value
 
 
-def is_freenas_model(model: str | None) -> bool:
+def _is_freenas_model(model: str | None) -> bool:
     return model is not None and model.lower().startswith("freenas")
 
 
@@ -116,7 +116,7 @@ def get_legacy_license_info() -> LicenseInfo | None:
         logger.warning("Error loading legacy license: %r", e)
         return None
 
-    if is_freenas_model(info.model):
+    if _is_freenas_model(info.model):
         return None
 
     return info
@@ -174,7 +174,7 @@ def describe_legacy_license(path: str = LEGACY_LICENSE_FILE) -> dict[str, Any]:
         # Neither the blob nor `lic` may reach this string: a License repr carries customer_key.
         return {"status": LegacyStatus.MALFORMED.value, "error": f"{type(e).__name__}: {e}", "fields": None}
 
-    status = LegacyStatus.REJECTED_FREENAS_MODEL if is_freenas_model(fields["model"]) else LegacyStatus.DECODED
+    status = LegacyStatus.REJECTED_FREENAS_MODEL if _is_freenas_model(fields["model"]) else LegacyStatus.DECODED
     return {"status": status.value, "error": None, "fields": fields}
 
 

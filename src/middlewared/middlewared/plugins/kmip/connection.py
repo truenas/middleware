@@ -99,6 +99,9 @@ def push_direction(context: ServiceContext, manage: Literal['manage_zfs_keys', '
     config = context.call_sync2(context.s.kmip.config)
     if not (config.enabled and getattr(config, manage)):
         return False
+    if context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.KMIP).entitled:
+        return True
+    # The check reads a daemon error as unlicensed, so a pull is decided only from a read that tells them apart.
     status = verify()
     if status.code in DAEMON_ERRORS:
         return None

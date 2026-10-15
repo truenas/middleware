@@ -58,7 +58,7 @@ async def test_stop_active_resumes_suspended_vm_and_powers_off_one_that_will_not
 
 @pytest.mark.asyncio
 async def test_stop_active_raises_when_libvirt_is_unreachable():
-    """vm.query reads an unreachable libvirt as every VM STOPPED, which must not pass for a completed revoke."""
+    """An unreachable libvirt must not pass for a completed revoke."""
     context, stopped = make_context({1: "STOPPED"}, resumable=set())
     context.middleware.libvirt_domains_manager.vms_connection.list_domains.side_effect = RuntimeError("no socket")
 

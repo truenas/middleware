@@ -586,9 +586,16 @@ class VMService(GenericCRUDService[VMEntry]):
         await teardown_guest_vmemory(self.context, vm_id)
 
 
-class VMLicenseDelegate(WorkloadDelegate):
+class VMLicenseDelegate(WorkloadDelegate[VMService]):
     features = (LicenseFeature.VMS,)
     namespace = 'vm'
+
+    @property
+    def service(self) -> VMService:
+        return self.s.vm
+
+    async def start(self, id_: int) -> None:
+        await self.call2(self.s.vm.start, id_, VMStartOptions())
 
 
 async def __event_system_ready(middleware: Middleware, event_type: str, args: typing.Any) -> None:

@@ -4,7 +4,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from truenas_pylicensed import LicenseError
-from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.plugins.truenas.license import TrueNASLicenseService
@@ -37,6 +36,13 @@ def status(*, code=LicenseError.OK, test=False, issued_at=NEWER, features=()):
 NO_LICENSE = status(code=LicenseError.NO_LICENSE)
 
 
+@pytest.fixture(autouse=True)
+def pending_file(tmp_path):
+    path = tmp_path / "license_propagation_pending"
+    with patch(f"{MODULE}.PROPAGATION_PENDING_FILE", str(path)):
+        yield path
+
+
 def license_service(*, failover_status="MASTER", in_progress=False, vip_rows=()):
     middleware = Middleware()
     middleware["failover.status"] = Mock(return_value=failover_status)
@@ -46,7 +52,7 @@ def license_service(*, failover_status="MASTER", in_progress=False, vip_rows=())
     return create_service(middleware, TrueNASLicenseService)
 
 
-def upload(service, app, delivered, installed=NO_LICENSE, rolled_back=None):
+def upload(service, app, delivered, installed=NO_LICENSE, rolled_back=None, authoritative=False):
     @contextmanager
     def upload_license(pem):
         try:
@@ -62,7 +68,10 @@ def upload(service, app, delivered, installed=NO_LICENSE, rolled_back=None):
         patch(f"{MODULE}.snapshot", Mock(return_value=dict.fromkeys(POLICY, False))),
         patch(f"{MODULE}.upload_license", upload_license),
     ):
-        service.upload(app, "-----BEGIN LICENSE-----")
+        if authoritative:
+            service.upload_authoritative("-----BEGIN LICENSE-----")
+        else:
+            service.upload(app, "-----BEGIN LICENSE-----")
 
 
 @pytest.mark.parametrize(
@@ -107,7 +116,7 @@ def test_ha_loss_keys_on_vip_rows_and_rolls_back(vip_rows):
         (None, NO_LICENSE, False),
         (None, status(issued_at=NEWER, test=True), False),
     ],
-    ids=["node", "tnc", "user", "installed-legacy", "installed-test"],
+    ids=["node", "tnc", "user", "none-installed", "installed-test"],
 )
 def test_older_license_refused_only_for_unattended_callers(app, installed, refused):
     """A stale standby or TNC re-sending an old PEM must not undo a newer license; a user may downgrade."""
@@ -117,6 +126,25 @@ def test_older_license_refused_only_for_unattended_callers(app, installed, refus
             upload(service, app, status(issued_at=OLDER), installed)
     else:
         upload(service, app, status(issued_at=OLDER), installed)
+
+
+def test_authoritative_propagation_installs_an_older_license():
+    """The standby must accept the active controller's propagation of an administrator's downgrade."""
+    upload(license_service(failover_status="BACKUP"), None, status(issued_at=OLDER), status(), authoritative=True)
+
+
+@pytest.mark.parametrize("failover_status,refused", [("MASTER", True), ("BACKUP", False)])
+def test_pending_upload_refuses_peer_push_on_the_active_controller(pending_file, failover_status, refused):
+    """The peer's newer-wins push must not undo an administrator's upload it has not received yet."""
+    pending_file.write_text("7c1e4b0a")
+    service = license_service(failover_status=failover_status)
+    if refused:
+        with pytest.raises(ValidationError, match="not reached"):
+            upload(service, NODE, status(), status(issued_at=OLDER))
+        assert pending_file.exists()
+    else:
+        upload(service, NODE, status(), status(issued_at=OLDER))
+        assert not pending_file.exists()
 
 
 @pytest.mark.parametrize("app,refused", [(NODE, True), (None, True), (USER, False)])
@@ -139,31 +167,3 @@ def test_daemon_error_is_not_a_rejection(code):
     """The TNC heartbeat never retries a PEM refused with a ValidationError."""
     with pytest.raises(CallError):
         upload(license_service(), None, status(code=code))
-
-
-@pytest.mark.parametrize(
-    "installed,vip_rows,blob_has_ha,error",
-    [
-        (status(), [], True, ValidationError),
-        (status(code=LicenseError.DAEMON_UNAVAILABLE), [], True, CallError),
-        (NO_LICENSE, [{"id": 1}], False, ValidationError),
-    ],
-    ids=["valid-v2-installed", "daemon-error", "ha-loss"],
-)
-def test_install_legacy_refusals(installed, vip_rows, blob_has_ha, error):
-    """A legacy blob must not delete a valid v2 license, nor be read as installable during a daemon blip,
-    nor drop HA from a pair with VIPs."""
-    service = license_service(vip_rows=vip_rows)
-    parsed = SimpleNamespace(model="M40", has_feature=lambda name: blob_has_ha and name == LicenseFeature.HA)
-    with (
-        patch(f"{MODULE}.parse_legacy_license", Mock(return_value=parsed)),
-        patch(f"{MODULE}.verify", Mock(return_value=installed)),
-        patch(f"{MODULE}.snapshot", Mock(return_value=dict.fromkeys(POLICY, False))),
-        patch(f"{MODULE}.os") as os_,
-        patch(f"{MODULE}.atomic_write") as write,
-        pytest.raises(error),
-    ):
-        service.install_legacy("blob")
-
-    os_.unlink.assert_not_called()
-    write.assert_not_called()
