@@ -340,10 +340,5 @@ async def _start_stop_vrrp_threads(middleware):
             VrrpObjs.event_thread.start()
 
 
-async def _post_license_update(middleware, *args, **kwargs):
-    await _start_stop_vrrp_threads(middleware)
-
-
 async def setup(middleware):
     middleware.create_task(_start_stop_vrrp_threads(middleware))
-    middleware.register_hook('system.post_license_update', _post_license_update)

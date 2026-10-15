@@ -3,7 +3,7 @@
         PAMModule, STANDALONE_SESSION, TRUENAS_SESSION_LIMIT, TRUENAS_SESSION_NO_LIMIT
     )
 
-    ds_auth = render_ctx['datastore.config']['stg_ds_auth']
+    ds_auth = render_ctx['system.general.ds_auth_effective']
 
     if render_ctx['system.security.config'].enable_gpos_stig:
         truenas_session_line = TRUENAS_SESSION_LIMIT

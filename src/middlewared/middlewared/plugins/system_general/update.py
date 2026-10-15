@@ -14,6 +14,7 @@ from middlewared.api.current import (
     SystemGeneralUpdateResult,
 )
 from middlewared.async_validators import validate_port
+from middlewared.plugins.account_.constants import TRUENAS_PAM_SERVICE
 from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -109,6 +110,28 @@ class SystemGeneralService(ConfigService):
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.DIRECTORY_SERVICES_AUTH)
             if not entitlement.entitled:
                 verrors.add('ds_auth', entitlement.message)
+
+    @private
+    async def ds_auth_effective(self) -> bool:
+        if not (await self.config())['ds_auth']:
+            return False
+        entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.DIRECTORY_SERVICES_AUTH)
+        if entitlement.entitled:
+            return True
+        # Dropping directory services auth with no local administrator able to log in would lock
+        # everyone out. A locked or password-disabled root is still listed but cannot log in.
+        return not any(
+            not admin['locked'] and not admin['password_disabled']
+            for admin in await self.middleware.call('privilege.local_administrators')
+        )
+
+    @private
+    def ds_auth_rendered(self) -> bool:
+        try:
+            with open(TRUENAS_PAM_SERVICE) as f:
+                return '@include common-auth' in f.read().splitlines()
+        except FileNotFoundError:
+            return False
 
     @settings.fields_validator('kbdmap')
     async def _validate_kbdmap(self, verrors, kbdmap):

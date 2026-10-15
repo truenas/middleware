@@ -341,7 +341,11 @@ class VMServicePart(CRUDServicePart[VMEntry]):
             ):
                 verrors.add(f'{schema_name}.uuid', 'A VM with this UUID already exists.', errno.EEXIST)
 
-        if not await license_active(self):
+        # Autostart decides what a licence grant starts, so it stays editable while unlicensed.
+        autostart_only = old is not None and data.model_dump(exclude={'autostart'}) == old.model_dump(
+            exclude={'autostart'}
+        )
+        if not autostart_only and not await license_active(self):
             verrors.add(f'{schema_name}.name', 'System is not licensed to use VMs')
 
         if data.min_memory and data.min_memory > data.memory:

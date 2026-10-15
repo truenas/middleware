@@ -47,8 +47,8 @@ async def get_applicability(context: ServiceContext, state: AlertState) -> Appli
     """Every applicability answer for this system, from one reading of the facts.
 
     The single owner of that reading. Held across calls so that a run and the send that follows
-    it -- separate jobs -- cannot disagree within one cycle; dropped on
-    ``system.post_license_update``.
+    it -- separate jobs -- cannot disagree within one cycle; dropped when a license change is
+    applied.
 
     A `None` license is never held: ``get_license`` returns `None` both for an unlicensed system
     and for one whose license daemon did not answer, so caching it would strand a licensed system

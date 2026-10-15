@@ -7,6 +7,7 @@ import random
 import time
 from typing import TYPE_CHECKING
 
+from truenas_pylicensed.features import LicenseFeature
 from truenas_pypam import PAMCode
 
 from middlewared.api import Event, api_method
@@ -50,6 +51,7 @@ from middlewared.auth import (
     UserSessionManagerCredentials,
     dump_credentials,
 )
+from middlewared.common.license import LicenseDelegate
 from middlewared.plugins.account_.constants import TRUENAS_PAM_API_KEY_SERVICE, TRUENAS_PAM_SERVICE
 from middlewared.plugins.auth_.login_ex_impl import (
     login_ex_api_key_plain,
@@ -68,7 +70,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.account.authenticator import TokenPamAuthenticator, UnixPamAuthenticator
+from middlewared.utils.account.authenticator import AccountFlag, TokenPamAuthenticator, UnixPamAuthenticator
 from middlewared.utils.auth import (
     AA_LEVEL1,
     AA_LEVEL2,
@@ -1129,6 +1131,29 @@ class AuthService(Service):
                                               [['uid', '=', user['pw_uid']]], {'get': True})
         except MatchNotFound:
             return None
+
+
+class DirectoryServicesAuthLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.DIRECTORY_SERVICES_AUTH,)
+    active_only = False
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        await self.render('pam')
+        if changes[LicenseFeature.DIRECTORY_SERVICES_AUTH] or await self.middleware.call(
+            'system.general.ds_auth_effective'
+        ):
+            return
+        for session_id, session in list(AuthService.session_manager.sessions.items()):
+            cred = session.credentials
+            if cred.is_user_session and AccountFlag.DIRECTORY_SERVICE in cred.user['account_attributes']:
+                await self.middleware.call('auth.terminate_session', session_id)
+
+    async def revoke_pending(self) -> str | None:
+        if await self.middleware.call('system.general.ds_auth_effective'):
+            return 'not revoked: no local administrator with a usable password'
+        if await self.middleware.call('system.general.ds_auth_rendered'):
+            return 'pam not re-rendered since a local administrator was added'
+        return None
 
 
 async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None:

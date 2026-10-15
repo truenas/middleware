@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     KMIPClearSyncPendingKeysArgs,
@@ -20,7 +22,8 @@ from middlewared.api.current import (
     KMIPUpdateArgs,
     KMIPUpdateResult,
 )
-from middlewared.service import GenericConfigService, job, periodic, private
+from middlewared.common.license import LicenseDelegate
+from middlewared.service import CallError, GenericConfigService, job, periodic, private
 from middlewared.service.decorators import pass_thread_local_storage
 
 from . import sed_keys as sed_mod
@@ -95,6 +98,10 @@ class KMIPService(GenericConfigService[KMIPEntry]):
         await sync_mod.initialize_keys(self.context, self._store, job)
 
     @private
+    async def escrowed_count(self) -> int:
+        return await sync_mod.escrowed_count(self.context)
+
+    @private
     async def kmip_memory_keys(self) -> dict[str, Any]:
         return sync_mod.kmip_memory_keys(self._store)
 
@@ -136,6 +143,25 @@ class KMIPService(GenericConfigService[KMIPEntry]):
     @private
     async def reset_sed_disk_password(self, disk_id: str, kmip_uid: str | None) -> None:
         await sed_mod.reset_sed_disk_password(self.context, self._store, disk_id, kmip_uid)
+
+
+class KMIPLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.KMIP,)
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        failures = []
+        for method in ('kmip.sync_zfs_keys', 'kmip.sync_sed_keys'):
+            result = await (await self.middleware.call(method)).wait(raise_error=True)
+            if result is None:
+                failures.append(f'{method}: KMIP server unreachable')
+            elif result:
+                failures.append(f'{method}: {", ".join(result)}')
+        if failures:
+            raise CallError('; '.join(failures))
+
+    async def revoke_pending(self) -> str | None:
+        n = await self.call2(self.s.kmip.escrowed_count)
+        return f'{n} key(s) still escrowed on the KMIP server' if n else None
 
 
 async def initialize_kmip_keys(middleware: Middleware) -> None:

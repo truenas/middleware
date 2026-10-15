@@ -1,5 +1,7 @@
 import asyncio
 import base64
+from collections.abc import Awaitable
+from datetime import datetime
 import errno
 from functools import partial
 import itertools
@@ -9,6 +11,10 @@ import os
 import shutil
 import stat
 import time
+from typing import Any
+
+from truenas_pylicensed import verify
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
 from middlewared.api import Event, api_method
@@ -37,9 +43,10 @@ from middlewared.api.current import (
     ZFSResourceEncryptionUnlockArgsData,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license import LicenseDelegate
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
+from middlewared.plugins.device_.vrrp_events import _start_stop_vrrp_threads
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.failover_.event import BACKUP_STOP_SERVICES
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
@@ -54,7 +61,7 @@ from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.contextlib import asyncnullcontext
-from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_FILE
+from middlewared.utils.license import LEGACY_LICENSE_FILE
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
@@ -389,9 +396,8 @@ class FailoverService(ConfigService):
             {'timeout': 300},  # Give more time for potential initrd update
         )
 
-        self.middleware.call_sync(
-            'failover.call_remote', 'core.call_hook', ['system.post_license_update', [True]]
-        )
+        self.middleware.call_sync('failover.call_remote', 'failover.status_refresh')
+        self.middleware.call_sync('failover.call_remote', 'etc.generate', ['rc'])
 
         if options['reboot']:
             self.middleware.call_sync('failover.call_remote', 'system.reboot', ['Failover sync to peer', {'delay': 2}])
@@ -409,10 +415,8 @@ class FailoverService(ConfigService):
 
     @private
     def send_license(self):
-        if os.path.exists(LICENSE_FILE):
-            with open(LICENSE_FILE, 'r') as f:
-                license_ = f.read()
-
+        license_ = self.middleware.call_sync('truenas.license.installed_pem')
+        if license_ is not None:
             try:
                 self.middleware.call_sync(
                     'failover.call_remote', 'truenas.license.upload', [license_, {"ha_propagate": False}],
@@ -423,6 +427,20 @@ class FailoverService(ConfigService):
             return
 
         if os.path.exists(LEGACY_LICENSE_FILE):
+            with open(LEGACY_LICENSE_FILE, 'r') as f:
+                blob = f.read()
+
+            try:
+                self.middleware.call_sync('failover.call_remote', 'truenas.license.install_legacy', [blob])
+                return
+            except Exception as e:
+                if not (isinstance(e, CallError) and e.errno == CallError.ENOMETHOD):
+                    self.logger.error(
+                        '%s: call failed on the remote node', 'truenas.license.install_legacy', exc_info=True,
+                    )
+                    return
+
+            # The peer runs an older release that has no install_legacy.
             self.send_small_file(LEGACY_LICENSE_FILE)
             try:
                 self.middleware.call_sync(
@@ -430,6 +448,32 @@ class FailoverService(ConfigService):
                 )
             except Exception as e:
                 self.logger.error(f'Failed to reset legacy license cache on the remote node: {e!r}')
+
+    @private
+    def push_license_if_newer(self):
+        try:
+            status = verify()
+            if not status.valid or status.test:
+                return
+
+            remote = self.middleware.call_sync('failover.call_remote', 'truenas.license.info')
+            if remote is None or remote['issued_at'] is None:
+                return
+
+            # Legacy `issued_at` is a support contract start date, not comparable to a v2 timestamp.
+            if not remote['id'].startswith('legacy_') and (
+                datetime.fromisoformat(status.issued_at) <= datetime.fromisoformat(remote['issued_at'])
+            ):
+                return
+
+            pem = self.middleware.call_sync('truenas.license.installed_pem')
+            self.middleware.call_sync(
+                'failover.call_remote', 'truenas.license.upload', [pem, {'ha_propagate': False}],
+            )
+            self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
+        except Exception as e:
+            if not (isinstance(e, CallError) and e.errno == CallError.ENOMETHOD):
+                self.logger.error('license: failed to push the installed license to the remote node', exc_info=True)
 
     @private
     def send_pwenc_secret(self):
@@ -1038,18 +1082,6 @@ async def interface_pre_sync_hook(middleware):
     await middleware.call('failover.internal_interface.pre_sync')
 
 
-async def hook_license_update_invalidate_status(middleware, *args, **kwargs):
-    """
-    Drop the cached `failover.status` so that everything running later in this hook sees a status
-    derived from the license we have just installed.
-
-    `status_refresh` rather than a bare cache drop because it also re-emits the status and
-    disabled-reasons events. It can take seconds when the local node falls back to remote probes,
-    and it runs here so that cost lands outside any reconcile delegate's timeout.
-    """
-    await middleware.call('failover.status_refresh')
-
-
 async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
     """
     This hook needs to be run after a NIC rollback operation and before
@@ -1300,6 +1332,10 @@ def remote_status_event(middleware, *args, **kwargs):
     middleware.call_sync('failover.status_refresh')
 
 
+def push_license_on_connect(middleware):
+    middleware.call_sync('failover.push_license_if_newer', background=True)
+
+
 def mismatch_nics(
     local_mac_to_name: dict[str, str],
     remote_mac_to_name: dict[str, str],
@@ -1327,14 +1363,44 @@ def mismatch_nics(
     return missing_local, missing_remote
 
 
-class CtdbLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'ctdb'
-    etc_groups = ('ctdb',)
-    service = 'ctdb'
-    # RESTART, not RELOAD: the reload path regenerates config but returns without starting a unit
-    # that is not running, and ctdb is stopped on a node that has only just become licensed.
-    action = LicenseReconcileAction.RESTART
-    order = 0
+class HALicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.HA,)
+    active_only = False
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        # Each step is independent, so one failure must not leave the others unconverged.
+        failures: list[str] = []
+
+        async def attempt(step: Awaitable[Any]) -> Any:
+            try:
+                return await step
+            except CallError as e:
+                failures.append(e.errmsg)
+                return None
+
+        granted = changes[LicenseFeature.HA]
+        if granted:
+            await _start_stop_vrrp_threads(self.middleware)
+            await attempt(self.middleware.call('failover.ensure_remote_client'))
+        # Without the VRRP threads a node with failover VIPs no longer reacts to keepalived events.
+        elif not await self.middleware.call('interface.query', [['failover_virtual_aliases', '!=', []]]):
+            await _start_stop_vrrp_threads(self.middleware)
+
+        await attempt(self.render('rc', 'keepalived', 'cron'))
+        if granted:
+            ctdb = 'RESTART' if await self.call2(self.s.service.started, 'ctdb') else 'START'
+        else:
+            ctdb = 'STOP'
+
+        await attempt(self.control('ctdb', ctdb, standby_ok=True))
+        for service in ('discovery', 'cifs', 'iscsitarget'):
+            await attempt(self.control(service, 'RELOAD'))
+
+        if await attempt(self.middleware.call('nvmet.global.running')):
+            await attempt(self.render('nvmet'))
+
+        if failures:
+            raise CallError('; '.join(failures))
 
 
 async def setup(middleware):
@@ -1356,24 +1422,14 @@ async def setup(middleware):
     )
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
-    # This must stay ahead of the license reconcile pass, which runs at order=0. License sensitive
-    # etc groups read `failover.status` while rendering, so if this ordering is ever changed they
-    # will silently reconcile against the status cached under the old license.
-    middleware.register_hook(
-        'system.post_license_update', hook_license_update_invalidate_status, order=-100, sync=True
-    )
     middleware.register_hook('service.pre_action', service_remote, sync=False)
-
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        CtdbLicenseReconcileDelegate(),
-    )
 
     # Register callbacks to properly refresh HA status and send events on changes
     await middleware.call('failover.remote_subscribe', 'system.ready', remote_status_event)
     await middleware.call('failover.remote_subscribe', 'system.reboot', remote_status_event)
     await middleware.call('failover.remote_subscribe', 'system.shutdown', remote_status_event)
     await middleware.call('failover.remote_on_connect', remote_status_event)
+    await middleware.call('failover.remote_on_connect', push_license_on_connect)
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     if await middleware.call('system.ready'):

@@ -15,6 +15,7 @@ from middlewared.api.current import (
     SharingNFSUpdateArgs,
     SharingNFSUpdateResult,
 )
+from middlewared.common.license import ConvergeDelegate
 from middlewared.plugins.dns_client import DNSClientForwardLookupData
 from middlewared.plugins.nfs_.utils import (
     NFSProtocol,
@@ -579,6 +580,11 @@ class SharingNFSService(SharingService):
         data.pop(self.locked_field, None)
         data.pop('tier', None)
         return data
+
+
+class NFSSnapshotLicenseDelegate(ConvergeDelegate):
+    features = (LicenseFeature.NFS_SNAPSHOT,)
+    services = (('nfs', 'RELOAD'),)
 
 
 async def pool_post_import(middleware, pool):

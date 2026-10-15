@@ -37,7 +37,7 @@ from middlewared.api.current import (
     SMBUpdateResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license import ConvergeDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_GROUP_PREFIX, SID_LOCAL_USER_PREFIX
 from middlewared.plugins.smb_.constants import (
@@ -2001,12 +2001,9 @@ def create_samba_directories(middleware):
                 os.chown(p.path, 0, 0)
 
 
-class SMBLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'smb'
-    etc_groups = ('smb',)
-    service = 'cifs'
-    action = LicenseReconcileAction.RELOAD
-    order = 20
+class SMBLicenseDelegate(ConvergeDelegate):
+    features = (LicenseFeature.SMB_BLOCK_CLONING,)
+    services = (('cifs', 'RELOAD'),)
 
 
 async def setup(middleware):
@@ -2020,7 +2017,3 @@ async def setup(middleware):
         middleware.services.zfs.resource.register_attachment_delegate, SMBFSAttachmentDelegate(middleware)
     )
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        SMBLicenseReconcileDelegate(),
-    )

@@ -3,6 +3,7 @@
     import socket
     from collections.abc import Sequence
     from pathlib import Path
+    from truenas_pylicensed.features import LicenseFeature
     from middlewared.api.current import NFSEntry
     from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
     from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
@@ -117,6 +118,9 @@
 
     has_nfs_principal = middleware.call_sync('kerberos.keytab.has_nfs_principal')
     global_sec = middleware.call_sync2(middleware.services.nfs.sec, config, has_nfs_principal) or ["sys"]
+    snapshots_entitled = middleware.call_sync2(
+        middleware.services.truenas.entitlements.check, LicenseFeature.NFS_SNAPSHOT
+    ).entitled
 
     for share in shares:
         if share['locked']:
@@ -141,7 +145,7 @@
         options = []
         params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
 
-        if share["expose_snapshots"]:
+        if share["expose_snapshots"] and snapshots_entitled:
             params += ",zfs_snapdir"
 
         for host in share["hosts"]:

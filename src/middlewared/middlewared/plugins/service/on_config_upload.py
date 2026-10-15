@@ -4,7 +4,11 @@ import sqlite3
 import subprocess
 from typing import TYPE_CHECKING
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.service_exception import MatchNotFound
+
+from .services.webshare import unit_file_enabled
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -13,6 +17,9 @@ if TYPE_CHECKING:
 def on_config_upload(middleware: Middleware, path: str) -> None:
     # For SCALE, we have to enable/disable services based on the uploaded database
     enable_disable_units: dict[str, list[str]] = {'enable': [], 'disable': []}
+    webshare_entitled = middleware.call_sync2(
+        middleware.services.truenas.entitlements.check, LicenseFeature.WEBSHARE
+    ).entitled
     conn = sqlite3.connect(path)
     try:
         cursor = conn.cursor()
@@ -23,7 +30,7 @@ def on_config_upload(middleware: Middleware, path: str) -> None:
                 # An old service which we don't have currently
                 continue
 
-            if enabled:
+            if unit_file_enabled(service, enabled, webshare_entitled):
                 enable_disable_units['enable'].extend(units)
             else:
                 enable_disable_units['disable'].extend(units)

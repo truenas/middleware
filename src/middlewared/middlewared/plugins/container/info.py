@@ -4,10 +4,11 @@ from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import ServiceContext
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
+from middlewared.utils.service.call_mixin import CallMixin
 from middlewared.utils.zfs import query_imported_fast_impl
 
 
-async def license_active(context: ServiceContext) -> bool:
+async def license_active(context: CallMixin) -> bool:
     """
     Returns whether this system is entitled to run containers.
     """

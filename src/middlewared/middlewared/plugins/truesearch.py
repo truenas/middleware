@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import ZFSResourceQuery
-from middlewared.service import Service
+from middlewared.common.license import LicenseDelegate
+from middlewared.service import CallError, Service
 from middlewared.utils.smb import SearchProtocol
 
 if TYPE_CHECKING:
@@ -224,8 +225,13 @@ class TrueSearchService(Service):
                 await (await self.call2(self.s.service.control, 'START', 'truesearch')).wait(raise_error=True)
 
 
-async def post_license_update(middleware: Middleware, *args: tuple[Any], **kwargs: dict[str, Any]) -> None:
-    await middleware.call2(middleware.services.truesearch.configure)
+class TruesearchLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.TRUESEARCH,)
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        await self.call2(self.s.truesearch.configure)
+        if await self.call2(self.s.service.started, 'truesearch') != await self.call2(self.s.truesearch.enabled):
+            raise CallError('truesearch: service state does not match its configuration')
 
 
 async def on_dataset_mounted(middleware: Middleware, data: dict[str, Any]) -> None:
@@ -251,6 +257,5 @@ async def on_system_ready(middleware: Middleware, event_type: str, args: Any) ->
 
 
 async def setup(middleware: Middleware) -> None:
-    middleware.register_hook("system.post_license_update", post_license_update, sync=False)
     middleware.register_hook("zfs.dataset.mounted", on_dataset_mounted)
     middleware.event_subscribe("system.ready", on_system_ready)

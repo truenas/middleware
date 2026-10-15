@@ -87,6 +87,9 @@ class NFSServicePart(SystemServicePart[NFSEntry]):
         for field in ("id", "managed_nfsd", "v4_krb_enabled", "keytab_has_nfs_spn"):
             update.pop(field)
         update["16"] = update.pop("userd_manage_gids")
+        # `extend` masks `rdma` while RDMA is unavailable; writing that back would lose the user's choice.
+        if new.rdma == old.rdma:
+            update.pop("rdma")
 
         await self._update_service(old.id, update)
 

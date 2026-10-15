@@ -1,5 +1,8 @@
 import asyncio
 
+from truenas_pylicensed.features import LicenseFeature
+
+from middlewared.common.license import LicenseDelegate
 from middlewared.service import Service, private
 from middlewared.utils.zfs.event import ZfsConfigSyncEvent, ZfsEvent
 
@@ -34,7 +37,7 @@ class PoolService(Service):
         #
         # We will only query those pools by default which have all sed flag unset
         # When this method runs, it will update status for all pools based on whatever filters we have
-        # It does not account for healthy or unhealthy options and relies on consumer instead to be smart about it
+        # Only imported pools are judged, since an exported pool has no topology and would read as not all-SED
         # How this will be triggered is in 3 places:
         # For non-HA systems:
         # It will happen in a data migration where we will update status of all pools
@@ -48,7 +51,9 @@ class PoolService(Service):
         # pool in question becomes healthy and vice versa
         # Why we still settle on setting this value initially is to prevent accidental mis-configuration of a pool
         # which might perhaps very well be an all sed pool
-        filters = [] if skip_all_sed_check else [['all_sed', '=', None]]
+        filters = [['topology', '!=', None]]
+        if not skip_all_sed_check:
+            filters.append(['all_sed', '=', None])
         if filter_pool:
             filters.append(['name', '=', filter_pool])
 
@@ -103,18 +108,15 @@ async def zfs_events_hook(middleware, event: ZfsEvent):
                 middleware.create_task(middleware.call("pool.update_all_sed_attr", True, event.pool))
 
 
-async def _post_license_sed_update(middleware):
-    # First we sync disks to make sure disks appropriately get marked as SED/non-SED
-    # Then we scan existing pools and make sure that they get marked as all_sed appropriately
-    await (await middleware.call('disk.sync_all')).wait()
-    await middleware.call('pool.update_all_sed_attr', True)
+class SEDLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.SED,)
 
-
-async def hook_license_update(middleware, *args, **kwargs):
-    if await middleware.call('system.sed_enabled'):
-        middleware.create_task(_post_license_sed_update(middleware))
+    async def apply(self, changes: dict[str, bool]) -> None:
+        if changes[LicenseFeature.SED]:
+            # Disks are probed for SED only while entitled, so they must be re-synced before pools are judged
+            await (await self.middleware.call('disk.sync_all')).wait(raise_error=True)
+            await self.middleware.call('pool.update_all_sed_attr', True)
 
 
 async def setup(middleware):
     middleware.register_hook('zfs.pool.events', zfs_events_hook)
-    middleware.register_hook('system.post_license_update', hook_license_update)

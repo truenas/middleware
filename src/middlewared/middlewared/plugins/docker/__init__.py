@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import typing
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.base import Event
 from middlewared.api.current import (
@@ -28,7 +30,8 @@ from middlewared.api.current import (
     DockerUpdateArgs,
     DockerUpdateResult,
 )
-from middlewared.service import GenericConfigService, job, periodic, private
+from middlewared.common.license import LicenseDelegate
+from middlewared.service import CallError, GenericConfigService, job, periodic, private
 
 from .backup import backup, delete_backup, list_backups, post_system_update_hook
 from .backup_to_pool import backup_to_pool
@@ -252,16 +255,32 @@ async def _event_system_ready(middleware: Middleware, event_type: str, args: typ
         await middleware.call2(middleware.services.docker.set_status, Status.UNCONFIGURED.value)
 
 
-async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
-    if not await middleware.call('docker.license_active'):
-        # We would like to stop docker in this case
-        await middleware.call2(middleware.services.service.control, 'STOP', 'docker')
+class DockerLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.APPS,)
+
+    async def _running(self) -> bool:
+        if await self.call2(self.s.service.started, 'docker'):
+            return True
+        # A start is in flight and the unit is not active yet.
+        return (await self.call2(self.s.docker.status)).status == Status.INITIALIZING.value
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        running = await self._running()
+        if changes[LicenseFeature.APPS]:
+            if not running and (await self.call2(self.s.docker.config)).pool and await self.is_active():
+                await self.call2(self.s.docker.start_service, True)
+                if not await self.call2(self.s.service.started, 'docker'):
+                    raise CallError('docker did not start')
+        elif running:
+            await self.control('docker', 'STOP', timeout=600)
+
+    async def revoke_pending(self) -> str | None:
+        return 'docker is still running' if await self._running() else None
 
 
 async def setup(middleware: Middleware) -> None:
     middleware.event_subscribe('system.ready', _event_system_ready)
     await middleware.call2(middleware.services.docker.initialize_state)
-    middleware.register_hook('system.post_license_update', handle_license_update)
     middleware.register_hook('update.post_run', post_system_update_hook, sync=True)
     # We are going to check in setup docker events if setting up events is relevant or not
     middleware.create_task(middleware.call2(middleware.services.docker.setup_docker_events))

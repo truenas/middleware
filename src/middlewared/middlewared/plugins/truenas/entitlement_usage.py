@@ -49,7 +49,7 @@ async def _ha(context: ServiceContext) -> bool:
 
 
 async def _kmip(context: ServiceContext) -> bool:
-    return bool((await context.call2(context.s.kmip.config)).server)
+    return (await context.call2(context.s.kmip.config)).enabled
 
 
 async def _mission_critical(context: ServiceContext) -> bool:
@@ -107,7 +107,7 @@ async def _s3_audit(context: ServiceContext) -> bool:
 
 async def _s3_versioning(context: ServiceContext) -> bool:
     return bool(
-        await context.call2(context.s.sharing.s3.query, [["versioning", "!=", "OFF"]], QueryOptions(count=True))
+        await context.call2(context.s.sharing.s3.query, [["versioning", "=", "ENABLED"]], QueryOptions(count=True))
     )
 
 
@@ -161,7 +161,9 @@ async def _vms(context: ServiceContext) -> bool:
 
 
 async def _webshare(context: ServiceContext) -> bool:
-    return bool(await context.call2(context.s.sharing.webshare.query, [], QueryOptions(count=True)))
+    return bool(
+        await context.call2(context.s.sharing.webshare.query, [["enabled", "=", True]], QueryOptions(count=True))
+    )
 
 
 async def _zfstier(context: ServiceContext) -> bool:

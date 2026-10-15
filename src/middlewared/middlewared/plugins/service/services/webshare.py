@@ -1,4 +1,12 @@
+from truenas_pylicensed.features import LicenseFeature
+
+from middlewared.service_exception import CallError
+
 from .base import SimpleService
+
+
+def unit_file_enabled(service: str, enable: bool, webshare_entitled: bool) -> bool:
+    return enable and (service != WebShareService.name or webshare_entitled)
 
 
 class WebShareService(SimpleService):
@@ -10,6 +18,11 @@ class WebShareService(SimpleService):
 
     systemd_unit = "truenas-webshare-auth"
     systemd_async_start = True
+
+    async def before_start(self) -> None:
+        entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.WEBSHARE)
+        if not entitlement.entitled:
+            raise CallError(f"webshare: {entitlement.message}")
 
     async def after_start(self) -> None:
         await self.call2(self.s.truesearch.configure)
