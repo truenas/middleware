@@ -12,7 +12,7 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.api.current import KMIPEntry
 from middlewared.plugins.kmip import KMIPLicenseDelegate, sed_keys, zfs_keys
 from middlewared.plugins.kmip.keystore import KMIPKeyStore
-from middlewared.pytest.unit.entitlements import facts_for_column
+from middlewared.pytest.unit.entitlements import facts_for_column, install_entitlements
 from middlewared.pytest.unit.middleware import FakeJob, Middleware
 from middlewared.service import CallError
 from middlewared.service.context import ServiceContext
@@ -33,6 +33,7 @@ def _context(monkeypatch, *, column="HW+K", daemon_error=False, datasets=(), dis
         ssl_version="PROTOCOL_TLSv1_2",
     )
     facts = facts_for_column(LicenseFeature.KMIP, column)
+    install_entitlements(m, facts)
     code = LicenseError.DAEMON_UNAVAILABLE if daemon_error else LicenseError.OK
     monkeypatch.setattr("middlewared.plugins.kmip.connection.verify", lambda: SimpleNamespace(code=code))
     monkeypatch.setattr("middlewared.plugins.kmip.connection.get_hardware_class", lambda: facts.hardware_class)

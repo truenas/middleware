@@ -96,11 +96,7 @@ def encrypted_dataset():
 
 
 def wait_for(condition, timeout=60):
-    """Poll ``condition`` until it returns a truthy value and return it.
-
-    ``kmip.sync_keys`` starts the per-key-type sync jobs without waiting for them, so
-    the effect of a ``kmip.update`` only becomes visible some time after it returns.
-    """
+    """Poll ``condition`` until it returns a truthy value and return it."""
     deadline = time.monotonic() + timeout
     while True:
         result = condition()
@@ -516,24 +512,30 @@ def test_kmip_zfs_key_pulled_from_local_sources(encrypted_dataset):
     key = encrypted_dataset_row(encrypted_dataset)["encryption_key"]
 
     # KMIP is disabled, so these syncs pull keys back without ever reaching a server and
-    # have to recover the key from a local source.
+    # have to recover the key from a local source. The UID is kept because the server copy
+    # could not be destroyed, so the key stays pending until `force_clear`.
+    try:
+        # The database still holds the key.
+        set_encrypted_dataset(encrypted_dataset, {"encryption_key": key, "kmip_uid": "unreachable-uid"})
+        assert call("kmip.sync_zfs_keys", job=True) == []
+        row = encrypted_dataset_row(encrypted_dataset)
+        assert row["encryption_key"] == key
+        assert row["kmip_uid"] == "unreachable-uid"
 
-    # The database still holds the key.
-    set_encrypted_dataset(encrypted_dataset, {"encryption_key": key, "kmip_uid": "unreachable-uid"})
-    assert call("kmip.sync_zfs_keys", job=True) == []
-    row = encrypted_dataset_row(encrypted_dataset)
-    assert row["encryption_key"] == key
-    assert row["kmip_uid"] is None
+        # Only the in-memory cache holds the key.
+        set_encrypted_dataset(encrypted_dataset, {"encryption_key": None})
+        call("kmip.update_memory_keys", {"zfs": {encrypted_dataset: key}})
+        assert call("kmip.sync_zfs_keys", job=True) == []
 
-    # Only the in-memory cache holds the key.
-    set_encrypted_dataset(encrypted_dataset, {"encryption_key": None, "kmip_uid": "unreachable-uid"})
-    call("kmip.update_memory_keys", {"zfs": {encrypted_dataset: key}})
-    assert call("kmip.sync_zfs_keys", job=True) == []
+        row = encrypted_dataset_row(encrypted_dataset)
+        assert row["encryption_key"] == key
+        assert row["kmip_uid"] == "unreachable-uid"
 
-    row = encrypted_dataset_row(encrypted_dataset)
-    assert row["encryption_key"] == key
-    assert row["kmip_uid"] is None
+        assert call("kmip.kmip_sync_pending") is True
+    finally:
+        call("kmip.clear_sync_pending_keys")
 
+    assert encrypted_dataset_row(encrypted_dataset)["encryption_key"] == key
     assert call("kmip.kmip_sync_pending") is False
 
 
@@ -542,7 +544,7 @@ def test_kmip_sed_keys_pulled_from_local_sources():
 
     # KMIP is disabled, so this pull never reaches a server and has to recover both
     # passwords from a local source: the database for the disk, the cache for the global
-    # password.
+    # password. The UIDs are kept because the server copies could not be destroyed.
     with sed_disk_password() as disk_id:
         call("datastore.update", "storage.disk", disk_id, {"kmip_uid": "unreachable-uid"}, {"prefix": "disk_"})
         call("datastore.update", "system.advanced", adv_id, {"adv_sed_passwd": "", "adv_kmip_uid": "unreachable"})
@@ -550,9 +552,10 @@ def test_kmip_sed_keys_pulled_from_local_sources():
         try:
             assert call("kmip.sync_sed_keys", job=True) == []
             assert disk_row(disk_id)["passwd"] == SED_PASSWORD
-            assert disk_row(disk_id)["kmip_uid"] is None
+            assert disk_row(disk_id)["kmip_uid"] == "unreachable-uid"
             assert advanced_row()["sed_passwd"] == SED_PASSWORD
-            assert advanced_row()["kmip_uid"] is None
+            assert advanced_row()["kmip_uid"] == "unreachable"
+            assert call("kmip.kmip_sync_pending") is True
         finally:
             call("datastore.update", "system.advanced", adv_id, {"adv_sed_passwd": "", "adv_kmip_uid": None})
             call("kmip.update_memory_keys", {"sed": {"global_password": "", "sed_disks_keys": {}}})

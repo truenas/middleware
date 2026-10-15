@@ -1,18 +1,16 @@
 from collections.abc import Callable, Iterable
 import contextlib
 from datetime import datetime
-import enum
 import errno
 import json
 import os
 import threading
-import time
 from typing import TYPE_CHECKING, Any, TypedDict
 import uuid
 
 from pydantic import Secret
 from truenas_os_pyutils.io import atomic_write
-from truenas_pylicensed import LicenseError, LicenseStatus, LicenseType, verify
+from truenas_pylicensed import LicenseStatus, LicenseType, verify
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
@@ -46,8 +44,6 @@ from middlewared.utils.license import (
     get_fingerprint_b64,
     get_legacy_license_info,
     get_license,
-    is_freenas_model,
-    parse_legacy_license,
     upload_license,
 )
 
@@ -58,6 +54,9 @@ if TYPE_CHECKING:
 
 
 JOURNAL_FILE = f"{MIDDLEWARE_RUN_DIR}/license_apply_pending.json"
+# Id of an administrator's upload the HA peer has not accepted yet. Persistent, because the peer may stay
+# away across a reboot and its newer-wins push must not undo the upload when it returns.
+PROPAGATION_PENDING_FILE = "/data/license_propagation_pending"
 
 # Features whose revoke has no runtime action: their gates read the entitlement live and the
 # usage alert reports what is still in use.
@@ -71,14 +70,10 @@ ALERT_ONLY: frozenset[str] = frozenset(
     }
 )
 
-# Held from the snapshot before a licence change through the enqueue of its apply, so apply jobs
+# Held from the snapshot before a license change through the enqueue of its apply, so apply jobs
 # queue in install order. Thread pool only: the holder waits on the event loop to enqueue.
 _upload_lock = threading.Lock()
 _journal_lock = threading.Lock()
-
-
-class _Live(enum.Enum):
-    LIVE = enum.auto()
 
 
 class _JournalEntry(TypedDict):
@@ -86,17 +81,18 @@ class _JournalEntry(TypedDict):
     changes: dict[str, bool]
 
 
-def snapshot(
-    status: LicenseStatus | None = None, *, license: LicenseInfo | None | _Live = _Live.LIVE
-) -> dict[str, bool]:
+def snapshot(status: LicenseStatus | None = None) -> dict[str, bool]:
     """Entitlement of every policy key. Refuses rather than reading a daemon error as unlicensed."""
-    if license is _Live.LIVE:
-        status = verify() if status is None else status
-        if status.code in DAEMON_ERRORS:
-            raise CallError("license daemon unavailable", errno.EAGAIN)
-        license = get_license(status)
-    facts = EntitlementFacts(hardware_class=get_hardware_class(), license=license)
+    status = verify() if status is None else status
+    if status.code in DAEMON_ERRORS:
+        raise CallError("license daemon unavailable", errno.EAGAIN)
+    facts = EntitlementFacts(hardware_class=get_hardware_class(), license=get_license(status))
     return {key: check_entitlement(key, facts).entitled for key in POLICY}
+
+
+def _committed_snapshot() -> dict[str, bool]:
+    with _upload_lock:
+        return snapshot()
 
 
 def diff(previous: dict[str, bool], current: dict[str, bool]) -> dict[str, bool]:
@@ -127,6 +123,22 @@ def journal_append(changes: dict[str, bool]) -> str:
 def journal_remove(entry_id: str) -> None:
     with _journal_lock:
         _journal_write([entry for entry in _journal_read() if entry["id"] != entry_id])
+
+
+def _propagation_pending() -> str | None:
+    try:
+        with open(PROPAGATION_PENDING_FILE) as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
+
+
+def _read_installed_pem() -> str | None:
+    try:
+        with open(LICENSE_FILE) as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
 
 
 def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
@@ -189,6 +201,22 @@ class TrueNASLicenseService(Service):
             if self.middleware.call_sync("failover.in_progress"):
                 raise CallError("A license cannot be uploaded while a failover event is in progress", errno.EBUSY)
 
+        # `check_annotations` hands the method the undumped model value, so the PEM arrives still
+        # boxed in the Secret that keeps it off the audit trail.
+        self._install(
+            license_.get_secret_value(),
+            options.ha_propagate,
+            authoritative=interactive,
+            from_peer=app is not None and not interactive,
+        )
+
+    @private
+    def upload_authoritative(self, license_: str) -> None:
+        """The active controller propagating an administrator's upload, which is installed even over a newer
+        license."""
+        self._install(license_, False, authoritative=True, from_peer=True)
+
+    def _install(self, pem: str, ha_propagate: bool, *, authoritative: bool, from_peer: bool) -> None:
         had_license = False
         lic: LicenseStatus | None = None
 
@@ -199,9 +227,7 @@ class TrueNASLicenseService(Service):
                 raise CallError("license daemon unavailable", errno.EAGAIN)
             installed_info = get_license(installed)
             had_license = installed_info is not None and installed_info.origin is LicenseOrigin.ISSUED
-            # `check_annotations` hands the method the undumped model value, so the PEM arrives still
-            # boxed in the Secret that keeps it off the audit trail.
-            with upload_license(license_.get_secret_value()) as lic:
+            with upload_license(pem) as lic:
                 if lic.code in DAEMON_ERRORS:
                     raise CallError("license daemon unavailable", errno.EAGAIN)
 
@@ -214,9 +240,19 @@ class TrueNASLicenseService(Service):
                 else:
                     self._refuse_ha_loss()
 
+                # The active controller's pending upload outranks the peer's newer license. A standby's pending
+                # upload is stale: the peer took over before receiving it.
+                if (
+                    not authoritative
+                    and from_peer
+                    and _propagation_pending() is not None
+                    and self.middleware.call_sync("failover.status") != "BACKUP"
+                ):
+                    raise ValidationError("license", "An uploaded license has not reached the other controller yet")
+
                 # A delivery must not undo a newer license, nor put a test license (which skips the serial
-                # check) over a production one. The daemon does not read legacy licenses, so one never blocks.
-                if not interactive and installed.valid and not installed.test:
+                # check) over a production one.
+                if not authoritative and installed.valid and not installed.test:
                     if lic.test:
                         raise ValidationError("license", "A test license cannot replace the installed license")
                     assert lic.issued_at is not None and installed.issued_at is not None
@@ -227,6 +263,14 @@ class TrueNASLicenseService(Service):
 
             with contextlib.suppress(FileNotFoundError):
                 os.remove(LEGACY_LICENSE_FILE)
+
+            if authoritative and ha_propagate and lic.has_feature(LicenseFeature.HA):
+                assert lic.id is not None
+                with atomic_write(PROPAGATION_PENDING_FILE, "w", perms=0o600) as f:
+                    f.write(lic.id)
+            else:
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(PROPAGATION_PENDING_FILE)
 
             get_legacy_license_info.cache_clear()
             return current
@@ -239,23 +283,23 @@ class TrueNASLicenseService(Service):
         if not had_license and current[LicenseFeature.MISSION_CRITICAL]:
             self.call_sync2(self.s.update.set_profile, "MISSION_CRITICAL")
 
-        if options.ha_propagate:
+        if ha_propagate:
             if lic.type == LicenseType.ENTERPRISE:
                 if lic.has_feature(LicenseFeature.HA):
-                    self._configure_ha_license()
+                    self._configure_ha_license(authoritative)
 
                 with open(EULA_PENDING_PATH, "a+") as f:
                     os.fchmod(f.fileno(), 0o600)
 
         self.call_sync2(self.s.alert.alert_source_clear_run, "LicenseStatus")
 
-    def _configure_ha_license(self) -> None:
+    def _configure_ha_license(self, authoritative: bool) -> None:
         # The license is already installed here, so a propagation failure is logged, never raised.
         try:
             self.middleware.call_sync("failover.ensure_remote_client")
         except Exception:
             # Without the remote heartbeat IP address no failover.call_remote can reach the peer.
-            self.logger.error("Failed to determine remote heartbeat IP address", exc_info=True)
+            self.logger.error("license: failed to determine remote heartbeat IP address", exc_info=True)
             return
 
         try:
@@ -269,10 +313,48 @@ class TrueNASLicenseService(Service):
                 exc_info=True,
             )
 
+        if authoritative:
+            self.propagate_pending()
+            return
+
         try:
             self.middleware.call_sync("failover.send_license")
         except Exception:
             self.logger.warning("Failed to send file to remote node", exc_info=True)
+
+    @private
+    def propagate_pending(self) -> bool:
+        """Send a pending administrator's upload to the peer. Returns whether one was pending."""
+        with _upload_lock:
+            pending = _propagation_pending()
+            pem = _read_installed_pem()
+        if pending is None or pem is None:
+            return False
+        # Stale on a standby; the newer-wins push decides instead.
+        if self.middleware.call_sync("failover.status") == "BACKUP":
+            return False
+
+        try:
+            try:
+                self.middleware.call_sync("failover.call_remote", "truenas.license.upload_authoritative", [pem])
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    raise
+                # An older peer has no authoritative path, and no refusal of an older license either.
+                self.middleware.call_sync(
+                    "failover.call_remote",
+                    "truenas.license.upload",
+                    [pem, {"ha_propagate": False}],
+                )
+        except Exception:
+            self.logger.warning("license: failed to send the uploaded license to the remote node", exc_info=True)
+            return True
+
+        with _upload_lock:
+            if _propagation_pending() == pending:
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove(PROPAGATION_PENDING_FILE)
+        return True
 
     def _refuse_ha_loss(self) -> None:
         if self.middleware.call_sync("interface.query", [["failover_virtual_aliases", "!=", []]]):
@@ -293,7 +375,7 @@ class TrueNASLicenseService(Service):
             raise CallError(f"No license delegate for: {', '.join(unhandled)}")
 
         delegates: list[LicenseDelegate] = []
-        # HA goes first: other delegates reach the peer through the remote client its grant creates.
+        # HA goes first: other delegates read the peer through the remote client its grant creates.
         for key in sorted(POLICY, key=lambda key: key != LicenseFeature.HA):
             if key in keys and (delegate := self.delegates.get(key)) is not None and delegate not in delegates:
                 delegates.append(delegate)
@@ -305,8 +387,9 @@ class TrueNASLicenseService(Service):
         if unknown := set(changes) - set(POLICY):
             raise CallError(f"Unknown license features: {', '.join(sorted(unknown))}")
 
-        # A key that no longer matches the installed license belongs to a superseded change.
-        live = await self.middleware.run_in_thread(snapshot)
+        # A key that no longer matches the installed license belongs to a superseded change. Read under the lock,
+        # or a tentative install that is then rolled back would supersede it.
+        live = await self.middleware.run_in_thread(_committed_snapshot)
         skipped = sorted(key for key, value in changes.items() if live[key] != value)
         changes = {key: value for key, value in changes.items() if key not in skipped}
 
@@ -342,9 +425,7 @@ class TrueNASLicenseService(Service):
         # Under the lock so an entry appended by a change that has not enqueued its apply yet is not
         # enqueued twice.
         with _upload_lock:
-            if not (entries := _journal_read()):
-                return
-
+            # Jobs before the journal: an apply that finishes in between has already removed its entry.
             queued = {
                 args[1]
                 for queued_job in self.middleware.call_sync(
@@ -353,7 +434,7 @@ class TrueNASLicenseService(Service):
                 )
                 if len(args := queued_job["arguments"]) > 1
             }
-            for entry in entries:
+            for entry in _journal_read():
                 if entry["id"] not in queued:
                     self.middleware.call_sync("truenas.license.apply", entry["changes"], entry["id"])
 
@@ -379,58 +460,10 @@ class TrueNASLicenseService(Service):
         return lines
 
     @private
-    def install_legacy(self, blob: str) -> None:
-        try:
-            parsed = parse_legacy_license(blob.strip("\n"))
-        except Exception as e:
-            raise ValidationError("license", f"Invalid legacy license: {e}")
-
-        if is_freenas_model(parsed.model):
-            raise ValidationError("license", "A FreeNAS license cannot be installed")
-
-        if not parsed.has_feature(LicenseFeature.HA):
-            self._refuse_ha_loss()
-
-        def mutate() -> dict[str, bool]:
-            installed = verify()
-            if installed.code in DAEMON_ERRORS:
-                raise CallError("license daemon unavailable", errno.EAGAIN)
-            if installed.valid:
-                raise ValidationError("license", "A legacy license cannot replace the installed license")
-
-            v2_removed = False
-            with contextlib.suppress(FileNotFoundError):
-                os.unlink(LICENSE_FILE)
-                v2_removed = True
-
-            with atomic_write(LEGACY_LICENSE_FILE, "w", perms=0o600) as f:
-                f.write(blob)
-
-            get_legacy_license_info.cache_clear()
-
-            if v2_removed:
-                # Until the daemon drops the removed license it would still answer with it, and the
-                # apply would read every key as superseded.
-                for _ in range(6):
-                    if verify().code == LicenseError.NO_LICENSE:
-                        break
-                    time.sleep(0.5)
-                else:
-                    raise CallError("License daemon did not drop the removed license", errno.ETIMEDOUT)
-
-            return snapshot(license=get_legacy_license_info())
-
-        self._change(mutate)
-
-    @private
     def installed_pem(self) -> str | None:
         # Mid-upload the file holds a license that may still be rolled back.
         with _upload_lock:
-            try:
-                with open(LICENSE_FILE) as f:
-                    return f.read()
-            except FileNotFoundError:
-                return None
+            return _read_installed_pem()
 
     @private
     def reset_legacy_license_cache(self) -> None:
@@ -473,7 +506,7 @@ class TrueNASLicenseService(Service):
 
 async def on_system_ready(middleware: "Middleware", event_type: str, args: Any) -> None:
     try:
-        await middleware.call("truenas.license.process_hw_license_error")
+        await middleware.call2(middleware.services.truenas.license.process_hw_license_error)
     except Exception:
         middleware.logger.error("Error processing hardware entitlement error file", exc_info=True)
 

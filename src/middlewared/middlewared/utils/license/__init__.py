@@ -21,7 +21,7 @@ from .constants import (
     LICENSE_FILE,
 )
 from .daemon import from_license_status, get_fingerprint_b64, upload_license
-from .legacy import describe_legacy_license, get_legacy_license_info, is_freenas_model, parse_legacy_license
+from .legacy import describe_legacy_license, get_legacy_license_info, parse_legacy_license
 from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 __all__ = [
@@ -40,7 +40,6 @@ __all__ = [
     "get_fingerprint_b64",
     "get_legacy_license_info",
     "get_license",
-    "is_freenas_model",
     "parse_legacy_license",
     "upload_license",
 ]

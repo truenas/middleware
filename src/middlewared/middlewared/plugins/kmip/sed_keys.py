@@ -48,7 +48,8 @@ There are 2 possible cases which we need to handle for system.advanced
 
 def sed_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool | None) -> bool:
     if push is None:
-        return False
+        # The direction is unknown, so a key pending either way is pending.
+        return sed_keys_pending_sync(context, store, True) or sed_keys_pending_sync(context, store, False)
     adv_config = context.middleware.call_sync('datastore.config', 'system.advanced', {'prefix': 'adv_'})
     disks = context.middleware.call_sync('datastore.query', 'storage.disk', [], {'prefix': 'disk_'})
     for disk in disks:

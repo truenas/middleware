@@ -7,19 +7,21 @@ from middlewared.utils.service.call_mixin import CallMixin
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+    from middlewared.plugins.container import ContainerService
+    from middlewared.plugins.vm import VMService
 
 Verb = Literal["START", "STOP", "RELOAD", "RESTART"]
 
 
 class LicenseDelegate(CallMixin):
     """
-    Converges one licence feature's runtime state after the licence changes.
+    Converges one license feature's runtime state after the license changes.
 
     `apply(changes)` receives `{feature: entitled}` for the delegate's features that changed, and only
-    those. It returns, or raises one `CallError` naming what failed; it never logs and never calls the
-    peer. A plugin method called from `apply()` runs with its own options and may swallow a failure, so
-    the delegate re-checks the resulting state and raises itself. Whether a feature is allowed is the
-    plugin's gate, never the delegate's.
+    those. It returns, or raises one `CallError` naming what failed; it never logs and never changes the
+    peer, which applies its own diff. A plugin method called from `apply()` runs with its own options and
+    may swallow a failure, so the delegate re-checks the resulting state and raises itself. Whether a
+    feature is allowed is the plugin's gate, never the delegate's.
     """
 
     features: ClassVar[tuple[str, ...]] = ()
@@ -50,7 +52,7 @@ class LicenseDelegate(CallMixin):
         if await self.middleware.call("failover.in_progress"):
             return False
         # Uncached: reads the live VIP state, so a demoting node reads BACKUP as soon as keepalived drops
-        # the VIPs. A configured standby reads SINGLE during a licence daemon blip, which the VIP-row
+        # the VIPs. A configured standby reads SINGLE during a license daemon blip, which the VIP-row
         # clause catches.
         status: str = await self.middleware.call("failover.status.get_local", None)
         if status == "SINGLE":
@@ -99,39 +101,40 @@ class ConvergeDelegate(LicenseDelegate):
             await self.control(service, verb)
 
 
-class WorkloadDelegate(LicenseDelegate):
-    """
-    libvirt instances with autostart. The plugin exposes private `<namespace>.stop_active` (shared with
-    its shutdown path), `<namespace>.active_instances` (raises when libvirt is unreachable) and the usual
-    query/start/get_instance, which return entry models.
-    """
+class WorkloadDelegate[S: (VMService, ContainerService)](LicenseDelegate):
+    """libvirt instances with autostart, managed through the plugin's `service`."""
 
     namespace: ClassVar[str]
+
+    @property
+    def service(self) -> S:
+        raise NotImplementedError
+
+    async def start(self, id_: int) -> None:
+        raise NotImplementedError
 
     async def apply(self, changes: dict[str, bool]) -> None:
         if changes[self.features[0]]:
             await self._start_autostart()
         else:
-            await self.middleware.call(f"{self.namespace}.stop_active")
+            await self.call2(self.service.stop_active)
 
     async def _start_autostart(self) -> None:
-        stopped = await self.middleware.call(
-            f"{self.namespace}.query", [["autostart", "=", True], ["status.state", "=", "STOPPED"]]
-        )
+        stopped = await self.call2(self.service.query, [["autostart", "=", True], ["status.state", "=", "STOPPED"]])
         failures = []
         for inst in stopped:
             if not await self.is_active():
                 break
             try:
-                await self.middleware.call(f"{self.namespace}.start", inst.id)
+                await self.start(inst.id)
             except Exception as e:
                 # The start path can raise after the instance is up; only an instance left STOPPED failed.
-                current = await self.middleware.call(f"{self.namespace}.get_instance", inst.id)
+                current = await self.call2(self.service.get_instance, inst.id)
                 if current.status.state == "STOPPED":
                     failures.append(f"{inst.name}: {e}")
         if failures:
             raise CallError(f"{self.namespace}s not started: " + "; ".join(failures))
 
     async def revoke_pending(self) -> str | None:
-        active = await self.middleware.call(f"{self.namespace}.active_instances")
+        active = await self.call2(self.service.active_instances)
         return f"{len(active)} {self.namespace}(s) still active" if active else None

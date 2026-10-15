@@ -122,7 +122,7 @@ async def _maybe_install_license(context: ServiceContext, pem: str) -> None:
         return
 
     # TNC re-sends the same PEM until our heartbeat reports its id, so skip when it is already
-    # installed; reinstalling would needlessly re-run etc.generate / license hooks / ctdb restart.
+    # installed; reinstalling would needlessly re-run etc.generate / ctdb restart.
     current = await context.middleware.call('system.license', True)
     if current and (current.get('raw_license') or '').strip() == pem.strip():
         logger.debug('TNC Heartbeat: delivered license already installed, skipping')

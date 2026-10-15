@@ -341,7 +341,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
             ):
                 verrors.add(f'{schema_name}.uuid', 'A VM with this UUID already exists.', errno.EEXIST)
 
-        # Autostart decides what a licence grant starts, so it stays editable while unlicensed.
+        # Autostart decides what a license grant starts, so it stays editable while unlicensed.
         autostart_only = old is not None and data.model_dump(exclude={'autostart'}) == old.model_dump(
             exclude={'autostart'}
         )
