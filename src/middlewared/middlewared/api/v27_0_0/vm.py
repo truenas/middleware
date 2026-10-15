@@ -129,6 +129,10 @@ class VMEntry(BaseModel):
         default=True,
         description="Whether to ensure at least one display device is configured for the VM.",
     )
+    video_model: Literal['QXL', 'VGA', 'VIRTIO'] = Field(
+        default='VGA',
+        description="Emulated video adapter presented to the guest.",
+    )
     time: Literal['LOCAL', 'UTC'] = Field(
         default='LOCAL',
         description="Guest OS time zone reference. `LOCAL` uses host timezone, `UTC` uses coordinated universal time.",
@@ -175,6 +179,10 @@ class VMCreate(VMEntry):
         examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'],
         description="OVMF firmware file to use for UEFI boot.",
     )
+    video_model: Literal['QXL', 'VGA', 'VIRTIO'] | None = Field(
+        default=None,
+        description="Emulated video adapter presented to the guest. `null` selects `VGA`.",
+    )
 
 
 @single_argument_args('vm_create')
@@ -190,6 +198,9 @@ class VMUpdate(VMCreate, metaclass=ForUpdateMetaclass):
     uuid: Excluded = excluded_field()
     bootloader_ovmf: Excluded = excluded_field()
     enable_secure_boot: Excluded = excluded_field()
+    video_model: Literal['QXL', 'VGA', 'VIRTIO'] = Field(
+        description="Emulated video adapter presented to the guest.",
+    )
 
 
 class VMUpdateArgs(BaseModel):
