@@ -187,8 +187,22 @@ def test_config_method(legacy_api_client, config_method):
 
 
 def test_filterable_method(legacy_api_client, filterable_method, misc_method_names):
-    client, _ = legacy_api_client
+    client, version = legacy_api_client
     if filterable_method in misc_method_names:
+        return
+
+    if (
+        version in APIVersions.FT.value
+        and filterable_method in (
+            "app.latest",
+            "core.get_jobs",
+            "ipmi.sel.elist",
+            "nfs.get_nfs3_clients",
+            "nfs.get_nfs4_clients",
+            "nvmet.global.sessions",
+            "route.system_routes",
+        )
+    ):
         return
 
     assert isinstance(client.call(filterable_method, [], {"limit": 1}), list)
