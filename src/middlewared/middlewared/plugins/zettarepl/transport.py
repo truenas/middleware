@@ -87,7 +87,9 @@ async def define_transport(
     transport_definition = dict(type="ssh", **await define_ssh_transport(context, credentials), sudo=sudo)
 
     if transport == "SSH+NETCAT":
-        assert netcat_active_side is not None
+        if netcat_active_side is None:
+            raise CallError(f"You should pass active side for {transport} transport")
+
         transport_definition["type"] = "ssh+netcat"
         transport_definition["active-side"] = netcat_active_side.lower()
         if netcat_active_side_listen_address is not None:
