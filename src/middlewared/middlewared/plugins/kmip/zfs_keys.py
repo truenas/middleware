@@ -5,16 +5,20 @@
 
 from __future__ import annotations
 
+import errno
 from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.source.kmip import KMIPZFSDatasetsSyncFailureAlert
 from middlewared.api.current import ZFSResourceEncryptionUnlockArgsData, ZFSResourceQuery
 from middlewared.plugins.zfs.encryption import check_key
+from middlewared.service import CallError
 
 from .connection import (
     connection_config,
     delete_kmip_secret_data,
+    delete_pulled_secret_data,
     kmip_connection,
+    push_direction,
     register_secret_data,
     retrieve_secret_data,
     revoke_and_destroy_key,
@@ -27,14 +31,13 @@ if TYPE_CHECKING:
     from middlewared.service import ServiceContext
 
 
-def zfs_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore) -> bool:
-    config = context.call_sync2(context.s.kmip.config)
+def zfs_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool | None) -> bool:
+    if push is None:
+        return False
     for ds in context.middleware.call_sync('datastore.query', 'storage.encrypteddataset'):
-        if config.enabled and config.manage_zfs_keys and (
-            ds['encryption_key'] or ds['name'] not in store.zfs_keys
-        ):
+        if push and (ds['encryption_key'] or ds['name'] not in store.zfs_keys):
             return True
-        elif (not config.enabled or not config.manage_zfs_keys) and ds['kmip_uid']:
+        elif not push and ds['kmip_uid']:
             return True
     return False
 
@@ -127,11 +130,14 @@ def pull_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any) -> lis
         except Exception:
             failed.append(ds['name'])
         else:
-            update_data = {'encryption_key': key, 'kmip_uid': None}
-            context.middleware.call_sync('datastore.update', 'storage.encrypteddataset', ds['id'], update_data)
+            context.middleware.call_sync(
+                'datastore.update', 'storage.encrypteddataset', ds['id'], {'encryption_key': key}
+            )
             store.zfs_keys.pop(ds['name'], None)
-            if connection_successful:
-                delete_kmip_secret_data(context, ds['kmip_uid'])
+            if connection_successful and delete_pulled_secret_data(context, ds['kmip_uid'], ds['name']):
+                context.middleware.call_sync(
+                    'datastore.update', 'storage.encrypteddataset', ds['id'], {'kmip_uid': None}
+                )
     prune_zfs_keys(context, store)
     return failed
 
@@ -139,11 +145,13 @@ def pull_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any) -> lis
 def sync_zfs_keys(
     context: ServiceContext, store: KMIPKeyStore, job: Job, tls: Any, ids: list[Any] | None = None,
 ) -> list[str] | None:
-    if not zfs_keys_pending_sync(context, store):
-        return None
-    config = context.call_sync2(context.s.kmip.config)
+    push = push_direction(context, 'manage_zfs_keys')
+    if push is None:
+        raise CallError('license daemon unavailable', errno.EAGAIN)
+    if not zfs_keys_pending_sync(context, store, push):
+        return []
     conn_successful = test_connection(context, None, True)
-    if config.enabled and config.manage_zfs_keys:
+    if push:
         if conn_successful:
             failed = push_zfs_keys(context, store, tls, ids)
         else:

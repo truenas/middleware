@@ -2,7 +2,7 @@
     from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
     from middlewared.utils.pam import STANDALONE_ACCOUNT, FAILLOCK_AUTH_FAIL, FAILLOCK_AUTH_SUCC
 
-    ds_auth = render_ctx['datastore.config']['stg_ds_auth']
+    ds_auth = render_ctx['system.general.ds_auth_effective']
     truenas_admin_string = ''
     for key in render_ctx['api_key.query']:
         if key.user_identifier == LEGACY_API_KEY_USERNAME:

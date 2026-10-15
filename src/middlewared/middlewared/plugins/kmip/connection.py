@@ -7,16 +7,21 @@ from __future__ import annotations
 
 import contextlib
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any, Iterator, Literal
 
 from kmip.core import enums
 from kmip.pie.client import ProxyKmipClient
 from kmip.pie.exceptions import ClientConnectionFailure, ClientConnectionNotOpen, KmipOperationFailure
 from kmip.pie.objects import SecretData
+from truenas_pylicensed import verify
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.source.kmip import KMIPConnectionFailedAlert
 from middlewared.service import CallError
 from middlewared.utils.crypto import ssl_uuid4
+from middlewared.utils.entitlements import EntitlementFacts, check_entitlement
+from middlewared.utils.hardware import get_hardware_class
+from middlewared.utils.license import DAEMON_ERRORS, get_license
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -89,9 +94,29 @@ def test_connection(context: ServiceContext, data: dict[str, Any] | None = None,
         return True
 
 
+def push_direction(context: ServiceContext, manage: Literal['manage_zfs_keys', 'manage_sed_disks']) -> bool | None:
+    """True pushes keys to the KMIP server, False pulls them back, None means the license daemon cannot answer."""
+    config = context.call_sync2(context.s.kmip.config)
+    if not (config.enabled and getattr(config, manage)):
+        return False
+    status = verify()
+    if status.code in DAEMON_ERRORS:
+        return None
+    facts = EntitlementFacts(hardware_class=get_hardware_class(), license=get_license(status))
+    return check_entitlement(LicenseFeature.KMIP, facts).entitled
+
+
 def delete_kmip_secret_data(context: ServiceContext, uid: str) -> bool:
     with kmip_connection(context, connection_config(context)) as conn:
         return revoke_and_destroy_key(uid, conn, context.middleware.logger)
+
+
+def delete_pulled_secret_data(context: ServiceContext, uid: str, key_id: str) -> bool:
+    try:
+        return delete_kmip_secret_data(context, uid)
+    except CallError:
+        context.logger.warning('%s: failed to delete key from KMIP server', key_id, exc_info=True)
+        return False
 
 
 def revoke_key(uid: str, conn: ProxyKmipClient) -> None:
@@ -125,7 +150,9 @@ def destroy_key(uid: str, conn: ProxyKmipClient) -> None:
     try:
         conn.destroy(uid)
     except KmipOperationFailure as e:
-        raise CallError(f'Failed to destroy key: {e}')
+        # A lost reply to an earlier destroy leaves the object already gone.
+        if e.reason != enums.ResultReason.ITEM_NOT_FOUND:
+            raise CallError(f'Failed to destroy key: {e}')
 
 
 def retrieve_secret_data(uid: str, conn: ProxyKmipClient) -> str:

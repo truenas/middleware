@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import enum
-import typing
 
 from truenas_pylicensed.features import LicenseFeature
 
@@ -10,9 +9,6 @@ from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError
 
 from .trains import get_manifest_file, get_train_releases
-
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
 
 
 class UpdateProfiles(enum.IntEnum):
@@ -103,22 +99,3 @@ async def current_version_profile(context: ServiceContext) -> str:
         )
 
     return current_release.profile
-
-
-async def post_license_update(
-    middleware: Middleware,
-    had_license: bool,
-    *args: typing.Any,
-    **kwargs: typing.Any,
-) -> None:
-    # Only the unlicensed -> licensed transition force-sets the profile, so `had_license` is
-    # checked first and an already-licensed system never queries the entitlement. Removing a
-    # license deliberately does not move the profile back down.
-    if not had_license and (
-        await middleware.call2(middleware.services.truenas.entitlements.check, LicenseFeature.MISSION_CRITICAL)
-    ).entitled:
-        await middleware.call2(middleware.services.update.set_profile, UpdateProfiles.MISSION_CRITICAL.name)
-
-
-async def setup(middleware: Middleware) -> None:
-    middleware.register_hook('system.post_license_update', post_license_update)

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     NfsShareCreate,
@@ -15,6 +17,7 @@ from middlewared.api.current import (
     SharingNFSUpdateArgs,
     SharingNFSUpdateResult,
 )
+from middlewared.common.license import ConvergeDelegate
 from middlewared.service import GenericSharingService, private
 from middlewared.utils.types import AuditCallback
 
@@ -90,6 +93,11 @@ class SharingNFSService(GenericSharingService[SharingNFSEntry]):
         """
         await self._svc_part.do_delete(audit_callback, id_)
         return True
+
+
+class NFSSnapshotLicenseDelegate(ConvergeDelegate):
+    features = (LicenseFeature.NFS_SNAPSHOT,)
+    services = (("nfs", "RELOAD"),)
 
 
 async def pool_post_import(middleware: Middleware, pool: dict[str, Any] | None) -> None:

@@ -4,7 +4,6 @@ import pytest
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.update_ import UpdateService
-from middlewared.plugins.update_.profile_ import post_license_update
 from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.middleware import Middleware
 
@@ -63,28 +62,3 @@ async def test_profile_choices_when_not_entitled():
         assert choices["GENERAL"].footnote == "(Default)"
 
     assert checked == [LicenseFeature.MISSION_CRITICAL]
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "was_licensed,entitled,expect_checked,expect_set",
-    [
-        (False, True, [LicenseFeature.MISSION_CRITICAL], True),
-        (False, False, [LicenseFeature.MISSION_CRITICAL], False),
-        # A system that was already licensed keeps whatever profile it is on, so the
-        # entitlement is not consulted at all.
-        (True, True, [], False),
-    ],
-)
-async def test_post_license_update(was_licensed, entitled, expect_checked, expect_set):
-    middleware = Middleware()
-    checked = mission_critical(middleware, entitled)
-    middleware.services.update.set_profile = AsyncMock()
-
-    await post_license_update(middleware, was_licensed)
-
-    assert checked == expect_checked
-    if expect_set:
-        middleware.services.update.set_profile.assert_called_once_with("MISSION_CRITICAL")
-    else:
-        middleware.services.update.set_profile.assert_not_called()

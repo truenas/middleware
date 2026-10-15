@@ -13,6 +13,7 @@ from middlewared.api.current import (
     RDMAGetCardChoicesResult,
     RdmaLinkConfig,
 )
+from middlewared.common.license import LicenseDelegate
 from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (just import to start the service)
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
@@ -155,3 +156,18 @@ class RDMAService(Service):
             if await self.middleware.call('rdma.get_link_choices', True):
                 result.extend([RDMAprotocols.NFS.value, RDMAprotocols.ISER.value, RDMAprotocols.NVMET.value])
         return result
+
+
+class RDMALicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.RDMA,)
+    active_only = False
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        if await self.middleware.call('nvmet.global.running'):
+            await self.render('nvmet')
+        # SCST loads isert_scst and nfsd binds its RDMA listener only at start, so a reload reaches neither.
+        iser = (await self.middleware.call('iscsi.global.config'))['iser']
+        lio = await self.middleware.call('iscsi.global.lio_enabled')
+        await self.control('iscsitarget', 'RESTART' if iser and not lio else 'RELOAD')
+        if (await self.middleware.call('datastore.config', 'services.nfs'))['nfs_srv_rdma']:
+            await self.control('nfs', 'RESTART')

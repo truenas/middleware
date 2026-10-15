@@ -215,14 +215,9 @@ async def _event_system(middleware: Middleware, event_type: str, args: dict[str,
         await middleware.call2(middleware.services.alert.send_alerts)
 
 
-async def _post_license_update(middleware: Middleware, *args: Any, **kwargs: Any) -> None:
-    await middleware.call2(middleware.services.alert.invalidate_applicability)
-
-
 async def setup(middleware: Middleware) -> None:
     await middleware.call2(middleware.services.alertservice.initialize)
 
     await middleware.call2(middleware.services.alert.initialize)
 
     middleware.event_subscribe("system.ready", _event_system)
-    middleware.register_hook("system.post_license_update", _post_license_update)

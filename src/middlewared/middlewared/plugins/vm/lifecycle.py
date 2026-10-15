@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
-import typing
 
 from truenas_pylibvirt import Error as PyLibvirtError
 from truenas_pylibvirt import Time, VmBootloader, VmCpuMode, VmVideoModel
@@ -14,6 +14,8 @@ from middlewared.utils.libvirt.utils import ACTIVE_STATES
 from .info import BOOT_LOADER_OPTIONS, license_active
 from .utils import SYSTEM_NVRAM_FOLDER_PATH, SYSTEM_TPM_FOLDER_PATH, get_vm_nvram_file_name, get_vm_tpm_state_dir_name
 from .vm_domain import VmDomain, VmDomainConfiguration
+
+LIBVIRT_PROBE_TIMEOUT = 30
 
 
 async def lifecycle_action_check(context: ServiceContext) -> None:
@@ -166,17 +168,41 @@ async def start_on_boot(context: ServiceContext) -> None:
             context.logger.error(f'Failed to start VM {vm.name}: {e}')
 
 
-async def _stop_one_vm(context: ServiceContext, vm: typing.Any) -> None:
+async def active_vms(context: ServiceContext) -> list[VMEntry]:
+    # Listing domains starts libvirtd, which vm.query only does once a VM exists.
+    if not await context.call2(context.s.vm.query, [], QueryOptions(extra={'retrieve_status': False})):
+        return []
+
+    # vm.query reports every VM as STOPPED when libvirt does not answer.
     try:
-        if vm.status.state == 'RUNNING':
-            job = await context.call2(context.s.vm.stop, vm.id, VMStopOptions(force_after_timeout=True))
-            await job.wait(raise_error=True)
-        else:
+        await asyncio.wait_for(
+            context.to_thread(context.middleware.libvirt_domains_manager.vms_connection.list_domains),
+            LIBVIRT_PROBE_TIMEOUT,
+        )
+    except Exception as e:
+        raise CallError(f'libvirt is unreachable: {e!r}') from e
+
+    return await context.call2(context.s.vm.query, [('status.state', 'in', ACTIVE_STATES)])
+
+
+async def _stop_vm(context: ServiceContext, vm: VMEntry) -> None:
+    state = vm.status.state
+    if state == 'SUSPENDED':
+        # A guest that will not resume cannot shut down cleanly, so it is powered off instead.
+        with contextlib.suppress(Exception):
+            await context.call2(context.s.vm.resume, vm.id)
+        state = (await context.call2(context.s.vm.get_instance, vm.id)).status.state
+        if state == 'SUSPENDED':
             await context.to_thread(poweroff_vm, context, vm.id)
-    except Exception:
-        context.logger.error('Failed to stop %r VM', vm.name, exc_info=True)
+            return
+
+    if state == 'RUNNING':
+        job = await context.call2(context.s.vm.stop, vm.id, VMStopOptions(force_after_timeout=True))
+        await job.wait(raise_error=True)
 
 
-async def handle_shutdown(context: ServiceContext) -> None:
-    active = await context.call2(context.s.vm.query, [('status.state', 'in', ACTIVE_STATES)])
-    await asyncio.gather(*(_stop_one_vm(context, vm) for vm in active))
+async def stop_active(context: ServiceContext) -> None:
+    vms = await active_vms(context)
+    results = await asyncio.gather(*(_stop_vm(context, vm) for vm in vms), return_exceptions=True)
+    if failures := [f'{vm.name}: {result}' for vm, result in zip(vms, results) if isinstance(result, BaseException)]:
+        raise CallError('VMs not stopped: ' + '; '.join(failures))

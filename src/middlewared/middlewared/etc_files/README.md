@@ -100,14 +100,15 @@ def render(service, middleware, render_ctx):
 ## License-Derived Config
 
 If what your file renders depends on the license -- `failover.licensed`, `failover.status`, an
-entitlement check, or any ctx method that consults one of those internally -- the owning group
-needs a `LicenseReconcileDelegate`. Nothing regenerates a group when a license is uploaded,
-replaced or expires unless a delegate claims it, so the file keeps whatever it was rendered with
-until some unrelated event happens to regenerate the group or the system reboots.
+entitlement check, or any ctx method that consults one of those internally -- the feature that
+changes it needs a license delegate. Nothing regenerates a group when a license is uploaded,
+replaced or expires unless the delegate for a changed feature renders it or reloads its service, so
+the file keeps whatever it was rendered with until some unrelated event happens to regenerate the
+group or the system reboots.
 
-Delegates live in the plugin that owns the subsystem and are registered from its `setup()`; see
-`middlewared/common/license_reconcile/` for the base class and
-`middlewared/plugins/failover.py::CtdbLicenseReconcileDelegate` for a worked example.
+Delegates live in the plugin that owns the subsystem; declaring the class registers it. See
+`middlewared/common/license/` for the kinds: `ConvergeDelegate` (reload or restart services),
+`WorkloadDelegate` (libvirt instances) and `LicenseDelegate` (anything else).
 
 ## File Registration
 

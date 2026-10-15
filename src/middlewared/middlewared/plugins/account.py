@@ -48,7 +48,7 @@ from middlewared.api.current import (
     UserUpdateResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license import LicenseDelegate
 from middlewared.plugins.account_.constants import (
     ADMIN_GID,
     ADMIN_UID,
@@ -74,6 +74,7 @@ from middlewared.utils.account.authenticator import AccountFlag, UserPamAuthenti
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_string, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.entitlements import DerivedEntitlement, LicenseFeature
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import pwd
@@ -2121,12 +2122,12 @@ class UserService(CRUDService):
             await self.middleware.call('smb.update_passdb_user', entry)
 
 
-class UserLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'user'
-    etc_groups = ('user',)
-    service = 'user'
-    action = LicenseReconcileAction.RELOAD
-    order = 20
+class SupportLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.SUPPORT, DerivedEntitlement.PROACTIVE_SUPPORT)
+    active_only = False
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        await self.render('user')
 
 
 async def setup(middleware):
@@ -2140,11 +2141,6 @@ async def setup(middleware):
         )
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
-
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        UserLicenseReconcileDelegate(),
-    )
 
     if await middleware.call2(middleware.services.keyvalue.get, 'run_migration', False):
         await middleware.call('user.sync_builtin')

@@ -3,6 +3,8 @@ import ipaddress
 import re
 import socket
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     ISCSIGlobalAluaEnabledArgs,
@@ -15,9 +17,10 @@ from middlewared.api.current import (
     ServiceOptions,
 )
 from middlewared.async_validators import validate_port
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license import LicenseDelegate
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
+from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.iscsi.constants import ISCSIMODE
@@ -350,40 +353,19 @@ class ISCSIGlobalService(SystemServiceService):
         return False
 
 
-class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'iscsi'
-    etc_groups = ('scst', 'lio', 'scst_targets')
-    service = 'iscsitarget'
-    action = LicenseReconcileAction.RENDER
-    order = 30
+class FibreChannelLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.FIBRECHANNEL,)
+    active_only = False
 
-    async def resolve_groups(self, middleware):
-        """
-        Ask the service which of the mutually exclusive iSCSI groups is live on this system.
+    async def apply(self, changes: dict[str, bool]) -> None:
+        await self.control('iscsitarget', 'RELOAD')
+        if changes[LicenseFeature.FIBRECHANNEL]:
+            if await self.is_active():
+                await self.middleware.call('fc.fc_host.wire')
+        elif pending := await self.revoke_pending():
+            raise CallError(pending)
 
-        `etc_groups` lists `scst`, `lio` and `scst_targets` because it is the ownership
-        declaration -- what uniqueness checking is written against -- and it has to be knowable
-        without making a call. Only a subset of it is ever rendered, and which one depends on the
-        configured mode, so the actual choice needs a call.
-
-        Deferring to the service's own `select_etc()` keeps the license path and the service path
-        from choosing different groups.
-        """
-        return await (await middleware.call2(middleware.services.service.object, 'iscsitarget')).select_etc()
-
-    async def should_run(self, middleware):
-        """
-        Only converge a target that is actually running.
-
-        With the service stopped there is no live state to bring in line, and starting it later
-        regenerates config from scratch anyway. With the service running this is the only thing
-        that converges it after a license change.
-        """
-        return await middleware.call2(middleware.services.service.started, 'iscsitarget')
-
-
-async def setup(middleware):
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        ISCSILicenseReconcileDelegate(),
-    )
+    async def revoke_pending(self) -> str | None:
+        if await self.middleware.call('fcport.any_qla_target_enabled'):
+            return 'Fibre Channel targets still enabled'
+        return None

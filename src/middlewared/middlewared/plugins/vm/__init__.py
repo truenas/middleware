@@ -4,6 +4,7 @@ import functools
 import typing
 
 from truenas_pylibvirt.utils import kvm_supported
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -93,6 +94,7 @@ from middlewared.api.current import (
     VMVirtualizationDetailsArgs,
     VMVirtualizationDetailsResult,
 )
+from middlewared.common.license import WorkloadDelegate
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.libvirt.utils import NGINX_PREFIX
 
@@ -125,7 +127,7 @@ from .info import (
     get_display_web_uri as _get_display_web_uri,
 )
 from .lifecycle import (
-    handle_shutdown,
+    active_vms,
     poweroff_vm,
     reset_vm,
     restart_vm,
@@ -133,6 +135,7 @@ from .lifecycle import (
     resume_vm,
     start_on_boot,
     start_vm,
+    stop_active,
     stop_vm,
     suspend_vm,
     suspend_vms,
@@ -543,8 +546,12 @@ class VMService(GenericCRUDService[VMEntry]):
         return await get_vms_to_ignore_for_querying_attachments(self.context, enabled, extra_filters)
 
     @private
+    async def active_instances(self) -> list[VMEntry]:
+        return await active_vms(self.context)
+
+    @private
     async def handle_shutdown(self) -> None:
-        await handle_shutdown(self.context)
+        await stop_active(self.context)
 
     @private
     async def init_guest_vmemory(self, vm_id: int, overcommit: bool) -> None:
@@ -567,12 +574,21 @@ class VMService(GenericCRUDService[VMEntry]):
         await start_on_boot(self.context)
 
     @private
+    async def stop_active(self) -> None:
+        await stop_active(self.context)
+
+    @private
     def suspend_vms(self, vm_ids: list[int]) -> None:
         suspend_vms(self.context, vm_ids)
 
     @private
     async def teardown_guest_vmemory(self, vm_id: int) -> None:
         await teardown_guest_vmemory(self.context, vm_id)
+
+
+class VMLicenseDelegate(WorkloadDelegate):
+    features = (LicenseFeature.VMS,)
+    namespace = 'vm'
 
 
 async def __event_system_ready(middleware: Middleware, event_type: str, args: typing.Any) -> None:

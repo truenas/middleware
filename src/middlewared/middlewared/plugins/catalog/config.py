@@ -5,15 +5,13 @@ import typing
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import CatalogEntry, CatalogUpdate
+from middlewared.common.license import LicenseDelegate
 from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 
 from .state import dataset_mounted
 from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS
-
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
 
 
 class CatalogModel(sa.Model):
@@ -90,9 +88,9 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
                 )
 
 
-async def enterprise_train_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
-    await middleware.call2(middleware.services.catalog.update_train_for_enterprise)
+class CatalogLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.CATALOG_ENTERPRISE_TRAIN,)
 
-
-async def setup(middleware: Middleware) -> None:
-    middleware.register_hook('system.post_license_update', enterprise_train_update)
+    async def apply(self, changes: dict[str, bool]) -> None:
+        if changes[LicenseFeature.CATALOG_ENTERPRISE_TRAIN]:
+            await self.call2(self.s.catalog.update_train_for_enterprise)

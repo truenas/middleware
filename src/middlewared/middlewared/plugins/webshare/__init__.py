@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
+    QueryOptions,
     WebshareBindipChoicesArgs,
     WebshareBindipChoicesResult,
     WebshareEntry,
@@ -11,6 +14,7 @@ from middlewared.api.current import (
     WebshareUpdateArgs,
     WebshareUpdateResult,
 )
+from middlewared.common.license import LicenseDelegate
 from middlewared.service import GenericConfigService, private
 
 from .config import WebshareConfigPart
@@ -72,6 +76,24 @@ class WebshareService(GenericConfigService[WebshareEntry]):
     @private
     async def urls(self) -> list[str]:
         return await get_urls(self.context)
+
+
+class WebshareLicenseDelegate(LicenseDelegate):
+    features = (LicenseFeature.WEBSHARE,)
+    active_only = False
+
+    async def apply(self, changes: dict[str, bool]) -> None:
+        await self.render("rc")
+        started = await self.call2(self.s.service.started, "webshare")
+        if changes[LicenseFeature.WEBSHARE]:
+            svc = await self.call2(self.s.service.query, [["service", "=", "webshare"]], QueryOptions(get=True))
+            if svc.enable and not started:
+                await self.control("webshare", "START")
+        elif started:
+            await self.control("webshare", "STOP")
+
+    async def revoke_pending(self) -> str | None:
+        return "webshare is still running" if await self.call2(self.s.service.started, "webshare") else None
 
 
 async def setup(middleware: Middleware) -> None:

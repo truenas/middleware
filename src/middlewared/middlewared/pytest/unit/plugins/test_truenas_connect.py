@@ -822,6 +822,10 @@ def _install_ctx(installed_raw, upload_raises=False):
     ctx.middleware = MagicMock()
 
     async def mock_call(method, *args, **kwargs):
+        if method == 'failover.is_single_master_node':
+            return True
+        if method == 'failover.in_progress':
+            return False
         if method == 'system.license':
             return {'raw_license': installed_raw} if installed_raw is not None else None
         if method == 'truenas.license.upload':

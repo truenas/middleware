@@ -424,6 +424,11 @@ class FCPortService(CRUDService):
         await self.middleware.run_in_thread(self.__load_kernel_module)
 
     @private
+    def any_qla_target_enabled(self) -> bool:
+        # An enabled target's attribute reads "1\n[key]\n".
+        return any(p.read_text().startswith('1') for p in Path(SCST_QLA_TARGET_PATH).glob('*/enabled'))
+
+    @private
     async def update_scst(self, do_module_load=False):
         # First process the local (MASTER) config
         if do_module_load:
