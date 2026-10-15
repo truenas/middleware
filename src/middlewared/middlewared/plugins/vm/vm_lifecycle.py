@@ -1,4 +1,4 @@
-from truenas_pylibvirt import Error as PyLibvirtError, Time, VmBootloader, VmCpuMode
+from truenas_pylibvirt import Error as PyLibvirtError, Time, VmBootloader, VmCpuMode, VmVideoModel
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -159,6 +159,7 @@ class VMService(Service):
         vm.update({
             'bootloader': VmBootloader(vm["bootloader"]),
             'cpu_mode': VmCpuMode(vm["cpu_mode"]),
+            'video_model': VmVideoModel(vm['video_model']),
             'time': Time(vm["time"]),
             'nvram_path': vm_nvram_path(vm['id'], vm['name']),
             'tpm_path': vm_tpm_path(vm['id'], vm['name']),

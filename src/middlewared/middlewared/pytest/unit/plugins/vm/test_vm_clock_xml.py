@@ -31,6 +31,7 @@ def make_vm(**overrides):
         "enable_cpu_topology_extension": False,
         "pin_vcpus": False,
         "ensure_display_device": True,
+        "video_model": "VGA",
         "hyperv_enlightenments": False,
         "trusted_platform_module": False,
         "hide_from_msr": False,
