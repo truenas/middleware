@@ -57,6 +57,7 @@ class VMModel(sa.Model):
     suspend_on_snapshot = sa.Column(sa.Boolean(), default=True)
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
+    video_model = sa.Column(sa.String(50))
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
     uuid = sa.Column(sa.String(255))
     command_line_args = sa.Column(sa.Text(), default='', nullable=False)
@@ -166,6 +167,9 @@ class VMService(CRUDService):
         a snapshot is being taken for periodic snapshot tasks. For manual snapshots, if user has specified vms to
         be paused, they will be in that case.
         """
+        if data.get('video_model') is None:
+            data['video_model'] = 'VGA'
+
         verrors = ValidationErrors()
         await self.common_validation(verrors, 'vm_create', data)
 
