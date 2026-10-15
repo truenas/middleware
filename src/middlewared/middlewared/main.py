@@ -158,6 +158,7 @@ from middlewared.plugins.usage import UsageService
 from middlewared.plugins.vm import VMService
 from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
+from middlewared.plugins.zettarepl import ZettareplService
 from middlewared.plugins.zfs.resource import ZFSResourceService
 from middlewared.plugins.zfs.tier import ZfsTierService
 
@@ -319,6 +320,7 @@ class ServiceContainer(BaseServiceContainer):
         self.usage = UsageService(middleware)
         self.vm = VMService(middleware)
         self.webshare = WebshareService(middleware)
+        self.zettarepl = ZettareplService(middleware)
         self.zfs = ZfsServicesContainer(middleware)
 
         self.methods = get_methods(self)

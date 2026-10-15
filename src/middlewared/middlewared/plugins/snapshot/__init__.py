@@ -27,7 +27,7 @@ from middlewared.api.current import (
     PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
 from middlewared.job import Job
-from middlewared.plugins.zettarepl_.state import PERIODIC_SNAPSHOT_TASK_STATE
+from middlewared.plugins.zettarepl.state import PERIODIC_SNAPSHOT_TASK_STATE
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.types import AuditCallback
 

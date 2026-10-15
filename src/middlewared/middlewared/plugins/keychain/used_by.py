@@ -138,7 +138,7 @@ class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelega
                 "repl_ssh_credentials": None,
             },
         )
-        await self.middleware.call("zettarepl.update_tasks")
+        await self.middleware.call2(self.middleware.services.zettarepl.update_tasks)
 
 
 class RsyncTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate[RsyncTaskEntry]):

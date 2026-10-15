@@ -59,7 +59,7 @@ class KeychainCredentialServicePart(CRUDServicePart[KeychainCredentialEntry]):
             },
         )
 
-        await self.middleware.call("zettarepl.update_tasks")
+        await self.call2(self.s.zettarepl.update_tasks)
 
         return entry
 

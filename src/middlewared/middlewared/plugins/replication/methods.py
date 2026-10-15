@@ -8,8 +8,8 @@ from pydantic import Field
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     ReplicationCountEligibleManualSnapshotsArgs,
-    ReplicationCountEligibleManualSnapshotsResult,
     ReplicationCreate,
+    ReplicationEligibleManualSnapshots,
     ReplicationEntry,
     ReplicationRestoreOptions,
 )
@@ -45,7 +45,7 @@ async def run_task(context: ServiceContext, job: Job, id_: int, really_run: bool
         if task.state["state"] == "HOLD":
             raise CallError("Task is on hold")
 
-    await context.middleware.call("zettarepl.run_replication_task", id_, really_run, job)
+    await context.call2(context.s.zettarepl.run_replication_task, id_, really_run, job)
 
 
 async def restore(
@@ -75,8 +75,8 @@ async def restore(
         else:
             also_include_naming_schema = list(task.naming_schema)
 
-    source_datasets, _ = await context.middleware.call(
-        "zettarepl.reverse_source_target_datasets",
+    source_datasets, _ = await context.call2(
+        context.s.zettarepl.reverse_source_target_datasets,
         task.source_datasets,
         task.target_dataset,
     )
@@ -117,11 +117,7 @@ async def list_datasets(
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"],
     ssh_credentials: int | None,
 ) -> list[str]:
-    return await context.middleware.call(  # type: ignore[no-any-return]
-        "zettarepl.list_datasets",
-        transport,
-        ssh_credentials,
-    )
+    return await context.call2(context.s.zettarepl.list_datasets, transport, ssh_credentials)
 
 
 async def create_dataset(
@@ -130,7 +126,7 @@ async def create_dataset(
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"],
     ssh_credentials: int | None,
 ) -> None:
-    await context.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
+    await context.call2(context.s.zettarepl.create_dataset, dataset, transport, ssh_credentials)
 
 
 async def list_naming_schemas(context: ServiceContext) -> list[str]:
@@ -146,11 +142,8 @@ async def list_naming_schemas(context: ServiceContext) -> list[str]:
 async def count_eligible_manual_snapshots(
     context: ServiceContext,
     data: ReplicationCountEligibleManualSnapshotsArgs,
-) -> ReplicationCountEligibleManualSnapshotsResult:
-    return await context.middleware.call(  # type: ignore[no-any-return]
-        "zettarepl.count_eligible_manual_snapshots",
-        data.model_dump(),
-    )
+) -> ReplicationEligibleManualSnapshots:
+    return await context.call2(context.s.zettarepl.count_eligible_manual_snapshots, data)
 
 
 async def target_unmatched_snapshots(
@@ -161,8 +154,8 @@ async def target_unmatched_snapshots(
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"],
     ssh_credentials: int | None,
 ) -> dict[str, list[str]]:
-    return await context.middleware.call(  # type: ignore[no-any-return]
-        "zettarepl.target_unmatched_snapshots",
+    return await context.call2(
+        context.s.zettarepl.target_unmatched_snapshots,
         direction,
         source_datasets,
         target_dataset,

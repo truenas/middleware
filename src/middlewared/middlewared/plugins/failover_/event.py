@@ -863,11 +863,11 @@ class FailoverEventsService(Service):
         logger.info('Done restarting ZFS tier daemon')
 
         logger.info('Loading replication task state')
-        self.run_call('zettarepl.load_state')
+        self.call_sync2(self.s.zettarepl.load_state)
         logger.info('Done loading replication task state')
 
         logger.info('Updating replication tasks')
-        self.run_call('zettarepl.update_tasks')
+        self.call_sync2(self.s.zettarepl.update_tasks)
         logger.info('Done updating replication tasks')
 
         logger.info('Temporarily blocking failover alerts')
