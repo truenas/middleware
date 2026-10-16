@@ -1,3 +1,4 @@
+import contextlib
 import time
 
 import pytest
@@ -5,6 +6,7 @@ import pytest
 from truenas_api_client import ClientException
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils.alert import wait_for_alerts_by_class
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +37,16 @@ _3_disk_mirror_with_spare_topology = (3, lambda disks: {
 
 _TOPOLOGY_FILL_MIB = 512
 _ACTION_FILL_MIB = 8192
+
+
+@contextlib.contextmanager
+def suspended_scan_progress():
+    path = "/sys/module/zfs/parameters/zfs_scan_suspend_progress"
+    ssh(f"echo 1 > {path}")
+    try:
+        yield
+    finally:
+        ssh(f"echo 0 > {path}")
 
 
 def _fill_pool(pool_name, size_mib=_ACTION_FILL_MIB):
@@ -76,30 +88,6 @@ def _cancel_scrub(pool_name):
         }, job=True)
     except ClientException:
         pass
-
-
-def _scrub_started_alerts(pool_name):
-    return [
-        a for a in call("alert.list")
-        if a["klass"] == "ScrubStarted" and a["args"] == pool_name
-    ]
-
-
-def _scrub_not_started_alerts(pool_name):
-    return [
-        a for a in call("alert.list")
-        if a["klass"] == "ScrubNotStarted" and a["args"]["pool"] == pool_name
-    ]
-
-
-def _poll_for_alert(finder, timeout=10):
-    """Poll until finder() returns a non-empty list, or fail."""
-    for _ in range(timeout):
-        alerts = finder()
-        if alerts:
-            return alerts
-        time.sleep(1)
-    pytest.fail("Expected alert was not created")
 
 
 # ---------------------------------------------------------------------------
@@ -257,7 +245,8 @@ class TestZpoolScrubActions:
             "threshold": 0,
         }, job=True)
 
-        _poll_for_alert(lambda: _scrub_not_started_alerts(name))
+        alerts = wait_for_alerts_by_class("ScrubNotStarted")
+        assert name in [a["args"]["pool"] for a in alerts], alerts
 
 
 class TestThreshold:
@@ -337,19 +326,17 @@ class TestPauseCancelBypassValidation:
 
 
 def test_start_creates_scrub_started_alert(shared_pool):
-    """A successful START should create a ScrubStarted alert.
-
-    The alert is created immediately when the scrub starts (before
-    it finishes), and the scrub_finished ZFS event deletes it when
-    the scrub completes.  We call without job=True so we can check
-    for the alert while the scrub is still running.
-    """
     name = shared_pool["name"]
 
-    call("zpool.scrub.run", {
-        "pool_name": name,
-        "action": "START",
-        "threshold": 0,
-    })
+    try:
+        with suspended_scan_progress():  # so that the scan doesn't end before we have the chance to observe the alert
+            call("zpool.scrub.run", {
+                "pool_name": name,
+                "action": "START",
+                "threshold": 0,
+            })
 
-    _poll_for_alert(lambda: _scrub_started_alerts(name))
+            alerts = wait_for_alerts_by_class("ScrubStarted")
+            assert [a["args"] for a in alerts] == [name], alerts
+    finally:
+        _cancel_scrub(name)
