@@ -23,6 +23,8 @@ __all__ = [
     "NFSBindipChoicesResult",
     "NFSClientCountArgs",
     "NFSClientCountResult",
+    "NfsShareCreate",
+    "NfsShareUpdate",
     "SharingNFSEntry",
     "SharingNFSCreateArgs",
     "SharingNFSCreateResult",

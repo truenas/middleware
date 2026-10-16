@@ -17,6 +17,12 @@ from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils.alert import (
+    wait_for_alerts_by_class,
+    wait_for_alerts_by_class_cleared,
+    wait_for_share_locked_alert,
+    wait_for_share_locked_alert_cleared,
+)
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.failover import wait_for_standby
 from middlewared.test.integration.utils.legacy_functions import async_SSH_done, async_SSH_start
@@ -359,9 +365,8 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
     call('service.control', 'RESTART', 'nfs', job=True)
 
     # An alert should be generated
-    alerts = call('alert.list')
-    this_alert = [entry for entry in alerts if entry['klass'] == "NFSexportMappingInvalidNames"]
-    assert len(this_alert) == 1, f"Did not find alert for 'NFSexportMappingInvalidNames'.\n{alerts}"
+    alerts = wait_for_alerts_by_class("NFSexportMappingInvalidNames", count=1)
+    assert len(alerts) == 1, f"Did not find alert for 'NFSexportMappingInvalidNames'.\n{alerts}"
 
     # The NFS export should have been removed
     parsed = parse_exports()
@@ -374,9 +379,8 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
     call('service.control', 'RESTART', 'nfs', job=True)
 
     # The alert should be cleared
-    alerts = call('alert.list')
-    this_alert = [entry for entry in alerts if entry['key'] == "NFSexportMappingInvalidNames"]
-    assert len(this_alert) == 0, f"Unexpectedly found alert 'NFSexportMappingInvalidNames'.\n{alerts}"
+    assert wait_for_alerts_by_class_cleared("NFSexportMappingInvalidNames"), \
+        "Unexpectedly found alert 'NFSexportMappingInvalidNames'."
 
     # Share should have been restored
     parsed = parse_exports()
@@ -2073,11 +2077,18 @@ class TestNFSops:
         ]
 
     def test_share_human_identifier(self, start_nfs, nfs_dataset_and_share):
-        ''' NFS shares are identified by their path in alerts and attachments '''
+        ''' NFS shares are identified by their path in the locked alert '''
         assert start_nfs is True
 
         share = call('sharing.nfs.get_instance', nfs_dataset_and_share['nfsid'])
-        assert call('sharing.nfs.human_identifier', share) == share['path']
+        call('sharing.nfs.generate_locked_alert', share['id'])
+        try:
+            alert = wait_for_share_locked_alert('NFS', share['id'])
+            assert alert is not None, 'ShareLocked alert was not created'
+            assert alert['args']['identifier'] == share['path']
+        finally:
+            call('sharing.nfs.remove_locked_alert', share['id'])
+            assert wait_for_share_locked_alert_cleared('NFS', share['id'])
 
     def test_share_aliases_are_ignored(self, start_nfs, nfs_dataset_and_share):
         '''
@@ -2267,9 +2278,8 @@ class TestNFSops:
 
         match entry_type:
             case 'both':  # Both hosts and networks are empty should result in no alerts
-                alerts = call('alert.list')
-                current_alerts = [entry for entry in alerts if entry['key'] in list(nfs_share_alerts.values())]
-                assert len(current_alerts) == 0, f"Unexpectedly found NFS share alert.\n{current_alerts}"
+                for klass in nfs_share_alerts.values():
+                    assert wait_for_alerts_by_class_cleared(klass), f"Unexpectedly found NFS share alert {klass}."
             case 'hosts':
                 allowed_client_list = [] if num == 0 else [f"192.168.50.{i}" for i in range(1, num + 1)]
             case 'networks':
@@ -2277,55 +2287,162 @@ class TestNFSops:
 
         if entry_type in ['hosts', 'networks']:
             alert_name = nfs_share_alerts[entry_type]
-            alerts = call('alert.list')
 
             # Confirm we're starting in an expected state
-            this_alert = [entry for entry in alerts if entry['klass'] == alert_name]
             if expect_alert:
                 # Should be starting clean
-                assert len(this_alert) == 0, f"Unexpectedly found pre-existing alert '{alert_name}'.\n{alerts}"
+                assert wait_for_alerts_by_class_cleared(alert_name), \
+                    f"Unexpectedly found pre-existing alert '{alert_name}'."
             else:
                 # Should have an alert to clear
-                assert len(this_alert) > 0, f"Unexpectedly did not find an alert to clear '{alert_name}'.\n{alerts}"
+                assert wait_for_alerts_by_class(alert_name), \
+                    f"Unexpectedly did not find an alert to clear '{alert_name}'."
 
             # Make the share change and get the current list of alerts
             call('sharing.nfs.update', share_id, {entry_type: allowed_client_list})
-            alerts = call('alert.list')
 
             # Confirm we get the expected result
             if expect_alert:
-                this_alert = [entry for entry in alerts if entry['klass'] == alert_name]
-                assert len(this_alert) == 1, f"Did not find alert for '{alert_name}'.\n{alerts}"
+                alerts = wait_for_alerts_by_class(alert_name, count=1)
+                assert len(alerts) == 1, f"Did not find alert for '{alert_name}'.\n{alerts}"
             else:
                 # The alert should be cleared
-                this_alert = [entry for entry in alerts if entry['key'] == f"/mnt/{ds}"]
-                assert len(this_alert) == 0, f"Unexpectedly found alert for key '/mnt/{ds}'.\n{alerts}"
+                assert wait_for_alerts_by_class_cleared(alert_name), \
+                    f"Unexpectedly found alert '{alert_name}' for '/mnt/{ds}'."
+
+    def test_share_alert_follows_the_share_path(self, start_nfs):
+        """An excessive list alert names the path the share exports now. Moving the share to
+        another path must not leave an alert naming the path it no longer exports."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        excessive = [f"192.168.50.{i}" for i in range(1, 101)]
+        with nfs_dataset('nfs_alert_from') as from_ds, nfs_dataset('nfs_alert_to') as to_ds:
+            from_path, to_path = f"/mnt/{from_ds}", f"/mnt/{to_ds}"
+            with nfs_share(from_path, {'hosts': excessive}) as nfsid:
+                alerts = wait_for_alerts_by_class("NFSHostListExcessive", count=1)
+                assert [entry['args']['sharePath'] for entry in alerts] == [from_path], f"{alerts}"
+
+                # Moving the share off `from_path` and back under the threshold leaves nothing
+                # behind: the alert for the path it no longer exports goes with it.
+                call('sharing.nfs.update', nfsid, {'path': to_path, 'hosts': ["192.168.50.1"]})
+                assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), \
+                    f"Unexpectedly found an alert after moving the share off '{from_path}'."
+
+                # The alert the share raises now names the path it exports now
+                call('sharing.nfs.update', nfsid, {'hosts': excessive})
+                alerts = wait_for_alerts_by_class("NFSHostListExcessive", count=1)
+                assert [entry['args']['sharePath'] for entry in alerts] == [to_path], f"{alerts}"
+
+    def test_share_alert_is_per_share(self, start_nfs):
+        """Each share with an excessive list gets its own alert, so one share's list going
+        back under the threshold does not clear another share's alert."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        def alerted_paths(count):
+            alerts = wait_for_alerts_by_class("NFSHostListExcessive", count=count)
+            return sorted(entry['args']['sharePath'] for entry in alerts)
+
+        with nfs_dataset('nfs_alert_one') as one_ds, nfs_dataset('nfs_alert_two') as two_ds:
+            one_path, two_path = f"/mnt/{one_ds}", f"/mnt/{two_ds}"
+            with nfs_share(one_path, {'hosts': [f"192.168.50.{i}" for i in range(1, 101)]}):
+                with nfs_share(two_path, {'hosts': [f"192.168.51.{i}" for i in range(1, 101)]}) as two_id:
+                    assert alerted_paths(2) == sorted([one_path, two_path])
+
+                    call('sharing.nfs.update', two_id, {'hosts': ["192.168.51.1"]})
+                    assert alerted_paths(1) == [one_path]
+
+    def test_share_alerts_on_shares_with_the_same_path(self, start_nfs):
+        """Two shares may export one path as long as their host lists do not overlap. Each keeps
+        its own alert, so neither clears the other's by being created, updated or deleted."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        def alerted_shares(count):
+            alerts = wait_for_alerts_by_class("NFSHostListExcessive", count=count)
+            return sorted(entry['args']['shareId'] for entry in alerts)
+
+        with nfs_dataset('nfs_alert_same_path') as ds:
+            path = f"/mnt/{ds}"
+            with nfs_share(path, {'hosts': [f"192.168.50.{i}" for i in range(1, 101)]}) as first:
+                assert alerted_shares(1) == [first]
+
+                with nfs_share(path, {'hosts': [f"192.168.51.{i}" for i in range(1, 101)]}) as second:
+                    # The second share's create must not have taken over the first share's alert
+                    assert alerted_shares(2) == sorted([first, second])
+
+                    # Nor may updating it
+                    call('sharing.nfs.update', second, {'comment': 'second'})
+                    assert alerted_shares(2) == sorted([first, second])
+
+                # Nor may deleting it
+                assert alerted_shares(1) == [first]
+
+    def test_share_alert_not_raised_by_a_rejected_create(self, start_nfs):
+        """A create the validation rejects must leave no alert: no share exports that path, so
+        nothing would ever clear it."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        with nfs_dataset('nfs_alert_rejected') as ds:
+            with pytest.raises(ValidationErrors):
+                call('sharing.nfs.create', {
+                    'path': f"/mnt/{ds}",
+                    'hosts': [f"192.168.50.{i}" for i in range(1, 101)],
+                    # A map group without a map user is refused, well after the host list is read
+                    'maproot_group': 'nogroup',
+                })
+
+            assert call('sharing.nfs.query', [['path', '=', f"/mnt/{ds}"]]) == []
+            assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), \
+                "A rejected create left an alert behind."
+
+    def test_share_alert_removed_with_the_dataset(self, start_nfs):
+        """Destroying the dataset removes the share through the attachment delegate rather than
+        `sharing.nfs.delete`, and has to take the share's alerts with it."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        nfsid = None
+        try:
+            with nfs_dataset('nfs_alert_attached') as ds:
+                nfsid = call('sharing.nfs.create', {
+                    'path': f"/mnt/{ds}",
+                    'hosts': [f"192.168.50.{i}" for i in range(1, 101)],
+                })['id']
+                assert [a['args']['shareId'] for a in wait_for_alerts_by_class("NFSHostListExcessive", 1)] == [nfsid]
+
+            # nfs_dataset deleted the dataset on exit, which takes the share with it
+            assert call('sharing.nfs.query', [['id', '=', nfsid]]) == []
+            assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), \
+                "Removing the dataset left the share's alert behind."
+        finally:
+            # Do not leave a stray export behind if the dataset could not be deleted
+            if nfsid is not None:
+                with contextlib.suppress(InstanceNotFound):
+                    call('sharing.nfs.delete', nfsid)
 
     def test_share_alert_on_share_delete(self, start_nfs):
         """Share alerts should be deleted when the share is deleted. Current threshold: 100"""
         assert start_nfs is True
-        alerts = call('alert.list')
-        current_alerts = [entry for entry in alerts if entry['klass'] == "NFSHostListExcessive"]
-        assert len(current_alerts) == 0, f"Unexpectedly found NFS share alert.\n{current_alerts}"
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
 
         with nfs_dataset('nfs_temp') as ds:
             nfs_share_path = f"/mnt/{ds}"
             with nfs_share(nfs_share_path) as nfsid:
-                alerts = call('alert.list')
-                current_alerts = [entry for entry in alerts if entry['key'] == nfs_share_path]
-                assert len(current_alerts) == 0, f"Unexpectedly found alert for key '{nfs_share_path}'\n{alerts}"
+                assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), \
+                    f"Unexpectedly found alert for '{nfs_share_path}'"
 
                 allowed_client_list = [f"192.168.50.{i}" for i in range(1, 101)]
                 call('sharing.nfs.update', nfsid, {'hosts': allowed_client_list})
-                alerts = call('alert.list')
 
-                this_alert = [entry for entry in alerts if entry['klass'] == "NFSHostListExcessive"]
-                assert len(this_alert) == 1, f"Did not find alert for 'NFSHostListExcessive'.\n{alerts}"
+                alerts = wait_for_alerts_by_class("NFSHostListExcessive", count=1)
+                assert len(alerts) == 1, f"Did not find alert for 'NFSHostListExcessive'.\n{alerts}"
 
         # Share should be gone.  Check alerts
-        alerts = call('alert.list')
-        this_alert = [entry for entry in alerts if entry['klass'] == "NFSHostListExcessive"]
-        assert len(this_alert) == 0, f"Unexpectedly found alert for 'NFSHostListExcessive'.\n{alerts}"
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), \
+            "Unexpectedly found alert for 'NFSHostListExcessive'."
 
     def test_runtime_debug_empty_selection(self, start_nfs):
         '''

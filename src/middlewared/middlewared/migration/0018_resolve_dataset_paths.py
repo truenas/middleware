@@ -13,7 +13,7 @@ datasets become available.
 from middlewared.plugins.cloud_backup import CloudBackupService
 from middlewared.plugins.cloud_sync import CloudSyncService
 from middlewared.plugins.iscsi_.extents import iSCSITargetExtentService
-from middlewared.plugins.nfs import SharingNFSService
+from middlewared.plugins.nfs_.share import SharingNFSService
 from middlewared.plugins.nvmet.namespace import NVMetNamespaceService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.smb import SharingSMBService

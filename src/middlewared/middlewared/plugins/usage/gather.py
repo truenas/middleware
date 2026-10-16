@@ -378,7 +378,7 @@ async def gather_sharing(service: Service, context: GatherContext) -> dict[str, 
             if share_service == "smb":
                 sharing_list.append({"type": service_upper, "purpose": s["purpose"]})
             elif share_service == "nfs":
-                sharing_list.append({"type": service_upper, "readonly": s["ro"]})
+                sharing_list.append({"type": service_upper, "readonly": s.ro})
             elif share_service == "webshare":
                 sharing_list.append({"type": service_upper, "enabled": s.enabled, "is_home_base": s.is_home_base})
             elif share_service == "s3":

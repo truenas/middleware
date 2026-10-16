@@ -7,7 +7,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.service.path import check_path_service_write_allowed
+from middlewared.utils.service.path import check_path_service_share_allowed, check_path_service_write_allowed
 
 from .crud_service_part import CRUDServicePart
 
@@ -16,7 +16,14 @@ if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 
 
-__all__ = ("LocalPathInfo", "SharingTaskServicePart", "dataset_split", "validate_path_service_write")
+__all__ = (
+    "LocalPathInfo",
+    "SharingServicePart",
+    "SharingTaskServicePart",
+    "dataset_split",
+    "validate_path_service_share",
+    "validate_path_service_write",
+)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -62,6 +69,30 @@ async def validate_path_service_write(
         return
     dataset, relative_path = dataset_split(data)
     await check_path_service_write_allowed(verrors, middleware, f"{schema}.{field}", path, dataset, relative_path)
+
+
+async def validate_path_service_share(
+    middleware: Middleware,
+    verrors: ValidationErrors,
+    schema: str,
+    path_field: str,
+    path: str,
+    data: Any,
+    readonly_field: str | None,
+) -> None:
+    """Ask `check_path_service_share_allowed` about a share's local path: where another service keeps private
+    state on that path's dataset, the share may serve only what that service keeps for clients.
+
+    A task is not held to this; what it copies goes to the administrator. `readonly_field` is the share's
+    read-only flag, None where it has none -- such a share writes whatever it is given, so
+    `validate_path_service_write` has already refused the whole of such a dataset on this same field.
+    """
+    if readonly_field is None or path_location(path) is not FSLocation.LOCAL:
+        return
+    dataset, relative_path = dataset_split(data)
+    await check_path_service_share_allowed(
+        verrors, middleware, f"{schema}.{path_field}", path, dataset, relative_path
+    )
 
 
 class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
@@ -197,4 +228,17 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             self.logger.error("%s: unknown location type", loc.name)
             raise NotImplementedError
 
+        return verrors
+
+
+class SharingServicePart[E, PK = int](SharingTaskServicePart[E, PK]):
+    __slots__ = ()
+
+    async def validate_path_field(
+        self, data: dict[str, Any], schema: str, verrors: ValidationErrors, *, split_path: bool = False
+    ) -> ValidationErrors:
+        await super().validate_path_field(data, schema, verrors, split_path=split_path)
+        await validate_path_service_share(
+            self.middleware, verrors, schema, self.path_field, data[self.path_field], data, self.readonly_field
+        )
         return verrors

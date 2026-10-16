@@ -64,7 +64,11 @@ async def _network_fec(context: ServiceContext) -> bool:
 
 
 async def _nfs_snapshot(context: ServiceContext) -> bool:
-    return bool(await context.middleware.call("sharing.nfs.query", [["expose_snapshots", "=", True]], {"count": True}))
+    return bool(
+        await context.call2(
+            context.s.sharing.nfs.query, [["expose_snapshots", "=", True]], QueryOptions(count=True)
+        )
+    )
 
 
 async def _nvmeof_spdk(context: ServiceContext) -> bool:
