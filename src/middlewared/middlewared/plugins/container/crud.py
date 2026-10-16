@@ -21,6 +21,7 @@ from middlewared.api.current import (
     QueryOptions,
     ZFSResourceQuery,
     ZFSResourceRenameArgsData,
+    ZFSResourceSnapshotCloneArgsData,
     ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotDestroyArgsData,
 )
@@ -217,10 +218,10 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         # Populate dataset
         if pool == image_snapshot.split('@')[0].split('/')[0]:  # noqa
             # The container is in the same pool as images. We can just clone the image.
-            await self.middleware.call("pool.snapshot.clone", {
-                "snapshot": image_snapshot,  # noqa
-                "dataset_dst": dataset
-            })
+            await self.call2(
+                self.s.zfs.resource.snapshot.clone,
+                ZFSResourceSnapshotCloneArgsData(snapshot=image_snapshot, dataset=dataset, bypass=True),  # noqa
+            )
         else:
             # The container is on the different pool. Let's replicate the image.
             source_dataset, source_snapshot = image_snapshot.split('@', 1)  # noqa
@@ -239,7 +240,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
             ))
             await self.call2(
                 self.s.zfs.resource.snapshot.destroy_impl,
-                ZFSResourceSnapshotDestroyArgsData(path=f'{dataset}@{source_snapshot}'),
+                ZFSResourceSnapshotDestroyArgsData(path=f'{dataset}@{source_snapshot}', bypass=True),
             )
 
         entry = await self._create(data.model_dump(exclude={'pool', 'image'}) | {'dataset': dataset})
@@ -266,7 +267,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
             new_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new.name
             await self.call2(
                 self.s.zfs.resource.rename_impl,
-                ZFSResourceRenameArgsData(current_name=old_dataset, new_name=new_dataset),
+                ZFSResourceRenameArgsData(current_name=old_dataset, new_name=new_dataset, bypass=True),
             )
             new = new.model_copy(update={'dataset': new_dataset})
 
@@ -333,8 +334,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         # gone, so a failed destroy never orphans the dataset with no container row
         # pointing at it.
         if dataset_exists:
-            # bypass, because the container plugin owns everything under its own dataset and
-            # must keep being able to destroy it if that tree is ever marked a protected path.
+            # bypass, because the container dataset tree is a protected path that only this plugin manages.
             try:
                 self.call_sync2(
                     self.s.zfs.resource.destroy_impl, container.dataset, recursive=options.recursive,

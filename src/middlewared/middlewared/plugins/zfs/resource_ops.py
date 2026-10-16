@@ -108,8 +108,8 @@ def unload_key(tls: Any, filesystem: str, recursive: bool = False, force_unmount
 
 def rename_impl(tls: Any, data: ZFSResourceRenameArgsData) -> None:
     schema = "zfs.resource.rename"
-    reject_protected_path(schema, data.current_name)
-    reject_protected_path(schema, data.new_name)
+    reject_protected_path(schema, data.current_name, data.bypass)
+    reject_protected_path(schema, data.new_name, data.bypass)
     if data.no_unmount and data.force_unmount:
         raise ValidationError(schema, "force_unmount must be disabled when no_unmount is set", errno.EINVAL)
     try:

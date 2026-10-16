@@ -22,7 +22,6 @@ from middlewared.api.current import (
     ZFSResourceRenameArgsData,
     ZFSResourceSetArgsData,
 )
-from middlewared.plugins.zfs.encryption_info import is_internal_dataset_name
 from middlewared.plugins.zfs.share_presets import SHARE_PRESETS
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import (
@@ -34,8 +33,6 @@ from middlewared.service import (
     filterable_api_method,
     private,
 )
-from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
-from middlewared.utils.filter_list import filter_list
 
 from .dataset_query_utils import generic_query, user_property_names_to_be_renamed
 from .utils import (
@@ -181,7 +178,7 @@ class PoolDatasetService(CRUDService):
 
     @private
     async def get_instance_quick(self, name, options=None):
-        if is_internal_dataset_name(name):
+        if has_internal_path(name):
             raise InstanceNotFound(f'PoolDataset {name} does not exist')
         encryption = bool((options or {}).get('encryption'))
         properties = ['mountpoint', 'encryption'] if encryption else ['mountpoint']
@@ -191,21 +188,6 @@ class PoolDatasetService(CRUDService):
         if not rows:
             raise InstanceNotFound(f'PoolDataset {name} does not exist')
         return pool_dataset_view(rows[0], encryption)
-
-    @private
-    async def internal_datasets_filters(self):
-        # We get filters here which ensure that we don't match an internal dataset
-        return [
-            ['pool', 'nin', BOOT_POOL_NAME_VALID],
-            ['id', 'rnin', '/.system'],
-            ['id', 'rnin', '/ix-applications/'],
-            ['id', 'rnin', '/ix-apps'],
-        ]
-
-    @private
-    async def is_internal_dataset(self, dataset):
-        pool = dataset.split('/')[0]
-        return not bool(filter_list([{'id': dataset, 'pool': pool}], await self.internal_datasets_filters()))
 
     @filterable_api_method(
         item=PoolDatasetEntry,
@@ -324,7 +306,7 @@ class PoolDatasetService(CRUDService):
         """
         verrors = ValidationErrors()
         name = data['name']
-        if await self.is_internal_dataset(name):
+        if has_internal_path(name):
             verrors.add(
                 'pool_dataset_create.name',
                 f'{name!r} is using system internal managed dataset. Please specify a different parent.'

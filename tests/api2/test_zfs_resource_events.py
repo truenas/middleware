@@ -146,14 +146,17 @@ def test_snapshot_api_emits_snapshot_events():
         call("zfs.resource.destroy", {"path": f"{path}/clone"})
 
 
-def test_internal_dataset_destroy_emits_removed():
+def test_nested_ix_apps_name_is_not_internal():
     with resource("zre_events_internal") as parent:
         internal = f"{parent}/ix-apps/child"
         ssh(f"zfs create -p {internal}")
-        with collect(internal) as events:
+        with collect(internal, ("zfs.resource.list", "pool.dataset.query")) as events:
             ssh(f"zfs destroy {internal}")
 
-        assert summary(events) == [("zfs.resource.list", "REMOVED", internal)], pprint.pformat(events)
+        assert sorted(summary(events)) == [
+            ("pool.dataset.query", "REMOVED", internal),
+            ("zfs.resource.list", "REMOVED", internal),
+        ], pprint.pformat(events)
 
 
 def test_replication_receive_emits_no_removed():

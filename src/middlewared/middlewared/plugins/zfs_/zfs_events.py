@@ -214,9 +214,9 @@ async def zfs_events(middleware, event: ZfsEvent):
                 middleware.send_event('zfs.resource.snapshot.list', 'REMOVED', id=ds_id)
                 middleware.send_event('pool.snapshot.query', 'REMOVED', id=ds_id)
             return
-        if event_type == 'destroy' and not ds_id.split('/')[-1].startswith('%'):
+        if event_type == 'destroy' and not ds_id.split('/')[-1].startswith('%') and not has_internal_path(ds_id):
             middleware.send_event('zfs.resource.list', 'REMOVED', id=ds_id)
-        if await middleware.call('pool.dataset.is_internal_dataset', ds_id):
+        if has_internal_path(ds_id):
             # We should not raise any event for system internal datasets
             return
 

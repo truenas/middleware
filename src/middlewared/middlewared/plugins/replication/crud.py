@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import time
+import errno
 import re
 from typing import TYPE_CHECKING, Any
 
@@ -11,8 +12,9 @@ from middlewared.api.current import (
     ReplicationRunOnetimeArgs,
     ReplicationUpdate,
 )
-from middlewared.auth import fake_app
+from middlewared.auth import FakeApplication, fake_app
 from middlewared.plugins.zettarepl.state import REPLICATION_TASK_STATE
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -20,7 +22,6 @@ from middlewared.utils.path import is_child
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
-    from middlewared.auth import FakeApplication
     from middlewared.job import Job
     from middlewared.utils.types import AuditCallback
 
@@ -319,6 +320,13 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
 
         # Transport
         await self._validate_transport(data, verrors)
+
+        if (
+            not isinstance(app, FakeApplication)
+            and (data.direction == "PULL" or data.transport == "LOCAL")
+            and has_internal_path(data.target_dataset)
+        ):
+            verrors.add("target_dataset", f"{data.target_dataset!r} is a protected path.", errno.EACCES)
 
         # Common for all directions and transports
         self._validate_source_datasets(data, snapshot_tasks, verrors)
