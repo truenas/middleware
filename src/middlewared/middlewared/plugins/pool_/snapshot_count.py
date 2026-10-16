@@ -1,3 +1,5 @@
+import errno
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetSnapshotCountArgs,
@@ -5,6 +7,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCountQuery,
 )
 from middlewared.service import Service
+from middlewared.service_exception import ValidationError
 
 
 class PoolDatasetService(Service):
@@ -19,7 +22,7 @@ class PoolDatasetService(Service):
     )
     def snapshot_count(self, dataset: str) -> int:
         """Returns snapshot count for specified ``dataset``."""
-        return self.call_sync2(
-            self.s.zfs.resource.snapshot.count,
-            ZFSResourceSnapshotCountQuery(paths=[dataset])
-        ).get(dataset, 0)
+        counts = self.call_sync2(self.s.zfs.resource.snapshot.count, ZFSResourceSnapshotCountQuery(paths=[dataset]))
+        if not counts:
+            raise ValidationError("zfs.resource.snapshot.count", f"{dataset!r} not found", errno.ENOENT)
+        return counts.get(dataset, 0)

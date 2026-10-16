@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 
-from middlewared.api.current import ZFSResourceQuery, ZFSResourceSnapshotCreateQuery
+from middlewared.api.current import ZFSResourceQuery, ZFSResourceSnapshotCreateArgsData
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ServiceContext, ValidationErrors
 
@@ -47,7 +47,7 @@ async def backup_to_pool(context: ServiceContext, job: Job, target_pool: str) ->
         snap_name = await context.middleware.call(
             'replication.new_snapshot_name', schema
         )
-        await context.call2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+        await context.call2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateArgsData(
             dataset=applications_ds_name(docker_config.pool),
             name=snap_name,
             recursive=True,

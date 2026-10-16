@@ -23,7 +23,7 @@ def test_zfs_resource_snapshot_create_basic():
 
             # Verify snapshot exists
             query_result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [f"{ds}@{snap_name}"]},
             )
             assert len(query_result) == 1
@@ -49,7 +49,7 @@ def test_zfs_resource_snapshot_create_recursive():
 
                 # Verify both parent and child snapshots exist
                 query_result = call(
-                    "zfs.resource.snapshot.query",
+                    "zfs.resource.snapshot.list",
                     {"paths": [parent], "recursive": True},
                 )
                 assert len(query_result) == 2
@@ -83,7 +83,7 @@ def test_zfs_resource_snapshot_create_recursive_with_exclude():
 
                     # Verify parent and child1 have snapshots, child2 does not
                     query_result = call(
-                        "zfs.resource.snapshot.query",
+                        "zfs.resource.snapshot.list",
                         {"paths": [parent], "recursive": True},
                     )
                     snap_names = {r["name"] for r in query_result}
@@ -111,7 +111,7 @@ def test_zfs_resource_snapshot_create_with_user_properties():
 
             # Query with user properties to verify
             query_result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [f"{ds}@{snap_name}"], "get_user_properties": True},
             )
             assert len(query_result) == 1
@@ -198,7 +198,7 @@ def test_zfs_resource_snapshot_create_zvol():
 
             # Verify snapshot exists
             query_result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [f"{zvol}@{snap_name}"]},
             )
             assert len(query_result) == 1
@@ -239,4 +239,4 @@ def test_zfs_resource_snapshot_create_excluding_everything_is_rejected():
             assert ve.value.errmsg == (
                 f"{parent!r} and all of its children are excluded, leaving nothing to snapshot"
             )
-            assert call("zfs.resource.snapshot.query", {"paths": [parent]}) == []
+            assert call("zfs.resource.snapshot.list", {"paths": [parent]}) == []

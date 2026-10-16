@@ -18,6 +18,7 @@ from middlewared.utils.tdb import (
     get_tdb_handle,
 )
 
+from .exceptions import ZFSPathNotFoundException
 from .utils import has_internal_path, open_resource
 
 __all__ = ("count_snapshots_impl",)
@@ -196,7 +197,7 @@ def count_snapshots_impl(tls: Any, data: ZFSResourceSnapshotCountQuery) -> dict[
     Args:
         tls: Thread local storage containing lzh (libzfs handle)
         data: Count parameters dict containing:
-            - paths: List of dataset paths to count snapshots for
+            - paths: List of dataset paths to count snapshots for; a path that does not exist is skipped
             - recursive: Whether to include child dataset snapshots
 
     Returns:
@@ -213,7 +214,10 @@ def count_snapshots_impl(tls: Any, data: ZFSResourceSnapshotCountQuery) -> dict[
 
     if paths:
         for path in paths:
-            rsrc = open_resource(tls, path)
+            try:
+                rsrc = open_resource(tls, path)
+            except ZFSPathNotFoundException:
+                continue
             if rsrc.type == ZFSType.ZFS_TYPE_SNAPSHOT:
                 dataset = rsrc.name.split("@", 1)[0]
                 state.counts[dataset] = state.counts.get(dataset, 0) + 1

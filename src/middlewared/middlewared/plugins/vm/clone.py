@@ -11,9 +11,9 @@ from middlewared.api.current import (
     VMDeviceCreate,
     VMDeviceEntry,
     ZFSResourceQuery,
-    ZFSResourceSnapshotCloneQuery,
-    ZFSResourceSnapshotCreateQuery,
-    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotCloneArgsData,
+    ZFSResourceSnapshotCreateArgsData,
+    ZFSResourceSnapshotDestroyArgsData,
     ZFSResourceSnapshotQuery,
 )
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path, zvol_path_to_name
@@ -57,7 +57,7 @@ async def _clone_zvol(
         raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
     # Get existing snapshots for this zvol (properties: None for efficiency)
-    existing_snaps = await context.call2(context.s.zfs.resource.snapshot.query, ZFSResourceSnapshotQuery(
+    existing_snaps = await context.call2(context.s.zfs.resource.snapshot.list, ZFSResourceSnapshotQuery(
         paths=[zvol], properties=None,
     ))
     existing_snap_names = {s.name for s in existing_snaps}
@@ -75,7 +75,7 @@ async def _clone_zvol(
             continue
         break
 
-    await context.call2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+    await context.call2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateArgsData(
         dataset=zvol,
         name=snapshot_name,
     ))
@@ -96,7 +96,7 @@ async def _clone_zvol(
             continue
         break
 
-    await context.call2(context.s.zfs.resource.snapshot.clone, ZFSResourceSnapshotCloneQuery(
+    await context.call2(context.s.zfs.resource.snapshot.clone, ZFSResourceSnapshotCloneArgsData(
         snapshot=zvol_snapshot,
         dataset=clone_dst,
     ))
@@ -202,7 +202,7 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
             try:
                 await context.call2(
                     context.s.zfs.resource.snapshot.destroy_impl,
-                    ZFSResourceSnapshotDestroyQuery(path=snap),
+                    ZFSResourceSnapshotDestroyArgsData(path=snap),
                 )
             except Exception:
                 context.logger.exception('clone rollback: failed to destroy snapshot %r', snap)

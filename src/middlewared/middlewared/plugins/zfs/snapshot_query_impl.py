@@ -138,17 +138,17 @@ def __query_snapshot_directly(hdl: Any, snap_path: str, state: SnapshotQueryStat
     """Query a specific snapshot by its full path (pool/dataset@snapshot).
 
     Opens the parent dataset to determine its type for proper property handling.
+    A snapshot that does not exist is skipped.
     """
-    # Parse dataset name from snapshot path
-    dataset_name = snap_path.split("@")[0]
-
     try:
-        # Open parent dataset to get its type
-        ds_hdl = hdl.open_resource(name=dataset_name)
-        state.parent_type = ds_hdl.type
-
-        # Now open and process the snapshot
+        ds_hdl = hdl.open_resource(name=snap_path.split("@")[0])
         snap_hdl = hdl.open_resource(name=snap_path)
+    except ZFSException as e:
+        if e.code == ZFSError.EZFS_NOENT:
+            return
+        raise
+    state.parent_type = ds_hdl.type
+    try:
         __snapshot_callback(snap_hdl, state)
     except ZFSException as e:
         if e.code == ZFSError.EZFS_NOENT:
@@ -157,9 +157,14 @@ def __query_snapshot_directly(hdl: Any, snap_path: str, state: SnapshotQueryStat
 
 
 def __query_dataset_snapshots(hdl: Any, ds_path: str, state: SnapshotQueryState) -> None:
-    """Query all snapshots for a dataset (and optionally its children)."""
+    """Query all snapshots for a dataset (and optionally its children). A dataset that does not exist is skipped."""
     try:
         ds_hdl = hdl.open_resource(name=ds_path)
+    except ZFSException as e:
+        if e.code == ZFSError.EZFS_NOENT:
+            return
+        raise
+    try:
         __dataset_iter_callback(ds_hdl, state)
     except ZFSException as e:
         if e.code == ZFSError.EZFS_NOENT:
@@ -173,7 +178,7 @@ def query_snapshots_impl(hdl: Any, data: dict[str, Any]) -> list[dict[str, Any]]
     Args:
         hdl: ZFS library handle (tls.lzh)
         data: Query parameters dict containing:
-            - paths: List of dataset or snapshot paths to query
+            - paths: Dataset or snapshot paths to query; a path that does not exist is skipped
             - properties: List of property names to retrieve (None/[] = none)
             - min_txg: Minimum transaction group filter
             - max_txg: Maximum transaction group filter

@@ -5,7 +5,7 @@ import logging
 import os
 import typing
 
-from middlewared.api.current import ZFSResourceSnapshotRollbackQuery
+from middlewared.api.current import ZFSResourceSnapshotRollbackArgsData
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_path
 from middlewared.plugins.apps.ix_apps.utils import AppState
 from middlewared.service import CallError, ServiceContext
@@ -45,7 +45,7 @@ def restore_backup(context: ServiceContext, job: Job, backup_name: str) -> None:
     docker_ds, snapshot_name = backup.snapshot_name.split('@')
     skipped_snapshot_on_backup = datasets_to_skip_for_snapshot_on_backup(docker_ds)
     for dataset in filter(lambda d: d not in skipped_snapshot_on_backup, docker_datasets(docker_ds)):
-        context.call_sync2(context.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+        context.call_sync2(context.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackArgsData(
             path=f'{dataset}@{snapshot_name}',
             force=True,
             recursive=True,

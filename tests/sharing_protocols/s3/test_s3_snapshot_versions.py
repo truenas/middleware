@@ -77,7 +77,10 @@ def destroy(dataset: str, name: str) -> None:
 
 
 def rename(dataset: str, name: str, new_name: str) -> None:
-    call("zfs.resource.snapshot.rename", {"current_name": f"{dataset}@{name}", "new_name": f"{dataset}@{new_name}"})
+    call(
+        "zfs.resource.snapshot.rename",
+        {"current_name": f"{dataset}@{name}", "new_name": f"{dataset}@{new_name}", "force": True},
+    )
 
 
 def ids_of(s3, bucket: str, key: str) -> list[str]:

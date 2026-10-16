@@ -302,11 +302,11 @@ def test_zfs_resource_list_renames_known_user_properties():
 
 
 def test_zfs_resource_list_snapshot_path_is_rejected():
-    """Snapshot paths belong to zfs.resource.snapshot.query"""
+    """Snapshot paths belong to zfs.resource.snapshot.list"""
     with pytest.raises(ValidationError) as ve:
         call("zfs.resource.list", {"paths": [f"{pool_name}@snap"]})
     assert ve.value.attribute == "zfs.resource.list"
-    assert ve.value.errmsg == "Use `zfs.resource.snapshot.query` to query snapshot information."
+    assert ve.value.errmsg == "Use `zfs.resource.snapshot.list` to query snapshot information."
 
 
 def test_zfs_resource_list_property_cache_across_volumes():

@@ -14,17 +14,17 @@ def test_zfs_resource_snapshot_rename_single():
         ssh(f"zfs snapshot {ds}@old_name")
 
         # Verify it exists
-        result = call("zfs.resource.snapshot.query", {"paths": [f"{ds}@old_name"]})
+        result = call("zfs.resource.snapshot.list", {"paths": [f"{ds}@old_name"]})
         assert len(result) == 1
 
         # Rename it
         call(
             "zfs.resource.snapshot.rename",
-            {"current_name": f"{ds}@old_name", "new_name": f"{ds}@new_name"},
+            {"current_name": f"{ds}@old_name", "new_name": f"{ds}@new_name", "force": True},
         )
 
         # Verify old name is gone
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 1
         assert result[0]["snapshot_name"] == "new_name"
 
@@ -41,7 +41,7 @@ def test_zfs_resource_snapshot_rename_recursive():
 
             # Verify both exist
             result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [parent], "recursive": True},
             )
             assert len(result) == 2
@@ -55,12 +55,13 @@ def test_zfs_resource_snapshot_rename_recursive():
                     "current_name": f"{parent}@old_snap",
                     "new_name": f"{parent}@new_snap",
                     "recursive": True,
+                    "force": True,
                 },
             )
 
             # Verify all renamed
             result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [parent], "recursive": True},
             )
             assert len(result) == 2
@@ -77,9 +78,9 @@ def test_zfs_resource_snapshot_rename_nonexistent():
         with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.resource.snapshot.rename",
-                {"current_name": f"{ds}@nonexistent", "new_name": f"{ds}@new_name"},
+                {"current_name": f"{ds}@nonexistent", "new_name": f"{ds}@new_name", "force": True},
             )
-        assert ve.value.attribute == "zfs.resource.snapshot.rename"
+        assert ve.value.attribute == "zfs.resource.snapshot.rename.current_name"
         assert ve.value.errmsg == f"{ds + '@nonexistent'!r} not found"
         assert ve.value.errno == errno.ENOENT
 
@@ -108,9 +109,9 @@ def test_zfs_resource_snapshot_rename_already_exists():
             with pytest.raises(ValidationError) as ve:
                 call(
                     "zfs.resource.snapshot.rename",
-                    {"current_name": f"{ds}@snap1", "new_name": f"{ds}@snap2"},
+                    {"current_name": f"{ds}@snap1", "new_name": f"{ds}@snap2", "force": True},
                 )
-            assert ve.value.attribute == "zfs.resource.snapshot.rename"
+            assert ve.value.attribute == "zfs.resource.snapshot.rename.new_name"
             assert ve.value.errmsg == f"{ds + '@snap2'!r} already exists"
             assert ve.value.errno == errno.EEXIST
         finally:
@@ -130,7 +131,7 @@ def test_zfs_resource_snapshot_rename_path_validation():
             with pytest.raises(Exception) as exc_info:
                 call(
                     "zfs.resource.snapshot.rename",
-                    {"current_name": ds, "new_name": f"{ds}@new_snap"},
+                    {"current_name": ds, "new_name": f"{ds}@new_snap", "force": True},
                 )
             assert "must be a snapshot path" in str(exc_info.value).lower()
 
@@ -138,7 +139,7 @@ def test_zfs_resource_snapshot_rename_path_validation():
             with pytest.raises(Exception) as exc_info:
                 call(
                     "zfs.resource.snapshot.rename",
-                    {"current_name": f"{ds}@snap", "new_name": ds},
+                    {"current_name": f"{ds}@snap", "new_name": ds, "force": True},
                 )
             assert "must be a snapshot path" in str(exc_info.value).lower()
         finally:
@@ -158,7 +159,7 @@ def test_zfs_resource_snapshot_rename_different_dataset():
                 with pytest.raises(Exception) as exc_info:
                     call(
                         "zfs.resource.snapshot.rename",
-                        {"current_name": f"{ds1}@snap", "new_name": f"{ds2}@snap"},
+                        {"current_name": f"{ds1}@snap", "new_name": f"{ds2}@snap", "force": True},
                     )
                 assert "cannot rename" in str(exc_info.value).lower()
             finally:
@@ -177,11 +178,11 @@ def test_zfs_resource_snapshot_rename_zvol():
         # Rename it
         call(
             "zfs.resource.snapshot.rename",
-            {"current_name": f"{zvol}@old_snap", "new_name": f"{zvol}@new_snap"},
+            {"current_name": f"{zvol}@old_snap", "new_name": f"{zvol}@new_snap", "force": True},
         )
 
         # Verify renamed
-        result = call("zfs.resource.snapshot.query", {"paths": [zvol]})
+        result = call("zfs.resource.snapshot.list", {"paths": [zvol]})
         assert len(result) == 1
         assert result[0]["snapshot_name"] == "new_snap"
 
@@ -195,6 +196,19 @@ def test_zfs_resource_snapshot_rename_protected_path():
     with pytest.raises(Exception) as exc_info:
         call(
             "zfs.resource.snapshot.rename",
-            {"current_name": "boot-pool@test", "new_name": "boot-pool@new_name"},
+            {"current_name": "boot-pool@test", "new_name": "boot-pool@new_name", "force": True},
         )
     assert "protected" in str(exc_info.value).lower()
+
+
+@pytest.mark.parametrize("api", ["zfs.resource.snapshot", "pool.snapshot"])
+def test_snapshot_rename_requires_force(api):
+    with dataset("test_snap_rename_noforce") as ds:
+        with snapshot(ds, "snap") as snap:
+            if api == "pool.snapshot":
+                args = [snap, {"new_name": f"{ds}@renamed"}]
+            else:
+                args = [{"current_name": snap, "new_name": f"{ds}@renamed"}]
+            with pytest.raises(ValidationError) as ve:
+                call(f"{api}.rename", *args)
+            assert ve.value.attribute == f"{api}.rename.force"

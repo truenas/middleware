@@ -14,14 +14,14 @@ def test_zfs_resource_snapshot_destroy_single():
         ssh(f"zfs snapshot {ds}@test_snap")
 
         # Verify it exists
-        result = call("zfs.resource.snapshot.query", {"paths": [f"{ds}@test_snap"]})
+        result = call("zfs.resource.snapshot.list", {"paths": [f"{ds}@test_snap"]})
         assert len(result) == 1
 
         # Destroy it
         call("zfs.resource.snapshot.destroy", {"path": f"{ds}@test_snap"})
 
         # Verify it's gone
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 0
 
 
@@ -34,7 +34,7 @@ def test_zfs_resource_snapshot_destroy_recursive():
 
             # Verify both exist
             result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [parent], "recursive": True},
             )
             assert len(result) == 2
@@ -47,7 +47,7 @@ def test_zfs_resource_snapshot_destroy_recursive():
 
             # Verify both are gone
             result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [parent], "recursive": True},
             )
             assert len(result) == 0
@@ -137,7 +137,7 @@ def test_zfs_resource_snapshot_destroy_defer():
 
             # Snapshot should still exist (deferred) until clone is destroyed
             result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [f"{ds}@defer_snap"]},
             )
             # May or may not show up depending on ZFS version
@@ -162,14 +162,14 @@ def test_zfs_resource_snapshot_destroy_zvol():
         ssh(f"zfs snapshot {zvol}@vol_snap")
 
         # Verify it exists
-        result = call("zfs.resource.snapshot.query", {"paths": [f"{zvol}@vol_snap"]})
+        result = call("zfs.resource.snapshot.list", {"paths": [f"{zvol}@vol_snap"]})
         assert len(result) == 1
 
         # Destroy it
         call("zfs.resource.snapshot.destroy", {"path": f"{zvol}@vol_snap"})
 
         # Verify it's gone
-        result = call("zfs.resource.snapshot.query", {"paths": [zvol]})
+        result = call("zfs.resource.snapshot.list", {"paths": [zvol]})
         assert len(result) == 0
 
 
@@ -182,20 +182,20 @@ def test_zfs_resource_snapshot_destroy_multiple_sequential():
         ssh(f"zfs snapshot {ds}@snap3")
 
         # Verify all exist
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 3
 
         # Destroy them one by one
         call("zfs.resource.snapshot.destroy", {"path": f"{ds}@snap2"})
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 2
 
         call("zfs.resource.snapshot.destroy", {"path": f"{ds}@snap1"})
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 1
 
         call("zfs.resource.snapshot.destroy", {"path": f"{ds}@snap3"})
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 0
 
 
@@ -208,7 +208,7 @@ def test_zfs_resource_snapshot_destroy_all_snapshots():
         ssh(f"zfs snapshot {ds}@snap3")
 
         # Verify all exist
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 3
 
         # Destroy all snapshots for this dataset
@@ -218,7 +218,7 @@ def test_zfs_resource_snapshot_destroy_all_snapshots():
         )
 
         # Verify all are gone
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert len(result) == 0
 
 
@@ -235,7 +235,7 @@ def test_zfs_resource_snapshot_destroy_all_snapshots_recursive():
 
             # Verify all exist
             result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [parent], "recursive": True},
             )
             assert len(result) == 5
@@ -248,7 +248,7 @@ def test_zfs_resource_snapshot_destroy_all_snapshots_recursive():
 
             # Verify all are gone
             result = call(
-                "zfs.resource.snapshot.query",
+                "zfs.resource.snapshot.list",
                 {"paths": [parent], "recursive": True},
             )
             assert len(result) == 0
@@ -334,7 +334,7 @@ def test_zfs_resource_snapshot_destroy_busy_snapshot_reports_ebusy():
                 assert ve.value.errno == errno.EBUSY
                 assert f"Failed to destroy {snap!r}" in ve.value.errmsg
                 assert "Device or resource busy" in ve.value.errmsg
-                assert call("zfs.resource.snapshot.query", {"paths": [snap]})
+                assert call("zfs.resource.snapshot.list", {"paths": [snap]})
             finally:
                 ssh(f"kill {pid}", check=False)
                 ssh(f"umount {snapdir}", check=False)

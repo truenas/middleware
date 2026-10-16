@@ -179,9 +179,12 @@ class PoolSnapshotUserPropertyUpdate(BaseModel):
 class PoolSnapshotUpdate(BaseModel):
     user_properties_update: list[PoolSnapshotUserPropertyUpdate] = Field(
         default=[],
-        description="Properties to update.",
+        description="User properties to set. Snapshot user properties cannot be changed, so the call fails.",
     )
-    user_properties_remove: list[UserPropertyKey] = Field(default=[], description="Properties to remove.")
+    user_properties_remove: list[UserPropertyKey] = Field(
+        default=[],
+        description="User properties to remove. Snapshot user properties cannot be changed, so the call fails.",
+    )
 
 
 @single_argument_args("data")
@@ -273,7 +276,7 @@ class PoolSnapshotRenameOptions(BaseModel):
             "This operation does not check whether the dataset is currently in use. Renaming an active dataset may "
             "disrupt SMB shares, iSCSI targets, snapshots, replication, and other services.\n"
             "\n"
-            "Set Force only if you understand and accept the risks."
+            "Set `force` only if you understand and accept the risks."
         ),
     )
     recursive: bool = Field(default=False, description="Recursively rename the snapshots of all descendant resources.")

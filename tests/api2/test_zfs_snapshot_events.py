@@ -1,5 +1,6 @@
 import errno
 import pprint
+import time
 from unittest.mock import ANY
 
 import pytest
@@ -38,11 +39,15 @@ def test_delete():
 
             c.subscribe("pool.snapshot.query", callback, sync=True)
             c.call("pool.snapshot.delete", f"{ds}@test")
+            for _ in range(50):
+                if events:
+                    break
+                time.sleep(0.1)
+            time.sleep(1)
 
             assert len(events) == 1, pprint.pformat(events, indent=2)
             assert events[0][0] == "REMOVED"
-            assert events[0][1] == {"collection": "pool.snapshot.query", "msg": "removed", "id": f"{ds}@test",
-                                    "extra": {"recursive": False}}
+            assert events[0][1] == {"collection": "pool.snapshot.query", "msg": "removed", "id": f"{ds}@test"}
 
 
 def test_delete_with_dependent_clone():

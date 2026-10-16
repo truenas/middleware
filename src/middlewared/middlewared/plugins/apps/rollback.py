@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import AppEntry, AppRollbackOptions, QueryOptions, ZFSResourceSnapshotRollbackQuery
+from middlewared.api.current import AppEntry, AppRollbackOptions, QueryOptions, ZFSResourceSnapshotRollbackArgsData
 from middlewared.service import ServiceContext, ValidationErrors
 
 from .compose_utils import compose_action
@@ -68,7 +68,7 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
             snap_name = f'{app_volume_ds}@{options.app_version}'
             if context.call_sync2(context.s.zfs.resource.snapshot.exists, snap_name):
                 job.set_progress(40, f'Rolling back {app_name!r} app to {options.app_version!r} version')
-                context.call_sync2(context.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+                context.call_sync2(context.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackArgsData(
                     path=snap_name,
                     force=True,
                     recursive=True,

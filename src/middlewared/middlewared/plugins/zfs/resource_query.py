@@ -20,7 +20,7 @@ def validate_query_args(data: ZFSResourceQuery) -> None:
         if "@" in path:
             raise ValidationError(
                 SCHEMA,
-                "Use `zfs.resource.snapshot.query` to query snapshot information.",
+                "Use `zfs.resource.snapshot.list` to query snapshot information.",
             )
 
     # `max_depth > 0` turns the walk on later, so the overlap must be rejected here or the same

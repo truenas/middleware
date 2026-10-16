@@ -1,4 +1,3 @@
-import errno
 import time
 
 import pytest
@@ -124,16 +123,6 @@ def test_zfs_resource_snapshot_count_no_snapshots():
     with dataset("test_snap_count_empty") as ds:
         result = call("zfs.resource.snapshot.count", {"paths": [ds]})
         assert result[ds] == 0
-
-
-def test_zfs_resource_snapshot_count_nonexistent_dataset():
-    """Test counting non-existent dataset returns error"""
-    with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.snapshot.count", {"paths": ["nonexistent/dataset"]})
-    assert (
-        "not found" in str(exc_info.value).lower()
-        or "noent" in str(exc_info.value).lower()
-    )
 
 
 def test_zfs_resource_snapshot_count_overlapping_paths_recursive():
@@ -274,12 +263,8 @@ def test_zfs_resource_snapshot_count_volume():
             assert call("zfs.resource.snapshot.count", {"paths": [zvol]}) == {zvol: 1}
 
 
-def test_zfs_resource_snapshot_count_nonexistent_raises_enoent():
-    path = f"{pool}/test_snap_count_missing"
-    with pytest.raises(ValidationError) as ve:
-        call("zfs.resource.snapshot.count", {"paths": [path]})
-    assert ve.value.errmsg == f"{path!r} not found"
-    assert ve.value.errno == errno.ENOENT
+def test_zfs_resource_snapshot_count_nonexistent_is_skipped():
+    assert call("zfs.resource.snapshot.count", {"paths": [f"{pool}/test_snap_count_missing"]}) == {}
 
 
 def test_zfs_resource_snapshot_count_recursive_overlapping_paths_rejected():

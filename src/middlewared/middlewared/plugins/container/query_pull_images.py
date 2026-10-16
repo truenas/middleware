@@ -6,7 +6,7 @@ import typing
 
 import requests
 
-from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceQuery, ZFSResourceSnapshotCreateQuery
+from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceQuery, ZFSResourceSnapshotCreateArgsData
 from middlewared.service import CallError, ServiceContext, ValidationErrors
 from middlewared.utils.network import INTERNET_TIMEOUT
 
@@ -111,7 +111,7 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
 
             # Create ZFS snapshot
             job.set_progress(98, 'Creating ZFS snapshot...')
-            context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+            context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateArgsData(
                 dataset=dataset_name,
                 name='image'
             ))

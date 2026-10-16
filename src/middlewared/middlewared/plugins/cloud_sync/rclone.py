@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from middlewared.api.current import CloudSyncEntry, ZFSResourceSnapshotDestroyQuery
+from middlewared.api.current import CloudSyncEntry, ZFSResourceSnapshotDestroyArgsData
 from middlewared.job import JobCancelledException
 from middlewared.plugins.cloud.crud import validate_task_attributes
 from middlewared.plugins.cloud.path import check_local_path, get_remote_path
@@ -301,7 +301,7 @@ def rclone(
             try:
                 middleware.call_sync2(
                     middleware.services.zfs.resource.snapshot.destroy_impl,
-                    ZFSResourceSnapshotDestroyQuery(path=snapshot),
+                    ZFSResourceSnapshotDestroyArgsData(path=snapshot),
                 )
             except Exception as e:
                 middleware.logger.warning(f"Error deleting ZFS snapshot on cloud sync finish: {e!r}")
