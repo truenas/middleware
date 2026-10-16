@@ -39,26 +39,29 @@ def zfs_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore) -> bool:
     return False
 
 
+def existing_dataset_names(context: ServiceContext, names: list[str]) -> set[str]:
+    if not names:
+        # Empty `paths` would list every root filesystem instead of none.
+        return set()
+    return {
+        i['name'] for i in context.call_sync2(
+            context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=names, properties=None)
+        )
+    }
+
+
 def get_encrypted_datasets(context: ServiceContext, filters: list[Any]) -> list[dict[str, Any]]:
-    rv: list[dict[str, Any]] = []
     ds_in_db: dict[str, Any] = {}
-    for i in context.middleware.call_sync(
-        'datastore.query',
-        'storage.encrypteddataset',
-        filters
-    ):
+    for i in context.middleware.call_sync('datastore.query', 'storage.encrypteddataset', filters):
         ds_in_db[i['name']] = i
+    existing = existing_dataset_names(context, list(ds_in_db))
+    return [ds for name, ds in ds_in_db.items() if name in existing]
 
-    if not ds_in_db:
-        return rv
 
-    for i in context.call_sync2(
-        context.s.zfs.resource.list_impl,
-        ZFSResourceQuery(paths=list(ds_in_db), get_children=True, properties=None)
-    ):
-        if i['name'] in ds_in_db:
-            rv.append(ds_in_db[i['name']])
-    return rv
+def prune_zfs_keys(context: ServiceContext, store: KMIPKeyStore) -> None:
+    names = list(store.zfs_keys)
+    for name in set(names) - existing_dataset_names(context, names):
+        store.zfs_keys.pop(name, None)
 
 
 def push_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any, ids: list[Any] | None = None) -> list[str]:
@@ -99,8 +102,7 @@ def push_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any, ids: l
                 update_data = {'encryption_key': None, 'kmip_uid': uid}
             if update_data:
                 context.middleware.call_sync('datastore.update', 'storage.encrypteddataset', ds['id'], update_data)
-    existing_dataset_names = {ds['name'] for ds in existing_datasets}
-    store.zfs_keys = {k: v for k, v in store.zfs_keys.items() if k in existing_dataset_names}
+    prune_zfs_keys(context, store)
     return failed
 
 
@@ -130,8 +132,7 @@ def pull_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any) -> lis
             store.zfs_keys.pop(ds['name'], None)
             if connection_successful:
                 delete_kmip_secret_data(context, ds['kmip_uid'])
-    existing_dataset_names = {ds['name'] for ds in existing_datasets}
-    store.zfs_keys = {k: v for k, v in store.zfs_keys.items() if k in existing_dataset_names}
+    prune_zfs_keys(context, store)
     return failed
 
 

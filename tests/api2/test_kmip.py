@@ -274,13 +274,27 @@ def test_kmip_zfs_keys_pushed_and_pulled(kmip_certificate, encrypted_dataset):
                        encrypted_dataset_row(encrypted_dataset))
         assert row["encryption_key"] is None
 
-        # Turning `manage_zfs_keys` off pulls the key back from the KMIP server.
-        call("kmip.update", {"manage_zfs_keys": False}, job=True)
+        with dataset("kmip_encrypted/nested", {
+            "encryption": True,
+            "inherit_encryption": False,
+            "encryption_options": {"generate_key": True},
+        }) as nested:
+            # The cache briefly holds both keys mid-push, so wait for the job to finish rather than polling the cache.
+            wait_for(lambda: not call("core.get_jobs", [
+                ["method", "=", "kmip.sync_zfs_keys"], ["state", "in", ["WAITING", "RUNNING"]],
+            ]))
+            assert encrypted_dataset_row(nested)["kmip_uid"]
+            assert {encrypted_dataset, nested} <= set(call("kmip.retrieve_zfs_keys"))
 
-        row = wait_for(lambda: encrypted_dataset_row(encrypted_dataset)["encryption_key"] and
-                       encrypted_dataset_row(encrypted_dataset))
-        assert row["encryption_key"] == key
-        assert row["kmip_uid"] is None
+            # Turning `manage_zfs_keys` off pulls the key back from the KMIP server.
+            call("kmip.update", {"manage_zfs_keys": False}, job=True)
+
+            wait_for(lambda: encrypted_dataset_row(encrypted_dataset)["encryption_key"] and
+                     encrypted_dataset_row(nested)["encryption_key"])
+            row = encrypted_dataset_row(encrypted_dataset)
+            assert row["encryption_key"] == key
+            assert row["kmip_uid"] is None
+            assert encrypted_dataset_row(nested)["kmip_uid"] is None
 
     wait_for(lambda: call("kmip.kmip_sync_pending") is False)
 
