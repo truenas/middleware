@@ -21,6 +21,7 @@ from middlewared.api.current import (
     FilesystemSetpermArgs,
     FilesystemSetpermResult,
 )
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import Service, ValidationErrors, job, private
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils.filesystem.acl import (
@@ -94,7 +95,7 @@ class FilesystemService(Service):
     class Config:
         cli_private = True
 
-    def _common_perm_path_validate(self, schema, data, verrors, pool_mp_ok=False):
+    def _common_perm_path_validate(self, schema, data, verrors, pool_mp_ok=False, internal_ok=False):
         loc = path_location(data['path'])
         if loc is FSLocation.EXTERNAL:
             verrors.add(f'{schema}.path', 'ACL operations on remote server paths are not possible')
@@ -135,6 +136,12 @@ class FilesystemService(Service):
                 f'{schema}.path',
                 "Changes to permissions on paths that are not beneath "
                 f"the directory /mnt are not permitted: {path}"
+            )
+
+        elif not internal_ok and has_internal_path(self.middleware.call_sync('filesystem.statfs', st.realpath).source):
+            verrors.add(
+                f'{schema}.path',
+                f'Changes to permissions on paths managed by the system are not permitted: {path}'
             )
 
         elif len(Path(st.realpath).resolve().parents) == 2:
@@ -646,10 +653,11 @@ class FilesystemService(Service):
         FilesystemSetaclResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set ACL',
-        audit_extended=lambda data: data['path']
+        audit_extended=lambda data: data['path'],
+        pass_app=True,
     )
     @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
-    def setacl(self, job, data):
+    def setacl(self, app, job, data):
         """
         Set the ACL of a given path.
 
@@ -701,7 +709,7 @@ class FilesystemService(Service):
         the default and access lists.
         """
         verrors = ValidationErrors()
-        data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
+        data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors, internal_ok=app is None)
         normalize_acl_ids(data)
         if data['uid'] != ACL_UNDEFINED_ID and data['user']:
             verrors.add(
@@ -975,7 +983,7 @@ class FilesystemService(Service):
         """
         init_path = data['path']
         verrors = ValidationErrors()
-        self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
+        self._common_perm_path_validate('filesystem.add_to_acl', data, verrors, internal_ok=True)
         verrors.check()
 
         data['path'] = init_path
@@ -1017,7 +1025,9 @@ class FilesystemService(Service):
         ACL is for a file or a directory.
         """
         verrors = ValidationErrors()
-        self._common_perm_path_validate('filesystem.get_inherited_acl', data, verrors, True)
+        self._common_perm_path_validate(
+            'filesystem.get_inherited_acl', data, verrors, pool_mp_ok=True, internal_ok=True
+        )
         verrors.check()
 
         current_acl = self.getacl(data['path'], False)

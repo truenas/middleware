@@ -98,7 +98,7 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
         new = old.updated(data)
 
         verrors = ValidationErrors()
-        verrors.add_child('periodic_snapshot_update', await self._validate(new))
+        verrors.add_child('periodic_snapshot_update', await self._validate(new, old.dataset))
 
         if not new.enabled:
             for replication_task in await self.call2(self.s.replication.query, [['enabled', '=', True]]):
@@ -165,10 +165,12 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
 
         await self.call2(self.s.zettarepl.update_tasks)
 
-    async def _validate(self, data: PeriodicSnapshotTaskEntry | PoolSnapshotTaskCreate) -> ValidationErrors:
+    async def _validate(
+        self, data: PeriodicSnapshotTaskEntry | PoolSnapshotTaskCreate, old_dataset: str | None = None,
+    ) -> ValidationErrors:
         verrors = ValidationErrors()
 
-        if data.dataset not in (await self.middleware.call('pool.filesystem_choices')):
+        if data.dataset != old_dataset and data.dataset not in (await self.middleware.call('pool.filesystem_choices')):
             verrors.add(
                 'dataset',
                 'Dataset not found'

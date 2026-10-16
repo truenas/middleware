@@ -1,8 +1,9 @@
+import errno
 import threading
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors as ServiceValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors as ServiceValidationErrors
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.apps import app
@@ -408,6 +409,26 @@ def test_drift_repair_app_volume_canmount(docker_pool):
         assert ssh(f"zfs get -H -o value canmount {volume_ds}").strip() == "noauto"
         volume_path = f"{IX_APPS_CHOKEPOINT}/app_mounts/actual-budget/{volume_name}"
         assert call("filesystem.stat", volume_path)["type"] == "DIRECTORY"
+
+
+def test_filesystem_api_refuses_ix_apps_paths(docker_pool):
+    path = f"{IX_APPS_CHOKEPOINT}/app_mounts/internal_path_guard"
+    ssh(f"mkdir {path}")
+    try:
+        acl = call("filesystem.getacl", path)
+        with pytest.raises(ValidationErrors, match="managed by the system"):
+            call("filesystem.setacl", {"path": path, "dacl": acl["acl"], "acltype": acl["acltype"]}, job=True)
+
+        with pytest.raises(CallError) as ce:
+            call("filesystem.mkdir", {"path": f"{path}/child"})
+        assert ce.value.errno == errno.EPERM
+
+        call("filesystem.add_to_acl", {
+            "path": path,
+            "entries": [{"id_type": "USER", "id": 568, "access": "READ"}],
+        }, job=True)
+    finally:
+        ssh(f"rm -rf {path}")
 
 
 @pytest.mark.parametrize("corrupt,expected_reason", [

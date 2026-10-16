@@ -38,8 +38,8 @@ __all__ = (
 
 INTERNAL_PATHS = (
     "ix-apps",
-    "ix-applications",
-    ".system"
+    ".system",
+    ".truenas_containers",
 )
 
 
@@ -77,7 +77,11 @@ def has_internal_path(path: str) -> bool:
     components = path.split("/")
     if components[0] in BOOT_POOL_NAME_VALID:
         return True
-    return len(components) > 1 and components[1] in INTERNAL_PATHS
+    return len(components) > 1 and (
+        components[1] in INTERNAL_PATHS
+        # Legacy ix-applications is left visible so users can delete it; its contents stay hidden.
+        or (components[1] == "ix-applications" and len(components) > 2)
+    )
 
 
 def resource_mountpoint(row: dict[str, Any]) -> str | None:

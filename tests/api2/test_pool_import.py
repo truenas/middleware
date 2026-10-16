@@ -50,3 +50,15 @@ def test_resets_explicit_mountpoint():
         # Verify the mountpoint value is correct and source changed to "default"
         assert ssh(f'zfs get -H -o source mountpoint {POOL_NAME}').strip() == 'default'
         assert ssh(f'zfs get -H -o value mountpoint {POOL_NAME}').strip() == f'/mnt/{POOL_NAME}'
+
+
+def test_resets_container_dataset_mountpoint():
+    with another_pool({'name': POOL_NAME}) as pool:
+        ssh(f'zfs create -o mountpoint=/wrong {POOL_NAME}/.truenas_containers')
+
+        call('pool.export', pool['id'], job=True)
+        call('pool.import_pool', {'guid': pool['guid'], 'name': POOL_NAME}, job=True)
+
+        assert ssh(
+            f'zfs get -H -o value mountpoint {POOL_NAME}/.truenas_containers'
+        ).strip() == f'/mnt/.truenas_containers/{POOL_NAME}'

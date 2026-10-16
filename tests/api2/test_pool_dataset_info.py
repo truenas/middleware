@@ -14,7 +14,11 @@ def pool_dataset_zvol_snapshot_app():
     pool_list = [line for line in ssh("zpool list -H -o name | grep -v boot-pool").split()]
 
     try:
-        ds_list = [line for line in ssh(f"zfs list -H -t fs -o name | grep -Ev 'boot-pool|{pool}/.system'").split()]
+        ds_list = [
+            line for line in ssh(
+                f"zfs list -H -t fs -o name | grep -Ev 'boot-pool|{pool}/.system|/.truenas_containers'"
+            ).split()
+        ]
     except AssertionError:
         ds_list = []
 

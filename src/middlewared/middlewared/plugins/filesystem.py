@@ -58,7 +58,9 @@ from middlewared.event import TypedEventSource
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.filesystem_.utils import apply_zfs_attrs_recursive
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, Service, ValidationErrors, filterable_api_method, job, private
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID, acl_is_present
 from middlewared.utils.filesystem.constants import FileType
@@ -328,7 +330,14 @@ class FilesystemService(Service):
 
         try:
             realpath = os.path.join(os.readlink(f'/proc/self/fd/{parent_fd}'), basename)
-            if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
+            if not realpath.startswith(
+                ('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')
+            ) or (
+                realpath.startswith('/mnt/')
+                # /mnt itself is a boot-pool dataset, which has_internal_path always treats as internal.
+                and (source := self.statfs(os.path.dirname(realpath)).source).split('/')[0] not in BOOT_POOL_NAME_VALID
+                and has_internal_path(source)
+            ):
                 raise CallError(f'{data.path}: path not permitted', errno.EPERM)
 
             os.mkdir(basename, mode=mode, dir_fd=parent_fd)

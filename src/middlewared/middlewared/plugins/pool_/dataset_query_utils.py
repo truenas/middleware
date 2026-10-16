@@ -5,8 +5,8 @@ from typing import TypeAlias
 import truenas_pyfilter as _tf
 import truenas_pylibzfs
 
-from middlewared.plugins.zfs.encryption_info import is_internal_dataset_name
 from middlewared.plugins.zfs.tier import get_dataset_tier_info_cached
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filter_list import compile_filters, compile_options
@@ -867,7 +867,7 @@ def is_internal_dataset(hdl):
         bool: True if the dataset is internal and should be filtered out,
               False if it should be included in results
     """
-    return is_internal_dataset_name(hdl.name)
+    return has_internal_path(hdl.name)
 
 
 def generic_query_callback(hdl, state: QueryFiltersCallbackState):

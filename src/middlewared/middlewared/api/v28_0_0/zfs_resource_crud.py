@@ -964,6 +964,12 @@ class ZFSResourceRenameArgsData(BaseModel):
             "refused unless this is set."
         ),
     )
+    bypass: Private[bool] = Field(
+        default=False,
+        description=(
+            'If true, will bypass the safety checks that prevent renaming zfs resources under "protected" paths.'
+        ),
+    )
 
 
 class ZFSResourceRenameArgs(BaseModel):
