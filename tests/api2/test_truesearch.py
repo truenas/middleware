@@ -61,7 +61,7 @@ def test_index_new_dataset(share):
     with dataset('truesearch/nested', data={'share_type': 'SMB'}) as ds:
         ssh(f"touch /mnt/{ds}/anothertest.txt")
 
-        # truesearch.schedule_reconfigure will take 5 seconds
+        # TrueSearch is reconfigured 1 second after the mount and then needs time to index
         time.sleep(5)
 
         expect_search_result(["mytest.txt", "nested/anothertest.txt"])

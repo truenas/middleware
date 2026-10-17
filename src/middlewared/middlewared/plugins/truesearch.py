@@ -19,6 +19,12 @@ class TrueSearchService(Service):
     class Config:
         private = True
 
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        # Paths mounted since the last check, see schedule_mount_check()
+        self.mounted_paths: set[str] = set()
+        self.mount_check_timer: asyncio.TimerHandle | None = None
+
     async def unavailable_reasons(self) -> list[str]:
         """
         Returns a list of reasons why the truesearch service cannot be used.
@@ -125,11 +131,11 @@ class TrueSearchService(Service):
         """
         What Samba shares directories should it index.
         """
-        if not await self.call2(self.s.service.started_or_enabled, 'cifs'):
-            return set()
-
         smb_config = await self.middleware.call('smb.config')
         if SearchProtocol.SPOTLIGHT not in smb_config['search_protocols']:
+            return set()
+
+        if not await self.call2(self.s.service.started_or_enabled, 'cifs'):
             return set()
 
         shares = await self.middleware.call(
@@ -144,11 +150,11 @@ class TrueSearchService(Service):
         """
         What WebShare shares directories should it index.
         """
-        if not await self.call2(self.s.service.started_or_enabled, 'webshare'):
-            return set()
-
         webshare_config = await self.call2(self.s.webshare.config)
         if not webshare_config.search:
+            return set()
+
+        if not await self.call2(self.s.service.started_or_enabled, 'webshare'):
             return set()
 
         shares = await self.call2(
@@ -159,15 +165,55 @@ class TrueSearchService(Service):
 
         return {share.path for share in shares}
 
-    RECONFIGURE_TIMER = None
+    MOUNT_CHECK_DELAY = 1  # seconds
+
+    async def schedule_mount_check(self, mountpoint: str) -> None:
+        """
+        Check newly mounted paths against the indexed directories 1 second after the last mount. A pool import
+        mounts its datasets in a burst, and looking up the indexed directories queries service state, so doing it
+        for every mount is expensive.
+        """
+        self.mounted_paths.add(mountpoint)
+        if self.mount_check_timer is not None:
+            self.mount_check_timer.cancel()
+
+        self.mount_check_timer = asyncio.get_running_loop().call_later(
+            self.MOUNT_CHECK_DELAY,
+            lambda: self.middleware.create_task(self.check_mounted_paths())
+        )
+
+    async def check_mounted_paths(self) -> None:
+        mounted, self.mounted_paths = self.mounted_paths, set()
+        # A mount that arrives just before an earlier check starts is taken by
+        # that check, and leaves nothing for the timer it scheduled.
+        if not mounted:
+            return
+
+        try:
+            directories = await self.raw_directories()
+        except Exception:
+            self.logger.exception(
+                'TrueSearch: failed to check %d mounted paths against indexed directories', len(mounted)
+            )
+            return
+
+        for mountpoint in mounted:
+            for directory in directories:
+                paths = {directory, mountpoint}
+                # If the mounted path is a child of the share, or the share is a child of the mounted path,
+                # reconfigure TS
+                if os.path.commonpath(list(paths)) in paths:
+                    self.logger.info(
+                        f"Mounted path {mountpoint!r} intersects with indexed directory {directory}. "
+                        "Reconfiguring TrueSearch."
+                    )
+                    await self.configure()
+                    return
 
     async def configure(self) -> None:
         """
         Start or stop the service based on whether it should be started or stopped.
         """
-        if self.RECONFIGURE_TIMER is not None:
-            self.RECONFIGURE_TIMER.cancel()
-
         enabled = await self.enabled()
         running = await self.call2(self.s.service.started, 'truesearch')
 
@@ -177,19 +223,6 @@ class TrueSearchService(Service):
             await (await self.call2(self.s.service.control, 'START', 'truesearch')).wait(raise_error=True)
         elif not enabled and running:
             await (await self.call2(self.s.service.control, 'STOP', 'truesearch')).wait(raise_error=True)
-
-    async def schedule_reconfigure(self) -> None:
-        """
-        Reconfigure TrueSearch in 5 seconds. This is to prevent it being reconfigured too often when too many datasets
-        are mounted at the time.
-        """
-        if self.RECONFIGURE_TIMER is not None:
-            self.RECONFIGURE_TIMER.cancel()
-
-        self.RECONFIGURE_TIMER = asyncio.get_running_loop().call_later(
-            5,
-            lambda: asyncio.create_task(self.configure())
-        )
 
     @contextlib.asynccontextmanager
     async def remove_mountpoint(self, mountpoint: str | None) -> AsyncGenerator[None, None]:
@@ -229,18 +262,7 @@ async def post_license_update(middleware: Middleware, *args: tuple[Any], **kwarg
 
 
 async def on_dataset_mounted(middleware: Middleware, data: dict[str, Any]) -> None:
-    mount = data
-
-    for directory in await middleware.call2(middleware.services.truesearch.raw_directories):
-        paths = {directory, mount['mountpoint']}
-        # If the mounted path is a child of the share, or the share is a child of the mounted path, reconfigure TS
-        if os.path.commonpath(list(paths)) in paths:
-            middleware.logger.info(
-                f"Mounted path {mount['mountpoint']!r} intersects with indexed directory {directory}. "
-                "Scheduling TrueSearch reload."
-            )
-            await middleware.call2(middleware.services.truesearch.schedule_reconfigure)
-            break
+    await middleware.call2(middleware.services.truesearch.schedule_mount_check, data['mountpoint'])
 
 
 async def on_system_ready(middleware: Middleware, event_type: str, args: Any) -> None:
