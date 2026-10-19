@@ -44,7 +44,7 @@ __all__ = [
     "upload_license",
 ]
 
-# The daemon could not answer. A reader that would act on "unlicensed" must refuse instead.
+# The daemon could not answer, as distinct from answering that a license is invalid.
 DAEMON_ERRORS = frozenset(
     {
         LicenseError.DAEMON_UNAVAILABLE,

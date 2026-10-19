@@ -5,13 +5,11 @@
 
 from __future__ import annotations
 
-import errno
 from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.source.kmip import KMIPZFSDatasetsSyncFailureAlert
 from middlewared.api.current import ZFSResourceEncryptionUnlockArgsData, ZFSResourceQuery
 from middlewared.plugins.zfs.encryption import check_key
-from middlewared.service import CallError
 
 from .connection import (
     connection_config,
@@ -31,10 +29,7 @@ if TYPE_CHECKING:
     from middlewared.service import ServiceContext
 
 
-def zfs_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool | None) -> bool:
-    if push is None:
-        # The direction is unknown, so a key pending either way is pending.
-        return zfs_keys_pending_sync(context, store, True) or zfs_keys_pending_sync(context, store, False)
+def zfs_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool) -> bool:
     for ds in context.middleware.call_sync('datastore.query', 'storage.encrypteddataset'):
         if push and (ds['encryption_key'] or ds['name'] not in store.zfs_keys):
             return True
@@ -147,8 +142,6 @@ def sync_zfs_keys(
     context: ServiceContext, store: KMIPKeyStore, job: Job, tls: Any, ids: list[Any] | None = None,
 ) -> list[str] | None:
     push = push_direction(context, 'manage_zfs_keys')
-    if push is None:
-        raise CallError('license daemon unavailable', errno.EAGAIN)
     if not zfs_keys_pending_sync(context, store, push):
         return []
     conn_successful = test_connection(context, None, True)

@@ -13,15 +13,11 @@ from kmip.core import enums
 from kmip.pie.client import ProxyKmipClient
 from kmip.pie.exceptions import ClientConnectionFailure, ClientConnectionNotOpen, KmipOperationFailure
 from kmip.pie.objects import SecretData
-from truenas_pylicensed import verify
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.source.kmip import KMIPConnectionFailedAlert
 from middlewared.service import CallError
 from middlewared.utils.crypto import ssl_uuid4
-from middlewared.utils.entitlements import EntitlementFacts, check_entitlement
-from middlewared.utils.hardware import get_hardware_class
-from middlewared.utils.license import DAEMON_ERRORS, get_license
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -94,19 +90,12 @@ def test_connection(context: ServiceContext, data: dict[str, Any] | None = None,
         return True
 
 
-def push_direction(context: ServiceContext, manage: Literal['manage_zfs_keys', 'manage_sed_disks']) -> bool | None:
-    """True pushes keys to the KMIP server, False pulls them back, None means the license daemon cannot answer."""
+def push_direction(context: ServiceContext, manage: Literal['manage_zfs_keys', 'manage_sed_disks']) -> bool:
+    """True pushes keys to the KMIP server, False pulls them back."""
     config = context.call_sync2(context.s.kmip.config)
     if not (config.enabled and getattr(config, manage)):
         return False
-    if context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.KMIP).entitled:
-        return True
-    # The check reads a daemon error as unlicensed, so a pull is decided only from a read that tells them apart.
-    status = verify()
-    if status.code in DAEMON_ERRORS:
-        return None
-    facts = EntitlementFacts(hardware_class=get_hardware_class(), license=get_license(status))
-    return check_entitlement(LicenseFeature.KMIP, facts).entitled
+    return context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.KMIP).entitled
 
 
 def delete_kmip_secret_data(context: ServiceContext, uid: str) -> bool:

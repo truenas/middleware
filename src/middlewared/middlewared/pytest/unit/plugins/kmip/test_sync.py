@@ -6,7 +6,6 @@ from unittest.mock import Mock
 from kmip.core import enums
 from kmip.pie.exceptions import KmipOperationFailure
 import pytest
-from truenas_pylicensed import LicenseError
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import KMIPEntry
@@ -18,7 +17,7 @@ from middlewared.service import CallError
 from middlewared.service.context import ServiceContext
 
 
-def _context(monkeypatch, *, column="HW+K", daemon_error=False, datasets=(), disks=()):
+def _context(monkeypatch, *, column="HW+K", datasets=(), disks=()):
     m = Middleware()
     m.call_hook_sync = Mock()
     m.services.kmip.config = lambda: KMIPEntry(
@@ -34,10 +33,6 @@ def _context(monkeypatch, *, column="HW+K", daemon_error=False, datasets=(), dis
     )
     facts = facts_for_column(LicenseFeature.KMIP, column)
     install_entitlements(m, facts)
-    code = LicenseError.DAEMON_UNAVAILABLE if daemon_error else LicenseError.OK
-    monkeypatch.setattr("middlewared.plugins.kmip.connection.verify", lambda: SimpleNamespace(code=code))
-    monkeypatch.setattr("middlewared.plugins.kmip.connection.get_hardware_class", lambda: facts.hardware_class)
-    monkeypatch.setattr("middlewared.plugins.kmip.connection.get_license", lambda status: facts.license)
     tables = {"storage.encrypteddataset": list(datasets), "storage.disk": list(disks)}
     m["datastore.query"] = lambda table, filters=None, options=None: tables[table]
     m["datastore.config"] = lambda table, options=None: {"id": 1, "kmip_uid": None, "sed_passwd": ""}
@@ -62,27 +57,22 @@ def _context(monkeypatch, *, column="HW+K", daemon_error=False, datasets=(), dis
     ],
 )
 @pytest.mark.parametrize(
-    "column,daemon_error,rows,direction",
+    "column,rows,direction",
     [
-        ("HW+K", False, True, "push"),
-        ("CE+L", False, True, "pull"),
-        ("CE+L", True, True, None),
-        ("CE+L", False, False, None),
+        ("HW+K", True, "push"),
+        ("CE+L", True, "pull"),
+        ("CE+L", False, None),
     ],
 )
-def test_kmip_sync_direction(monkeypatch, module, sync, pending_row, column, daemon_error, rows, direction):
-    """Unentitled keys come back; a license daemon blip touches nothing; "nothing pending" is not "unreachable"."""
+def test_kmip_sync_direction(monkeypatch, module, sync, pending_row, column, rows, direction):
+    """Unentitled keys come back; "nothing pending" is not "unreachable"."""
     called = []
     prefix = "zfs" if module is zfs_keys else "sed"
     for name in ("push", "pull"):
         monkeypatch.setattr(module, f"{name}_{prefix}_keys", lambda *args, name=name: called.append(name) or [])
-    ctx = _context(monkeypatch, column=column, daemon_error=daemon_error, **(pending_row if rows else {}))
+    ctx = _context(monkeypatch, column=column, **(pending_row if rows else {}))
 
-    if daemon_error:
-        with pytest.raises(CallError, match="license daemon unavailable"):
-            sync(ctx)
-    else:
-        assert sync(ctx) == []
+    assert sync(ctx) == []
     assert called == ([direction] if direction else [])
 
 

@@ -1,5 +1,4 @@
 import ast
-import errno
 import glob
 import importlib
 import os
@@ -7,11 +6,10 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from truenas_pylicensed import LicenseError
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.common.license import LicenseDelegate
-from middlewared.plugins.truenas.license import ALERT_ONLY, TrueNASLicenseService, setup, snapshot
+from middlewared.plugins.truenas.license import ALERT_ONLY, TrueNASLicenseService, setup
 from middlewared.plugins.vm import VMLicenseDelegate
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import FakeJob, Middleware, fake_service_control
@@ -159,24 +157,6 @@ async def test_key_disagreeing_with_installed_license_is_skipped(registry):
 
 
 @pytest.mark.asyncio
-async def test_failed_revoke_check_leaves_the_usage_alert_alone(registry):
-    middleware = Middleware()
-    middleware.services.truenas.entitlements.usage = AsyncMock(
-        return_value={str(LicenseFeature.DEDUP): {"entitled": False, "in_use": True, "message": "x"}}
-    )
-    service = await license_service(middleware)
-
-    with patch(
-        "middlewared.plugins.truenas.license.snapshot",
-        Mock(side_effect=CallError("license daemon unavailable", errno.EAGAIN)),
-    ):
-        await service.refresh_usage_alert()
-
-    middleware.services.alert.oneshot_create.assert_not_called()
-    middleware.services.alert.oneshot_delete.assert_not_called()
-
-
-@pytest.mark.asyncio
 async def test_ha_in_use_alone_clears_the_usage_alert(registry):
     middleware = Middleware()
     middleware.services.truenas.entitlements.usage = AsyncMock(
@@ -237,16 +217,6 @@ async def test_running_override_restarts_a_unit_still_activating():
     d, calls = delegate(started=False)
     await d.control("s3", "RESTART", running=True)
     assert [call[0] for call in calls] == ["RESTART"]
-
-
-@pytest.mark.parametrize(
-    "code", [LicenseError.DAEMON_UNAVAILABLE, LicenseError.DAEMON_ERROR, LicenseError.INTERNAL_ERROR]
-)
-def test_snapshot_refuses_daemon_errors(code):
-    """A daemon blip read as unlicensed would revoke every feature."""
-    with pytest.raises(CallError) as e:
-        snapshot(Mock(code=code))
-    assert e.value.errno == errno.EAGAIN
 
 
 def vm_row(id_, autostart, state):

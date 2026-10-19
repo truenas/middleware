@@ -86,10 +86,7 @@ class _JournalEntry(TypedDict):
 
 
 def snapshot(status: LicenseStatus | None = None) -> dict[str, bool]:
-    """Entitlement of every policy key. Refuses rather than reading a daemon error as unlicensed."""
     status = verify() if status is None else status
-    if status.code in DAEMON_ERRORS:
-        raise CallError("license daemon unavailable", errno.EAGAIN)
     facts = EntitlementFacts(hardware_class=get_hardware_class(), license=get_license(status))
     return {key: check_entitlement(key, facts).entitled for key in POLICY}
 
@@ -468,18 +465,7 @@ class TrueNASLicenseService(Service):
     async def refresh_usage_alert(self) -> None:
         async with _usage_alert_lock:
             try:
-                # Its snapshot refuses a daemon error, which would read as "nothing is licensed" and list
-                # every configured feature; the existing alert is left as it is until the daemon answers.
                 revokes = await self.revoke_pending()
-            except CallError as e:
-                if e.errno != errno.EAGAIN:
-                    self.logger.error("license: failed to refresh the unlicensed features alert", exc_info=True)
-                return
-            except Exception:
-                self.logger.error("license: failed to refresh the unlicensed features alert", exc_info=True)
-                return
-
-            try:
                 usage = await self.call2(self.s.truenas.entitlements.usage)
                 lines = [
                     f"{FEATURE_DISPLAY_NAMES[key]}: {entry['message']}"

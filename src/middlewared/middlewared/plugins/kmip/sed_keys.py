@@ -6,11 +6,9 @@
 from __future__ import annotations
 
 import contextlib
-import errno
 from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.source.kmip import KMIPSEDDisksSyncFailureAlert, KMIPSEDGlobalPasswordSyncFailureAlert
-from middlewared.service import CallError
 
 from .connection import (
     connection_config,
@@ -46,10 +44,7 @@ There are 2 possible cases which we need to handle for system.advanced
 """
 
 
-def sed_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool | None) -> bool:
-    if push is None:
-        # The direction is unknown, so a key pending either way is pending.
-        return sed_keys_pending_sync(context, store, True) or sed_keys_pending_sync(context, store, False)
+def sed_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool) -> bool:
     adv_config = context.middleware.call_sync('datastore.config', 'system.advanced', {'prefix': 'adv_'})
     disks = context.middleware.call_sync('datastore.query', 'storage.disk', [], {'prefix': 'disk_'})
     for disk in disks:
@@ -184,8 +179,6 @@ def sync_sed_keys(
     context: ServiceContext, store: KMIPKeyStore, job: Job, ids: list[Any] | None = None,
 ) -> list[str] | None:
     push = push_direction(context, 'manage_sed_disks')
-    if push is None:
-        raise CallError('license daemon unavailable', errno.EAGAIN)
     if not sed_keys_pending_sync(context, store, push):
         return []
     conn_successful = test_connection(context, None, True)

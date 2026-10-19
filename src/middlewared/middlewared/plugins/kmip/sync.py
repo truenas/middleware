@@ -5,10 +5,7 @@
 
 from __future__ import annotations
 
-import errno
 from typing import TYPE_CHECKING, Any
-
-from middlewared.service import CallError
 
 from .connection import push_direction, test_connection
 from .keystore import KMIPKeyStore
@@ -44,14 +41,7 @@ async def sync_keys(context: ServiceContext, store: KMIPKeyStore) -> None:
             not await context.middleware.call('failover.is_single_master_node'):
         return
     for method in ('kmip.sync_zfs_keys', 'kmip.sync_sed_keys'):
-        sync_job = await context.middleware.call(method, job_silent=True)
-        try:
-            await sync_job.wait(raise_error=True)
-        except CallError as e:
-            if e.errno != errno.EAGAIN:
-                raise
-            context.logger.warning('kmip: key sync skipped, license daemon unavailable')
-            return
+        await (await context.middleware.call(method, job_silent=True)).wait(raise_error=True)
 
 
 async def escrowed_count(context: ServiceContext) -> int:
