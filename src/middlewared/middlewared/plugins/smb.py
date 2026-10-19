@@ -1939,18 +1939,27 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def delete(self, attachments):
         # Deleting through sharing.smb.delete would regenerate smb4.conf once per share
         share_list = await self.middleware.call('sharing.smb.smbconf_list_shares')
-        for attachment in attachments:
-            await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
-            if (share_name := get_share_name(attachment)) in share_list:
-                await self.middleware.call('sharing.smb.close_share', share_name)
-            await self.remove_alert(attachment)
-            self.middleware.send_event('sharing.smb.query', 'REMOVED', id=attachment['id'])
-
-        if attachments:
-            await self.restart_reload_services(attachments)
-            # Only once smb4.conf no longer lists the shares
+        deleted = []
+        try:
             for attachment in attachments:
-                await self.middleware.call('sharing.smb.delete_share_acl', get_share_name(attachment))
+                await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
+                deleted.append(attachment)
+                await self.remove_alert(attachment)
+                self.middleware.send_event('sharing.smb.query', 'REMOVED', id=attachment['id'])
+        finally:
+            if deleted:
+                try:
+                    await self.restart_reload_services(deleted)
+                finally:
+                    # Disconnecting clients only once smb4.conf no longer lists the shares keeps them from
+                    # connecting again, and a share created later under the same name must not inherit the ACL.
+                    for attachment in deleted:
+                        share_name = get_share_name(attachment)
+                        if share_name in share_list:
+                            await self.middleware.call('sharing.smb.close_share', share_name)
+                        await self.middleware.call('sharing.smb.delete_share_acl', share_name)
+
+        if deleted:
             await self.call2(self.s.truesearch.configure)
 
     async def stop(self, attachments):

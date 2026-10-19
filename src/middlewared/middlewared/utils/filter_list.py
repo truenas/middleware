@@ -225,7 +225,7 @@ def _filter_fields(filters: Sequence[Any]) -> Iterable[str]:
     for f in filters:
         if len(f) == 2 and f[0] == 'OR':
             yield from _filter_fields(f[1])
-        elif f and isinstance(f[0], list):
+        elif f and isinstance(f[0], (list, tuple)):
             # AND group inside OR
             yield from _filter_fields(f)
         else:

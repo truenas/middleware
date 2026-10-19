@@ -90,6 +90,11 @@ async def test__query_computes_fields_that_filters_read():
             {"select": ["id"]},
             ["id", "a", "b", "c"],
         ),
+        (
+            [("OR", [(("a", "=", 1), ("b", "=", 2), ("d", "=", 4)), ("c", "=", 3)])],
+            {"select": ["id"]},
+            ["id", "a", "b", "d", "c"],
+        ),
     ],
 )
 def test__select_with_query_fields(filters, options, fields):
