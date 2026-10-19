@@ -153,7 +153,7 @@ class SMBService(ConfigService):
         if self.middleware.call_sync('failover.is_single_master_node'):
             smb_shares = self.middleware.call_sync('sharing.smb.query', [
                 [share_field.ENABLED, '=', True]
-            ])
+            ], {'force_sql_filters': True})
         else:
             # Do not include SMB shares in configuration on standby controller
             smb_shares = []
@@ -1141,8 +1141,22 @@ class SharingSMBService(SharingService):
 
         # if share is currently active we need to gracefully clean up config and clients
         if share_name in share_list:
-            await self.toggle_share(share_name, False)
+            await self.close_share(share_name)
 
+        await self.middleware.call('etc.generate', 'smb')
+        await self.delete_share_acl(share_name)
+
+        if is_time_machine_share(share):
+            await (await self.call2(
+                self.s.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False)
+            )).wait(raise_error=True)
+
+        await self.call2(self.s.truesearch.configure)
+
+        return result
+
+    @private
+    async def delete_share_acl(self, share_name):
         cluster = (await self.middleware.call('datastore.config', 'services.cifs'))['cifs_srv_stateful_failover']
         try:
             await self.middleware.run_in_thread(remove_share_acl, share_name, cluster)
@@ -1152,17 +1166,6 @@ class SharingSMBService(SharingService):
                 self.logger.warning('%s: Failed to remove share ACL', share_name, exc_info=True)
         except Exception:
             self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
-
-        if is_time_machine_share(share):
-            await (await self.call2(
-                self.s.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False)
-            )).wait(raise_error=True)
-
-        await self.middleware.call('etc.generate', 'smb')
-
-        await self.call2(self.s.truesearch.configure)
-
-        return result
 
     @private
     async def legacy_afp_check(self, data, schema, verrors):
@@ -1934,12 +1937,21 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
             )
 
     async def delete(self, attachments):
+        # Deleting through sharing.smb.delete would regenerate smb4.conf once per share
+        share_list = await self.middleware.call('sharing.smb.smbconf_list_shares')
         for attachment in attachments:
-            await self.middleware.call('sharing.smb.delete', attachment['id'])
+            await self.middleware.call('datastore.delete', self.datastore_model, attachment['id'])
+            if (share_name := get_share_name(attachment)) in share_list:
+                await self.middleware.call('sharing.smb.close_share', share_name)
             await self.remove_alert(attachment)
+            self.middleware.send_event('sharing.smb.query', 'REMOVED', id=attachment['id'])
 
         if attachments:
             await self.restart_reload_services(attachments)
+            # Only once smb4.conf no longer lists the shares
+            for attachment in attachments:
+                await self.middleware.call('sharing.smb.delete_share_acl', get_share_name(attachment))
+            await self.call2(self.s.truesearch.configure)
 
     async def stop(self, attachments):
         for share in attachments:

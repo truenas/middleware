@@ -219,3 +219,26 @@ def filter_getattrs(filters: list[Sequence[Any]]) -> set[str]:
         else:
             raise ValueError('Invalid filter.')
     return attrs
+
+
+def _filter_fields(filters: Sequence[Any]) -> Iterable[str]:
+    for f in filters:
+        if len(f) == 2 and f[0] == 'OR':
+            yield from _filter_fields(f[1])
+        elif f and isinstance(f[0], list):
+            # AND group inside OR
+            yield from _filter_fields(f)
+        else:
+            yield f[0].split('.', 1)[0]
+
+
+def select_with_query_fields(filters: Sequence[Any], options: Mapping[str, Any]) -> list[str | list[str]]:
+    """
+    `options['select']` plus the top-level fields that `filters` read, for an extend context that skips computing
+    unselected fields. Filters run before `select` is applied, so those fields must still be computed. Empty when
+    `select` is, meaning every field.
+    """
+    if not (select := options.get('select')):
+        return []
+
+    return [*select, *_filter_fields(filters)]

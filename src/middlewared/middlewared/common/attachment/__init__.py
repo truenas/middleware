@@ -213,11 +213,11 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
             self.service = self.service_class._config.service  # type: ignore[attr-defined]
 
     async def get_query_filters(self, enabled: bool, options: dict[str, Any] | None = None) -> list[Any]:
-        options = options or {}
-        filters = [[self.enabled_field, "=", enabled]]
-        if "locked" in options:
-            filters += [[self.locked_field, "=", options["locked"]]]
-        return filters
+        """
+        Filters that select this delegate's items. `query` runs them in SQL, so they may only name database
+        columns, never an extended field such as the locked field.
+        """
+        return [[self.enabled_field, "=", enabled]]
 
     async def start_service(self) -> None:
         if (
@@ -234,9 +234,21 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         options = options or {}
         check_parent = options.get("check_parent", False)
         exact_match = options.get("exact_match", False)
+        filter_locked = "locked" in options
         for resource in await self.middleware.call(
-            f"{self.namespace}.query", await self.get_query_filters(enabled, options)
+            f"{self.namespace}.query",
+            await self.get_query_filters(enabled, options),
+            # Lock state costs a lookup per row, so compute it only when filtering on it
+            {"force_sql_filters": True, "extra": {"retrieve_locked_info": filter_locked}},
         ):
+            if filter_locked:
+                if isinstance(resource, dict):
+                    # FIXME: This must be eventually removed
+                    locked = resource[self.locked_field]
+                else:
+                    locked = getattr(resource, self.locked_field)
+                if locked != options["locked"]:
+                    continue
             if await self.is_child_of_path(resource, path, check_parent, exact_match):
                 results.append(resource)
         return results

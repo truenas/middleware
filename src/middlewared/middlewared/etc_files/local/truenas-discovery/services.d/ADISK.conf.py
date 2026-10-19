@@ -1,6 +1,7 @@
 from truenas_pymdns.server.config import ServiceConfig, generate_service_config
 
 from middlewared.plugins.etc import FileShouldNotExist
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.mdns import ip_addresses_to_interface_names
 
 # Time Machine (adisk) TXT records:
@@ -21,10 +22,13 @@ def render(service, middleware, render_ctx):
     if not render_ctx['service.started_or_enabled']:
         raise FileShouldNotExist()
 
-    shares = middleware.call_sync('sharing.smb.query', [
-        ['OR', [['purpose', '=', 'TIMEMACHINE_SHARE'], ['options.timemachine', '=', True]]],
-        ['enabled', '=', True], ['locked', '=', False],
-    ])
+    shares = filter_list(
+        middleware.call_sync('sharing.smb.query', [['enabled', '=', True]], {'force_sql_filters': True}),
+        [
+            ['OR', [['purpose', '=', 'TIMEMACHINE_SHARE'], ['options.timemachine', '=', True]]],
+            ['locked', '=', False],
+        ],
+    )
     if not shares:
         raise FileShouldNotExist()
 
