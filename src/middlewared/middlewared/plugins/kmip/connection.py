@@ -103,14 +103,6 @@ def delete_kmip_secret_data(context: ServiceContext, uid: str) -> bool:
         return revoke_and_destroy_key(uid, conn, context.middleware.logger)
 
 
-def delete_pulled_secret_data(context: ServiceContext, uid: str, key_id: str) -> bool:
-    try:
-        return delete_kmip_secret_data(context, uid)
-    except CallError:
-        context.logger.warning('%s: failed to delete key from KMIP server', key_id, exc_info=True)
-        return False
-
-
 def revoke_key(uid: str, conn: ProxyKmipClient) -> None:
     # Revoke key from the KMIP Server
     try:

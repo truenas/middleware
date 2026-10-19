@@ -13,7 +13,6 @@ from middlewared.alert.source.kmip import KMIPSEDDisksSyncFailureAlert, KMIPSEDG
 from .connection import (
     connection_config,
     delete_kmip_secret_data,
-    delete_pulled_secret_data,
     kmip_connection,
     push_direction,
     register_secret_data,
@@ -142,14 +141,13 @@ def pull_sed_keys(context: ServiceContext, store: KMIPKeyStore) -> list[str]:
         except Exception:
             failed.append(disk['identifier'])
         else:
+            update_data = {'passwd': key, 'kmip_uid': None}
             context.middleware.call_sync(
-                'datastore.update', 'storage.disk', disk['identifier'], {'passwd': key}, {'prefix': 'disk_'}
+                'datastore.update', 'storage.disk', disk['identifier'], update_data, {'prefix': 'disk_'}
             )
             store.disks_keys.pop(disk['identifier'], None)
-            if connection_successful and delete_pulled_secret_data(context, disk['kmip_uid'], disk['identifier']):
-                context.middleware.call_sync(
-                    'datastore.update', 'storage.disk', disk['identifier'], {'kmip_uid': None}, {'prefix': 'disk_'}
-                )
+            if connection_successful:
+                delete_kmip_secret_data(context, disk['kmip_uid'])
     adv_config = context.middleware.call_sync('datastore.config', 'system.advanced', {'prefix': 'adv_'})
     if adv_config['kmip_uid']:
         key = None
@@ -163,13 +161,14 @@ def pull_sed_keys(context: ServiceContext, store: KMIPKeyStore) -> list[str]:
                     key = retrieve_secret_data(adv_config['kmip_uid'], conn)
         if key:
             context.middleware.call_sync(
-                'datastore.update', 'system.advanced', adv_config['id'], {'adv_sed_passwd': key}
+                'datastore.update', 'system.advanced',
+                adv_config['id'], {
+                    'adv_sed_passwd': key, 'adv_kmip_uid': None
+                }
             )
             store.global_sed_key = ''
-            if connection_successful and delete_pulled_secret_data(context, adv_config['kmip_uid'], 'Global SED Key'):
-                context.middleware.call_sync(
-                    'datastore.update', 'system.advanced', adv_config['id'], {'adv_kmip_uid': None}
-                )
+            if connection_successful:
+                delete_kmip_secret_data(context, adv_config['kmip_uid'])
         else:
             failed.append('Global SED Key')
     return failed

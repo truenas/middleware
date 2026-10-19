@@ -16,7 +16,6 @@ from middlewared.service import CallError, ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 
 from .connection import test_connection
-from .sync import clear_pulled_kmip_uids
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -157,8 +156,6 @@ class KMIPConfigServicePart(ConfigServicePart[KMIPEntry]):
                 error_str = '\n'.join(errors)
                 raise CallError(f'Failed to sync keys from {old.server} to host: {error_str}')
 
-            # A destroy the old server refused or never received must not block leaving it.
-            await clear_pulled_kmip_uids(self)
             if await self.call2(self.s.kmip.kmip_sync_pending):
                 raise CallError(SYNC_ERROR)
 

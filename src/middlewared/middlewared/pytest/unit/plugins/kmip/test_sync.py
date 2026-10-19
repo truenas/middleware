@@ -1,10 +1,6 @@
-import contextlib
 import logging
-from types import SimpleNamespace
 from unittest.mock import Mock
 
-from kmip.core import enums
-from kmip.pie.exceptions import KmipOperationFailure
 import pytest
 from truenas_pylicensed.features import LicenseFeature
 
@@ -76,44 +72,6 @@ def test_kmip_sync_direction(monkeypatch, module, sync, pending_row, column, row
     assert called == ([direction] if direction else [])
 
 
-@pytest.mark.parametrize(
-    "delete,uid_cleared",
-    [
-        ("destroyed", True),
-        (KmipOperationFailure(enums.ResultStatus.OPERATION_FAILED, enums.ResultReason.ITEM_NOT_FOUND, "gone"), True),
-        (KmipOperationFailure(enums.ResultStatus.OPERATION_FAILED, enums.ResultReason.PERMISSION_DENIED, "no"), False),
-        (CallError("Failed to connect to KMIP Server"), False),
-    ],
-)
-def test_kmip_pull_clears_uid_only_once_the_server_copy_is_gone(monkeypatch, delete, uid_cleared):
-    """Clearing `kmip_uid` before the server delete orphans the escrowed copy for good."""
-    row = {"id": 1, "name": "tank/a", "encryption_key": None, "kmip_uid": "uid-a"}
-    ctx = _context(monkeypatch, column="CE+L", datasets=[row])
-    ctx.middleware.services.zfs.resource.list_impl = lambda query: [{"name": "tank/a"}]
-    monkeypatch.setattr(zfs_keys, "check_key", lambda *args, **kwargs: True)
-    updates = []
-    ctx.middleware["datastore.update"] = lambda table, id_, data: updates.append(data)
-
-    def destroy(uid):
-        if isinstance(delete, Exception):
-            raise delete
-
-    @contextlib.contextmanager
-    def connection(*args):
-        if isinstance(delete, CallError):
-            raise delete
-        yield SimpleNamespace(revoke=lambda *args: None, destroy=destroy)
-
-    monkeypatch.setattr("middlewared.plugins.kmip.connection.connection_config", lambda *args: {})
-    monkeypatch.setattr("middlewared.plugins.kmip.connection.kmip_connection", connection)
-    store = KMIPKeyStore()
-    store.zfs_keys["tank/a"] = "key-a"
-
-    assert zfs_keys.sync_zfs_keys(ctx, store, None, None) == []
-    expected = [{"encryption_key": "key-a"}] + ([{"kmip_uid": None}] if uid_cleared else [])
-    assert updates == expected
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "zfs,sed,error",
@@ -136,4 +94,16 @@ async def test_kmip_delegate_fails_unless_both_syncs_finish(zfs, sed, error):
             await delegate.apply({LicenseFeature.KMIP: False})
     else:
         await delegate.apply({LicenseFeature.KMIP: False})
+    assert called == ["kmip.sync_zfs_keys", "kmip.sync_sed_keys"]
+
+
+@pytest.mark.asyncio
+async def test_kmip_delegate_zfs_failure_still_syncs_sed():
+    m = Middleware()
+    called = []
+    m["kmip.sync_zfs_keys"] = lambda: called.append("kmip.sync_zfs_keys") or FakeJob(error="boom")
+    m["kmip.sync_sed_keys"] = lambda: called.append("kmip.sync_sed_keys") or FakeJob(["Global SED Key"])
+
+    with pytest.raises(CallError, match="kmip.sync_zfs_keys: boom; kmip.sync_sed_keys: Global SED Key"):
+        await KMIPLicenseDelegate(m).apply({LicenseFeature.KMIP: False})
     assert called == ["kmip.sync_zfs_keys", "kmip.sync_sed_keys"]

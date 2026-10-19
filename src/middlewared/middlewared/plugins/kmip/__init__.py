@@ -98,10 +98,6 @@ class KMIPService(GenericConfigService[KMIPEntry]):
         await sync_mod.initialize_keys(self.context, self._store, job)
 
     @private
-    async def escrowed_count(self) -> int:
-        return await sync_mod.escrowed_count(self.context)
-
-    @private
     async def kmip_memory_keys(self) -> dict[str, Any]:
         return sync_mod.kmip_memory_keys(self._store)
 
@@ -150,9 +146,12 @@ class KMIPLicenseDelegate(LicenseDelegate):
 
     async def apply(self, changes: dict[str, bool]) -> None:
         failures = []
-        for method in ('kmip.sync_zfs_keys', 'kmip.sync_sed_keys'):
-            result = await (await self.middleware.call(method)).wait(raise_error=True)
-            if result is None:
+        jobs = {method: await self.middleware.call(method) for method in ('kmip.sync_zfs_keys', 'kmip.sync_sed_keys')}
+        for method, sync_job in jobs.items():
+            result = await sync_job.wait(raise_error=False)
+            if sync_job.error:
+                failures.append(f'{method}: {sync_job.error}')
+            elif result is None:
                 failures.append(f'{method}: KMIP server unreachable')
             elif result:
                 failures.append(f'{method}: {", ".join(result)}')
@@ -160,8 +159,9 @@ class KMIPLicenseDelegate(LicenseDelegate):
             raise CallError('; '.join(failures))
 
     async def revoke_pending(self) -> str | None:
-        n = await self.call2(self.s.kmip.escrowed_count)
-        return f'{n} key(s) still escrowed on the KMIP server' if n else None
+        if await self.call2(self.s.kmip.kmip_sync_pending):
+            return 'Keys not yet pulled back from the KMIP server'
+        return None
 
 
 async def initialize_kmip_keys(middleware: Middleware) -> None:

@@ -14,7 +14,6 @@ from middlewared.plugins.zfs.encryption import check_key
 from .connection import (
     connection_config,
     delete_kmip_secret_data,
-    delete_pulled_secret_data,
     kmip_connection,
     push_direction,
     register_secret_data,
@@ -126,14 +125,11 @@ def pull_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any) -> lis
         except Exception:
             failed.append(ds['name'])
         else:
-            context.middleware.call_sync(
-                'datastore.update', 'storage.encrypteddataset', ds['id'], {'encryption_key': key}
-            )
+            update_data = {'encryption_key': key, 'kmip_uid': None}
+            context.middleware.call_sync('datastore.update', 'storage.encrypteddataset', ds['id'], update_data)
             store.zfs_keys.pop(ds['name'], None)
-            if connection_successful and delete_pulled_secret_data(context, ds['kmip_uid'], ds['name']):
-                context.middleware.call_sync(
-                    'datastore.update', 'storage.encrypteddataset', ds['id'], {'kmip_uid': None}
-                )
+            if connection_successful:
+                delete_kmip_secret_data(context, ds['kmip_uid'])
     prune_zfs_keys(context, store)
     return failed
 
