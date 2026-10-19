@@ -8,9 +8,8 @@ from middlewared.utils.filter_list import filter_list
 class FakeJob:
     """Stands in for a `Job` returned by a job-decorated method."""
 
-    def __init__(self, result=None, error=None):
+    def __init__(self, result=None):
         self.result = result
-        self.error = error
         self.progress = []
 
     async def wait(self, raise_error: bool = False):
