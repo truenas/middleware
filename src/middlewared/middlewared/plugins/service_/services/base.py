@@ -82,8 +82,16 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     def _get_systemd_unit_name(self):
         return f"{self.systemd_unit}.service"
 
+    async def _reset_sidecar_rate_limits(self, action: str) -> None:
+        if action not in {"Start", "Restart", "Reload"}:
+            return
+
+        for unit in self.systemd_sidecar_units:
+            await system_dbus.reset_failed_unit(unit)
+
     async def _unit_action(self, action, wait=True):
         unit_name = self._get_systemd_unit_name()
+        await self._reset_sidecar_rate_limits(action)
         if wait:
             await self._call_unit_action_and_wait(unit_name, action)
         else:
@@ -175,6 +183,7 @@ class SwitchableSimpleService(SimpleService):
         if unit is None:
             return
         unit_name = f"{unit}.service"
+        await self._reset_sidecar_rate_limits(action)
         if wait:
             await self._call_unit_action_and_wait(unit_name, action)
         else:
