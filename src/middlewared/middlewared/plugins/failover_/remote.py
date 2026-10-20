@@ -351,12 +351,7 @@ class FailoverService(Service):
         if self.CLIENT.remote_ip is not None:
             return
 
-        remote_ip = await self.middleware.call('failover.remote_ip')
-        # A concurrent caller may have started the client during the await.
-        if self.CLIENT.remote_ip is not None:
-            return
-
-        self.CLIENT.remote_ip = remote_ip
+        self.CLIENT.remote_ip = await self.middleware.call('failover.remote_ip')
         self.CLIENT.middleware = self.middleware
         start_daemon_thread(name="fo_rem_client", target=self.CLIENT.run)
 

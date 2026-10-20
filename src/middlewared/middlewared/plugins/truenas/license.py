@@ -194,8 +194,7 @@ class TrueNASLicenseService(Service):
     def _delegates_for(self, keys: Iterable[str]) -> list[LicenseDelegate]:
         keys = set(keys)
         delegates: list[LicenseDelegate] = []
-        # HA goes first: other delegates read the peer through the remote client its grant creates.
-        for key in sorted(POLICY, key=lambda key: key != LicenseFeature.HA):
+        for key in POLICY:
             if key in keys and (delegate := self.delegates.get(key)) is not None and delegate not in delegates:
                 delegates.append(delegate)
         return delegates

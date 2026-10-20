@@ -1336,7 +1336,6 @@ class HALicenseDelegate(LicenseDelegate):
         granted = changes[LicenseFeature.HA]
         if granted:
             await attempt(_start_stop_vrrp_threads(self.middleware))
-            await attempt(self.middleware.call('failover.ensure_remote_client'))
         # Without the VRRP threads a node with failover VIPs no longer reacts to keepalived events.
         elif await attempt(self.middleware.call('interface.query', [['failover_virtual_aliases', '!=', []]])) == []:
             await attempt(_start_stop_vrrp_threads(self.middleware))
