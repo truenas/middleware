@@ -224,6 +224,8 @@ def periodic_snapshot_tasks():
     (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"],
           lifetimes=[dict(schedule={"hour": "0"}, lifetime_value=30, lifetime_unit="DAY")]),
      "lifetimes"),
+
+    (dict(target_dataset=f"{pool}/ix-apps"), "target_dataset"),
 ])
 def test_create_replication(ssh_credentials, periodic_snapshot_tasks, req, error):
     if "ssh_credentials" in req:

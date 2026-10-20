@@ -14,14 +14,12 @@ from middlewared.api.current import (
     ZFSResourceEncryptionExportReplicationKeysArgsData,
     ZFSResourceQuery,
 )
-from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.service_exception import CallError, InstanceNotFound
-from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem.directory import directory_is_empty
 
 from . import resource_query as _query
 from .encryption_keys import path_filters, stored_keys
-from .utils import INTERNAL_PATHS, get_encryption_info
+from .utils import get_encryption_info, has_internal_path
 
 if TYPE_CHECKING:
     from middlewared.api.current import ReplicationEntry
@@ -98,18 +96,9 @@ def encryption_view(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def is_internal_dataset_name(path: str) -> bool:
-    if path.split("/")[0] in BOOT_POOL_NAME_VALID:
-        return True
-    for i in (*INTERNAL_PATHS, CONTAINER_DS_NAME):
-        if f"/{i}" in path:
-            return True
-    return False
-
-
 def encryption_state(context: ServiceContext, tls: Any, path: str) -> dict[str, Any]:
     rows = []
-    if not is_internal_dataset_name(path):
+    if not has_internal_path(path):
         rows = _query.list_impl(context, tls, ZFSResourceQuery(paths=[path], properties=["mountpoint", "encryption"]))
     if not rows:
         raise InstanceNotFound(f"Dataset {path} does not exist")

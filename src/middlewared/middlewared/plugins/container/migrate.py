@@ -538,7 +538,7 @@ def migrate_specific_pool(
 
             context.call_sync2(
                 context.s.zfs.resource.rename_impl,
-                ZFSResourceRenameArgsData(current_name=dataset['name'], new_name=dst_dataset),
+                ZFSResourceRenameArgsData(current_name=dataset['name'], new_name=dst_dataset, bypass=True),
             )
             # From here on the dataset lives in its native location, where the mount
             # properties set above are the correct ones to keep.
@@ -567,7 +567,7 @@ def migrate_specific_pool(
                 try:
                     context.call_sync2(
                         context.s.zfs.resource.rename_impl,
-                        ZFSResourceRenameArgsData(current_name=dst_dataset, new_name=dataset['name']),
+                        ZFSResourceRenameArgsData(current_name=dst_dataset, new_name=dataset['name'], bypass=True),
                     )
                 except Exception:
                     context.logger.error(
@@ -745,7 +745,7 @@ def relocate_container_origin(context: ServiceContext, container_ds: str) -> str
         )
         context.call_sync2(
             context.s.zfs.resource.rename_impl,
-            ZFSResourceRenameArgsData(current_name=origin_dataset, new_name=final_target),
+            ZFSResourceRenameArgsData(current_name=origin_dataset, new_name=final_target, bypass=True),
         )
     except Exception:
         context.logger.error(

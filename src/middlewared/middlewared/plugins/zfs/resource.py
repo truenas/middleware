@@ -472,7 +472,8 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def rename_impl(self, tls: Any, data: ZFSResourceRenameArgsData) -> None:
         _ops.rename_impl(tls, data)
-        self.middleware.send_event("zfs.resource.list", "REMOVED", id=data.current_name)
+        if not has_internal_path(data.current_name):
+            self.middleware.send_event("zfs.resource.list", "REMOVED", id=data.current_name)
         if not has_internal_path(data.new_name):
             for entry in _query.list_impl(self.context, tls, ZFSResourceQuery(paths=[data.new_name], properties=None)):
                 self.middleware.send_event("zfs.resource.list", "ADDED", id=data.new_name, fields=entry)

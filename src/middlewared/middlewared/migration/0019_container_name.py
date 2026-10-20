@@ -32,7 +32,7 @@ async def migrate(middleware: Middleware) -> None:
         try:
             await middleware.call2(
                 middleware.services.zfs.resource.rename_impl,
-                ZFSResourceRenameArgsData(current_name=dataset, new_name=new_dataset),
+                ZFSResourceRenameArgsData(current_name=dataset, new_name=new_dataset, bypass=True),
             )
         except Exception:
             middleware.logger.error(

@@ -44,7 +44,7 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
             # Orphan dataset without a snapshot. Probably leftover from a
             # previous `pull` attempt that failed and did not clean up
             # properly. Delete it.
-            context.call_sync2(context.s.zfs.resource.destroy_impl, dataset_name)
+            context.call_sync2(context.s.zfs.resource.destroy_impl, dataset_name, bypass=True)
         else:
             # Image dataset already exists, no action needed.
             return snapshot_name
@@ -113,7 +113,8 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
             job.set_progress(98, 'Creating ZFS snapshot...')
             context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateArgsData(
                 dataset=dataset_name,
-                name='image'
+                name='image',
+                bypass=True,
             ))
 
             job.set_progress(100, 'Image pull completed successfully')
@@ -123,5 +124,5 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
         except (tarfile.TarError, OSError) as e:
             raise CallError(f'Failed to extract image tarball: {str(e)}')
     except Exception:
-        context.call_sync2(context.s.zfs.resource.destroy_impl, dataset_name)
+        context.call_sync2(context.s.zfs.resource.destroy_impl, dataset_name, bypass=True)
         raise

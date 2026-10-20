@@ -47,8 +47,8 @@ def test_value_the_zfs_model_rejects_is_a_validation_error():
 
 
 def test_internal_dataset_is_not_found():
-    parent = os.path.join(pool_name, "shim_internal")
-    internal = os.path.join(parent, "ix-apps")
+    parent = os.path.join(pool_name, "ix-applications")
+    internal = os.path.join(parent, "shim_internal")
     ssh(f"zfs create -p -o compression=zstd {internal}")
     try:
         with pytest.raises(ValidationErrors) as exc_info:
