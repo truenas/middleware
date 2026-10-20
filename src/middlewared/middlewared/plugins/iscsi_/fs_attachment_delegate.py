@@ -12,8 +12,8 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service_class = iSCSITargetExtentService
     set_triggers = frozenset({'volsize', 'readonly', 'snapdev'})
 
-    async def get_query_filters(self, enabled, options=None):
-        return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
+    def get_query_filters(self, enabled):
+        return [['type', '=', 'DISK']] + super().get_query_filters(enabled)
 
     async def delete(self, attachments):
         orphan_targets_ids = set()

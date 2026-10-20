@@ -212,7 +212,7 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         if not self.service:
             self.service = self.service_class._config.service  # type: ignore[attr-defined]
 
-    async def get_query_filters(self, enabled: bool, options: dict[str, Any] | None = None) -> list[Any]:
+    def get_query_filters(self, enabled: bool) -> list[Any]:
         """
         Filters that select this delegate's items. `query` runs them in SQL, so they may only name database
         columns, never an extended field such as the locked field.
@@ -237,7 +237,7 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         filter_locked = "locked" in options
         for resource in await self.middleware.call(
             f"{self.namespace}.query",
-            await self.get_query_filters(enabled, options),
+            self.get_query_filters(enabled),
             # Lock state costs a lookup per row, so compute it only when filtering on it
             {"force_sql_filters": True, "extra": {"retrieve_locked_info": filter_locked}},
         ):
