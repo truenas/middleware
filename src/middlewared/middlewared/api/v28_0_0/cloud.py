@@ -117,4 +117,6 @@ class BaseCloudEntry(BaseModel):
     args: FullAdmin[LongString] = Field(default="", description="(Slated for removal).")
     enabled: bool = Field(default=True, description="Can enable/disable the task.")
     job: dict | None = Field(description="Information regarding the task's job state, e.g. progress.")
-    locked: bool = Field(description="A locked task cannot run.")
+    locked: bool | None = Field(
+        description="A locked task cannot run. `null` if lock information was not requested.",
+    )

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, get_args
+from typing import TYPE_CHECKING, Any
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
@@ -137,11 +137,6 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
                     select_fields.add(entry)
             if self.locked_field not in select_fields:
                 retrieve_locked_info = False
-        if not retrieve_locked_info and not self._locked_nullable() and (
-            not select or self.locked_field in select_fields
-        ):
-            # A `None` the entry rejects would silently drop the row from the query result
-            retrieve_locked_info = True
 
         tier_map: dict[Any, Any] = {}
         if self.include_tier_info:
@@ -154,10 +149,6 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             "retrieve_locked_info": retrieve_locked_info,
             "tier_map": tier_map,
         }
-
-    def _locked_nullable(self) -> bool:
-        field = getattr(self._entry, "model_fields", {}).get(self.locked_field)
-        return field is not None and type(None) in get_args(field.annotation)
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         data = await self.sharing_task_extend(data, context["service_extend"])
