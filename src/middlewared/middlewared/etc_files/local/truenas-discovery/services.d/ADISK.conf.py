@@ -23,10 +23,8 @@ def render(service, middleware, render_ctx):
     if not render_ctx['service.started_or_enabled']:
         raise FileShouldNotExist()
 
-    shares = [
-        s for s in middleware.call_sync(
-            'sharing.smb.query', [[share_field.ENABLED, '=', True]], {'force_sql_filters': True},
-        )
+    shares = []
+    for s in middleware.call_sync('sharing.smb.query', [[share_field.ENABLED, '=', True]], {'force_sql_filters': True}):
         if (
             # Only LEGACY_SHARE options carry the timemachine key
             (
@@ -34,8 +32,9 @@ def render(service, middleware, render_ctx):
                 or s[share_field.OPTS].get(share_field.TIMEMACHINE) is True
             )
             and s[share_field.LOCKED] is False
-        )
-    ]
+        ):
+            shares.append(s)
+
     if not shares:
         raise FileShouldNotExist()
 
