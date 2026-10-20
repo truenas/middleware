@@ -74,11 +74,12 @@ def rclone_config_section(name: str, items: dict[str, Any]) -> str:
     ends it and the remainder is parsed as the next key (or fails the parse), so CR/LF are stripped. This keeps a
     pasted multi-line JSON token or service account file a valid single-line value.
 
-    goconfig trims whitespace around a value before treating one that starts with a backtick or a triple double-quote
-    as quoted, either truncating it at the last matching quote or rejecting the whole file. Wrapping such values (and
-    values with leading/trailing whitespace, which would otherwise be silently trimmed) in goconfig's own triple
-    double-quotes makes them read back verbatim: goconfig closes the quote at the last triple double-quote on the
-    line, so any newline-free value round-trips exactly.
+    goconfig trims whitespace around a value, so leading or trailing whitespace never reaches rclone.
+
+    goconfig treats a trimmed value that starts with a backtick or a triple double-quote as quoted, either truncating
+    it at the last matching quote or rejecting the whole file. Wrapping such a value in goconfig's own triple
+    double-quotes makes it read back verbatim: goconfig closes the quote at the last triple double-quote on the line,
+    so any newline-free value round-trips exactly.
     """
     out = f"[{name}]\n"
     for key, value in items.items():
@@ -86,9 +87,8 @@ def rclone_config_section(name: str, items: dict[str, Any]) -> str:
             value = json.dumps(value)
         else:
             value = str(value)
-        value = value.replace("\r", "").replace("\n", "")
-        stripped = value.strip()
-        if value != stripped or stripped.startswith(("`", '"""')):
+        value = value.replace("\r", "").replace("\n", "").strip()
+        if value.startswith(("`", '"""')):
             value = f'"""{value}"""'
         out += f"{key} = {value}\n"
     return out
