@@ -145,18 +145,26 @@ class KMIPLicenseDelegate(LicenseDelegate):
     features = (LicenseFeature.KMIP,)
 
     async def apply(self, changes: dict[str, bool]) -> None:
-        failures = []
+        if changes[LicenseFeature.KMIP]:
+            return
+        config = await self.call2(self.s.kmip.config)
+        if config.enabled:
+            # Not kmip.update: its sync-pending validation refuses the disable, and force_clear would
+            # discard the very keys this needs to pull back.
+            await self.middleware.call('datastore.update', 'system_kmip', config.id, {'enabled': False})
         jobs = {method: await self.middleware.call(method) for method in ('kmip.sync_zfs_keys', 'kmip.sync_sed_keys')}
+        failures = []
         for method, sync_job in jobs.items():
-            result = await sync_job.wait(raise_error=False)
+            await sync_job.wait(raise_error=False)
             if sync_job.error:
                 failures.append(f'{method}: {sync_job.error}')
-            elif result is None:
-                failures.append(f'{method}: KMIP server unreachable')
-            elif result:
-                failures.append(f'{method}: {", ".join(result)}')
-        if failures:
-            raise CallError('; '.join(failures))
+            elif sync_job.result:
+                failures.append(f'{method}: {", ".join(sync_job.result)}')
+        if failures or await self.call2(self.s.kmip.kmip_sync_pending):
+            raise CallError(
+                'Keys not yet pulled back from the KMIP server, the daily KMIP key sync will retry'
+                + (f': {"; ".join(failures)}' if failures else '')
+            )
 
     async def revoke_pending(self) -> str | None:
         if await self.call2(self.s.kmip.kmip_sync_pending):

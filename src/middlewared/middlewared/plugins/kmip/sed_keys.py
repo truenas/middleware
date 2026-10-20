@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.source.kmip import KMIPSEDDisksSyncFailureAlert, KMIPSEDGlobalPasswordSyncFailureAlert
@@ -14,7 +13,6 @@ from .connection import (
     connection_config,
     delete_kmip_secret_data,
     kmip_connection,
-    push_direction,
     register_secret_data,
     retrieve_secret_data,
     revoke_and_destroy_key,
@@ -43,17 +41,19 @@ There are 2 possible cases which we need to handle for system.advanced
 """
 
 
-def sed_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore, push: bool) -> bool:
+def sed_keys_pending_sync(context: ServiceContext, store: KMIPKeyStore) -> bool:
     adv_config = context.middleware.call_sync('datastore.config', 'system.advanced', {'prefix': 'adv_'})
     disks = context.middleware.call_sync('datastore.query', 'storage.disk', [], {'prefix': 'disk_'})
+    config = context.call_sync2(context.s.kmip.config)
+    check_db_key = config.enabled and config.manage_sed_disks
     for disk in disks:
-        if push and (disk['passwd'] or (disk['kmip_uid'] and disk['identifier'] not in store.disks_keys)):
+        if check_db_key and (disk['passwd'] or (disk['kmip_uid'] and disk['identifier'] not in store.disks_keys)):
             return True
-        elif not push and disk['kmip_uid']:
+        elif not check_db_key and disk['kmip_uid']:
             return True
-    if push and (adv_config['sed_passwd'] or (not store.global_sed_key and adv_config['kmip_uid'])):
+    if check_db_key and (adv_config['sed_passwd'] or (not store.global_sed_key and adv_config['kmip_uid'])):
         return True
-    elif not push and adv_config['kmip_uid']:
+    elif not check_db_key and adv_config['kmip_uid']:
         return True
     return False
 
@@ -156,9 +156,11 @@ def pull_sed_keys(context: ServiceContext, store: KMIPKeyStore) -> list[str]:
         elif store.global_sed_key:
             key = store.global_sed_key
         elif connection_successful:
-            with contextlib.suppress(Exception):
+            try:
                 with kmip_connection(context, connection_config(context)) as conn:
                     key = retrieve_secret_data(adv_config['kmip_uid'], conn)
+            except Exception:
+                failed.append('Global SED Key')
         if key:
             context.middleware.call_sync(
                 'datastore.update', 'system.advanced',
@@ -169,19 +171,17 @@ def pull_sed_keys(context: ServiceContext, store: KMIPKeyStore) -> list[str]:
             store.global_sed_key = ''
             if connection_successful:
                 delete_kmip_secret_data(context, adv_config['kmip_uid'])
-        else:
-            failed.append('Global SED Key')
     return failed
 
 
 def sync_sed_keys(
     context: ServiceContext, store: KMIPKeyStore, job: Job, ids: list[Any] | None = None,
 ) -> list[str] | None:
-    push = push_direction(context, 'manage_sed_disks')
-    if not sed_keys_pending_sync(context, store, push):
-        return []
+    if not sed_keys_pending_sync(context, store):
+        return None
+    config = context.call_sync2(context.s.kmip.config)
     conn_successful = test_connection(context, None, True)
-    if push:
+    if config.enabled and config.manage_sed_disks:
         if conn_successful:
             failed = push_sed_keys(context, store, ids)
         else:

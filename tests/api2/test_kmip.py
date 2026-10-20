@@ -752,9 +752,10 @@ def test_kmip_sed_keys_pull_failures(kmip_certificate):
                 clear_uids()
 
         # With KMIP disabled there is no certificate to build a connection from either.
+        # The global password is silently left alone in this case.
         make_uids_stale("unreachable-uid")
         try:
-            assert sorted(call("kmip.sync_sed_keys", job=True)) == sorted([disk_id, "Global SED Key"])
+            assert call("kmip.sync_sed_keys", job=True) == [disk_id]
         finally:
             clear_uids()
             for klass in ("KMIPSEDDisksSyncFailure", "KMIPSEDGlobalPasswordSyncFailure"):

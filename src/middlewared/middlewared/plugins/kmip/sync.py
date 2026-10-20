@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from .connection import push_direction, test_connection
+from .connection import test_connection
 from .keystore import KMIPKeyStore
 from .sed_keys import (
     clear_sync_pending_sed_keys,
@@ -29,10 +29,7 @@ if TYPE_CHECKING:
 
 
 def kmip_sync_pending(context: ServiceContext, store: KMIPKeyStore) -> bool:
-    return (
-        zfs_keys_pending_sync(context, store, push_direction(context, 'manage_zfs_keys'))
-        or sed_keys_pending_sync(context, store, push_direction(context, 'manage_sed_disks'))
-    )
+    return zfs_keys_pending_sync(context, store) or sed_keys_pending_sync(context, store)
 
 
 async def sync_keys(context: ServiceContext, store: KMIPKeyStore) -> None:
