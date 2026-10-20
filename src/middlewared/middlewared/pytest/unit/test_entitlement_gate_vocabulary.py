@@ -54,7 +54,6 @@ GATES = [
     ("plugins/system/product.py", None),
     ("plugins/system/product.py", "LicenseFeature.SED"),
     ("plugins/system_general/update.py", "LicenseFeature.DIRECTORY_SERVICES_AUTH"),
-    ("plugins/system_general/update.py", "LicenseFeature.DIRECTORY_SERVICES_AUTH"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_VERSIONING"),

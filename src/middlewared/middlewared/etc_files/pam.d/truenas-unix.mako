@@ -1,7 +1,7 @@
 <%
     from middlewared.utils.pam import STANDALONE_ACCOUNT
 
-    ds_auth = render_ctx['system.general.ds_auth_effective']
+    ds_auth = render_ctx['datastore.config']['stg_ds_auth']
 %>\
 # PAM configuration for the middleware sessions over unix socket
 

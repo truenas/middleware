@@ -1135,25 +1135,23 @@ class AuthService(Service):
 
 class DirectoryServicesAuthLicenseDelegate(LicenseDelegate):
     features = (LicenseFeature.DIRECTORY_SERVICES_AUTH,)
-    active_only = False
 
     async def apply(self, changes: dict[str, bool]) -> None:
-        await self.render('pam')
-        if changes[LicenseFeature.DIRECTORY_SERVICES_AUTH] or await self.middleware.call(
-            'system.general.ds_auth_effective'
-        ):
+        if changes[LicenseFeature.DIRECTORY_SERVICES_AUTH]:
             return
+        if (await self.middleware.call('system.general.config'))['ds_auth']:
+            # Turning directory services auth off with no local administrator able to log in would lock
+            # everyone out. A locked or password-disabled root is still listed but cannot log in.
+            if not any(
+                not admin['locked'] and not admin['password_disabled']
+                for admin in await self.middleware.call('privilege.local_administrators')
+            ):
+                return
+            await self.middleware.call('system.general.update', {'ds_auth': False})
         for session_id, session in list(AuthService.session_manager.sessions.items()):
             cred = session.credentials
             if cred.is_user_session and AccountFlag.DIRECTORY_SERVICE in cred.user['account_attributes']:
                 await self.middleware.call('auth.terminate_session', session_id)
-
-    async def revoke_pending(self) -> str | None:
-        if await self.middleware.call('system.general.ds_auth_effective'):
-            return 'not revoked: no local administrator with a usable password'
-        if await self.middleware.call('system.general.ds_auth_rendered'):
-            return 'pam not re-rendered since a local administrator was added'
-        return None
 
 
 async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None:

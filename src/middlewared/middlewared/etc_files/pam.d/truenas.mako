@@ -1,7 +1,7 @@
 <%
     from middlewared.utils.pam import STANDALONE_AUTH, FAILLOCK_AUTH_FAIL, FAILLOCK_AUTH_SUCC
 
-    ds_auth = render_ctx['system.general.ds_auth_effective']
+    ds_auth = render_ctx['datastore.config']['stg_ds_auth']
     twofactor_auth = render_ctx['auth.twofactor.config']
     twofactor_enabled = twofactor_auth['enabled']
 %>\

@@ -26,8 +26,9 @@ class LicenseDelegate(CallMixin):
     Converges one license feature's runtime state after the license changes.
 
     `apply(changes)` receives `{feature: entitled}` for the delegate's features that changed, and only
-    those. It returns, or raises one `CallError` naming what failed; it never logs and never changes the
-    peer, which applies its own diff. A plugin method called from `apply()` runs with its own options and
+    those. It returns, or raises one `CallError` naming what failed; it never logs and leaves the peer's
+    runtime state to the peer, which applies its own diff. A setting it persists goes through the owning
+    plugin's update path. A plugin method called from `apply()` runs with its own options and
     may swallow a failure, so the delegate re-checks the resulting state and raises itself. Whether a
     feature is allowed is the plugin's gate, never the delegate's.
     """

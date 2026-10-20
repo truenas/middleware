@@ -386,7 +386,7 @@ class EtcService(Service):
         ),
         'pam': EtcGroup(
             ctx=(
-                CtxMethod(method='system.general.ds_auth_effective'),
+                CtxMethod(method='datastore.config', args=['system.settings']),
                 CtxMethod(method='directoryservices.status'),
                 CtxMethod(method='system.security.config'),
                 CtxMethod(method='auth.twofactor.config'),
