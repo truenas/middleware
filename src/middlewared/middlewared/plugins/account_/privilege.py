@@ -28,6 +28,8 @@ from middlewared.utils.privilege import privilege_has_webui_access, privileges_g
 from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalBuiltinAdminGroups
 from middlewared.utils.security import system_security_config_to_stig_type
 
+UNMAPPED_GROUP = UnmappedGroupEntry(gid=None, sid=None, group=None).model_dump()
+
 
 class BuiltinPrivileges(enum.Enum):
     LOCAL_ADMINISTRATOR = "LOCAL_ADMINISTRATOR"
@@ -107,15 +109,15 @@ class PrivilegeService(CRUDService):
         audit_callback(old["name"])
 
         new = old.copy()
-        new["local_groups"] = [g.gid for g in new["local_groups"]]
+        new["local_groups"] = [g["gid"] for g in new["local_groups"]]
 
         # Preference is for SID values rather than GIDS because they are universally unique
         new["ds_groups"] = []
         for g in old["ds_groups"]:
-            if g.sid:
-                new["ds_groups"].append(g.sid)
+            if g["sid"]:
+                new["ds_groups"].append(g["sid"])
             else:
-                new["ds_groups"].append(g.gid)
+                new["ds_groups"].append(g["gid"])
 
         new.update(data)
 
@@ -240,10 +242,10 @@ class PrivilegeService(CRUDService):
         for gid in local_groups:
             if group := groups['by_gid'].get(gid):
                 if group.local:
-                    result.append(group)
+                    result.append(group.model_dump())
             else:
                 if include_nonexistent:
-                    result.append(UnmappedGroupEntry(gid=gid, sid=None, group=None))
+                    result.append(UNMAPPED_GROUP | {"gid": gid})
 
         return result
 
@@ -293,14 +295,14 @@ class PrivilegeService(CRUDService):
                         if is_sid:
                             unmapped_sid = xid
 
-                        result.append(UnmappedGroupEntry(gid=unmapped_gid, sid=unmapped_sid, group=None))
+                        result.append(UNMAPPED_GROUP | {"gid": unmapped_gid, "sid": unmapped_sid})
 
                     continue
 
             if group.local:
                 continue
 
-            result.append(group)
+            result.append(group.model_dump())
 
         return result
 

@@ -356,6 +356,28 @@ def test_query_privilege_ds_groups_sid_conversion_failure():
 
 
 # ---------------------------------------------------------------------------
+# filtering on the nested group entries
+#
+# `local_groups` / `ds_groups` hold `GroupEntry` for a group that resolves and
+# `UnmappedGroupEntry` for one that does not. `UnmappedGroupEntry` has no
+# `name`, so a filter on `name` must skip it instead of failing the query.
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("key,value", [("local_groups", UNUSED_GID), ("ds_groups", UNMAPPED_SID)])
+def test_query_privilege_filter_by_group_name_with_unmapped_group(key, value):
+    with raw_privilege({"name": "Test filter unmapped", key: [value]}) as id_:
+        assert call("privilege.query", [[f"{key}.*.name", "~", "no_such_group"]]) == []
+        assert call("privilege.query", [["id", "=", id_], [f"{key}.*.name", "^", "no_such_group"]]) == []
+
+
+def test_query_privilege_filter_by_group_name():
+    privileges = call("privilege.query", [["local_groups.*.name", "=", "builtin_administrators"]])
+    assert [p["builtin_name"] for p in privileges] == ["LOCAL_ADMINISTRATOR"]
+
+    privileges = call("privilege.query", [["local_groups.*.name", "~", "builtin_admin"]])
+    assert [p["builtin_name"] for p in privileges] == ["LOCAL_ADMINISTRATOR"]
+
+
+# ---------------------------------------------------------------------------
 # privilege.privileges_for_groups
 # ---------------------------------------------------------------------------
 def test_privileges_for_groups():

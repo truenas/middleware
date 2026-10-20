@@ -97,11 +97,14 @@ class GroupService(GenericCRUDService[GroupEntry]):
         self,
         audit_callback: AuditCallback,
         id_: int,
-        options: GroupDeleteOptions = GroupDeleteOptions(),
+        options: GroupDeleteOptions | None = None,
     ) -> int:
         """
         Delete group ``id``.
         """
+        if options is None:
+            options = GroupDeleteOptions()
+
         return await self._svc_part.do_delete(audit_callback, id_, options)
 
     @api_method(GroupGetNextGidArgs, GroupGetNextGidResult, roles=["ACCOUNT_READ"], check_annotations=True)

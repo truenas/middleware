@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 import errno
-from typing import TYPE_CHECKING, Any, overload
+from typing import Any
 
 from middlewared.api.current import (
     GroupCreate,
@@ -24,7 +24,6 @@ from middlewared.service import CallError, CRUDServicePart, ServiceContext, Vali
 from middlewared.service_exception import InstanceNotFound, MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.directoryservices.constants import DSStatus
-from middlewared.utils.filter_list import filter_list
 from middlewared.utils.lang import undefined
 from middlewared.utils.privilege import privileges_group_mapping
 from middlewared.utils.reserved_ids import ReservedXid
@@ -32,9 +31,6 @@ from middlewared.utils.sid import DomainRid, db_id_to_rid
 from middlewared.utils.types import AuditCallback
 
 from .group_validate import common_validation, validate_builtin_update, validate_userns_idmap_conflict
-
-if TYPE_CHECKING:
-    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
 
 
 class GroupModel(sa.Model):
@@ -118,58 +114,29 @@ class GroupServicePart(CRUDServicePart[GroupEntry]):
         )
         return data
 
-    @overload
-    async def query(self, filters: list[Any], options: QueryOptionsCount) -> int: ...  # type: ignore[overload-overlap]
-
-    @overload
-    async def query(self, filters: list[Any], options: QueryOptionsGet) -> GroupEntry: ...  # type: ignore[overload-overlap]
-
-    @overload
-    async def query(
+    async def _query_rows(
         self,
-        filters: list[Any] | None = None,
-        options: QueryOptions | None = None,
-    ) -> list[GroupEntry]: ...
+        filters: list[Any],
+        options: QueryOptions,
+        extra: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        rows = await super()._query_rows(filters, options, extra)
+        if not filters_include_ds_accounts(filters):
+            return rows
 
-    async def query(
-        self,
-        filters: list[Any] | None = None,
-        options: QueryOptions | None = None,
-    ) -> list[GroupEntry] | GroupEntry | int:
-        if filters is None:
-            filters = []
-        if options is None:
-            options = QueryOptions()
-        opts = options.model_dump()
+        ds = await self.middleware.call("directoryservices.status")
+        if ds["type"] is None or ds["status"] != DSStatus.HEALTHY.name:
+            return rows
 
-        ds_groups: list[dict[str, Any]] = []
-        if filters_include_ds_accounts(filters):
-            ds = await self.middleware.call("directoryservices.status")
-            if ds["type"] is not None and ds["status"] == DSStatus.HEALTHY.name:
-                ds_groups = await self.middleware.call(
-                    "directoryservices.cache.query",
-                    "GROUP",
-                    filters,
-                    opts,
-                )
-
-        rows: list[dict[str, Any]] = await self.middleware.call(
-            "datastore.query",
-            self._datastore,
-            [],
-            {"prefix": self._datastore_prefix},
+        # The cache stores whole `GroupEntry` rows and applies `filters` itself, so these
+        # must not be extended again.
+        ds_groups: list[dict[str, Any]] = await self.middleware.call(
+            "directoryservices.cache.query",
+            "GROUP",
+            filters,
+            options.model_dump(),
         )
-        context = await self.extend_context(rows, {})
-        rows = await self._run_extend_many(rows, context)
-
-        result = await self.to_thread(filter_list, rows + ds_groups, filters, opts)
-        if isinstance(result, int):
-            return result
-
-        if isinstance(result, dict):
-            return self._to_entry(result)
-
-        return [self._to_entry(row) for row in result]
+        return rows + ds_groups
 
     async def get_instance(self, id_: int, extra: dict[str, Any] | None = None) -> GroupEntry:
         groups = await self.query([[self._datastore_primary_key, "=", id_]])
