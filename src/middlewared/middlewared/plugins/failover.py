@@ -1,7 +1,6 @@
 import asyncio
 import base64
 from collections.abc import Awaitable
-from datetime import datetime
 import errno
 from functools import partial
 import itertools
@@ -12,7 +11,6 @@ import shutil
 import stat
 import time
 
-from truenas_pylicensed import verify
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
@@ -60,7 +58,7 @@ from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.contextlib import asyncnullcontext
-from middlewared.utils.license import LEGACY_LICENSE_FILE
+from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_FILE
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
@@ -414,8 +412,10 @@ class FailoverService(ConfigService):
 
     @private
     def send_license(self):
-        license_ = self.middleware.call_sync('truenas.license.installed_pem')
-        if license_ is not None:
+        if os.path.exists(LICENSE_FILE):
+            with open(LICENSE_FILE, 'r') as f:
+                license_ = f.read()
+
             try:
                 self.middleware.call_sync(
                     'failover.call_remote', 'truenas.license.upload', [license_, {"ha_propagate": False}],
@@ -433,33 +433,6 @@ class FailoverService(ConfigService):
                 )
             except Exception as e:
                 self.logger.error(f'Failed to reset legacy license cache on the remote node: {e!r}')
-
-    @private
-    def push_license_if_newer(self):
-        try:
-            if self.middleware.call_sync('truenas.license.propagate_pending'):
-                self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
-                return
-
-            status = verify()
-            if not status.valid or status.test:
-                return
-
-            remote = self.middleware.call_sync('failover.call_remote', 'truenas.license.info')
-            if remote is None or remote['issued_at'] is None:
-                return
-
-            if datetime.fromisoformat(status.issued_at) <= datetime.fromisoformat(remote['issued_at']):
-                return
-
-            pem = self.middleware.call_sync('truenas.license.installed_pem')
-            self.middleware.call_sync(
-                'failover.call_remote', 'truenas.license.upload', [pem, {'ha_propagate': False}],
-            )
-            self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
-        except Exception as e:
-            if not (isinstance(e, CallError) and e.errno == CallError.ENOMETHOD):
-                self.logger.error('license: failed to push the installed license to the remote node', exc_info=True)
 
     @private
     def send_pwenc_secret(self):
@@ -1318,10 +1291,6 @@ def remote_status_event(middleware, *args, **kwargs):
     middleware.call_sync('failover.status_refresh')
 
 
-def push_license_on_connect(middleware):
-    middleware.call_sync('failover.push_license_if_newer', background=True)
-
-
 def mismatch_nics(
     local_mac_to_name: dict[str, str],
     remote_mac_to_name: dict[str, str],
@@ -1372,7 +1341,7 @@ class HALicenseDelegate(LicenseDelegate):
         elif await attempt(self.middleware.call('interface.query', [['failover_virtual_aliases', '!=', []]])) == []:
             await attempt(_start_stop_vrrp_threads(self.middleware))
 
-        for group in ('rc', 'keepalived', 'cron'):
+        for group in ('rc', 'cron'):
             await attempt(self.render(group))
         ctdb: Verb
         if granted:
@@ -1417,7 +1386,6 @@ async def setup(middleware):
     await middleware.call('failover.remote_subscribe', 'system.reboot', remote_status_event)
     await middleware.call('failover.remote_subscribe', 'system.shutdown', remote_status_event)
     await middleware.call('failover.remote_on_connect', remote_status_event)
-    await middleware.call('failover.remote_on_connect', push_license_on_connect)
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     if await middleware.call('system.ready'):

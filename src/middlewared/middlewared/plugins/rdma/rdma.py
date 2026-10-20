@@ -166,8 +166,8 @@ class RDMALicenseDelegate(LicenseDelegate):
         if await self.middleware.call('nvmet.global.running'):
             await self.render('nvmet')
         # SCST loads isert_scst and nfsd binds its RDMA listener only at start, so a reload reaches neither.
-        iser = (await self.middleware.call('iscsi.global.config'))['iser']
-        lio = await self.middleware.call('iscsi.global.lio_enabled')
-        await self.control('iscsitarget', 'RESTART' if iser and not lio else 'RELOAD')
+        if (await self.middleware.call('iscsi.global.config'))['iser']:
+            lio = await self.middleware.call('iscsi.global.lio_enabled')
+            await self.control('iscsitarget', 'RELOAD' if lio else 'RESTART')
         if (await self.middleware.call('datastore.config', 'services.nfs'))['nfs_srv_rdma']:
             await self.control('nfs', 'RESTART')

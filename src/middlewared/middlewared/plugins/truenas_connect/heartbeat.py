@@ -10,7 +10,6 @@ from truenas_connect_utils.urls import get_heartbeat_url
 
 from middlewared.alert.source.truenas_connect import TNCHeartbeatConnectionFailureAlert
 from middlewared.service import CallError, ServiceContext
-from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.license import LicenseOrigin
 from middlewared.utils.version import parse_version_string
@@ -26,8 +25,6 @@ from .utils import (
 )
 
 logger = logging.getLogger('truenas_connect')
-# A refused PEM is skipped until middlewared restarts.
-_rejected_pem: str | None = None
 
 
 async def _heartbeat_request(
@@ -109,20 +106,8 @@ async def _persist_new_token(context: ServiceContext, tnc_config: dict[str, Any]
 
 
 async def _maybe_install_license(context: ServiceContext, pem: str) -> None:
-    global _rejected_pem
-    if pem == _rejected_pem:
-        return
-
-    # The active node propagates the license to the standby.
-    if (
-        not await context.middleware.call('failover.is_single_master_node')
-        or await context.middleware.call('failover.in_progress')
-    ):
-        logger.debug('TNC Heartbeat: not the active controller, skipping delivered license')
-        return
-
     # TNC re-sends the same PEM until our heartbeat reports its id, so skip when it is already
-    # installed; reinstalling would needlessly re-run etc.generate / ctdb restart.
+    # installed; reinstalling would needlessly re-run etc.generate / license hooks / ctdb restart.
     current = await context.middleware.call('system.license', True)
     if current and (current.get('raw_license') or '').strip() == pem.strip():
         logger.debug('TNC Heartbeat: delivered license already installed, skipping')
@@ -130,9 +115,6 @@ async def _maybe_install_license(context: ServiceContext, pem: str) -> None:
 
     try:
         await context.middleware.call('truenas.license.upload', pem)
-    except (ValidationError, ValidationErrors):
-        _rejected_pem = pem
-        logger.warning('TNC Heartbeat: delivered license was rejected', exc_info=True)
     except Exception:
         logger.error('TNC Heartbeat: failed to install delivered license', exc_info=True)
     else:

@@ -267,7 +267,7 @@ class DockerLicenseDelegate(LicenseDelegate):
     async def apply(self, changes: dict[str, bool]) -> None:
         running = await self._running()
         if changes[LicenseFeature.APPS]:
-            if not running and (await self.call2(self.s.docker.config)).pool and await self.is_active():
+            if not running and (await self.call2(self.s.docker.config)).pool:
                 await self.call2(self.s.docker.start_service, True)
                 if not await self.call2(self.s.service.started, 'docker'):
                     raise CallError('docker did not start')

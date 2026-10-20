@@ -359,10 +359,7 @@ class FibreChannelLicenseDelegate(LicenseDelegate):
 
     async def apply(self, changes: dict[str, bool]) -> None:
         await self.control('iscsitarget', 'RELOAD')
-        if changes[LicenseFeature.FIBRECHANNEL]:
-            if await self.is_active():
-                await self.middleware.call('fc.fc_host.wire')
-        elif pending := await self.revoke_pending():
+        if not changes[LicenseFeature.FIBRECHANNEL] and (pending := await self.revoke_pending()):
             raise CallError(pending)
 
     async def revoke_pending(self) -> str | None:

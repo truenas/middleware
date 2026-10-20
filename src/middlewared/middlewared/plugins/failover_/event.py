@@ -740,9 +740,6 @@ class FailoverEventsService(Service):
         else:
             logger.info('Volume imports complete')
 
-        # Initializing the alert system above dropped one-shot alerts, this one included.
-        self.middleware.call_sync2(self.s.truenas.license.refresh_usage_alert, background=True)
-
         # We will now run a task in the background to update any pool in db which has all_sed = null
         # This is to scan any such pools which might be based off all disks being sed capable
         # and to mark them and others appropriately

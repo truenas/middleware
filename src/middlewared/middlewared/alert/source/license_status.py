@@ -93,12 +93,6 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 if standby_serial not in standby_license['serials']:
                     alerts.append(Alert(LicenseAlert('System serial of standby node does not match license.')))
 
-            if standby_license and (
-                standby_license['id'] != local_license.id
-                or {feature['name'] for feature in standby_license['features']} != set(local_license.features)
-            ):
-                alerts.append(Alert(LicenseAlert('License on standby node differs from the license on this node.')))
-
             if model == 'UNKNOWN':
                 alerts.append(Alert(LicenseAlert('TrueNAS is running on unsupported hardware.')))
             elif model != local_license.model:

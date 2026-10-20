@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import shutil
+import threading
 import time
 from types import MappingProxyType
 import typing
@@ -22,6 +23,7 @@ from .constants import LICENSE_BACKUP, LICENSE_DIR, LICENSE_FILE
 from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 logger = logging.getLogger(__name__)
+_upload_lock = threading.Lock()
 
 __all__ = (
     "from_license_status",
@@ -91,57 +93,58 @@ def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, No
     caller can perform follow-up work inside the ``with`` block.  If the
     block raises an exception the previously installed license is restored.
     """
-    os.makedirs(LICENSE_DIR, mode=0o700, exist_ok=True)
+    with _upload_lock:
+        os.makedirs(LICENSE_DIR, mode=0o700, exist_ok=True)
 
-    # Snapshot the current reload_seq so we can detect when the daemon
-    # has picked up and processed the new file via inotify
-    initial_seq = verify().reload_seq
+        # Snapshot the current reload_seq so we can detect when the daemon
+        # has picked up and processed the new file via inotify
+        initial_seq = verify().reload_seq
 
-    # Back up existing license so we can restore on validation failure
-    try:
-        shutil.copy2(LICENSE_FILE, LICENSE_BACKUP)
-        had_backup = True
-    except FileNotFoundError:
-        had_backup = False
-
-    lic = None
-    try:
-        # Write the new license to disk -- daemon picks this up via inotify
-        with atomic_write(LICENSE_FILE, "w", perms=0o600) as f:
-            f.write(license_pem)
-
-        # Wait for the daemon to reload the new license
-        lic = _wait_for_reload_seq_change(
-            initial_seq,
-            "License daemon did not reload after upload (reload_seq unchanged). The daemon may be unresponsive.",
-        )
-
-        yield lic
-    except Exception:
+        # Back up existing license so we can restore on validation failure
         try:
-            if had_backup:
-                shutil.move(LICENSE_BACKUP, LICENSE_FILE)
-            else:
-                with contextlib.suppress(FileNotFoundError):
-                    os.unlink(LICENSE_FILE)
+            shutil.copy2(LICENSE_FILE, LICENSE_BACKUP)
+            had_backup = True
+        except FileNotFoundError:
+            had_backup = False
 
-            if lic is not None:
-                # Wait for the daemon to acknowledge the rollback
-                _wait_for_reload_seq_change(
-                    lic.reload_seq,
-                    "License daemon did not reload after rollback (reload_seq unchanged). "
-                    "The daemon may be unresponsive.",
-                    raise_=False,
-                )
-        except Exception as e:
-            logger.error("Error rolling back license: %r", e)
+        lic = None
+        try:
+            # Write the new license to disk -- daemon picks this up via inotify
+            with atomic_write(LICENSE_FILE, "w", perms=0o600) as f:
+                f.write(license_pem)
 
-        raise
+            # Wait for the daemon to reload the new license
+            lic = _wait_for_reload_seq_change(
+                initial_seq,
+                "License daemon did not reload after upload (reload_seq unchanged). The daemon may be unresponsive.",
+            )
 
-    # Success -- clean up backup
-    if had_backup:
-        with contextlib.suppress(FileNotFoundError):
-            os.unlink(LICENSE_BACKUP)
+            yield lic
+        except Exception:
+            try:
+                if had_backup:
+                    shutil.move(LICENSE_BACKUP, LICENSE_FILE)
+                else:
+                    with contextlib.suppress(FileNotFoundError):
+                        os.unlink(LICENSE_FILE)
+
+                if lic is not None:
+                    # Wait for the daemon to acknowledge the rollback
+                    _wait_for_reload_seq_change(
+                        lic.reload_seq,
+                        "License daemon did not reload after rollback (reload_seq unchanged). "
+                        "The daemon may be unresponsive.",
+                        raise_=False,
+                    )
+            except Exception as e:
+                logger.error("Error rolling back license: %r", e)
+
+            raise
+
+        # Success -- clean up backup
+        if had_backup:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(LICENSE_BACKUP)
 
 
 def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | None:

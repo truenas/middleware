@@ -25,7 +25,6 @@ from .legacy import describe_legacy_license, get_legacy_license_info, parse_lega
 from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 __all__ = [
-    "DAEMON_ERRORS",
     "HW_LICENSE_ERROR_FILE",
     "LEGACY_LICENSE_FILE",
     "LICENSE_ADDHW_MAPPING",
@@ -43,15 +42,6 @@ __all__ = [
     "parse_legacy_license",
     "upload_license",
 ]
-
-# The daemon could not answer, as distinct from answering that a license is invalid.
-DAEMON_ERRORS = frozenset(
-    {
-        LicenseError.DAEMON_UNAVAILABLE,
-        LicenseError.DAEMON_ERROR,
-        LicenseError.INTERNAL_ERROR,
-    }
-)
 
 # Codes that mean the daemon had nothing to say about a v2 license, so the
 # legacy blob underneath is still the best answer available. Only NO_LICENSE

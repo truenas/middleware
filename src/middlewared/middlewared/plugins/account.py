@@ -74,7 +74,7 @@ from middlewared.utils.account.authenticator import AccountFlag, UserPamAuthenti
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_string, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
-from middlewared.utils.entitlements import DerivedEntitlement, LicenseFeature
+from middlewared.utils.entitlements import LicenseFeature
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import pwd
@@ -2123,7 +2123,7 @@ class UserService(CRUDService):
 
 
 class SupportLicenseDelegate(LicenseDelegate):
-    features = (LicenseFeature.SUPPORT, DerivedEntitlement.PROACTIVE_SUPPORT)
+    features = (LicenseFeature.SUPPORT,)
     active_only = False
 
     async def apply(self, changes: dict[str, bool]) -> None:
