@@ -51,7 +51,10 @@ class PoolService(Service):
         # pool in question becomes healthy and vice versa
         # Why we still settle on setting this value initially is to prevent accidental mis-configuration of a pool
         # which might perhaps very well be an all sed pool
-        filters = [] if skip_all_sed_check else [['all_sed', '=', None]]
+        # A pool that is not imported has no topology and would be judged not all-SED
+        filters = [['topology', '!=', None]]
+        if not skip_all_sed_check:
+            filters.append(['all_sed', '=', None])
         if filter_pool:
             filters.append(['name', '=', filter_pool])
 
