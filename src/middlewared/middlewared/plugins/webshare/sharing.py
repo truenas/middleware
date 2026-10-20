@@ -37,6 +37,7 @@ class SharingWebshareModel(sa.Model):
     relative_path = sa.Column(sa.String(255), nullable=True)
     is_home_base = sa.Column(sa.Boolean())
     enabled = sa.Column(sa.Boolean())
+    readonly = sa.Column(sa.Boolean())
 
 
 class SharingWebshareService(SharingService[SharingWebshareEntry]):
@@ -217,6 +218,13 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
                     f'{schema_name}.is_home_base',
                     'Only one share can be configured as home directory base.',
                     errno.EEXIST
+                )
+
+            if data.readonly:
+                verrors.add(
+                    f'{schema_name}.readonly',
+                    'The home directory base share cannot be read-only, because Webshare creates home '
+                    'directories under it.',
                 )
 
     @private

@@ -1,178 +1,113 @@
 from datetime import datetime, timedelta
-import json
-import requests
-import time
-import uuid
 
 import pytest
-import websocket
+import requests
 
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, host, ssh
+from middlewared.test.integration.assets.webshare import (
+    LINK_PORT,
+    WebshareError,
+    webshare_server,
+    webshare_session,
+    webshare_share,
+)
+from middlewared.test.integration.utils import call, host, poll, ssh
 
 USERNAME = 'alex'
 PASSWORD = 'password'
-SHARE_NAME = 'alex'
-
-pytestmark = pytest.mark.skip('Skip until we manage to add test systems to TrueNAS Connect')
+SHARE_NAME = 'Share'
 
 
 @pytest.fixture(scope='module')
 def share():
-    call('webshare.update', {'search': True})
-    call('service.control', 'START', 'webshare', job=True)
-    try:
-        with dataset('webshare') as ds:
-            with user({
-                'username': USERNAME,
-                'full_name': 'Alex',
-                'group_create': True,
-                'password': PASSWORD,
-                'webshare': True,
-            }) as u:
-                ssh(f"echo Canary > /mnt/{ds}/test.txt")
-                ssh(f"chown {u['uid']}:{u['group']['bsdgrp_gid']} /mnt/{ds}/test.txt")
-
-                share = call('sharing.webshare.create', {'name': 'Share', 'path': f'/mnt/{ds}'})
-
-                # Verify dataset and relative_path resolution
-                assert share['dataset'] == ds
-                assert share['relative_path'] == ''
-
-                try:
-                    yield {
-                        'dataset': ds,
-                    }
-                finally:
-                    call('sharing.webshare.delete', share['id'])
-
-                    for i in range(30):
-                        processes = call('pool.dataset.processes', ds)
-                        if not processes:
-                            break
-
-                        time.sleep(1)
-                    else:
-                        pytest.fail(str(processes))
-
-    finally:
-        call('service.control', 'STOP', 'webshare', job=True)
-
-
-class JSONRPCException(Exception):
-    pass
-
-
-def connect():
-    for i in range(30):
+    with entitled('WEBSHARE'), entitled('TRUESEARCH'):
+        search = call('webshare.config')['search']
+        call('webshare.update', {'search': True})
         try:
-            return websocket.create_connection(
-                f"wss://{host().ip}:755/webshare/ws",
-                sslopt={"cert_reqs": 0},
-                timeout=30,
-            )
-        except (ConnectionRefusedError, websocket.WebSocketBadStatusException):
-            time.sleep(1)
-    else:
-        assert False, "Unable to establish websocket connection with webshare auth service"
+            with webshare_server():
+                with dataset('webshare') as ds:
+                    with user({
+                        'username': USERNAME,
+                        'full_name': 'Alex',
+                        'group_create': True,
+                        'password': PASSWORD,
+                        'webshare': True,
+                    }) as u:
+                        ssh(f"echo Canary > /mnt/{ds}/test.txt")
+                        ssh(f"chown -R {u['uid']}:{u['group']['bsdgrp_gid']} /mnt/{ds}")
 
+                        with webshare_share(f'/mnt/{ds}', SHARE_NAME) as webshare:
+                            # Verify dataset and relative_path resolution
+                            assert webshare['dataset'] == ds
+                            assert webshare['relative_path'] == ''
 
-def call_method(ws, method, params, *, call_id=None):
-    if call_id is None:
-        call_id = str(uuid.uuid4())
+                            yield {
+                                'dataset': ds,
+                                'id': webshare['id'],
+                            }
 
-    ws.send(json.dumps({"jsonrpc": "2.0", "id": call_id, "method": method, "params": params}))
-    while True:
-        resp_opcode, msg = ws.recv_data()
-        result = json.loads(msg.decode())
-        if result.get("id") == call_id:
-            break
-
-    if "error" in result:
-        raise JSONRPCException(result["error"])
-
-    return result["result"]
+                        poll(
+                            lambda: call('pool.dataset.processes', ds),
+                            condition=lambda processes: not processes,
+                            timeout=30,
+                            message=f'{ds}: Webshare still holds the dataset',
+                        )
+        finally:
+            call('webshare.update', {'search': search})
 
 
 def test_webshare(share):
-    auth_ws = connect()
+    with webshare_session(USERNAME, PASSWORD) as session:
+        shares = session.shares()
+        assert list(shares) == [SHARE_NAME]
 
-    try:
-        result = call_method(auth_ws, "login", {
-            "username": USERNAME,
-            "password": PASSWORD,
-        }, call_id=1)  # {'code': -32700, 'message': 'Parse error'} when using string IDs
+        handle = shares[SHARE_NAME]['fileHandle']
+        result = session.call('directory.list', {
+            "path": f"/{SHARE_NAME}",
+            "fileHandle": handle,
+            "showHidden": False,
+            "offset": 0,
+            "limit": 1000,
+            "sortBy": "name",
+            "sortOrder": "asc",
+            "metadata": "minimal"
+        })
+        assert result['started']
 
-        for i in range(30):
+        def search():
             try:
-                ws = websocket.create_connection(
-                    f"wss://{host().ip}:755{result['websocket_url']}",
-                    header={"Cookie": f"truenas_auth_token={result['auth_token']}"},
-                    sslopt={"cert_reqs": 0},
-                    timeout=30,
-                )
-                break
-            except (ConnectionRefusedError, websocket.WebSocketBadStatusException):
-                time.sleep(1)
-        else:
-            assert False, "Unable to establish websocket connection with webshare auth service"
+                return session.call('file.truesearch', {
+                    "query": "test",
+                    "path": f"/{SHARE_NAME}",
+                    "searchLocation": "current",
+                    "maxResults": 50
+                })
+            except WebshareError as e:
+                return e
 
-        try:
-            result = call_method(ws, "shares.list", {})
-            assert len(result["shares"]) == 1
-            assert result["shares"][0]["name"] == "Share"
+        result = poll(
+            search,
+            condition=lambda value: not isinstance(value, WebshareError) and value['items'],
+            timeout=30,
+            message='TrueSearch did not index the share',
+        )
+        assert len(result['items']) == 1
+        assert result['items'][0]['name'] == 'test.txt'
 
-            result = call_method(ws, "directory.list", {
-                "path": "/Share",
-                "fileHandle": result["shares"][0]["fileHandle"],
-                "showHidden": False,
-                "offset": 0,
-                "limit": 1000,
-                "sortBy": "name",
-                "sortOrder": "asc",
-                "metadata": "minimal"
-            })
-            assert result["started"]
+        result = session.call('share.createDownload', {
+            "path": f"/{SHARE_NAME}/test.txt",
+            "fileHandle": result['items'][0]['fileHandle'],
+            "expiry": (datetime.now().replace(microsecond=0, tzinfo=None) + timedelta(days=1)).isoformat() + "Z",
+            "maxDownloads": 1,
+            "password": None,
+        })
 
-            exc = None
-            for i in range(30):
-                try:
-                    result = call_method(ws, "file.truesearch", {
-                        "query": "test",
-                        "path": "/Share",
-                        "searchLocation": "current",
-                        "maxResults": 50
-                    })
-
-                    if result["items"]:
-                        break
-                except JSONRPCException as e:
-                    exc = e
-                    time.sleep(1)
-            else:
-                if exc is not None:
-                    raise exc
-
-                assert False, result
-
-            assert len(result["items"]) == 1
-            assert result["items"][0]["name"] == "test.txt"
-
-            result = call_method(ws, "share.createDownload", {
-                "path": "/share/test.txt",
-                "fileHandle": result["items"][0]["fileHandle"],
-                "expiry": (datetime.now().replace(microsecond=0, tzinfo=None) + timedelta(days=1)).isoformat() + "Z",
-                "maxDownloads": 1,
-                "password": None,
-            })
-
-            r = requests.get(f"https://{host().ip}:756/api/download/{result['shareId']}/file", verify=False)
-            assert r.text == "Canary\n"
-        finally:
-            ws.close()
-    finally:
-        auth_ws.close()
+        r = requests.get(
+            f"https://{host().ip}:{LINK_PORT}/api/download/{result['shareId']}/file", verify=False
+        )
+        assert r.text == "Canary\n"
 
 
 def test_webshare_dataset_details(share):
@@ -202,7 +137,54 @@ def test_webshare_dataset_details(share):
     webshare = webshare_shares[0]
     assert webshare['enabled'] is True
     assert webshare['path'] == f"/mnt/{share['dataset']}"
-    assert webshare['share_name'] == 'Share'
+    assert webshare['share_name'] == SHARE_NAME
+
+
+def test_writable_share_accepts_writes(share):
+    with webshare_session(USERNAME, PASSWORD) as session:
+        entry = session.shares()[SHARE_NAME]
+        assert entry['readonly'] is False
+
+        result = session.call('directory.create', {
+            "path": f"/{SHARE_NAME}/writable",
+            "parentDirHandle": entry['fileHandle'],
+        })
+        assert result['success']
+
+        ssh(f"rmdir /mnt/{share['dataset']}/writable")
+
+
+def test_readonly_share_refuses_writes_and_still_reads(share):
+    assert call('sharing.webshare.update', share['id'], {'readonly': True})['readonly'] is True
+    try:
+        # A session keeps the configuration it started with, so this one starts after the update.
+        with webshare_session(USERNAME, PASSWORD) as session:
+            entry = session.shares()[SHARE_NAME]
+            assert entry['readonly'] is True
+
+            with pytest.raises(WebshareError) as ve:
+                session.call('directory.create', {
+                    "path": f"/{SHARE_NAME}/denied",
+                    "parentDirHandle": entry['fileHandle'],
+                })
+
+            assert ve.value.message == f"Share '{SHARE_NAME}' is read-only"
+            assert ve.value.data['reason'] == 'share_read_only'
+            assert ssh(f"ls /mnt/{share['dataset']}") == "test.txt\n"
+
+            result = session.call('directory.list', {
+                "path": f"/{SHARE_NAME}",
+                "fileHandle": entry['fileHandle'],
+                "showHidden": False,
+                "offset": 0,
+                "limit": 1000,
+                "sortBy": "name",
+                "sortOrder": "asc",
+                "metadata": "minimal"
+            })
+            assert result['started']
+    finally:
+        call('sharing.webshare.update', share['id'], {'readonly': False})
 
 
 def test_webshare_no_access(share):
@@ -213,12 +195,8 @@ def test_webshare_no_access(share):
         'password': 'invalid_webshare',
         'webshare': False,
     }):
-        auth_ws = connect()
+        with pytest.raises(WebshareError) as ve:
+            with webshare_session('invalid_webshare', 'invalid_webshare'):
+                pass
 
-        with pytest.raises(JSONRPCException) as exc:
-            call_method(auth_ws, "login", {
-                "username": 'invalid_webshare',
-                "password": 'invalid_webshare',
-            }, call_id=1)
-
-        assert exc.value.args[0] == {'code': -32001, 'message': 'User is not authorized to access this service'}
+        assert ve.value.error == {'code': -32001, 'message': 'Authentication failed'}

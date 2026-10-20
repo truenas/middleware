@@ -90,6 +90,12 @@ class SharingWebshareEntry(BaseModel):
         ),
     )
     enabled: bool = Field(default=True, description="If unset, the Webshare share is not available.")
+    readonly: bool = Field(
+        default=False,
+        description=(
+            "If set, Webshare users cannot create or change files and directories in the share."
+        ),
+    )
     is_home_base: bool = Field(
         default=False,
         description=(
