@@ -9,6 +9,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     LocalUsername,
     NonEmptyString,
+    Private,
     RemoteUsername,
     excluded_field,
     single_argument_args,
@@ -34,6 +35,7 @@ __all__ = [
     'ACLTemplateUpdateArgs', 'ACLTemplateUpdateResult',
     'ACLTemplateDeleteArgs', 'ACLTemplateDeleteResult',
     'FilesystemGetaclArgs', 'FilesystemGetaclResult',
+    'FilesystemSetAclOptions',
     'FilesystemSetaclArgs', 'FilesystemSetaclResult',
     'NFS4ACE', 'POSIXACE',
 ]
@@ -358,6 +360,10 @@ class FilesystemSetAclOptions(BaseModel):
             "Whether to validate that the users/groups granted access in the ACL can actually access the path or parent"
             " path."
         ),
+    )
+    bypass: Private[bool] = Field(
+        default=False,
+        description="Whether to permit paths backed by datasets managed by the system.",
     )
 
 

@@ -17,6 +17,7 @@ from middlewared.api.current import (
     FilesystemGetaclArgs,
     FilesystemGetaclResult,
     FilesystemSetaclArgs,
+    FilesystemSetAclOptions,
     FilesystemSetaclResult,
     FilesystemSetpermArgs,
     FilesystemSetpermResult,
@@ -654,10 +655,9 @@ class FilesystemService(Service):
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set ACL',
         audit_extended=lambda data: data['path'],
-        pass_app=True,
     )
     @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
-    def setacl(self, app, job, data):
+    def setacl(self, job, data):
         """
         Set the ACL of a given path.
 
@@ -709,7 +709,9 @@ class FilesystemService(Service):
         the default and access lists.
         """
         verrors = ValidationErrors()
-        data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors, internal_ok=app is None)
+        data['loc'] = self._common_perm_path_validate(
+            "filesystem.setacl", data, verrors, internal_ok=data['options']['bypass']
+        )
         normalize_acl_ids(data)
         if data['uid'] != ACL_UNDEFINED_ID and data['user']:
             verrors.add(
@@ -1011,7 +1013,7 @@ class FilesystemService(Service):
             'path': data['path'],
             'dacl': current_acl['acl'],
             'acltype': current_acl['acltype'],
-            'options': {'recursive': True, 'validate_effective_acl': False}
+            'options': FilesystemSetAclOptions(recursive=True, validate_effective_acl=False, bypass=True)
         })
 
         job.wrap_sync(setacl_job)
