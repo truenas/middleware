@@ -12,6 +12,7 @@ import shlex
 import shutil
 import stat
 from threading import Lock
+from typing import Any
 
 from sqlalchemy.orm import relationship
 from truenas_os_pyutils.io import atomic_write
@@ -23,17 +24,9 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     FilesystemMkdirData,
     FilesystemMkdirOptions,
-    GroupCreateArgs,
-    GroupCreateResult,
-    GroupDeleteArgs,
-    GroupDeleteResult,
-    GroupEntry,
-    GroupGetGroupObjArgs,
-    GroupGetGroupObjResult,
-    GroupGetNextGidArgs,
-    GroupGetNextGidResult,
-    GroupUpdateArgs,
-    GroupUpdateResult,
+    GroupCreate,
+    GroupGetGroupObj,
+    QueryOptions,
     UserCreateArgs,
     UserCreateResult,
     UserDeleteArgs,
@@ -73,7 +66,6 @@ from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
     IDType,
 )
-from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -84,9 +76,9 @@ from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.nss import grp, pwd
+from middlewared.utils.nss import pwd
 from middlewared.utils.nss.nss_common import NssModule
-from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
+from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.reserved_ids import ReservedXid
 from middlewared.utils.security import (
     MAX_PASSWORD_HISTORY,
@@ -94,7 +86,7 @@ from middlewared.utils.security import (
     check_password_complexity,
 )
 from middlewared.utils.service.path import check_path_service_write_allowed
-from middlewared.utils.sid import DomainRid, db_id_to_rid
+from middlewared.utils.sid import db_id_to_rid
 from middlewared.utils.time_utils import UTC, utc_now
 from middlewared.utils.webshare import WEBSHARE_GROUP
 
@@ -106,7 +98,7 @@ def crypted_password(cleartext):
     return sha512_crypt(cleartext)
 
 
-def unixhash_is_valid(unixhash):
+def unixhash_is_valid(unixhash: str) -> bool:
     return unixhash not in ("x", "*")
 
 
@@ -114,7 +106,7 @@ def nt_password(cleartext):
     return generate_nt_hash(cleartext)
 
 
-def validate_sudo_commands(commands):
+def validate_sudo_commands(commands: list[str]) -> ValidationErrors:
     verrors = ValidationErrors()
     if 'ALL' in commands and len(commands) != 1:
         verrors.add(str(commands.index('ALL')), 'ALL cannot be used with other commands')
@@ -149,7 +141,7 @@ def validate_sudo_commands(commands):
     return verrors
 
 
-def filters_include_ds_accounts(filters):
+def filters_include_ds_accounts(filters: list[Any]) -> bool:
     """ Check for filters limiting to local accounts """
     for f in filters:
         if len(f) < 3:
@@ -225,7 +217,9 @@ class UserService(CRUDService):
 
     @private
     async def user_extend_context(self, rows, extra):
-        groups = await self.middleware.call('group.query', [['local', '=', True]], {'select': ['id', 'name', 'roles']})
+        groups = await self.call2(
+            self.s.group.query, [['local', '=', True]], QueryOptions(select=['id', 'name', 'roles']),
+        )
 
         user_api_keys = defaultdict(list)
         for key in await self.call2(self.s.api_key.query):
@@ -252,8 +246,8 @@ class UserService(CRUDService):
                 )
             }),
             'user_api_keys': user_api_keys,
-            'roles_mapping': {i['id']: i['roles'] for i in groups},
-            'group_ids': {i['name']: i['id'] for i in groups},
+            'roles_mapping': {group.id: group.roles for group in groups},
+            'group_ids': {group.name: group.id for group in groups},
         }
 
     @private
@@ -666,7 +660,8 @@ class UserService(CRUDService):
     @private
     def group_ids_to_gids(self, group_ids):
         return [
-            grp['gid'] for grp in self.middleware.call_sync('group.query', [['id', 'in', list(group_ids)]])
+            group.gid
+            for group in self.call_sync2(self.s.group.query, [['id', 'in', list(group_ids)]])
         ]
 
     @api_method(UserCreateArgs, UserCreateResult, audit='Create user', audit_extended=lambda data: data['username'])
@@ -707,37 +702,43 @@ class UserService(CRUDService):
         group_created = False
 
         if create:
-            group = self.middleware.call_sync('group.query', [
+            groups = self.call_sync2(self.s.group.query, [
                 ('group', '=', data['username']),
                 ('local', '=', True)
             ])
-            if group:
-                group = group[0]
+            if groups:
+                group = groups[0]
             else:
-                group = self.middleware.call_sync('group.create_internal', {
-                    'name': data['username'],
-                    'smb': False,
-                    'sudo_commands': [],
-                    'sudo_commands_nopasswd': [],
-                }, False)
-                group = self.middleware.call_sync('group.query', [
-                    ('id', '=', group), ('local', '=', True)
-                ])[0]
+                group_id = self.call_sync2(
+                    self.s.group.create_internal,
+                    GroupCreate(
+                        name=data['username'],
+                        smb=False,
+                        sudo_commands=[],
+                        sudo_commands_nopasswd=[],
+                    ),
+                    False,
+                )
+                group = self.call_sync2(
+                    self.s.group.query, [('id', '=', group_id), ('local', '=', True)], QueryOptions(get=True),
+                )
                 group_created = True
 
-            data['group'] = group['id']
+            data['group'] = group.id
         else:
-            group = self.middleware.call_sync('group.query', [('id', '=', data['group'])])
-            if not group:
+            groups = self.call_sync2(self.s.group.query, [('id', '=', data['group'])])
+            if not groups:
                 verrors.add('user_create.group', f'Group {data["group"]} not found', errno.ENOENT)
             else:
-                group = group[0]
+                group = groups[0]
         verrors.check()
 
         if data['smb']:
-            data['groups'].append((self.middleware.call_sync(
-                'group.query', [('group', '=', 'builtin_users'), ('local', '=', True)], {'get': True},
-            ))['id'])
+            data['groups'].append(self.call_sync2(
+                self.s.group.query,
+                [('group', '=', 'builtin_users'), ('local', '=', True)],
+                QueryOptions(get=True),
+            ).id)
 
         if data['uid'] is None:
             data['uid'] = self.get_next_uid()
@@ -753,7 +754,7 @@ class UserService(CRUDService):
                 with SYNC_NEXT_UID_LOCK:
                     self.ReservedUids.remove_entry(data['uid'])
                 if group_created:
-                    self.middleware.call_sync('group.delete', data['group'])
+                    self.call_sync2(self.s.group.delete, data['group'])
                 idmap_verrors.check()
 
         if data['sshpubkey'] and data['home'] and data['home'] != DEFAULT_HOME_PATH:
@@ -768,7 +769,7 @@ class UserService(CRUDService):
                 'user_create',
                 data['username'],
                 data['uid'],
-                group['gid'],
+                group.gid,
                 self.group_ids_to_gids(data['groups']),
                 home,
                 data['home_mode'],
@@ -778,7 +779,7 @@ class UserService(CRUDService):
                 with SYNC_NEXT_UID_LOCK:
                     self.ReservedUids.remove_entry(data['uid'])
                 if group_created:
-                    self.middleware.call_sync('group.delete', data['group'])
+                    self.call_sync2(self.s.group.delete, data['group'])
                 pubkey_verrors.check()
 
         new_homedir = False
@@ -790,13 +791,13 @@ class UserService(CRUDService):
                     data['username'],
                     home_mode,
                     data['uid'],
-                    group['gid'],
+                    group.gid,
                     data['home_create']
                 )
             except Exception:
                 # Homedir setup failed, we should remove any auto-generated group
                 if group_created:
-                    self.middleware.call_sync('group.delete', data['group'])
+                    self.call_sync2(self.s.group.delete, data['group'])
 
                 with SYNC_NEXT_UID_LOCK:
                     self.ReservedUids.remove_entry(data['uid'])
@@ -849,13 +850,13 @@ class UserService(CRUDService):
                     chown_job = self.middleware.call_sync('filesystem.chown', {
                         'path': dest_file,
                         'uid': data['uid'],
-                        'gid': group['gid'],
+                        'gid': group.gid,
                     })
                     chown_job.wait_sync()
 
             data['sshpubkey'] = sshpubkey
             try:
-                self.update_sshpubkey(data['home'], data, group['group'])
+                self.update_sshpubkey(data['home'], data, group.group)
             except PermissionError as e:
                 self.logger.warning('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
@@ -1183,7 +1184,7 @@ class UserService(CRUDService):
             )
             if count == 0 and count2 == 0:
                 try:
-                    self.middleware.call_sync('group.delete', user['group']['id'])
+                    self.call_sync2(self.s.group.delete, user['group']['id'])
                 except Exception:
                     self.logger.warning(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
@@ -1438,9 +1439,9 @@ class UserService(CRUDService):
                 pass
 
             try:
-                grp_obj = await self.middleware.call('group.get_group_obj', {'gid': ADMIN_GID})
+                grp_obj = await self.call2(self.s.group.get_group_obj, GroupGetGroupObj(gid=ADMIN_GID))
                 raise CallError(
-                    f'A {grp_obj["source"].lower()} group with gid={ADMIN_GID} already exists, '
+                    f'A {grp_obj.source.lower()} group with gid={ADMIN_GID} already exists, '
                     'setting up local administrator is not possible',
                     errno.EEXIST,
                 )
@@ -1448,8 +1449,8 @@ class UserService(CRUDService):
                 pass
 
             try:
-                grp_obj = await self.middleware.call('group.get_group_obj', {'groupname': username})
-                raise CallError(f'{username!r} {grp_obj["source"].lower()} group already exists, '
+                grp_obj = await self.call2(self.s.group.get_group_obj, GroupGetGroupObj(groupname=username))
+                raise CallError(f'{username!r} {grp_obj.source.lower()} group already exists, '
                                 'setting up local administrator is not possible',
                                 errno.EEXIST)
             except KeyError:
@@ -1457,7 +1458,7 @@ class UserService(CRUDService):
 
             # double-check our database in case we have for some reason failed to write to passwd
             local_users = await self.middleware.call('user.query', [['local', '=', True]])
-            local_groups = await self.middleware.call('group.query', [['local', '=', True]])
+            local_groups = await self.call2(self.s.group.query, [['local', '=', True]])
 
             if any(u['uid'] == ADMIN_UID for u in local_users):
                 raise CallError(
@@ -1469,13 +1470,13 @@ class UserService(CRUDService):
                 raise CallError(f'{username!r} user already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
-            if any(g['gid'] == ADMIN_GID for g in local_groups):
+            if any(g.gid == ADMIN_GID for g in local_groups):
                 raise CallError(
                     f'A group with gid={ADMIN_GID} already exists, setting up local administrator is not possible',
                     errno.EEXIST,
                 )
 
-            if any(g['group'] == username for g in local_groups):
+            if any(g.group == username for g in local_groups):
                 raise CallError(f'{username!r} group already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
@@ -1620,7 +1621,7 @@ class UserService(CRUDService):
         if combined.get('userns_idmap') and (
             'userns_idmap' in data or 'group' in data or 'groups' in data
         ):
-            if await self.middleware.call('group.query', [
+            if await self.call2(self.s.group.query, [
                 ['local', '=', True],
                 ['roles', '!=', []],
                 ['id', 'in', group_ids],
@@ -1969,7 +1970,7 @@ class UserService(CRUDService):
         # stripping the ACL will allow subsequent chmod calls to succeed even if
         # dataset aclmode is restricted.
         try:
-            gid = self.middleware.call_sync('group.get_group_obj', {'groupname': group})['gr_gid']
+            gid = self.call_sync2(self.s.group.get_group_obj, GroupGetGroupObj(groupname=group)).gr_gid
         except Exception:
             # leaving gid at -1 avoids altering the GID value.
             self.logger.debug("Failed to convert %s to gid", group, exc_info=True)
@@ -2118,656 +2119,6 @@ class UserService(CRUDService):
 
         if entry['smb']:
             await self.middleware.call('smb.update_passdb_user', entry)
-
-
-class GroupModel(sa.Model):
-    __tablename__ = 'account_bsdgroups'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    bsdgrp_gid = sa.Column(sa.Integer())
-    bsdgrp_group = sa.Column(sa.String(120), unique=True)
-    bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
-    bsdgrp_sudo_commands = sa.Column(sa.JSON(list))
-    bsdgrp_sudo_commands_nopasswd = sa.Column(sa.JSON(list))
-    bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
-    bsdgrp_userns_idmap = sa.Column(sa.Integer(), default=USERNS_IDMAP_NONE)
-    bsdgrp_users = relationship('UserModel', secondary=lambda: GroupMembershipModel.__table__, overlaps='bsdusr_groups')
-
-
-class GroupService(CRUDService):
-
-    class Config:
-        datastore = 'account.bsdgroups'
-        datastore_prefix = 'bsdgrp_'
-        datastore_extend = 'group.group_extend'
-        datastore_extend_context = 'group.group_extend_context'
-        cli_namespace = 'account.group'
-        role_prefix = 'ACCOUNT'
-        entry = GroupEntry
-
-    ReservedGids = ReservedXid({})
-
-    @private
-    async def group_extend_context(self, rows, extra):
-        privileges = await self.middleware.call('datastore.query', 'account.privilege')
-
-        users = await self.middleware.call('datastore.query', 'account.bsdusers')
-        primary_memberships = defaultdict(set)
-        for u in users:
-            primary_memberships[u['bsdusr_group']['id']].add(u['id'])
-
-        server_sid = await self.middleware.call('smb.local_server_sid')
-
-        return {
-            "privileges": privileges,
-            "primary_memberships": primary_memberships,
-            "server_sid": server_sid,
-        }
-
-    @private
-    async def group_extend(self, group, ctx):
-        group['name'] = group['group']
-        group['users'] = list({u['id'] for u in group['users']} | ctx['primary_memberships'][group['id']])
-
-        privilege_mappings = privileges_group_mapping(ctx['privileges'], [group['gid']], 'local_groups')
-
-        if group['userns_idmap'] == USERNS_IDMAP_DIRECT:
-            group['userns_idmap'] = 'DIRECT'
-        elif group['userns_idmap'] == USERNS_IDMAP_NONE:
-            group['userns_idmap'] = None
-
-        match group['group']:
-            case 'builtin_administrators':
-                sid = f'{ctx["server_sid"]}-{DomainRid.ADMINS}'
-            case 'builtin_guests':
-                sid = f'{ctx["server_sid"]}-{DomainRid.GUESTS}'
-            case _:
-                if group['smb']:
-                    sid = f'{ctx["server_sid"]}-{db_id_to_rid(IDType.GROUP, group["id"])}'
-                else:
-                    sid = None
-
-        is_immutable = group['builtin'] and group['gid'] not in ALLOWED_BUILTIN_GIDS
-
-        group.update({
-            'local': True,
-            'sid': sid,
-            'immutable': is_immutable,
-            'roles': privilege_mappings['roles']
-        })
-        return group
-
-    @private
-    async def group_compress(self, group):
-        to_remove = [
-            'name',
-            'local',
-            'immutable',
-            'sid',
-            'roles'
-        ]
-
-        match group.get('userns_idmap'):
-            case 'DIRECT':
-                group['userns_idmap'] = USERNS_IDMAP_DIRECT
-            case None:
-                group['userns_idmap'] = USERNS_IDMAP_NONE
-            case _:
-                pass
-
-        for i in to_remove:
-            group.pop(i, None)
-
-        return group
-
-    async def query(self, filters, options):
-        """
-        Query groups with `query-filters` and `query-options`.
-        """
-        ds_groups = []
-        options = options or {}
-        options['extend'] = self._config.datastore_extend
-        options['extend_context'] = self._config.datastore_extend_context
-        options['prefix'] = self._config.datastore_prefix
-
-        datastore_options = options.copy()
-        datastore_options.pop('count', None)
-        datastore_options.pop('get', None)
-        datastore_options.pop('limit', None)
-        datastore_options.pop('offset', None)
-        datastore_options.pop('select', None)
-
-        if filters_include_ds_accounts(filters):
-            ds = await self.middleware.call('directoryservices.status')
-            if ds['type'] is not None and ds['status'] == DSStatus.HEALTHY.name:
-                ds_groups = await self.middleware.call('directoryservices.cache.query', 'GROUP', filters, options)
-
-        result = await self.middleware.call(
-            'datastore.query', self._config.datastore, [], datastore_options
-        )
-
-        return await self.middleware.run_in_thread(
-            filter_list, result + ds_groups, filters, options
-        )
-
-    @api_method(GroupCreateArgs, GroupCreateResult, audit='Create group', audit_extended=lambda data: data['name'])
-    async def do_create(self, data):
-        """
-        Create a new group.
-        """
-        return await self.create_internal(data)
-
-    @private
-    async def create_internal(self, data, reload_users=True):
-
-        verrors = ValidationErrors()
-        await self.__common_validation(verrors, data, 'group_create')
-        verrors.check()
-
-        if data.get('gid') is None:
-            data['gid'] = await self.get_next_gid()
-
-            # __common_validation could not resolve a DIRECT mapping without a gid;
-            # now that one was auto-assigned, recheck against existing idmap claims.
-            idmap_verrors = ValidationErrors()
-            await self.validate_userns_idmap_conflict(
-                idmap_verrors, 'group_create', data.get('userns_idmap'), data['gid'], None,
-            )
-            if idmap_verrors:
-                async with ASYNC_NEXT_GID_LOCK:
-                    self.ReservedGids.remove_entry(data['gid'])
-                idmap_verrors.check()
-
-        group = data.copy()
-        group['group'] = group.pop('name')
-
-        try:
-            group = await self.group_compress(group)
-            pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
-        finally:
-            # Once the data store entry is created we can safely remove the reservation
-            async with ASYNC_NEXT_GID_LOCK:
-                self.ReservedGids.remove_entry(data['gid'])
-
-        if reload_users:
-            await (await self.call2(self.s.service.control, 'RELOAD', 'user')).wait(raise_error=True)
-
-        if data['smb']:
-            await self.middleware.call('smb.add_groupmap', group | {'id': pk})
-
-        return pk
-
-    @api_method(GroupUpdateArgs, GroupUpdateResult, audit='Update group', audit_callback=True)
-    async def do_update(self, audit_callback, pk, data):
-        """
-        Update attributes of an existing group.
-        """
-
-        if pk > BASE_SYNTHETIC_DATASTORE_ID:
-            # datastore ids for directory services are created by adding the
-            # posix ID to a base value so that we can use getpwuid / getgrgid to
-            # convert back to a username / group name
-            try:
-                groupname = (await self.middleware.call(
-                    'group.get_group_obj', {'gid': pk - BASE_SYNTHETIC_DATASTORE_ID}
-                ))['gr_name']
-            except KeyError:
-                groupname = 'UNKNOWN'
-
-            audit_callback(groupname)
-            raise CallError(
-                'Groups provided by a directory service must be modified through the identity provider '
-                '(LDAP server or domain controller).', errno.EPERM
-            )
-
-        group = await self.get_instance(pk)
-        audit_callback(group['name'])
-
-        verrors = ValidationErrors()
-        await self.__common_validation(verrors, data, 'group_update', pk=pk)
-        if group['immutable']:
-            verrors.add('group_update.id', 'Immutable groups cannot be changed')
-
-        elif group['builtin']:
-            # Generally many features of builtin groups should be immutable
-            for key in ('sudo_commands', 'sudo_commands_nopasswd', 'smb', 'name'):
-                if data.get(key, None) is not None and data[key] != group[key]:
-                    verrors.add(
-                        f'group_update.{key}',
-                        'This configuration parameter may not be changed for builtin groups.'
-                    )
-
-        verrors.check()
-        old_smb = group['smb']
-
-        group.update(data)
-        new_smb = group['smb']
-
-        if 'name' in data and data['name'] != group['group']:
-            group['group'] = group.pop('name')
-            if new_smb:
-                # group renamed. We can simply add over top since group_mapping.tdb is keyed
-                # by SID value
-                await self.middleware.call('smb.add_groupmap', group)
-        else:
-            group.pop('name', None)
-            if new_smb and not old_smb:
-                await self.middleware.call('smb.add_groupmap', group)
-            elif old_smb and not new_smb:
-                await self.middleware.call('smb.del_groupmap', group['id'])
-
-        if 'users' in group:
-            primary_users = {
-                u['id']
-                for u in await self.middleware.call(
-                    'datastore.query',
-                    'account.bsdusers',
-                    [('bsdusr_group', '=', pk)],
-                )
-            }
-            group['users'] = [u for u in group['users'] if u not in primary_users]
-
-        group = await self.group_compress(group)
-        await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
-
-        await (await self.call2(self.s.service.control, 'RELOAD', 'user')).wait(raise_error=True)
-        return pk
-
-    @api_method(GroupDeleteArgs, GroupDeleteResult, audit='Delete group', audit_callback=True)
-    async def do_delete(self, audit_callback, pk, options):
-        """
-        Delete group ``id``.
-        """
-
-        if pk > BASE_SYNTHETIC_DATASTORE_ID:
-            # datastore ids for directory services are created by adding the
-            # posix ID to a base value so that we can use getpwuid / getgrgid to
-            # convert back to a username / group name
-            try:
-                groupname = (await self.middleware.call(
-                    'group.get_group_obj', {'gid': pk - BASE_SYNTHETIC_DATASTORE_ID}
-                ))['gr_name']
-            except KeyError:
-                groupname = 'UNKNOWN'
-
-            audit_callback(groupname)
-            raise CallError(
-                'Groups provided by a directory service must be deleted from the identity provider '
-                '(LDAP server or domain controller).', errno.EPERM
-            )
-
-        group = await self.get_instance(pk)
-        audit_callback(group['name'] + (' and all users that have this group as their primary group'
-                                        if options['delete_users'] else ''))
-
-        if group['builtin']:
-            raise CallError('A built-in group cannot be deleted.', errno.EACCES)
-
-        await self.middleware.call('privilege.before_group_delete', group)
-
-        nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
-                                             {'prefix': 'bsdgrp_', 'get': True})
-
-        for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', group['id'])],
-                                            {'prefix': 'bsdusr_'}):
-            if options['delete_users']:
-                await self.middleware.call('datastore.delete', 'account.bsdusers', i['id'])
-            else:
-                await self.middleware.call('datastore.update', 'account.bsdusers', i['id'], {'group': nogroup['id']},
-                                           {'prefix': 'bsdusr_'})
-
-        await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
-
-        if group['smb']:
-            await self.middleware.call('smb.del_groupmap', group['id'])
-
-        await (await self.call2(self.s.service.control, 'RELOAD', 'user')).wait(raise_error=True)
-        try:
-            await self.middleware.call('idmap.gencache.del_idmap_cache_entry', {
-                'entry_type': 'GID2SID',
-                'entry': group['gid']
-            })
-        except MatchNotFound:
-            pass
-
-        return pk
-
-    @api_method(GroupGetNextGidArgs, GroupGetNextGidResult, roles=['ACCOUNT_READ'])
-    async def get_next_gid(self):
-        """
-        Get the next available/free gid.
-        """
-        async with ASYNC_NEXT_GID_LOCK:
-            groups = await self.middleware.call(
-                'datastore.query', 'account.bsdgroups',
-                [['bsdgrp_gid', '>=', MIN_AUTO_XID], ['bsdgrp_builtin', '=', False]]
-            )
-            used_gids = set(group['bsdgrp_gid'] for group in groups)
-            used_gids |= set([
-                gid for gid in (await self.middleware.call('privilege.used_local_gids')).keys()
-                if gid >= MIN_AUTO_XID
-            ])
-            in_flight_gids = self.ReservedGids.in_use()
-            total_gids = used_gids | in_flight_gids
-            max_gid = max(total_gids) if total_gids else MIN_AUTO_XID - 1
-
-            if gid_gap := (set(range(MIN_AUTO_XID, max_gid)) - total_gids):
-                next_gid = min(gid_gap)
-            else:
-                next_gid = max_gid + 1
-
-            self.ReservedGids.add_entry(next_gid)
-            return next_gid
-
-    @api_method(GroupGetGroupObjArgs, GroupGetGroupObjResult, roles=['ACCOUNT_READ'])
-    def get_group_obj(self, data):
-        """
-        Returns dictionary containing information from struct grp for the group specified by either
-        the ``groupname`` or ``gid``.
-
-        If ``sid_info`` is specified, additional SMB / domain information is returned for the group.
-        """
-        verrors = ValidationErrors()
-        if not data['groupname'] and data['gid'] is None:
-            verrors.add('get_group_obj.groupname', 'Either "groupname" or "gid" must be specified')
-        if data['groupname'] and data['gid'] is not None:
-            verrors.add('get_group_obj.groupname', '"groupname" and "gid" may not be simultaneously specified')
-        verrors.check()
-
-        # NOTE: per request from UI team we are overriding default library
-        # KeyError message with a clearer one
-        #
-        # Many callers to group.get_group_obj may be catching KeyError and so
-        # changing exception type is something that should be approached
-        # carefully.
-        if data['groupname']:
-            try:
-                grp_obj = grp.getgrnam(data['groupname'], as_dict=True)
-            except KeyError:
-                raise KeyError(f'{data["groupname"]}: group with this name does not exist') from None
-        else:
-            try:
-                grp_obj = grp.getgrgid(data['gid'], as_dict=True)
-            except KeyError:
-                raise KeyError(f'{data["gid"]}: group with this id does not exist') from None
-
-        grp_obj['local'] = grp_obj['source'] == NssModule.FILES.name
-        match grp_obj['source']:
-            case NssModule.FILES.name:
-                grp_obj['source'] = 'LOCAL'
-            case NssModule.WINBIND.name:
-                grp_obj['source'] = 'ACTIVEDIRECTORY'
-            case NssModule.SSS.name:
-                grp_obj['source'] = 'LDAP'
-            case _:
-                self.logger.error('%s: unknown ID source.', grp_obj['source'])
-                raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
-
-        grp_obj['local'] = grp_obj['source'] == 'LOCAL'
-
-        if data['sid_info']:
-            sid = None
-
-            match grp_obj['source']:
-                case 'LOCAL':
-                    idmap_ctx = None
-                    db_entry = self.middleware.call_sync('group.query', [
-                        ['group', '=', grp_obj['gr_name']],
-                        ['local', '=', True]
-                    ], {'select': ['sid']})
-                    if not db_entry:
-                        self.logger.error(
-                            '%s: local group exists on server but does not exist in the '
-                            'the group account table.', grp_obj['gr_name']
-                        )
-                    else:
-                        sid = db_entry[0]['sid']
-                case 'ACTIVEDIRECTORY':
-                    # winbind provides idmapping for AD groups
-                    try:
-                        idmap_ctx = idmap_winbind.WBClient()
-                    except wbclient.WBCError as e:
-                        # Library error from libwbclient.
-                        # Don't bother logging if winbind isn't running since
-                        # we have plenty of other places that are logging that
-                        # error condition
-                        if e.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
-                            self.logger.error('Failed to retrieve SID for gid: %d',
-                                              grp_obj['gr_gid'], exc_info=True)
-
-                        idmap_ctx = None
-                case 'LDAP':
-                    # SSSD provides ID mapping for IPA domains
-                    idmap_ctx = idmap_sss.SSSClient()
-                case _:
-                    self.logger.error('%s: unknown ID source.', grp_obj['source'])
-                    raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
-
-            if idmap_ctx is not None:
-                try:
-                    sid = idmap_ctx.uidgid_to_idmap_entry({
-                        'id_type': 'GROUP',
-                        'id': grp_obj['gr_gid']
-                    })['sid']
-                except MatchNotFound:
-                    # This can happen if IPA and group doesn't have SID assigned
-                    sid = None
-
-            grp_obj['sid'] = sid
-        else:
-            grp_obj['sid'] = None
-
-        return grp_obj
-
-    @private
-    async def validate_userns_idmap_conflict(
-        self,
-        verrors: ValidationErrors,
-        schema: str,
-        userns_idmap,
-        gid: int | None,
-        exclude_id: int | None = None,
-    ) -> None:
-        """Verify the proposed userns_idmap doesn't collide with another local group's mapping.
-
-        `gid` is the group's host GID; it may be None during creation if not yet auto-assigned,
-        in which case a DIRECT mapping cannot be resolved and the check is deferred. Callers
-        that auto-assign the GID must re-invoke this check after assignment.
-        """
-        if not userns_idmap:
-            return
-        proposed = gid if userns_idmap == 'DIRECT' else userns_idmap
-        if proposed is None:
-            return
-        conflict_filters = [
-            ['local', '=', True],
-            ['userns_idmap', 'nin', [None, 0]],
-        ]
-        if exclude_id is not None:
-            conflict_filters.append(['id', '!=', exclude_id])
-        for other in await self.middleware.call('group.query', conflict_filters):
-            other_target = (
-                other['gid'] if other['userns_idmap'] == 'DIRECT'
-                else other['userns_idmap']
-            )
-            if other_target == proposed:
-                verrors.add(
-                    f'{schema}.userns_idmap',
-                    f'Group {other["name"]!r} already maps to '
-                    f'container GID {proposed}.'
-                )
-                return
-
-    async def __common_validation(self, verrors, data, schema, pk=None):
-
-        exclude_filter = [('id', '!=', pk)] if pk else []
-
-        if data.get('smb') and not await self.middleware.call('smb.is_configured'):
-            verrors.add(
-                f'{schema}.smb', 'SMB groups may not be configured while SMB service backend is unitialized.'
-            )
-
-        entry = None
-        if pk and 'userns_idmap' in data:
-            entry = await self.query([['local', '=', True], ['id', '=', pk]], {'get': True})
-            if entry['roles']:
-                verrors.add(
-                    f'{schema}.userns_idmap',
-                    'User namespace idmaps may not be configured for privileged accounts.'
-                )
-
-            if entry['builtin']:
-                verrors.add(
-                    f'{schema}.userns_idmap',
-                    'User namespace idmaps may not be configured for builtin accounts.'
-                )
-
-        effective_gid = entry['gid'] if entry else data.get('gid')
-        await self.validate_userns_idmap_conflict(
-            verrors, schema, data.get('userns_idmap'), effective_gid, exclude_id=pk,
-        )
-
-        if 'name' in data:
-            if data.get('smb'):
-                if data['name'].upper() in [x.name for x in SMBBuiltin]:
-                    verrors.add(
-                        f'{schema}.name',
-                        f'Group name "{data["name"]}" conflicts with existing SMB Builtin entry. '
-                        f'SMB group mapping is not permitted for this group.',
-                        errno.EEXIST,
-                    )
-
-                smb_groups = await self.middleware.call('datastore.query',
-                                                        'account.bsdgroups',
-                                                        [('smb', '=', True)] + exclude_filter,
-                                                        {'prefix': 'bsdgrp_'})
-
-                if any(g['group'].casefold() == data['name'].casefold() for g in smb_groups):
-                    verrors.add(
-                        f'{schema}.name',
-                        f'Group name "{data["name"]}" conflicts with existing groupmap entry. '
-                        f'SMB group mapping is not permitted for this group. Note that SMB '
-                        f'group names are case-insensitive.',
-                        errno.EEXIST,
-                    )
-
-            existing = await self.middleware.call(
-                'datastore.query', 'account.bsdgroups',
-                [('group', '=', data['name'])] + exclude_filter, {'prefix': 'bsdgrp_'}
-            )
-            if existing:
-                verrors.add(
-                    f'{schema}.name',
-                    f'A Group with the name "{data["name"]}" already exists.',
-                    errno.EEXIST,
-                )
-
-        if data.get('gid') is not None:
-            try:
-                existing = await self.middleware.call(
-                    'group.get_group_obj', {'gid': data['gid']},
-                )
-            except KeyError:
-                pass
-            else:
-                verrors.add(
-                    f'{schema}.gid',
-                    f'Gid {data["gid"]} is already used (group {existing["gr_name"]} has it)',
-                    errno.EEXIST,
-                )
-
-            if privilege := (await self.middleware.call('privilege.used_local_gids')).get(data['gid']):
-                verrors.add(
-                    f'{schema}.gid',
-                    f'A privilege {privilege["name"]!r} already uses this group ID.',
-                    errno.EINVAL,
-                )
-
-        for idx, dbid in enumerate(data.get('users', [])):
-            if dbid >= BASE_SYNTHETIC_DATASTORE_ID:
-                verrors.add(
-                    f'{schema}.users.{idx}',
-                    'Directory services users may not be added as members of local groups.'
-                )
-                return
-
-        # Get root user ID and group associated with pk for use by the remaining tests
-        root_user = await self.middleware.call(
-            'user.query',
-            [('username', '=', 'root')],
-            {'get': True}
-        )
-        root_user_id = root_user['id']
-        if pk:
-            pk_groupname = (await self.middleware.call('group.get_instance', pk)).get('group')
-        else:
-            pk_groupname = None
-
-        if 'users' in data:
-            # Block root user from new groups or
-            # added to any groups other than BUILTIN_ADMINISTRATORS
-            if (
-                (schema == 'group_create' or (pk_groupname != 'builtin_administrators'))
-                and (root_user_id in data['users'])
-            ):
-                verrors.add(
-                    f'{schema}.users',
-                    'Cannot add the root user to this group'
-                )
-
-            existing = {
-                i['id']
-                for i in await self.middleware.call(
-                    'datastore.query',
-                    'account.bsdusers',
-                    [('id', 'in', data['users'])],
-                )
-            }
-            notfound = set(data['users']) - existing
-            if notfound:
-                verrors.add(
-                    f'{schema}.users',
-                    f'Following users do not exist: {", ".join(map(str, notfound))}',
-                )
-
-            primary_users = await self.middleware.call(
-                'datastore.query',
-                'account.bsdusers',
-                [('bsdusr_group', '=', pk)],
-            )
-            notfound = []
-            for user in primary_users:
-                if user['id'] not in data['users']:
-                    notfound.append(user['bsdusr_username'])
-            if notfound:
-                verrors.add(
-                    f'{schema}.users',
-                    f"This group is primary for the following users: {', '.join(map(str, notfound))}. "
-                    "You can't remove them.",
-                )
-
-        # Special handling for builtin_administrators group
-        if pk and 'users' in data:
-            if pk_groupname == 'builtin_administrators':
-
-                # Check if root is being removed from builtin_administrators
-                if root_user_id not in data['users']:
-                    verrors.add(
-                        f'{schema}.users',
-                        'The root user must remain a member of the builtin_administrators group.'
-                    )
-
-        if 'sudo_commands' in data:
-            verrors.add_child(
-                f'{schema}.sudo_commands',
-                await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands']),
-            )
-
-        if 'sudo_commands_nopasswd' in data:
-            verrors.add_child(
-                f'{schema}.sudo_commands_nopasswd',
-                await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands_nopasswd']),
-            )
 
 
 class UserLicenseReconcileDelegate(LicenseReconcileDelegate):

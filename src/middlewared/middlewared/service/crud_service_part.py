@@ -39,6 +39,28 @@ class CRUDServicePart[E, PK = int](ServicePart):
     def compress(self, data: dict[str, Any]) -> dict[str, Any] | Awaitable[dict[str, Any]]:
         return data
 
+    async def _query_rows(
+        self,
+        filters: list[Any],
+        options: QueryOptions,
+        extra: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Read and extend every row that `query` then filters and paginates.
+
+        Override to report rows that do not live in the datastore.
+        """
+        datastore_filters: list[Any] = []
+        ds_opts: dict[str, Any] = {'prefix': self._datastore_prefix}
+        if options.force_sql_filters:
+            datastore_filters = filters
+            ds_opts['force_sql_filters'] = True
+
+        rows: list[dict[str, Any]] = await self.middleware.call(
+            'datastore.query', self._datastore, datastore_filters, ds_opts,
+        )
+        ctx = await self.extend_context(rows, extra)
+        return await self._run_extend_many(rows, ctx)
+
     @overload
     async def query(self, filters: list[Any], options: QueryOptionsCount) -> int: ...  # type: ignore[overload-overlap]
 
@@ -63,28 +85,14 @@ class CRUDServicePart[E, PK = int](ServicePart):
         # (e.g. lock-state lookups) when the relevant field isn't being selected.
         extra = {**extra, 'select': opts.get('select')}
 
+        rows = await self._query_rows(filters, options, extra)
+
+        post_filters = filters
         if options.force_sql_filters:
-            # When force_sql_filters is set, let the datastore handle
-            # filters for performance, but strip pagination/select opts
-            # so the datastore returns full rows for extend() to process.
-            ds_opts: dict[str, Any] = {
-                'prefix': self._datastore_prefix,
-                'force_sql_filters': True,
-            }
-            rows: list[dict[str, Any]] = await self.middleware.call(
-                'datastore.query', self._datastore, filters, ds_opts,
-            )
-            ctx = await self.extend_context(rows, extra)
-            rows = await self._run_extend_many(rows, ctx)
-            result: Any = filter_list(rows, [], opts)
-        else:
-            rows = await self.middleware.call(
-                'datastore.query', self._datastore, [],
-                {'prefix': self._datastore_prefix},
-            )
-            ctx = await self.extend_context(rows, extra)
-            rows = await self._run_extend_many(rows, ctx)
-            result = filter_list(rows, filters, opts)
+            # `_query_rows` already handed them to the datastore.
+            post_filters = []
+
+        result: Any = filter_list(rows, post_filters, opts)
 
         if isinstance(result, int):
             return result

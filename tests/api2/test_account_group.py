@@ -1,3 +1,4 @@
+import contextlib
 import errno
 
 import pytest
@@ -5,9 +6,42 @@ import pytest
 from middlewared.service_exception import CallError, InstanceNotFound, ValidationErrors
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, mock
 
 BASE_SYNTHETIC_DATASTORE_ID = 100000000
+
+DS_GROUP = {
+    "id": BASE_SYNTHETIC_DATASTORE_ID + 300000001,
+    "gid": 300000001,
+    "name": "cov_ds_group",
+    "group": "cov_ds_group",
+    "builtin": False,
+    "sudo_commands": [],
+    "sudo_commands_nopasswd": [],
+    "smb": True,
+    "userns_idmap": None,
+    "local": False,
+    "sid": "S-1-5-21-1234567890-1234567890-1234567890-1111",
+    "roles": [],
+    "users": [],
+    "immutable": True,
+}
+
+
+@contextlib.contextmanager
+def joined_directory_service():
+    """Report `DS_GROUP` as the entire contents of the directory service group cache."""
+    with (
+        mock("directoryservices.status", return_value={"type": "ACTIVEDIRECTORY", "status": "HEALTHY"}),
+        mock("directoryservices.cache.query", f"""
+            def mock(self, id_type, filters, options):
+                if id_type != "GROUP":
+                    return []
+
+                return [{DS_GROUP!r}]
+        """),
+    ):
+        yield
 
 
 def test_delete_group_delete_users():
@@ -235,6 +269,31 @@ def test_group_toggle_smb():
         assert call("group.get_instance", g["id"])["smb"] is True
         call("group.update", g["id"], {"smb": False})
         assert call("group.get_instance", g["id"])["smb"] is False
+
+
+# ---------------------------------------------------------------------------
+# directory service groups
+#
+# They do not live in the datastore. `group.query` reports them alongside the
+# local groups, and every query option applies to the two sets together.
+# ---------------------------------------------------------------------------
+def test_query_reports_directory_service_groups():
+    local_count = call("group.query", [], {"count": True})
+
+    with joined_directory_service():
+        assert call("group.query", [["name", "=", DS_GROUP["name"]]], {"get": True}) == DS_GROUP
+        assert call("group.get_instance", DS_GROUP["id"]) == DS_GROUP
+        assert call("group.query", [], {"count": True}) == local_count + 1
+
+
+def test_query_excludes_directory_service_groups():
+    with joined_directory_service():
+        assert call("group.query", [["local", "=", True], ["name", "=", DS_GROUP["name"]]]) == []
+
+
+def test_query_skips_an_unhealthy_directory_service():
+    with mock("directoryservices.status", return_value={"type": "ACTIVEDIRECTORY", "status": "FAULTED"}):
+        assert call("group.query", [["name", "=", DS_GROUP["name"]]]) == []
 
 
 # ---------------------------------------------------------------------------

@@ -11,7 +11,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypedDict
 
-from middlewared.api.current import S3Access, S3Grant, S3GrantEntry, S3PrincipalType
+from middlewared.api.current import GroupGetGroupObj, S3Access, S3Grant, S3GrantEntry, S3PrincipalType
 from middlewared.service import ValidationErrors
 
 if TYPE_CHECKING:
@@ -75,7 +75,9 @@ async def principal_names(middleware: Middleware, principals: Principals) -> Pri
     groups: dict[int, str] = {}
     for gid in principals.gids:
         try:
-            groups[gid] = (await middleware.call("group.get_group_obj", {"gid": gid}))["gr_name"]
+            groups[gid] = (await middleware.call2(
+                middleware.services.group.get_group_obj, GroupGetGroupObj(gid=gid),
+            )).gr_name
         except KeyError:
             pass
     return PrincipalNames(users=users, groups=groups)
@@ -123,7 +125,7 @@ async def validate_grants(
                 verrors.add(f"{schema}.{i}.xid", f"No user with uid {xid} exists.")
         else:
             try:
-                await middleware.call("group.get_group_obj", {"gid": xid})
+                await middleware.call2(middleware.services.group.get_group_obj, GroupGetGroupObj(gid=xid))
             except KeyError:
                 verrors.add(f"{schema}.{i}.xid", f"No group with gid {xid} exists.")
 
