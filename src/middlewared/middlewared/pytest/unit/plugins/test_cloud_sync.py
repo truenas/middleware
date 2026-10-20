@@ -1,4 +1,5 @@
 # flake8: noqa
+import configparser
 import io
 import textwrap
 
@@ -108,16 +109,29 @@ def test__rclone_config_section_strips_line_breaks_from_value(payload):
     # quote.
     ("`x", '"""`x"""'),
     ('"""xyz', '""""""xyz"""'),
-    # goconfig trims whitespace around a value before quote detection, so a quote char behind leading whitespace
-    # still triggers quoting, and an unquoted padded value would be silently trimmed. the serializer is deliberately
-    # triple-quoting it so that goconfig reads it literally rather than interpreting the leading backtick
-    (" `x", '""" `x"""'),
-    (" padded ", '""" padded """'),
-    ("\tpadded", '"""\tpadded"""'),
+    # the value is trimmed before quote detection, so a quote char behind leading whitespace still triggers quoting.
+    (" `x", '"""`x"""'),
 ])
 def test__rclone_config_section_quotes_values_goconfig_would_mangle(value, written):
     out = rclone_config_section("remote", {"pass": value})
     assert out == f"[remote]\npass = {written}\n"
+
+
+@pytest.mark.parametrize("value,written", [
+    (" padded ", "padded"),
+    ("\tpadded", "padded"),
+    (" 0021accountnumber008", "0021accountnumber008"),
+])
+def test__rclone_config_section_trims_whitespace(value, written):
+    out = rclone_config_section("remote", {"account": value})
+    assert out == f"[remote]\naccount = {written}\n"
+
+
+def test__rclone_config_section_round_trips_through_configparser():
+    token = ' {"access_token": "x"} '
+    ini = configparser.ConfigParser()
+    ini.read_string(rclone_config_section("remote", {"token": token}))
+    assert ini["remote"]["token"] == token.strip()
 
 
 @pytest.mark.parametrize("value,written", [
