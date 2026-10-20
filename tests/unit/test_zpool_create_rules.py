@@ -64,7 +64,6 @@ def run(rule, data: ZpoolCreate, ctx: CreateContext) -> list[tuple[str, str]]:
         {"properties": {"altroot": "/x"}},
         {"properties": {"cachefile": "/x"}},
         {"filesystem_properties": {"mountpoint": "/x"}},
-        {"filesystem_properties": {"encryption": "on"}},
     ],
 )
 def test_private_properties_are_rejected(payload):
@@ -76,6 +75,16 @@ def test_private_properties_are_rejected(payload):
 def test_volume_only_properties_are_rejected(prop):
     with pytest.raises(ValidationErrors):
         request(filesystem_properties={prop: "8K"})
+
+
+@pytest.mark.parametrize(
+    "prop,value",
+    [("casesensitivity", "insensitive"), ("normalization", "formD"), ("utf8only", "on"), ("encryption", "off")],
+)
+def test_creation_only_properties_are_rejected(prop, value):
+    with pytest.raises(ValidationErrors) as ve:
+        request(filesystem_properties={prop: value})
+    assert [e.attribute for e in ve.value.errors] == [f"data.filesystem_properties.{prop}"]
 
 
 @pytest.mark.parametrize("vtype", ["STRIPE", "RAIDZ1", "stripe", "file"])

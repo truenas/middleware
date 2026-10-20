@@ -319,12 +319,17 @@ class ZpoolCreateProperties(BaseModel):
 
 class ZpoolCreateFilesystemProperties(ZFSResourceCreateProperties):
     """Root filesystem properties set at creation, as `zpool create -O property=value`. The same native property \
-    names and values :method:`zfs.resource.create` accepts, minus the volume-only ones. ZFS judges the values \
-    before any disk is formatted. A field left as null is not sent, so the TrueNAS defaults apply (`atime=off`, \
-    `acltype=posix`, `aclmode=discard`, `aclinherit=discard`, `compression=lz4`, `xattr=sa`, and `recordsize=1M` on \
-    dRAID pools)."""
+    names and values :method:`zfs.resource.create` accepts, minus the volume-only ones and `casesensitivity`, which \
+    can only be set at creation and on the root would become a permanent default for every dataset created beneath \
+    it. ZFS judges the values before any disk is formatted. A field left as null is not sent, so the TrueNAS \
+    defaults apply (`atime=off`, `acltype=posix`, `aclmode=discard`, `aclinherit=discard`, `compression=lz4`, \
+    `xattr=sa`, and `recordsize=1M` on dRAID pools)."""
 
+    casesensitivity: Excluded = excluded_field()
+    encryption: Excluded = excluded_field()
+    normalization: Excluded = excluded_field()
     snapdev: Excluded = excluded_field()
+    utf8only: Excluded = excluded_field()
     volblocksize: Excluded = excluded_field()
     volsize: Excluded = excluded_field()
 
