@@ -1,3 +1,4 @@
+import asyncio
 from typing import TYPE_CHECKING, Iterable, Protocol, Sequence
 
 from middlewared.alert.base import OneShotAlertClass
@@ -10,7 +11,10 @@ from middlewared.utils.path import FSLocation, path_location
 from .crud_service import CRUDService
 from .decorators import pass_app, private
 from .sharing_task_service_part import (
+    MOUNT_RESOLVE_DELAY,
     LocalPathInfo,
+    resolve_stored_paths,
+    send_resolved_events,
     validate_path_service_share,
     validate_path_service_write,
 )
@@ -36,74 +40,66 @@ class SharingTaskService[E](CRUDService[E]):
     share_task_type: str
     path_resolution_filters: Iterable[Sequence] | None = None
     include_tier_info = False
-    """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
-    default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
-    table (including `datastore_prefix`)."""
+    """Describe which share entries have a path to resolve their dataset fields from. By default, all entries do.
+    Filters must use the field names found in the database table (including `datastore_prefix`)."""
     readonly_field: str | None = None
     """The flag that makes the share or task read-only for its local path, or None where nothing does: what
     `local_path_info` reads unless overridden."""
 
     def __init__(self, middleware: 'Middleware'):
         super().__init__(middleware)
+        self._mounted_unresolved: set[str] = set()
         # Register path resolution hooks for all SharingTaskService subclasses
         middleware.register_hook('dataset.post_unlock', self.resolve_paths, sync=True)
         middleware.register_hook('pool.post_import', self.resolve_paths, sync=True)
+        middleware.register_hook('zfs.dataset.mounted', self.resolve_mounted_paths, sync=False)
 
     @classmethod
     @private
-    async def resolve_paths(cls, middleware: 'Middleware', *_args, **_kwargs) -> None:
+    async def resolve_paths(
+        cls, middleware: 'Middleware', *_args, datasets: list[dict] | None = None, mountpoints: set[str] | None = None,
+    ) -> None:
         """
-        Attempt resolution of NULL dataset paths.
+        Resolve paths again and store the dataset and relative path each one is in.
 
-        Note: *_args and **_kwargs are accepted but unused. They're required because hooks
-        are called with varying arguments (pool.post_import passes pool, dataset.post_unlock
-        passes datasets=[...]), but this hook queries for NULL paths independently.
+        Every path is resolved unless `datasets` (the datasets ``dataset.post_unlock`` passes) or `mountpoints`
+        (from `resolve_mounted_paths`) narrow it to the paths they can have changed. Positional arguments are
+        accepted but unused: ``pool.post_import`` passes the pool, and every path is resolved after an import.
 
         IMPORTANT: Used by migration/0018_resolve_dataset_paths.py
         """
         config = cls._config
-        namespace = config.namespace
-        datastore = config.datastore
-        prefix = config.datastore_prefix
-
-        # Query entries with unresolved dataset paths
-        unresolved = await middleware.call(
-            'datastore.query',
-            datastore,
-            [
-                [prefix + 'dataset', '=', None],
-                *(cls.path_resolution_filters or [])
-            ]
+        changed = await resolve_stored_paths(
+            middleware, config.namespace, config.datastore, config.datastore_prefix, cls.path_field,
+            cls.path_resolution_filters,
+            datasets=None if datasets is None else [ds['name'] for ds in datasets],
+            mountpoints=mountpoints,
         )
-        if not unresolved:
+        if changed and config.event_send:
+            try:
+                entries = await middleware.call(
+                    f'{config.namespace}.query', [[config.datastore_primary_key, 'in', changed]],
+                    {'force_sql_filters': True},
+                )
+                send_resolved_events(middleware, config.namespace, entries)
+            except Exception:
+                # Raising would have the hook's arguments logged, and dataset.post_unlock's carry encryption keys
+                middleware.logger.error(
+                    '%s: failed to send change events for %r', config.namespace, changed, exc_info=True
+                )
+
+    @private
+    async def resolve_mounted_paths(self, middleware: 'Middleware', data: dict) -> None:
+        """``zfs.dataset.mounted`` hook: resolve the paths under a dataset that was just mounted, together with
+        those under any other dataset mounted in the next `MOUNT_RESOLVE_DELAY` seconds."""
+        waiting = bool(self._mounted_unresolved)
+        self._mounted_unresolved.add(data['mountpoint'])
+        if waiting:
             return
 
-        for entry in unresolved:
-            try:
-                entry_id = entry['id']
-                path = entry[prefix + cls.path_field]
-
-                dataset, relative_path = await middleware.run_in_thread(resolve_dataset_path, path, middleware)
-                if dataset:
-                    # Successfully resolved - update database
-                    await middleware.call(
-                        'datastore.update',
-                        datastore,
-                        entry_id,
-                        {
-                            prefix + 'dataset': dataset,
-                            prefix + 'relative_path': relative_path
-                        }
-                    )
-                    middleware.logger.info(f"Resolved {namespace} id={entry_id}: {dataset}@'{relative_path}'")
-                else:
-                    # Cannot resolve yet (encrypted dataset, etc.) - leave as NULL
-                    middleware.logger.info(f"Deferred {namespace} id={entry_id}: {path}")
-
-            except Exception as e:
-                middleware.logger.debug(
-                    f"Failed to resolve {namespace} id={entry_id} path={path}: {e}"
-                )
+        await asyncio.sleep(MOUNT_RESOLVE_DELAY)
+        mountpoints, self._mounted_unresolved = self._mounted_unresolved, set()
+        await self.resolve_paths(middleware, mountpoints=mountpoints)
 
     @private
     async def get_path_field(self, data) -> str:

@@ -6,9 +6,9 @@ This migration splits filesystem paths into (dataset, relative_path) components
 for SMB shares, iSCSI extents, rsync tasks, NVMe-oF namespaces, etc.
 
 Must run after boot when datasets are mounted (unlike alembic migrations which
-run before mount). Paths that cannot be resolved (encrypted datasets, hardware
-issues) are left as NULL and will be resolved via hook subscriptions when the
-datasets become available.
+run before mount). Paths that cannot be resolved (a pool that is not imported,
+hardware issues) are left as NULL and will be resolved via hook subscriptions
+when the datasets become available.
 """
 from middlewared.plugins.cloud_backup import CloudBackupService
 from middlewared.plugins.cloud_sync import CloudSyncService

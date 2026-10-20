@@ -1,18 +1,32 @@
 """
 Test dataset/relative_path resolution hooks for sharing services.
 
-This test verifies that when encrypted datasets are unlocked, the hook system
-automatically resolves NULL dataset/relative_path fields for shares that were
-created while the dataset was locked.
+This test verifies that the dataset/relative_path fields stored for a share follow the dataset that holds its path:
+they resolve while that dataset is locked, are corrected when an encrypted dataset is unlocked, and move to a dataset
+mounted over the path later.
 """
+import time
+
 import pytest
 
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, client, ssh
 
 
 PASSPHRASE = 'test_passphrase_12345'
+
+
+def changed_to(events, share_id, dataset):
+    """Wait for a change event that resolves the share to `dataset`."""
+    for _ in range(10):
+        if any(
+            event_type == 'CHANGED' and message['id'] == share_id and message['fields']['dataset'] == dataset
+            for event_type, message in events
+        ):
+            return True
+        time.sleep(1)
+    return False
 
 
 @pytest.fixture
@@ -82,14 +96,22 @@ def test_smb_share_path_resolution_after_unlock(encrypted_dataset):
         assert share['dataset'] is None
         assert share['relative_path'] is None
 
-        # Unlock the dataset - this should trigger the dataset.post_unlock hook
-        call('pool.dataset.unlock', ds_name, {
-            'recursive': True,
-            'datasets': [{
-                'name': ds_name,
-                'passphrase': encrypted_dataset['passphrase'],
-            }]
-        }, job=True)
+        with client() as c:
+            events = []
+            c.subscribe(
+                'sharing.smb.query', lambda event_type, **message: events.append((event_type, message)), sync=True
+            )
+
+            # Unlock the dataset - this should trigger the dataset.post_unlock hook
+            call('pool.dataset.unlock', ds_name, {
+                'recursive': True,
+                'datasets': [{
+                    'name': ds_name,
+                    'passphrase': encrypted_dataset['passphrase'],
+                }]
+            }, job=True)
+
+            assert changed_to(events, share['id'], ds_name)
 
         # Verify dataset is unlocked
         ds = call('pool.dataset.get_instance', ds_name)
@@ -108,16 +130,15 @@ def test_smb_share_path_resolution_after_unlock(encrypted_dataset):
 
 def test_nfs_share_path_resolution_after_unlock(encrypted_dataset):
     """
-    Test that NFS share dataset/relative_path are resolved after unlocking.
+    Test that NFS share dataset/relative_path are corrected after unlocking.
 
-    This test simulates what happens when migration 0018_resolve_dataset_paths.py
-    runs while a dataset is locked - the migration leaves dataset/relative_path as NULL,
-    and the hook system should resolve them when the dataset is later unlocked.
+    This test simulates a share resolved to the dataset above the one holding its path, as a share resolved while
+    that dataset was unmounted used to be, and checks the hook system corrects it when the dataset is unlocked.
 
     1. Create NFS share with unlocked dataset
     2. Verify dataset and relative_path are set correctly
     3. Lock the dataset
-    4. Manually set dataset and relative_path to NULL (simulating migration 0018 running on locked dataset)
+    4. Manually set dataset and relative_path to the parent dataset's
     5. Unlock the dataset
     6. Verify hook automatically resolves dataset and relative_path
     """
@@ -141,17 +162,14 @@ def test_nfs_share_path_resolution_after_unlock(encrypted_dataset):
         ds = call('pool.dataset.get_instance', ds_name)
         assert ds['locked'] is True
 
-        # Manually set dataset and relative_path to NULL, simulating what happens
-        # when migration 0018 runs and encounters a locked dataset
+        parent, leaf = ds_name.rsplit('/', 1)
         call('datastore.update', 'sharing.nfs.share', share['id'], {
-            'nfs_dataset': None,
-            'nfs_relative_path': None,
+            'nfs_dataset': parent,
+            'nfs_relative_path': f'{leaf}/share_dir',
         })
 
-        # Verify fields are now NULL
         share = call('sharing.nfs.get_instance', share['id'])
-        assert share['dataset'] is None
-        assert share['relative_path'] is None
+        assert share['dataset'] == parent
 
         # Unlock the dataset - this should trigger the dataset.post_unlock hook
         call('pool.dataset.unlock', ds_name, {
@@ -185,9 +203,9 @@ def webshare_entitled():
         yield
 
 
-def test_webshare_path_resolution_after_unlock(webshare_entitled, encrypted_dataset):
+def test_webshare_path_resolution_while_locked(webshare_entitled, encrypted_dataset):
     """
-    Test that Webshare dataset/relative_path are resolved after unlocking.
+    Test that a Webshare created while its dataset is locked resolves to that dataset.
     """
     ds_name = encrypted_dataset['name']
     share_path = encrypted_dataset['path']
@@ -203,8 +221,9 @@ def test_webshare_path_resolution_after_unlock(webshare_entitled, encrypted_data
     })
 
     try:
-        assert share['dataset'] is None
-        assert share['relative_path'] is None
+        assert share['dataset'] == ds_name
+        assert share['relative_path'] == 'share_dir'
+        assert share['locked'] is True
 
         call('pool.dataset.unlock', ds_name, {
             'recursive': True,
@@ -224,3 +243,35 @@ def test_webshare_path_resolution_after_unlock(webshare_entitled, encrypted_data
 
     finally:
         call('sharing.webshare.delete', share['id'])
+
+
+def test_share_path_resolution_follows_mount():
+    """
+    Test that a share on an immutable directory resolves, and moves to a dataset later mounted over its path with a
+    change event.
+    """
+    with dataset('path_resolution_mount') as ds:
+        share_path = f'/mnt/{ds}/share_dir'
+        ssh(f'mkdir {share_path} && chattr +i {share_path}')
+        share = call('sharing.nfs.create', {'path': share_path})
+        try:
+            assert share['dataset'] == ds
+            assert share['relative_path'] == 'share_dir'
+            # A dataset cannot be created over an existing directory
+            ssh(f'chattr -i {share_path} && rmdir {share_path}')
+
+            with client() as c:
+                events = []
+                c.subscribe(
+                    'sharing.nfs.query', lambda event_type, **message: events.append((event_type, message)), sync=True
+                )
+                with dataset('path_resolution_mount/share_dir') as child:
+                    assert changed_to(events, share['id'], child)
+                    share = call('sharing.nfs.get_instance', share['id'])
+                    assert share['dataset'] == child
+                    assert share['relative_path'] == ''
+                    call('sharing.nfs.delete', share['id'])
+        finally:
+            ssh(f'chattr -i {share_path}', check=False)
+            if call('sharing.nfs.query', [['id', '=', share['id']]]):
+                call('sharing.nfs.delete', share['id'])

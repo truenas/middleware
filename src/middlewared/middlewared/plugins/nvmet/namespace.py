@@ -282,8 +282,8 @@ class NVMetNamespaceService(SharingService):
                                         'Shrinking an namespace file is not allowed. This can lead to data loss.')
 
             # Split path into dataset and relative_path for FILE type extents
-            # May return None if path exists but can't be authoritatively resolved yet
-            # (e.g., encrypted dataset). In this case, resolve on mount/unlock.
+            # May return None where no data pool dataset holds the path (e.g., its pool is not imported).
+            # In this case, resolve on import/unlock/mount.
             data['dataset'], data['relative_path'] = resolve_dataset_path(path, self.middleware)
         else:
             # In case device_type was updated

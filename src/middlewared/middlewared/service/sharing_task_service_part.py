@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
@@ -18,12 +21,19 @@ if TYPE_CHECKING:
 
 __all__ = (
     "LocalPathInfo",
+    "MOUNT_RESOLVE_DELAY",
     "SharingServicePart",
     "SharingTaskServicePart",
     "dataset_split",
+    "resolve_stored_paths",
+    "send_resolved_events",
     "validate_path_service_share",
     "validate_path_service_write",
 )
+
+MOUNT_RESOLVE_DELAY = 2
+"""Seconds a share or task service waits after a dataset mounts before resolving the paths under it, so that the
+burst of mounts a pool import or a recursive unlock makes is resolved together."""
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -44,6 +54,95 @@ def dataset_split(data: Any) -> tuple[str | None, str | None]:
     if isinstance(data, dict):
         return data.get("dataset"), data.get("relative_path")
     return data.dataset, data.relative_path
+
+
+async def resolve_stored_paths(
+    middleware: Middleware,
+    namespace: str,
+    datastore: str,
+    prefix: str,
+    path_field: str,
+    filters: Iterable[Sequence[Any]] | None,
+    *,
+    datasets: list[str] | None = None,
+    mountpoints: set[str] | None = None,
+) -> list[int]:
+    """Resolve the path of each row of a share or task table again and store the dataset and relative path it
+    resolves to, returning the ids of the rows whose stored values changed.
+
+    Every row is resolved unless the caller says what changed. With `datasets`, the datasets just unlocked, only
+    rows that are unresolved or whose dataset is one of them, inside one or above one are. With `mountpoints`, the
+    mountpoints of datasets just mounted, only rows whose path is under one of them are. A row whose path does not
+    resolve keeps what it has stored.
+
+    Args:
+        middleware: Middleware instance
+        namespace: The service's namespace, for logging
+        datastore: The service's table
+        prefix: The table's column prefix
+        path_field: The column, without the prefix, that holds the path
+        filters: Datastore filters selecting the rows that have a path to resolve
+        datasets: Names of datasets just unlocked
+        mountpoints: Mountpoints of datasets just mounted
+
+    Returns:
+        The ids of the rows updated
+    """
+    changed: list[int] = []
+    for row in await middleware.call("datastore.query", datastore, list(filters or [])):
+        path = row[prefix + path_field]
+        stored = (row[prefix + "dataset"], row[prefix + "relative_path"])
+        # A cloud backup's zvol source is never under a dataset's mountpoint
+        if not path or not path.startswith("/mnt/"):
+            continue
+        if datasets is not None and stored[0] is not None and not any(
+            stored[0] == name or stored[0].startswith(f"{name}/") or name.startswith(f"{stored[0]}/")
+            for name in datasets
+        ):
+            continue
+        if mountpoints is not None and not any(
+            path == mountpoint or path.startswith(f"{mountpoint}/") for mountpoint in mountpoints
+        ):
+            continue
+
+        try:
+            resolved = await middleware.run_in_thread(resolve_dataset_path, path, middleware)
+            if resolved[0] is None:
+                middleware.logger.debug("%s id=%d: %r does not resolve to a dataset", namespace, row["id"], path)
+                continue
+            if resolved == stored:
+                continue
+            # The row may have been given a new path, or deleted, while the rows before it resolved
+            if not await middleware.call(
+                "datastore.query", datastore, [["id", "=", row["id"]], [prefix + path_field, "=", path]]
+            ):
+                continue
+
+            await middleware.call(
+                "datastore.update",
+                datastore,
+                row["id"],
+                {prefix + "dataset": resolved[0], prefix + "relative_path": resolved[1]},
+            )
+        except Exception:
+            middleware.logger.error(
+                "%s id=%d: failed to resolve the dataset of %r", namespace, row["id"], path, exc_info=True
+            )
+            continue
+
+        middleware.logger.info("%s id=%d: %r resolved to dataset %r at %r", namespace, row["id"], path, *resolved)
+        changed.append(row["id"])
+
+    return changed
+
+
+def send_resolved_events(middleware: Middleware, namespace: str, entries: Iterable[Any]) -> None:
+    """Send the change event for each share or task whose stored dataset and relative path `resolve_stored_paths`
+    updated, which writes them past the CRUD methods that would otherwise send it."""
+    for entry in entries:
+        if isinstance(entry, BaseModel):
+            entry = entry.model_dump()
+        middleware.send_event(f"{namespace}.query", "CHANGED", id=entry["id"], fields=entry)
 
 
 async def validate_path_service_write(

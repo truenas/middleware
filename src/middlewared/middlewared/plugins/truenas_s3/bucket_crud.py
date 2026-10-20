@@ -283,6 +283,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         datastore_extend = "sharing.s3.bucket_extend"
         datastore_extend_context = "sharing.s3.bucket_extend_context"
 
+    @classmethod
+    @private
+    async def resolve_paths(cls, middleware: Middleware, *args: Any, **kwargs: Any) -> None:
+        # a bucket stores its dataset rather than a path to resolve to one
+        pass
+
     @private
     async def get_path_field(self, data: SharingS3Entry | dict[str, Any]) -> str:
         # the bucket is its dataset, mounted where every dataset middleware
