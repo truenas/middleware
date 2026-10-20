@@ -4,6 +4,7 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolReplaceArgs, PoolReplaceResult
 from middlewared.service import Service, ValidationErrors, job
 from middlewared.service_exception import MatchNotFound
+from middlewared.utils.service.entitlement import validate_sed_license
 
 
 def find_disk_from_identifier(disks, ident):
@@ -63,17 +64,8 @@ class PoolService(Service):
         )):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
-        if pool['all_sed'] and disk['sed'] is None:
-            if not await self.middleware.call(
-                'disk.query', [['identifier', '=', disk['identifier']]], {'force_sql_filters': True}
-            ):
-                verrors.add('options.disk', f'Disk {options["disk"]!r} is not a known disk.', errno.ENOENT)
-                verrors.check()
-            # Disks are probed for SED only while entitled, and an all-SED pool must stay repairable without it
-            disk['sed'] = await self.middleware.call('disk.is_sed', disk['devname'])
-            await self.middleware.call(
-                'datastore.update', 'storage.disk', disk['identifier'], {'disk_sed': disk['sed']}
-            )
+        if pool['all_sed']:
+            await validate_sed_license(self.middleware, verrors, 'options.disk')
 
         if pool['all_sed'] and not disk['sed']:
             verrors.add(

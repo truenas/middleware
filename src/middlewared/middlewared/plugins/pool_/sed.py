@@ -1,14 +1,10 @@
 import asyncio
-from typing import TYPE_CHECKING, Any
 
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.common.license import LicenseDelegate
 from middlewared.service import Service, private
 from middlewared.utils.zfs.event import ZfsConfigSyncEvent, ZfsEvent
-
-if TYPE_CHECKING:
-    from middlewared.main import Middleware
 
 SED_UPDATE_LOCK = asyncio.Lock()
 
@@ -20,7 +16,7 @@ class PoolService(Service):
         event_send = False
 
     @private
-    async def ha_update_all_sed_attr(self) -> None:
+    async def ha_update_all_sed_attr(self):
         if await self.middleware.call('system.sed_enabled'):
             await self.update_all_sed_attr()
         else:
@@ -28,12 +24,12 @@ class PoolService(Service):
                 await self.middleware.call('datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False})
 
     @private
-    async def update_all_sed_attr(self, skip_all_sed_check: bool = False, filter_pool: str | None = None) -> None:
+    async def update_all_sed_attr(self, skip_all_sed_check=False, filter_pool=None):
         async with SED_UPDATE_LOCK:
             return await self.update_all_sed_attr_impl(skip_all_sed_check, filter_pool)
 
     @private
-    async def update_all_sed_attr_impl(self, skip_all_sed_check: bool, filter_pool: str | None) -> None:
+    async def update_all_sed_attr_impl(self, skip_all_sed_check, filter_pool):
         # We will scan all pools here with relevant disks and make sure that if any pool has all disks which are
         # SED based, we will update that pool in the db to reflect reality
         # How we will do this is that we will get disks from pool topology and then check if all of them are SED
@@ -41,7 +37,7 @@ class PoolService(Service):
         #
         # We will only query those pools by default which have all sed flag unset
         # When this method runs, it will update status for all pools based on whatever filters we have
-        # Only imported pools are judged, since an exported pool has no topology and would read as not all-SED
+        # It does not account for healthy or unhealthy options and relies on consumer instead to be smart about it
         # How this will be triggered is in 3 places:
         # For non-HA systems:
         # It will happen in a data migration where we will update status of all pools
@@ -55,9 +51,7 @@ class PoolService(Service):
         # pool in question becomes healthy and vice versa
         # Why we still settle on setting this value initially is to prevent accidental mis-configuration of a pool
         # which might perhaps very well be an all sed pool
-        filters = [['topology', '!=', None]]
-        if not skip_all_sed_check:
-            filters.append(['all_sed', '=', None])
+        filters = [] if skip_all_sed_check else [['all_sed', '=', None]]
         if filter_pool:
             filters.append(['name', '=', filter_pool])
 
@@ -92,7 +86,7 @@ class PoolService(Service):
                 )
 
     @private
-    async def get_disks_from_topology(self, pool_id_or_pool: int | dict[str, Any]) -> set[str]:
+    async def get_disks_from_topology(self, pool_id_or_pool):
         pool = await self.middleware.call(
             'pool.get_instance', pool_id_or_pool
         ) if isinstance(pool_id_or_pool, int) else pool_id_or_pool
@@ -102,7 +96,7 @@ class PoolService(Service):
         }
 
 
-async def zfs_events_hook(middleware: "Middleware", event: ZfsEvent) -> None:
+async def zfs_events_hook(middleware, event: ZfsEvent):
     if isinstance(event, ZfsConfigSyncEvent):
         if await middleware.call('system.sed_enabled') and (
             pool := await middleware.call("pool.query", [["name", "=", event.pool]], {'force_sql_filters': True})
@@ -122,5 +116,5 @@ class SEDLicenseDelegate(LicenseDelegate):
             await self.middleware.call('pool.update_all_sed_attr', True)
 
 
-async def setup(middleware: "Middleware") -> None:
+async def setup(middleware):
     middleware.register_hook('zfs.pool.events', zfs_events_hook)

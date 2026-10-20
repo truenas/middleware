@@ -86,7 +86,6 @@ jobs:
             middlewared/plugins/dns_client.py \
             middlewared/plugins/filesystem.py \
             middlewared/plugins/keyvalue.py \
-            middlewared/plugins/pool_/sed.py \
             middlewared/plugins/pwenc.py \
             middlewared/service/generic_sharing_service.py \
             middlewared/service/ha_synchronization.py \
