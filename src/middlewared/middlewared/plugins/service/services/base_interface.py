@@ -18,6 +18,7 @@ class ServiceInterface(CallMixin):
     reloadable = False  # Implements `reload` method
     deprecated = False  # Alert if service is running
     may_run_on_standby = True  # should be allowed to run on HA standby
+    systemd_sidecar_units: list[str] = []  # Units that this service's own units start or restart
 
     def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
