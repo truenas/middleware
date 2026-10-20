@@ -89,7 +89,6 @@ class S3LicenseDelegate(LicenseDelegate):
     """
 
     features = (LicenseFeature.S3_AUDIT, LicenseFeature.S3_VERSIONING)
-    active_only = False
 
     async def apply(self, changes: dict[str, bool]) -> None:
         state = await self.call2(self.s.service.get_unit_state, SERVICE)
