@@ -374,7 +374,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             if data.object_lock_default_days is None:
                 verrors.add(f"{schema}.object_lock_default_days", "A default retention rule needs a period.")
 
-        if data.audit is not None or data.audit_overflow is not None:
+        if (data.audit is not None or data.audit_overflow is not None) and (
+            old is None or (data.audit, data.audit_overflow) != (old.audit, old.audit_overflow)
+        ):
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)
             if not entitlement.entitled:
                 verrors.add(f"{schema}.audit", entitlement.message)

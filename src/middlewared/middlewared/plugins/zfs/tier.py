@@ -363,13 +363,12 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
 
         ZFS tiering requires a license carrying the ZFSTIER feature. The call fails when the system is not
-        entitled to this feature, unless it changes nothing but ``enabled``.
+        entitled to this feature, unless it only turns tiering off.
         """
         old = await self.config()
+        wanted = old.model_copy(update=data).model_dump()
         ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
-        if not ent.entitled and old.model_copy(update=data).model_dump(exclude={"enabled"}) != old.model_dump(
-            exclude={"enabled"}
-        ):
+        if not ent.entitled and wanted != old.model_dump() | {"enabled": False}:
             raise CallError(ent.message)
 
         new = await self._svc_part.do_update(data)

@@ -1308,7 +1308,7 @@ class InterfaceService(CRUDService):
         # Validate fec_mode field
         if 'fec_mode' in data:
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NETWORK_FEC)
-            if entitlement.entitled:
+            if entitlement.entitled or data['fec_mode'] in ('OFF', iface.get('fec_mode')):
                 if new['type'] == 'PHYSICAL':
                     if available := self.available_fec_modes(oid):
                         if data['fec_mode'] not in available:
