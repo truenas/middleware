@@ -534,15 +534,15 @@ class DomainConnection(
                 raise ValueError(f'{ds_type}: unexpected directory sevice type')
 
     def remove_privileges(self, domain: str) -> None:
-        if not (priv := self.middleware.call_sync('privilege.query', [['name', '=', domain]])):
+        if not (priv := self.call_sync2(self.s.privilege.query, [['name', '=', domain]])):
             return
 
-        if priv[0]['local_groups']:
+        if priv[0].local_groups:
             self.logger.warning('%s: cannot remove the RBAC privilege for the domain because '
                                 'local accounts use the privilege.', domain)
             return
 
-        self.middleware.call_sync('privilege.delete', priv[0]['id'])
+        self.call_sync2(self.s.privilege.delete, priv[0].id)
 
     @job(lock="directoryservices_join_leave")
     @kerberos_ticket

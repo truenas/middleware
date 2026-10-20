@@ -561,7 +561,7 @@ class AuthService(Service):
         if not isinstance(root_credentials, UserSessionManagerCredentials):
             return None
 
-        if not root_credentials.user['privilege']['web_shell']:
+        if not root_credentials.user['privilege'].web_shell:
             return {
                 'error': ShellTokenAuthError.WEB_SHELL_DENIED,
                 'username': root_credentials.user['username'],
@@ -569,7 +569,7 @@ class AuthService(Service):
             }
 
         required_role = SHELL_APP_REQUIRED_ROLE[shell_type]
-        if required_role is not None and required_role not in root_credentials.user['privilege']['roles']:
+        if required_role is not None and required_role not in root_credentials.user['privilege'].roles:
             return {
                 'error': ShellTokenAuthError.MISSING_ROLE,
                 'required_role': required_role,

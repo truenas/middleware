@@ -15,7 +15,7 @@ __all__ = [
     'AuthMechanismChoicesArgs', 'AuthMechanismChoicesResult', 'AuthLogoutArgs', 'AuthLogoutResult',
     'AuthSetAttributeArgs', 'AuthSetAttributeResult', 'AuthTerminateOtherSessionsArgs',
     'AuthTerminateOtherSessionsResult', 'AuthTerminateSessionArgs', 'AuthTerminateSessionResult',
-    'AuthSessionsAddedEvent', 'AuthSessionsRemovedEvent',
+    'AuthSessionsAddedEvent', 'AuthSessionsRemovedEvent', 'ComposedPrivilege',
 ]
 
 
@@ -216,10 +216,30 @@ class AuthRespOTPRequired(BaseModel):
     username: str = Field(description="Username for which OTP is required.")
 
 
+class ComposedPrivilege(BaseModel):
+    roles: set[str] = Field(
+        description=(
+            "Names of every role the credential holds, including the roles those roles include. Empty for a "
+            "credential that was granted access by allowlist alone."
+        ),
+    )
+    allowlist: list[dict[str, str]] = Field(
+        description=(
+            "Method/resource pairs the credential may call, as `method` and `resource` keys. A single entry of "
+            "`*`/`*` grants unrestricted access."
+        ),
+    )
+    web_shell: bool = Field(
+        default=False,
+        description="Whether the credential may use the web shell. Always `false` under STIG.",
+    )
+    webui_access: bool = Field(default=False, description="Whether the credential may log in to the web UI.")
+
+
 class AuthUserInfo(UserGetUserObj):
     attributes: dict = Field(description="Custom user attributes and metadata.")
     two_factor_config: dict = Field(description="Two-factor authentication configuration for the user.")
-    privilege: dict = Field(description="User privilege and role information.")
+    privilege: ComposedPrivilege = Field(description="User privilege and role information.")
     account_attributes: list[str] = Field(description="Array of account attribute names available for this user.")
 
 

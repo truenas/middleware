@@ -7,6 +7,7 @@ import pytest
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, FullAdmin, LongString
 from middlewared.api.base.full_admin import RESTRICTION
 from middlewared.api.base.handler.full_admin import full_admin_fields, full_admin_payload_fields
+from middlewared.api.current import ComposedPrivilege
 from middlewared.service.full_admin import check_full_admin_payload
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.privilege import check_full_admin_fields
@@ -211,11 +212,11 @@ def test_finds_a_field_wrapped_in_secret():
 class _Credential:
     is_user_session = True
     allowlist = None
-    user = {"privilege": {"roles": ["SOME_WRITE"]}}
+    user = {"privilege": ComposedPrivilege(roles={"SOME_WRITE"}, allowlist=[])}
 
 
 class _FullAdminCredential(_Credential):
-    user = {"privilege": {"roles": ["FULL_ADMIN"]}}
+    user = {"privilege": ComposedPrivilege(roles={"FULL_ADMIN"}, allowlist=[])}
 
 
 def _app(credential):

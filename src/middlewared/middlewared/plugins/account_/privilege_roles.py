@@ -1,54 +1,50 @@
+from __future__ import annotations
+
 from copy import deepcopy
+from typing import TYPE_CHECKING, Any
 
-from middlewared.api.current import PrivilegeRolesEntry
+from middlewared.api.current import PrivilegeRolesEntry, QueryOptions
 from middlewared.role import ROLES
-from middlewared.service import Service, filter_list, filterable_api_method, private
+from middlewared.utils.filter_list import filter_list
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
+__all__ = ("dump_role_manager", "get_roles")
 
 
-class PrivilegeService(Service):
+def get_roles(
+    filters: list[Any],
+    options: QueryOptions,
+) -> list[PrivilegeRolesEntry] | PrivilegeRolesEntry | int:
+    roles = [
+        PrivilegeRolesEntry(
+            name=name,
+            title=name,
+            includes=role.includes,
+            builtin=role.builtin,
+            stig=role.stig,
+        )
+        for name, role in ROLES.items()
+    ]
 
-    class Config:
-        namespace = "privilege"
-        cli_namespace = "auth.privilege"
+    return filter_list(roles, filters, options, PrivilegeRolesEntry)
 
-    @filterable_api_method(item=PrivilegeRolesEntry, authorization_required=False)
-    async def roles(self, filters, options):
-        """
-        Get all available roles.
-        """
-        roles = [
-            {
-                "name": name,
-                "title": name,
-                "includes": role.includes,
-                "builtin": role.builtin,
-                "stig": role.stig,
-            }
-            for name, role in ROLES.items()
-        ]
 
-        return filter_list(roles, filters, options)
+def dump_role_manager(middleware: Middleware) -> dict[str, Any]:
+    """
+    Private method for CI in order to dump current information in role manager
+    This is consumed in tests/unit/test_role_manager.py
 
-    @private
-    async def dump_role_manager(self):
-        """
-        Private method for CI in order to dump current information in role manager
-        This is consumed in tests/unit/test_role_manager.py
+    And possibly more tests
+    """
+    role_manager = middleware.role_manager
 
-        And possibly more tests
-        """
-
-        # deepcopy is okay here because this should basically never be called and
-        # we'd rather err on side of paranoia
-        method_resources = deepcopy(self.middleware.role_manager.methods.resources)
-        method_allowlists = deepcopy(self.middleware.role_manager.methods.allowlists_for_roles)
-
-        event_resources = deepcopy(self.middleware.role_manager.events.resources)
-        event_allowlists = deepcopy(self.middleware.role_manager.events.allowlists_for_roles)
-
-        return {
-            'method_resources': method_resources,
-            'method_allowlists': method_allowlists,
-            'event_resources': event_resources,
-            'event_allowlists': event_allowlists
-        }
+    # deepcopy is okay here because this should basically never be called and
+    # we'd rather err on side of paranoia
+    return {
+        "method_resources": deepcopy(role_manager.methods.resources),
+        "method_allowlists": deepcopy(role_manager.methods.allowlists_for_roles),
+        "event_resources": deepcopy(role_manager.events.resources),
+        "event_allowlists": deepcopy(role_manager.events.allowlists_for_roles),
+    }

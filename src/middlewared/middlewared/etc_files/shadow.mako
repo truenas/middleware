@@ -19,7 +19,7 @@
         # of webui via due to PAM enforcing password policies on the root
         # account. Specifically, some legacy users have configured the root
         # account so its password has password_disabled = true.
-        root_always_enabled = middleware.call_sync('privilege.always_has_root_password_enabled')
+        root_always_enabled = middleware.call_sync2(middleware.services.privilege.always_has_root_password_enabled)
 
     if sec.max_password_age and password_full_admin_users:
         unexpired = filter_list(password_full_admin_users, [

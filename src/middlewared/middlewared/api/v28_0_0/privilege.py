@@ -6,6 +6,7 @@ from middlewared.utils.security import STIGType
 from .group import GroupEntry
 
 __all__ = ["PrivilegeEntry", "PrivilegeRolesEntry", "UnmappedGroupEntry",
+           "PrivilegeCreate", "PrivilegeUpdate",
            "PrivilegeCreateArgs", "PrivilegeCreateResult",
            "PrivilegeUpdateArgs", "PrivilegeUpdateResult",
            "PrivilegeDeleteArgs", "PrivilegeDeleteResult",

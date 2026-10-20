@@ -899,7 +899,7 @@ class UserService(CRUDService):
 
         if data.get('password_disabled'):
             try:
-                self.middleware.call_sync('privilege.before_user_password_disable', user)
+                self.call_sync2(self.s.privilege.before_user_password_disable, user)
             except CallError as e:
                 verrors.add('user_update.password_disabled', e.errmsg)
 
@@ -1171,7 +1171,7 @@ class UserService(CRUDService):
         if user['immutable']:
             raise CallError('Cannot delete an immutable user', errno.EINVAL)
 
-        self.middleware.call_sync('privilege.before_user_delete', user)
+        self.call_sync2(self.s.privilege.before_user_delete, user)
 
         if options['delete_group'] and not user['group']['bsdgrp_builtin']:
             count = self.middleware.call_sync(
@@ -1242,7 +1242,7 @@ class UserService(CRUDService):
         shells = {
             NO_LOGIN_SHELL: 'nologin',
         }
-        if self.middleware.call_sync('privilege.privileges_for_groups', 'local_groups', group_ids):
+        if self.call_sync2(self.s.privilege.privileges_for_groups, 'local_groups', group_ids):
             shells.update(**{
                 '/usr/bin/cli': 'TrueNAS CLI',  # installed via midcli
                 '/usr/bin/cli_console': 'TrueNAS Console',  # installed via midcli
@@ -1402,7 +1402,7 @@ class UserService(CRUDService):
         This is used when the system is installed without a password and must be set on
         first use/login.
         """
-        return len(await self.middleware.call('privilege.local_administrators')) > 0
+        return len(await self.call2(self.s.privilege.local_administrators)) > 0
 
     @api_method(
         UserSetupLocalAdministratorArgs, UserSetupLocalAdministratorResult,
