@@ -310,8 +310,13 @@ def test_assemble_records_which_request_vdev_each_spec_came_from():
 
 
 def test_build_vdev_spec_leaves_draid_ndata_to_the_binding():
-    vdev = {"root": "data", "type": "draid2", "disks": list("abcdefghijklm"), "draid_data_disks": None,
-            "draid_spare_disks": 1}
+    vdev = {
+        "root": "data",
+        "type": "draid2",
+        "disks": list("abcdefghijklm"),
+        "draid_data_disks": None,
+        "draid_spare_disks": 1,
+    }
     assert build_vdev_spec(vdev, "disks").name == "1s"
     vdev["draid_data_disks"] = 4
     assert build_vdev_spec(vdev, "disks").name == "4d:1s"
@@ -320,8 +325,14 @@ def test_build_vdev_spec_leaves_draid_ndata_to_the_binding():
 def test_assemble_locates_a_draid_config_the_binding_refuses():
     vdevs = [
         {"root": "data", "type": "mirror", "disks": ["a", "b"], "devices": []},
-        {"root": "data", "type": "draid1", "disks": ["c", "d"], "devices": [], "draid_data_disks": 5,
-         "draid_spare_disks": 0},
+        {
+            "root": "data",
+            "type": "draid1",
+            "disks": ["c", "d"],
+            "devices": [],
+            "draid_data_disks": 5,
+            "draid_spare_disks": 0,
+        },
     ]
     with pytest.raises(ZpoolCreateRejected) as e:
         assemble_create_pool_vdev_kwargs(vdevs, "disks")
@@ -352,7 +363,10 @@ def test_properties_to_zfs_stringifies_and_skips_unset():
         ({"data": [{"type": "draid1", "disks": ["a"]}]}, ["topology.data.0.disks"]),
         # the rest of the layout is the binding's call, not this rule's
         ({"data": [{"type": "mirror", "disks": ["a", "b"]}, {"type": "raidz1", "disks": ["c", "d", "e"]}]}, []),
-        ({"data": [{"type": "mirror", "disks": ["a", "b"]}], "log": [{"type": "raidz1", "disks": ["c", "d", "e"]}]}, []),
+        (
+            {"data": [{"type": "mirror", "disks": ["a", "b"]}], "log": [{"type": "raidz1", "disks": ["c", "d", "e"]}]},
+            [],
+        ),
         ({"data": [{"type": "mirror", "disks": ["a", "b"]}], "special": [{"type": "disk", "disks": ["c"]}]}, []),
         ({"data": [{"type": "draid1", "disks": ["a", "b"], "draid_data_disks": 5}]}, []),
     ],

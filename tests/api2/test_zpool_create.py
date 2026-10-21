@@ -179,7 +179,9 @@ def test_create_width_policy_and_force_topology():
         before = _partitions(disks)
         errors = _create_fails({"data": [{"type": "mirror", "disks": disks[0:5]}]})
         assert errors == [("zpool.create.topology.data.0", "mirror width 5 exceeds limit of 4", errno.EINVAL)]
-        errors = _create_fails({"data": [{"type": "raidz1", "disks": disks[0:3]}, {"type": "raidz1", "disks": disks[3:7]}]})
+        errors = _create_fails(
+            {"data": [{"type": "raidz1", "disks": disks[0:3]}, {"type": "raidz1", "disks": disks[3:7]}]}
+        )
         assert errors == [
             (
                 "zpool.create.topology.data.1",
@@ -210,7 +212,9 @@ def test_create_properties_pass_through_and_defaults_apply():
         properties={"autotrim": "on", "comment": "zpool.create test"},
         filesystem_properties={"dedup": "on", "checksum": "sha512", "compression": "zstd"},
     )
-    with expect_audit_method_calls([{"method": "zpool.create", "params": [payload], "description": f"Pool create {POOL}"}]):
+    with expect_audit_method_calls(
+        [{"method": "zpool.create", "params": [payload], "description": f"Pool create {POOL}"}]
+    ):
         pool = call("zpool.create", payload, job=True)
     try:
         # the pool properties that were set come back on the result
@@ -267,7 +271,12 @@ REJECTED = [
         3,
         lambda d: {"data": [{"type": "draid1", "disks": d[0:3], "draid_data_disks": 4}]},
         {},
-        [("zpool.create.topology.data.0", "dRAID requires at least 5 children (ndata=4 + parity=1 + nspares=0), got 3")],
+        [
+            (
+                "zpool.create.topology.data.0",
+                "dRAID requires at least 5 children (ndata=4 + parity=1 + nspares=0), got 3",
+            )
+        ],
         id="draid-config",
     ),
     pytest.param(
@@ -281,7 +290,12 @@ REJECTED = [
         3,
         lambda d: {"data": [{"type": "mirror", "disks": d[0:2]}], "special": [{"type": "disk", "disks": d[2:3]}]},
         {},
-        [("zpool.create.topology.special.0", 'vdev type "disk" has no redundancy but storage vdevs (type "mirror") are redundant')],
+        [
+            (
+                "zpool.create.topology.special.0",
+                'vdev type "disk" has no redundancy but storage vdevs (type "mirror") are redundant',
+            )
+        ],
         id="non-redundant-special-on-mirror",
     ),
     pytest.param(
@@ -356,7 +370,10 @@ def test_create_refuses_a_disk_in_use():
         ({"properties": {"ashift": 13}}, "properties.ashift"),
         ({"topology": {"data": [{"type": "STRIPE", "disks": ["nosuchdisk"]}]}}, "topology.data.0.type"),
         ({"encryption": True}, "encryption"),
-        ({"topology": {"data": [{"type": "disk", "disks": ["nosuchdisk"]}], "spare": ["nosuchdisk2"]}}, "topology.spare"),
+        (
+            {"topology": {"data": [{"type": "disk", "disks": ["nosuchdisk"]}], "spare": ["nosuchdisk2"]}},
+            "topology.spare",
+        ),
     ],
 )
 def test_create_rejects_what_the_model_does_not_expose(data, attribute):
@@ -394,7 +411,9 @@ def test_create_force_topology_rejected_when_support_entitled():
 
 def test_create_dedup_rejected_without_entitlement():
     with entitled("DEDUP", False):
-        errors = _create_fails({"data": [{"type": "disk", "disks": ["nosuchdisk"]}]}, filesystem_properties={"dedup": "on"})
+        errors = _create_fails(
+            {"data": [{"type": "disk", "disks": ["nosuchdisk"]}]}, filesystem_properties={"dedup": "on"}
+        )
     assert [(attr, code) for attr, _, code in errors] == [("zpool.create.filesystem_properties.dedup", errno.EPERM)]
 
 
@@ -413,7 +432,14 @@ def test_create_all_sed_rejected_without_entitlement():
     "method,payload_fn",
     [
         ("zpool.create", lambda d: _payload({"data": [{"type": "disk", "disks": d}]})),
-        ("pool.create", lambda d: {"name": POOL, "topology": {"data": [{"type": "STRIPE", "disks": d}]}, "allow_duplicate_serials": True}),
+        (
+            "pool.create",
+            lambda d: {
+                "name": POOL,
+                "topology": {"data": [{"type": "STRIPE", "disks": d}]},
+                "allow_duplicate_serials": True,
+            },
+        ),
     ],
 )
 def test_create_rolls_back_when_registration_fails(method, payload_fn):
