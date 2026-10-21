@@ -15,7 +15,6 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.api import api_method
 from middlewared.api.current import (
     S3AuditAction,
-    S3BucketLayout,
     S3Entry,
     SharingS3AuditChoicesArgs,
     SharingS3AuditChoicesResult,
@@ -432,7 +431,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     def compress(self, data: SharingS3Entry, owner_uid: int) -> dict[str, Any]:
-        row = data.model_dump(exclude={"id", "locked", "owner", "tier", "create_dataset"})
+        row = data.model_dump(exclude={"id", "locked", "owner", "tier"})
         row["grants"] = [g.model_dump(exclude={"name"}) for g in data.grants]
         row["owner_uid"] = owner_uid
         if isinstance(row["audit"], list):
@@ -546,7 +545,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 ZFSResourceCreateArgsData(path=name, properties=bucket_dataset_properties()),
             )
         except ZFSPathAlreadyExistsException as e:
-            # an existing dataset is used only with create_dataset false
+            # a BUCKET bucket's dataset is always created here
             verrors.add(f"{schema}.dataset", e.message, errno.EEXIST)
         except ZFSPathNotFoundException as e:
             verrors.add(f"{schema}.dataset", e.message, errno.ENOENT)
@@ -567,11 +566,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             self.logger.warning("%s: failed to remove the bucket dataset: %s", name, e.message)
 
     @private
-    async def validate_existing_dataset(
-        self, schema: str, dataset: str, layout: S3BucketLayout, verrors: ValidationErrors
-    ) -> None:
-        """Refuse an existing dataset the S3 service would refuse at
-        registration. A `BUCKET` bucket also requires it empty."""
+    async def validate_existing_dataset(self, schema: str, dataset: str, verrors: ValidationErrors) -> None:
+        """Refuse an existing dataset the S3 service would refuse at registration."""
         field = f"{schema}.dataset"
         if has_internal_path(dataset):
             verrors.add(field, f"{dataset!r} is a system dataset.")
@@ -579,7 +575,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         try:
             rows = await self.call2(
                 self.s.zfs.resource.list_impl,
-                ZFSResourceQuery(paths=[dataset], properties=[*RECOVER_PROPERTIES, "keystatus"]),
+                ZFSResourceQuery(paths=[dataset], properties=["mountpoint", "mounted", "xattr", "keystatus"]),
             )
         except ZFSPathNotFoundException:
             rows = []
@@ -614,17 +610,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 "register it as a bucket.",
             )
             return
-        if layout == "DATASET":
-            if properties["xattr"]["raw"] == "off":
-                verrors.add(
-                    field, f"{dataset!r} has xattr=off. The S3 service reads extended attributes on every object."
-                )
-            return
-        for blocker in recovery_blockers(properties, []):
-            verrors.add(field, blocker)
-        # the size of a ZFS directory is its entry count, 2 when empty
-        if (await self.middleware.run_in_thread(os.stat, mount)).st_size > 2:
-            verrors.add(field, f"{dataset!r} is not empty. A BUCKET bucket requires an empty dataset.")
+        if properties["xattr"]["raw"] == "off":
+            verrors.add(field, f"{dataset!r} has xattr=off. The S3 service reads extended attributes on every object.")
 
     @api_method(
         SharingS3CreateArgs,
@@ -637,48 +624,43 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         """
         Create an S3 bucket.
 
-        With ``create_dataset`` true, the dataset is created with the properties
-        the S3 service requires and must not exist beforehand. If ``dataset`` is
-        omitted, it is created under the S3 service's ``managed_root_dataset``
-        with the name of the bucket, plus a ``_N`` suffix if that name is in use.
-        Buckets created through the S3 protocol always use that default.
+        With the ``BUCKET`` layout, the dataset is created with the properties
+        the S3 service requires and must not exist beforehand. If ``dataset``
+        is omitted, it is created under the S3 service's
+        ``managed_root_dataset`` with the name of the bucket, plus a ``_N``
+        suffix if that name is in use. Buckets created through the S3 protocol
+        always use that default. Use :method:`sharing.s3.recover` for a
+        dataset that already holds a bucket.
 
-        With ``create_dataset`` false, ``dataset`` must be an existing mounted
-        dataset that is not a system dataset, is not used by another bucket and
-        does not already hold an S3 bucket. A ``BUCKET`` bucket also requires it
-        to be empty, with the properties a created dataset gets. Use
-        :method:`sharing.s3.recover` for a dataset that already holds a bucket.
-
-        With the ``DATASET`` layout, ``create_dataset`` defaults to false and
-        cannot be true. ``permissions_model`` defaults to ``MULTIPROTOCOL``.
-        ``versioning``, ``object_lock`` and ``snapshot_versions`` are not
-        supported.
+        With the ``DATASET`` layout, ``dataset`` is required and must be an
+        existing mounted dataset that is not a system dataset, is not used by
+        another bucket and does not already hold an S3 bucket.
+        ``permissions_model`` defaults to ``MULTIPROTOCOL``. ``versioning``,
+        ``object_lock`` and ``snapshot_versions`` are not supported.
         """
         async with BUCKET_LOCK:
             verrors = ValidationErrors()
-            if data.layout == "DATASET":
-                defaults = {"permissions_model": "MULTIPROTOCOL", "create_dataset": False}
-                data = data.model_copy(update={k: v for k, v in defaults.items() if k not in data.model_fields_set})
-                if data.create_dataset:
-                    verrors.add("sharing_s3_create.create_dataset", "A DATASET bucket uses an existing dataset.")
+            dataset_layout = data.layout == "DATASET"
+            if dataset_layout and "permissions_model" not in data.model_fields_set:
+                data = data.model_copy(update={"permissions_model": "MULTIPROTOCOL"})
             data = self.normalize_ownership(data)
             await self.validate(data, "sharing_s3_create", verrors)
             owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
             if data.dataset is None:
-                if data.create_dataset:
-                    data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
+                if dataset_layout:
+                    verrors.add("sharing_s3_create.dataset", "A DATASET bucket requires `dataset`.")
                 else:
-                    verrors.add("sharing_s3_create.dataset", "`dataset` is required when `create_dataset` is false.")
+                    data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
             elif await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
                 verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
-            elif not data.create_dataset:
-                await self.validate_existing_dataset("sharing_s3_create", data.dataset, data.layout, verrors)
+            elif dataset_layout:
+                await self.validate_existing_dataset("sharing_s3_create", data.dataset, verrors)
             verrors.check()
             assert owner_uid is not None
             assert data.dataset is not None
 
             # on failure, destroy only a dataset that this method created
-            created_dataset = data.create_dataset
+            created_dataset = not dataset_layout
             if created_dataset:
                 await self.create_dataset("sharing_s3_create", data.dataset)
             id_: int | None = None

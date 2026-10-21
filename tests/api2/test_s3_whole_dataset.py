@@ -181,20 +181,19 @@ def test_the_permissions_model_may_be_stated(owner):
 def test_what_an_export_cannot_serve_is_refused(owner):
     """versioning, object_lock and snapshot_versions are refused on create
     and on update, even with the versioning licence. `dataset` is
-    required and `create_dataset` cannot be true."""
+    required."""
     with filled_dataset() as ds, entitled("S3_VERSIONING"):
         for bad, field in (
             ({"versioning": "ENABLED"}, "versioning"),
             ({"versioning": "SUSPENDED"}, "versioning"),
             ({"versioning": "ENABLED", "object_lock": True}, "object_lock"),
             ({"snapshot_versions": ["*"]}, "snapshot_versions"),
-            ({"create_dataset": True}, "create_dataset"),
         ):
             attributes = [e.attribute for e in refused(**export_row(ds, **bad))]
             assert f"sharing_s3_create.{field}" in attributes, (bad, attributes)
         (error,) = refused(**{k: v for k, v in export_row(ds).items() if k != "dataset"})
         assert error.attribute == "sharing_s3_create.dataset"
-        assert "create_dataset" in error.errmsg
+        assert "requires" in error.errmsg
         with export(ds) as b:
             for bad, field in (
                 ({"versioning": "ENABLED"}, "versioning"),
@@ -377,10 +376,9 @@ def test_an_export_is_neither_backed_up_nor_recoverable(owner):
 
 
 def test_the_layout_is_create_only(owner):
-    """layout and create_dataset cannot be given on update."""
+    """layout cannot be given on update."""
     with filled_dataset() as ds, export(ds) as b:
-        for bad in ({"layout": "BUCKET"}, {"create_dataset": False}):
-            with pytest.raises(ValidationErrors) as ve:
-                call("sharing.s3.update", b["id"], bad)
-            assert "not permitted" in ve.value.errors[0].errmsg
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.update", b["id"], {"layout": "BUCKET"})
+        assert "not permitted" in ve.value.errors[0].errmsg
         assert call("sharing.s3.get_instance", b["id"])["layout"] == "DATASET"

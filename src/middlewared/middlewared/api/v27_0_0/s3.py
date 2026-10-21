@@ -514,19 +514,10 @@ class SharingS3Create(SharingS3Entry):
     dataset: NonEmptyString | None = Field(
         default=None,
         description=(
-            "The ZFS dataset for the bucket. With `create_dataset` true, `sharing.s3.create` creates the "
-            "dataset. When this field is omitted, the dataset is created under the S3 service's "
+            "The ZFS dataset for the bucket. With the `BUCKET` layout, `sharing.s3.create` creates the dataset, "
+            "which must not exist. When this field is omitted, the dataset is created under the S3 service's "
             "`managed_root_dataset` with the name of the bucket, plus a `_N` suffix if that name is in use. "
-            "With `create_dataset` false, this field is required and must name an existing dataset."
-        ),
-    )
-    create_dataset: bool = Field(
-        default=True,
-        description=(
-            "Whether `sharing.s3.create` creates `dataset`. When false, `dataset` must name an existing, mounted "
-            "dataset. With the `BUCKET` layout, that dataset must be empty and have the properties "
-            "`sharing.s3.create` sets on a new dataset. With the `DATASET` layout, this field defaults to false "
-            "and cannot be true."
+            "With the `DATASET` layout, this field is required and must name an existing dataset."
         ),
     )
     grants: list[S3Grant] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
@@ -537,7 +528,6 @@ class SharingS3Create(SharingS3Entry):
 class SharingS3Update(SharingS3Create, metaclass=ForUpdateMetaclass):
     dataset: Excluded = excluded_field()
     layout: Excluded = excluded_field()
-    create_dataset: Excluded = excluded_field()
 
 
 class SharingS3CreateArgs(BaseModel):

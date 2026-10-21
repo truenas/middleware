@@ -573,47 +573,11 @@ def test_the_managed_root_must_exist():
     assert call("s3.config")["managed_root_dataset"] != f"{pool}/s3-no-such-root"
 
 
-def test_an_existing_dataset_is_used_only_with_create_dataset_false(owner):
-    """With `create_dataset` at its default of true, an existing dataset is
-    refused. With `create_dataset` false, an empty dataset with a bucket's
-    properties is used unchanged, and the S3 service creates `s3data` in
-    it."""
-    row = {"name": "adopt-me", "owner": OWNER}
+def test_existing_dataset_is_refused(owner):
     with dataset("s3-preexisting") as ds:
         with pytest.raises(ValidationErrors):
-            call("sharing.s3.create", {**row, "dataset": ds})
+            call("sharing.s3.create", {"name": "adopt-me", "dataset": ds, "owner": OWNER})
         assert not call("sharing.s3.query", [["name", "=", "adopt-me"]])
-        ssh(f"zfs set acltype=nfsv4 aclmode=restricted aclinherit=passthrough xattr=sa snapdir=visible {ds}")
-        entry = call("sharing.s3.create", {**row, "dataset": ds, "create_dataset": False})
-        try:
-            assert entry["dataset"] == ds
-            assert zfs_props(ds, ["snapdir"]) == {"snapdir": "visible"}, "the dataset keeps its properties"
-            with running_service():
-                data = call("filesystem.stat", f"/mnt/{ds}/s3data")
-                assert (data["uid"], data["gid"]) == (owner["uid"], 0)
-        finally:
-            call("sharing.s3.delete", entry["id"])
-
-
-def test_an_existing_dataset_is_refused_with_contents_or_the_wrong_properties(owner):
-    def refusal(ds):
-        with pytest.raises(ValidationErrors) as ve:
-            call("sharing.s3.create", {"name": "adopt-me", "dataset": ds, "owner": OWNER, "create_dataset": False})
-        assert not call("sharing.s3.query", [["name", "=", "adopt-me"]])
-        return " ".join(e.errmsg for e in ve.value.errors)
-
-    with dataset("s3-preexisting") as ds:
-        ssh(f"zfs set acltype=nfsv4 aclmode=restricted aclinherit=passthrough xattr=off {ds}")
-        assert "xattr is 'off'" in refusal(ds)
-        ssh(f"zfs set xattr=sa {ds} && touch /mnt/{ds}/leftover")
-        assert "not empty" in refusal(ds)
-        ssh(f"rm /mnt/{ds}/leftover && zfs set readonly=on {ds}")
-        assert "read-only" in refusal(ds)
-        ssh(f"zfs set readonly=off {ds}")
-        with dataset("s3-preexisting/child"):
-            assert "not empty" in refusal(ds), "the child's mountpoint directory is an entry"
-    with dataset("s3-preexisting", {"casesensitivity": "INSENSITIVE"}) as ds:
-        assert "casesensitivity" in refusal(ds)
 
 
 @pytest.mark.parametrize(
