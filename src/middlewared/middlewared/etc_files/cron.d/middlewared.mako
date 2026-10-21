@@ -23,6 +23,7 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule, "root", f"midclt call cronjob.run {job.id} true"))}
     % endfor
 
+## Force SQL filters to avoid needlessly running extend on disabled tasks
     % for job in middleware.call_sync2(middleware.services.rsynctask.query, [["enabled", "=", True]], QueryOptions(force_sql_filters=True)):
 <%
     if job.locked:
