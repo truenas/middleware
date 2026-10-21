@@ -59,8 +59,7 @@ def backup_of(ds):
 def write_backup(ds, row):
     blob = base64.b64encode(json.dumps(row).encode()).decode()
     script = (
-        f"import base64, pathlib; "
-        f"pathlib.Path('/mnt/{ds}/{CONFIG_BACKUP}').write_bytes(base64.b64decode('{blob}'))"
+        f"import base64, pathlib; pathlib.Path('/mnt/{ds}/{CONFIG_BACKUP}').write_bytes(base64.b64decode('{blob}'))"
     )
     ssh(f'python3 -c "{script}"')
 
@@ -256,11 +255,12 @@ def test_a_bucket_layout_is_refused_by_name(owner):
     enough."""
     with filled_dataset() as ds:
         mount = f"/mnt/{ds}"
+
         def setxattr(name, value):
-            return f"python3 -c 'import os; os.setxattr(\"{mount}\", \"{name}\", bytes.fromhex(\"{value}\"))'"
+            return f'python3 -c \'import os; os.setxattr("{mount}", "{name}", bytes.fromhex("{value}"))\''
 
         def removexattr(name):
-            return f"python3 -c 'import os; os.removexattr(\"{mount}\", \"{name}\")'"
+            return f'python3 -c \'import os; os.removexattr("{mount}", "{name}")\''
 
         for plant, clear, named in (
             (setxattr(ROOT_XATTR, "00"), removexattr(ROOT_XATTR), ROOT_XATTR),

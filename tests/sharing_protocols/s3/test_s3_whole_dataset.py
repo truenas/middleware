@@ -112,9 +112,7 @@ def test_every_write_is_refused(s3, export):
             Bucket=export, Key="export-copy.txt", CopySource={"Bucket": export, "Key": key}
         ),
         "CreateMultipartUpload": lambda: s3.create_multipart_upload(Bucket=export, Key="export-m.bin"),
-        "AbortMultipartUpload": lambda: s3.abort_multipart_upload(
-            Bucket=export, Key="export-m.bin", UploadId="0" * 32
-        ),
+        "AbortMultipartUpload": lambda: s3.abort_multipart_upload(Bucket=export, Key="export-m.bin", UploadId="0" * 32),
         "PutObjectTagging": lambda: s3.put_object_tagging(
             Bucket=export, Key=key, Tagging={"TagSet": [{"Key": "a", "Value": "b"}]}
         ),
@@ -129,6 +127,7 @@ def test_every_write_is_refused(s3, export):
     batch = s3.delete_objects(Bucket=export, Delete={"Objects": [{"Key": key}]})
     assert [e["Code"] for e in batch.get("Errors", [])] == ["AccessDenied"]
     assert not batch.get("Deleted")
-    assert refused(
-        lambda: s3.put_bucket_versioning(Bucket=export, VersioningConfiguration={"Status": "Enabled"})
-    ) == (403, "AccessDenied")
+    assert refused(lambda: s3.put_bucket_versioning(Bucket=export, VersioningConfiguration={"Status": "Enabled"})) == (
+        403,
+        "AccessDenied",
+    )
