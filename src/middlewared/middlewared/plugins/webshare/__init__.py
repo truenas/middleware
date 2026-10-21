@@ -80,10 +80,8 @@ class WebshareService(GenericConfigService[WebshareEntry]):
 
 class WebshareLicenseDelegate(LicenseDelegate):
     features = (LicenseFeature.WEBSHARE,)
-    active_only = False
 
     async def apply(self, changes: dict[str, bool]) -> None:
-        await self.render("rc")
         started = await self.call2(self.s.service.started, "webshare")
         if changes[LicenseFeature.WEBSHARE]:
             svc = await self.call2(self.s.service.query, [["service", "=", "webshare"]], QueryOptions(get=True))
@@ -91,6 +89,9 @@ class WebshareLicenseDelegate(LicenseDelegate):
                 await self.control("webshare", "START")
         elif started:
             await self.control("webshare", "STOP")
+        else:
+            # Stopping webshare reconfigures truesearch; without a stop its directories stay indexed.
+            await self.call2(self.s.truesearch.configure)
 
     async def revoke_pending(self) -> str | None:
         return "webshare is still running" if await self.call2(self.s.service.started, "webshare") else None

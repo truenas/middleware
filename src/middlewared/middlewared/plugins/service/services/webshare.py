@@ -5,10 +5,6 @@ from middlewared.service_exception import CallError
 from .base import SimpleService
 
 
-def unit_file_enabled(service: str, enable: bool, webshare_entitled: bool) -> bool:
-    return enable and (service != WebShareService.name or webshare_entitled)
-
-
 class WebShareService(SimpleService):
     name = "webshare"
 

@@ -25,7 +25,6 @@ VOCABULARIES = {"LicenseFeature": LicenseFeature, "DerivedEntitlement": DerivedE
 # Every gate, as (path relative to the middlewared package, the vocabulary member it names).
 # `None` is a site that reaches the endpoint without naming one: a `method=` string or a mock.
 GATES = [
-    ("etc_files/systemd.py", "LicenseFeature.WEBSHARE"),
     ("etc_files/truenas_zfstierd.py", "LicenseFeature.ZFSTIER"),
     ("plugins/alert/runtime.py", "LicenseFeature.SUPPORT"),
     ("plugins/catalog/config.py", "LicenseFeature.CATALOG_ENTERPRISE_TRAIN"),
@@ -44,7 +43,6 @@ GATES = [
     ("plugins/pool_/utils.py", "LicenseFeature.DEDUP"),
     ("plugins/rdma/rdma.py", "LicenseFeature.RDMA"),
     ("plugins/security/info.py", "LicenseFeature.STIG"),
-    ("plugins/service/on_config_upload.py", "LicenseFeature.WEBSHARE"),
     ("plugins/service/services/webshare.py", "LicenseFeature.WEBSHARE"),
     ("plugins/smb.py", "LicenseFeature.SMB_BLOCK_CLONING"),
     ("plugins/smb.py", "LicenseFeature.SMB_BLOCK_CLONING"),
@@ -60,6 +58,7 @@ GATES = [
     ("plugins/truenas_s3/config.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/config.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truesearch.py", "LicenseFeature.TRUESEARCH"),
+    ("plugins/truesearch.py", "LicenseFeature.WEBSHARE"),
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
     ("plugins/vm/info.py", "LicenseFeature.VMS"),
     ("plugins/webshare/sharing.py", "LicenseFeature.WEBSHARE"),

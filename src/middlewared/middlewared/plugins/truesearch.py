@@ -148,6 +148,9 @@ class TrueSearchService(Service):
         if not await self.call2(self.s.service.started_or_enabled, 'webshare'):
             return set()
 
+        if not (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.WEBSHARE)).entitled:
+            return set()
+
         webshare_config = await self.call2(self.s.webshare.config)
         if not webshare_config.search:
             return set()
