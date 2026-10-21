@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -11,6 +12,7 @@ from middlewared.api.current import (
     S3AccesskeyDeleteArgs,
     S3AccesskeyDeleteResult,
     S3AccesskeyEntry,
+    S3AccesskeyEntryWithSecret,
     S3AccesskeyUpdate,
     S3AccesskeyUpdateArgs,
     S3AccesskeyUpdateResult,
@@ -26,13 +28,11 @@ from middlewared.utils.types import AuditCallback
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
-__all__ = ("S3AccesskeyService",)
+__all__ = ("RenderedAccesskey", "S3AccesskeyService")
 
 
 def _assume_utc(value: datetime | None) -> datetime | None:
-    """An expiry given without a timezone is taken as UTC: the value is
-    compared against and stored as UTC, and a naive one would otherwise
-    fail the aware comparison and be stamped in the server's local time."""
+    """Treat a naive expiry as UTC."""
     if value is not None and value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value
@@ -45,17 +45,22 @@ class S3AccesskeyModel(sa.Model):
     name = sa.Column(sa.String(200))
     user_identifier = sa.Column(sa.String(200))
     access_key = sa.Column(sa.String(128), unique=True)
-    # SigV4 derives signing keys from the secret itself, so it is stored
-    # recoverable. NULL means it was lost to a config restore without the
-    # secret seed and the key must be rotated
+    # SigV4 needs the secret itself, so it is stored recoverable. NULL means it was lost to a config restore.
     secret = sa.Column(sa.EncryptedText(), nullable=True)
     enabled = sa.Column(sa.Boolean())
     expiry = sa.Column(sa.Integer())
     created_at = sa.Column(sa.DateTime())
-    # unix seconds, like expiry: the S3 service reports it over JSON-RPC
-    # and an integer needs no agreement about timezones. 0 is never used
+    # unix seconds, reported by the S3 service. 0 means never used
     last_used = sa.Column(sa.Integer(), default=0)
     manage_buckets = sa.Column(sa.Boolean(), default=False)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class RenderedAccesskey:
+    """An access key and its secret, for rendering the credentials file."""
+
+    entry: S3AccesskeyEntry
+    secret: str | None
 
 
 class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
@@ -63,15 +68,12 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
     _entry = S3AccesskeyEntry
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
-        # user.query performs an expensive datastore extend that is not
-        # needed here, so query the table directly
+        # query the table directly: user.query's extend is expensive
         users = await self.middleware.call("datastore.query", "account.bsdusers", [], {"prefix": "bsdusr_"})
         by_id: dict[int, str | None] = {x["id"]: x["username"] for x in users}
 
-        # Keys for directory services accounts that have no SID (plain LDAP)
-        # are stored by the `user.query` id synthesized from the account's
-        # UID, which the local user table cannot resolve. Look each distinct
-        # one up through NSS once per query.
+        # directory accounts without a SID are keyed by the synthesized
+        # user.query id. Resolve those through NSS.
         for row in rows:
             if not row["user_identifier"].isdigit():
                 continue
@@ -119,9 +121,10 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         if expiry:
             data["expires_at"] = datetime.fromtimestamp(expiry, UTC)
 
-        # Only ENABLED renders as usable. The order puts what needs an
-        # administrator first.
-        if not data["secret"]:
+        # the entry never carries the secret
+        secret = data.pop("secret")
+        # only ENABLED renders as usable
+        if not secret:
             data["status"] = "SECRET_LOST"
         elif data["username"] is None:
             data["status"] = "USER_MISSING"
@@ -142,15 +145,11 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
             else:
                 out["expiry"] = int(expires_at.timestamp())
 
-        # extend() converts a digit user_identifier to int; coerce back to
-        # str so the SQLA String column stays consistent on round trip.
+        # keep user_identifier a str for the String column
         if isinstance(out.get("user_identifier"), int):
             out["user_identifier"] = str(out["user_identifier"])
 
-        # `last_used_at` is on the entry, so an update model-dumps it back
-        # here. Dropped rather than converted: only `report_usage` moves
-        # it, and writing back what the update read would undo a flush
-        # that landed in between.
+        # last_used_at is only written by report_usage
         for key in ("username", "local", "status", "rotate", "last_used_at"):
             out.pop(key, None)
 
@@ -172,22 +171,9 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
             verrors.add(f"{schema_name}.expires_at", "Expiration date is in the past")
 
     async def _validate_manage_buckets(self, schema_name: str, username: str | None, verrors: ValidationErrors) -> None:
-        """The account must hold the role the flag lets its key spend.
-
-        `manage_buckets` lets a key ask middleware to create and delete
-        buckets, and middleware answers as the account the key belongs
-        to. Setting it for an account without `SHARING_S3_WRITE` builds
-        a key whose every bucket call is refused, so it is refused here
-        instead, where the administrator can read why.
-
-        Roles come from `privilege.roles_for_user`, which resolves group
-        membership through NSS: `user.query` reports an empty role list
-        for every directory services account, so a check against that
-        would pass a key it should refuse. The composed list already
-        expands what a role includes, so an account holding
-        `SHARING_WRITE`, `SHARING_ADMIN` or `FULL_ADMIN` reads as
-        holding this one.
-        """
+        """The account must hold `SHARING_S3_WRITE` for a key with
+        `manage_buckets`. Roles come from `privilege.roles_for_user`, which also
+        covers directory services accounts."""
         if username is None:
             verrors.add(
                 f"{schema_name}.manage_buckets",
@@ -202,7 +188,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
                 "buckets. Grant the account a privilege that includes it, or leave manage_buckets off.",
             )
 
-    async def do_create(self, data: S3AccesskeyCreate) -> S3AccesskeyEntry:
+    async def do_create(self, data: S3AccesskeyCreate) -> S3AccesskeyEntryWithSecret:
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_create", data.name, data.expires_at, verrors)
 
@@ -210,11 +196,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         if not users:
             verrors.add("s3_accesskey_create.username", "User does not exist.")
         elif users[0]["uid"] == 0:
-            # the S3 service runs a signed request as the account the key
-            # belongs to, and uid 0 is the account no filesystem permission
-            # and no bucket grant restrains. Such a key reaches every object
-            # on the appliance whatever its bucket allows, and every object
-            # it writes lands owned by root
+            # a root-owned key is restrained by no permission or grant
             verrors.add(
                 "s3_accesskey_create.username",
                 "An access key may not belong to root. Give the key an account that owns only what it should "
@@ -241,25 +223,26 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
             user_identifier = str(user["id"])
 
         # an omitted Secret field arrives as None rather than Secret(None)
-        secret = data.secret.get_secret_value() if data.secret is not None else None
+        secret = (data.secret.get_secret_value() if data.secret is not None else None) or generate_s3_secret_key()
 
-        # the service half of the plugin re-renders the credentials file
-        # from the s3.accesskey.post_create/post_update/post_delete hooks
-        # CRUDService fires for every mutation
-        return await self._create(
+        # the post_create/post_update/post_delete hooks re-render the credentials file
+        entry = await self._create(
             {
                 "name": data.name,
                 "user_identifier": user_identifier,
                 "access_key": data.access_key or generate_s3_access_key(),
-                "secret": secret or generate_s3_secret_key(),
+                "secret": secret,
                 "enabled": data.enabled,
                 "expires_at": data.expires_at,
                 "created_at": utc_now(),
                 "manage_buckets": data.manage_buckets,
             }
         )
+        return S3AccesskeyEntryWithSecret(**entry.model_dump(), secret=secret)
 
-    async def do_update(self, audit_callback: AuditCallback, id_: int, data: S3AccesskeyUpdate) -> S3AccesskeyEntry:
+    async def do_update(
+        self, audit_callback: AuditCallback, id_: int, data: S3AccesskeyUpdate
+    ) -> S3AccesskeyEntryWithSecret | S3AccesskeyEntry:
         old = await self.get_instance(id_)
         audit_callback(old.name)
 
@@ -268,20 +251,19 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
 
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_update", new.name, new.expires_at, verrors, id_=id_)
-        # Checked when this call turns it on, not whenever the row holds
-        # it: an account may lose the role afterwards, and re-checking on
-        # every update would fail an unrelated rename for a reason the
-        # caller did not ask about. A stale flag grants nothing on its
-        # own — middleware refuses the bucket call the key makes with it.
+        # checked when the flag is turned on, not on every update
         if "manage_buckets" in data.model_fields_set and new.manage_buckets:
             await self._validate_manage_buckets("s3_accesskey_update", old.username, verrors)
         verrors.check()
 
-        update = new.model_dump(expose_secrets=True, exclude={"id", "created_at"})
+        update = new.model_dump(exclude={"id", "created_at"})
         if rotate:
             update["secret"] = generate_s3_secret_key()
 
-        return await self._update(id_, update)
+        entry = await self._update(id_, update)
+        if rotate:
+            return S3AccesskeyEntryWithSecret(**entry.model_dump(), secret=update["secret"])
+        return entry
 
     async def do_delete(self, audit_callback: AuditCallback, id_: int) -> None:
         entry = await self.get_instance(id_)
@@ -289,10 +271,16 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
 
         await self._delete(id_)
 
+    async def render_rows(self) -> list[RenderedAccesskey]:
+        """Every access key and its secret, for the credentials file. A
+        key deleted between the two queries has no secret."""
+        entries = await self.query()
+        rows = await self.middleware.call("datastore.query", self._datastore, [], {"select": ["id", "secret"]})
+        secrets = {row["id"]: row["secret"] for row in rows}
+        return [RenderedAccesskey(entry=entry, secret=secrets.get(entry.id)) for entry in entries]
+
     async def delete_for_user(self, user_id: int) -> list[int]:
-        """Every key a deleted local account held. Directory accounts are
-        keyed by SID and never pass through user.delete; a key of theirs
-        whose SID no longer resolves reads USER_MISSING instead."""
+        """Delete the keys of a deleted local account and return their ids."""
         rows = await self.middleware.call("datastore.query", self._datastore, [["user_identifier", "=", str(user_id)]])
         for row in rows:
             await self.middleware.call("datastore.delete", self._datastore, row["id"])
@@ -319,7 +307,7 @@ class S3AccesskeyService(GenericCRUDService[S3AccesskeyEntry]):
         audit_extended=lambda data: data["name"],
         check_annotations=True,
     )
-    async def do_create(self, data: S3AccesskeyCreate) -> S3AccesskeyEntry:
+    async def do_create(self, data: S3AccesskeyCreate) -> S3AccesskeyEntryWithSecret:
         """
         Create an S3 access key.
 
@@ -327,8 +315,8 @@ class S3AccesskeyService(GenericCRUDService[S3AccesskeyEntry]):
         with. It belongs to a local or directory services account, and the S3
         service runs that key's requests as the account. It can never
         authenticate to the TrueNAS API. The access key id and the secret are
-        generated unless supplied. The secret stays readable to administrators
-        holding ``SHARING_S3_WRITE``.
+        generated unless supplied. The result includes the secret. No later
+        call returns it.
         """
         return await self._svc_part.do_create(data)
 
@@ -339,12 +327,15 @@ class S3AccesskeyService(GenericCRUDService[S3AccesskeyEntry]):
         audit_callback=True,
         check_annotations=True,
     )
-    async def do_update(self, audit_callback: AuditCallback, id_: int, data: S3AccesskeyUpdate) -> S3AccesskeyEntry:
+    async def do_update(
+        self, audit_callback: AuditCallback, id_: int, data: S3AccesskeyUpdate
+    ) -> S3AccesskeyEntryWithSecret | S3AccesskeyEntry:
         """
         Update S3 access key ``id``.
 
         Specify ``rotate: true`` to generate a new secret under the same access
-        key id. The account an access key belongs to cannot be changed.
+        key id. The result then includes the new secret. The account an access
+        key belongs to cannot be changed.
         """
         return await self._svc_part.do_update(audit_callback, id_, data)
 
@@ -363,29 +354,19 @@ class S3AccesskeyService(GenericCRUDService[S3AccesskeyEntry]):
         return True
 
     @private
+    async def render_rows(self) -> list[RenderedAccesskey]:
+        return await self._svc_part.render_rows()
+
+    @private
     async def delete_for_user(self, user_id: int) -> list[int]:
         return await self._svc_part.delete_for_user(user_id)
 
     @private
     async def report_usage(self, used: list[dict[str, Any]]) -> int:
-        """Record when each access key was last used. Returns the number
-        of rows changed.
-
-        **Consumed by the truenas_s3 daemon and by nothing else.** The
-        daemon counts uses in memory and calls this at intervals over the
-        unix socket as root. It is private because no administrator has a
-        reason to report usage, and because it deliberately skips the
-        config render: a timestamp changes no file the daemon reads, so a
-        reload for one would be pure cost.
-
-        Each entry is `{"access_key": str, "last_used": <unix seconds>}`.
-        Seconds rather than a timestamp string: the daemon is the only
-        caller, and an integer needs no agreement about timezones or
-        formats across that boundary. A stored value only moves forward,
-        so a flush that arrives late or repeats after a restart cannot
-        move a key backwards. An access key the table no longer holds is
-        skipped: deleting a key between its use and this call is ordinary.
-        """
+        """Record when each access key was last used. Called by the S3 service
+        over its unix socket. Each entry is `{"access_key": str, "last_used":
+        <unix seconds>}`. A stored value only moves forward. Unknown keys are
+        skipped. Returns the number of rows changed."""
         rows = await self.middleware.call(
             "datastore.query", self._svc_part._datastore, [], {"select": ["id", "access_key", "last_used"]}
         )

@@ -1,13 +1,3 @@
-"""The bucket row, kept on the bucket's own dataset.
-
-The S3 service writes no bucket configuration on disk, so
-`sharing.s3.recover` has nothing else to re-create a bucket from.
-
-The file sits in the service's side directory: the reaper walks that
-tree but acts only on directories, and the directory is 0700,
-root-owned and never exported.
-"""
-
 from __future__ import annotations
 
 import errno
@@ -32,20 +22,18 @@ __all__ = (
 
 SIDE_TREE = ".truenas_s3"
 SIDE_MODE = 0o700
-"""The S3 service's state directory and the mode registration holds it
-at. Registration refuses one owned by anyone but the daemon."""
+"""Mode of the S3 service's state directory."""
 
 CONFIG_BACKUP = "config_backup.json"
 CONFIG_BACKUP_MODE = 0o600
 CONFIG_VERSION = 1
-"""A backup of any other version reads as absent: the row it would
-rebuild decides who reaches the objects."""
+"""A backup of any other version is ignored."""
 
 LATCH_XATTR = "trusted.tns3_latch"
 """The S3 service's Object Lock latch, on the dataset root."""
 
 ROOT_XATTR = "trusted.tns3_root"
-"""The S3 service's root sentinel, on the dataset root of a bucket."""
+"""The S3 service's root sentinel, on the dataset root."""
 
 RESOLVE_BENEATH_ROOT = (
     truenas_os.RESOLVE_BENEATH
@@ -53,20 +41,13 @@ RESOLVE_BENEATH_ROOT = (
     | truenas_os.RESOLVE_NO_MAGICLINKS
     | truenas_os.RESOLVE_NO_XDEV
 )
-"""The resolve flags that the S3 service uses for a name under a
-dataset root. No symlinks, no other filesystems, nothing above the
+"""The resolve flags the S3 service uses for a name under a dataset
 root."""
 
 
 def has_latch(mount: str) -> bool:
-    """Whether the dataset root carries the S3 service's Object Lock
-    latch. Presence is the whole test: the latch never clears, so a root
-    carrying one is a locked bucket whatever the row says.
-
-    A mount point that is not there holds no latch, which is a dataset
-    that is not mounted. A record that is there and will not read is not
-    a record that is not there, so every other error raises.
-    """
+    """Whether the dataset root carries the Object Lock latch. A missing
+    mountpoint reads as no latch. Any other error raises."""
     try:
         fd = truenas_os.openat2(mount, os.O_RDONLY | os.O_DIRECTORY)
     except OSError as e:
@@ -85,20 +66,11 @@ def has_latch(mount: str) -> bool:
 
 
 def bucket_layout_markers(mount: str) -> list[str]:
-    """Return the parts of the S3 service's bucket layout that the
-    dataset root at `mount` has. The parts are the root sentinel xattr,
-    the Object Lock latch xattr, and the `.truenas_s3` directory. Return
-    an empty list for a dataset that was never a bucket. This function
-    only checks that each part exists. It does not read the contents.
-    The service refuses a WHOLE_DATASET row if any of the three parts
-    exists.
-
-    Raise an error if `mount` cannot be opened or an xattr cannot be
-    read. The directory is opened with the same flags that the service
-    uses. A regular file named `.truenas_s3` does not count. A symlink
-    or a mount point with that name does count, because the service's
-    open fails on it.
-    """
+    """Return the S3 bucket markers on the dataset root at `mount`: the
+    root xattr, the latch xattr and the `.truenas_s3` directory. A
+    symlink or mount point named `.truenas_s3` is a marker. A regular
+    file with that name is not. Raise if `mount` cannot be opened or an
+    xattr cannot be read."""
     found: list[str] = []
     fd = truenas_os.openat2(mount, os.O_RDONLY | os.O_DIRECTORY)
     try:
@@ -149,9 +121,7 @@ def read_config_backup(mount: str) -> dict[str, Any] | None:
 
 
 def write_config_backup(mount: str, row: dict[str, Any]) -> None:
-    """Write the row into the bucket's side directory, creating it where
-    registration has not. Root-owned 0700, which is what registration
-    makes it and checks for."""
+    """Write the row into the bucket's side directory, creating it root-owned 0700 if needed."""
     side = os.path.join(mount, SIDE_TREE)
     try:
         os.mkdir(side, SIDE_MODE)

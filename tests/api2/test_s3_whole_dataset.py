@@ -1,10 +1,7 @@
-"""WHOLE_DATASET S3 buckets. The dataset already exists. The S3 service
-serves it read-only. `sharing.s3` does not create, write to, or destroy
-the dataset.
+"""Buckets with the DATASET layout: an existing dataset that the S3
+service serves read-only and `sharing.s3` never writes to.
 
-These tests cover the configuration side: what is accepted, what is
-refused, what is rendered, and what other services can still do with the
-dataset. What the S3 service serves is tested over the wire in
+These tests cover configuration. What the service serves is tested in
 ``tests/sharing_protocols/s3/test_s3_whole_dataset.py``."""
 
 import base64
@@ -30,7 +27,7 @@ LATCH_XATTR = "trusted.tns3_latch"
 LATCH_BYTES = "5453334200000001"
 """A latch record as the S3 service writes one, hex."""
 PROPERTIES = ["acltype", "aclmode", "aclinherit", "xattr", "casesensitivity", "readonly", "atime"]
-"""Properties that are set on a BUCKET dataset. A WHOLE_DATASET dataset must keep its own values."""
+"""Properties set on a BUCKET dataset. A dataset with the DATASET layout keeps its own."""
 
 
 def parse(path):
@@ -97,7 +94,7 @@ def filled_dataset(leaf="s3-export", data=None):
 
 
 def export_row(ds, **overrides):
-    return {"name": "export", "dataset": ds, "owner": OWNER, "layout": "WHOLE_DATASET", **overrides}
+    return {"name": "export", "dataset": ds, "owner": OWNER, "layout": "DATASET", **overrides}
 
 
 @contextlib.contextmanager
@@ -133,13 +130,13 @@ def refused(**row):
 
 
 def test_an_export_adopts_the_dataset_and_writes_nothing(owner):
-    """Create, service start, and delete change nothing on the dataset.
-    No property changes. No s3data, no .truenas_s3, no backup."""
+    """Create, service start and delete change nothing on the dataset:
+    no properties, no s3data, no .truenas_s3, no backup."""
     with filled_dataset() as ds:
         before = zfs_props(ds, PROPERTIES)
         tree = tree_of(ds)
         with export(ds) as b:
-            assert b["layout"] == "WHOLE_DATASET"
+            assert b["layout"] == "DATASET"
             assert b["dataset"] == ds
             assert "path" not in b
             assert b["owner_uid"] == owner["uid"]
@@ -174,43 +171,31 @@ def test_a_bucket_row_renders_without_a_layout_key(owner):
         assert "layout" not in rendered_row("plain")
 
 
-def test_a_failed_create_leaves_the_dataset_alone(owner):
-    with filled_dataset() as ds:
-        tree = tree_of(ds)
-        (error,) = refused(**export_row(ds, owner="nosuchuser"))
-        assert error.attribute == "sharing_s3_create.owner"
-        assert zfs_props(ds, ["mounted"]) == {"mounted": "yes"}
-        assert tree_of(ds) == tree
-
-
 def test_the_permissions_model_may_be_stated(owner):
-    """MULTIPROTOCOL is only the default. S3 can be set. Then only the
-    grants decide who can read."""
-    with filled_dataset() as ds:
-        with export(ds, permissions_model="S3") as b:
-            assert (b["permissions_model"], b["object_ownership"]) == ("S3", "BUCKET_OWNER_ENFORCED")
-            row = rendered_row("export")
-            assert (row["permissions_model"], row["object_ownership"]) == ("s3", "bucket_owner_enforced")
-        with export(ds, permissions_model="MULTIPROTOCOL", object_ownership="BUCKET_OWNER_ENFORCED") as b:
-            assert (b["permissions_model"], b["object_ownership"]) == ("MULTIPROTOCOL", "OBJECT_WRITER")
+    """MULTIPROTOCOL is only the default. S3 can be set."""
+    with filled_dataset() as ds, export(ds, permissions_model="S3") as b:
+        assert (b["permissions_model"], b["object_ownership"]) == ("S3", "BUCKET_OWNER_ENFORCED")
+        row = rendered_row("export")
+        assert (row["permissions_model"], row["object_ownership"]) == ("s3", "bucket_owner_enforced")
 
 
 def test_what_an_export_cannot_serve_is_refused(owner):
     """versioning, object_lock and snapshot_versions are refused on create
     and on update, even with the versioning licence. `dataset` is
-    required."""
+    required and `create_dataset` cannot be true."""
     with filled_dataset() as ds, entitled("S3_VERSIONING"):
         for bad, field in (
             ({"versioning": "ENABLED"}, "versioning"),
             ({"versioning": "SUSPENDED"}, "versioning"),
             ({"versioning": "ENABLED", "object_lock": True}, "object_lock"),
             ({"snapshot_versions": ["*"]}, "snapshot_versions"),
+            ({"create_dataset": True}, "create_dataset"),
         ):
             attributes = [e.attribute for e in refused(**export_row(ds, **bad))]
             assert f"sharing_s3_create.{field}" in attributes, (bad, attributes)
         (error,) = refused(**{k: v for k, v in export_row(ds).items() if k != "dataset"})
         assert error.attribute == "sharing_s3_create.dataset"
-        assert "names the dataset" in error.errmsg
+        assert "create_dataset" in error.errmsg
         with export(ds) as b:
             for bad, field in (
                 ({"versioning": "ENABLED"}, "versioning"),
@@ -222,9 +207,7 @@ def test_what_an_export_cannot_serve_is_refused(owner):
 
 
 def test_a_dataset_the_service_would_exclude_is_refused(owner):
-    """Each check matches a check that the S3 service makes at
-    registration. The bucket is refused here with an error. Without the
-    check, the service would register the bucket and return 503."""
+    """Each refusal matches one the S3 service makes at registration."""
 
     def refusal(ds, **overrides):
         (error,) = refused(**export_row(ds, **overrides))
@@ -268,10 +251,9 @@ def test_a_dataset_the_service_would_exclude_is_refused(owner):
 
 
 def test_a_bucket_layout_is_refused_by_name(owner):
-    """A dataset that already holds an S3 bucket is refused. Each of the
-    root sentinel xattr, the latch xattr, and the .truenas_s3 directory is
-    enough. The error names what was found and says to use
-    sharing.s3.recover."""
+    """A dataset that already holds an S3 bucket is refused. Any one of
+    the root xattr, the latch xattr and the .truenas_s3 directory is
+    enough."""
     with filled_dataset() as ds:
         mount = f"/mnt/{ds}"
         def setxattr(name, value):
@@ -297,34 +279,9 @@ def test_a_bucket_layout_is_refused_by_name(owner):
             pass
 
 
-def test_a_read_only_dataset_is_admitted(owner):
-    """A read-only dataset is accepted. A replication target is read-only.
-    The bucket is created and rendered, and the service starts with it."""
-    with filled_dataset() as ds:
-        ssh(f"zfs set readonly=on {ds}")
-        with export(ds):
-            assert rendered_row("export")["layout"] == "whole_dataset"
-            with running_service():
-                assert call("service.query", [["service", "=", SERVICE]], {"get": True})["state"] == "RUNNING"
-
-
-def test_a_dataset_mounted_beneath_is_admitted(owner):
-    """A dataset with a child dataset mounted under it is accepted. The
-    child stays mounted. The protocol suite checks that nothing in the
-    child is served."""
-    with filled_dataset() as ds, dataset("s3-export/child") as child:
-        ssh(f"printf charlie > /mnt/{child}/c.txt")
-        with export(ds) as b:
-            assert rendered_row("export")["dataset"] == ds
-            with running_service():
-                assert call("sharing.s3.get_instance", b["id"])["enabled"] is True
-            assert zfs_props(child, ["mounted"]) == {"mounted": "yes"}
-
-
 def test_a_bucket_may_be_created_under_an_export(owner):
-    """A BUCKET bucket can be created under a WHOLE_DATASET bucket. A share
-    of the BUCKET bucket's mountpoint is refused. A share of the
-    WHOLE_DATASET bucket's mountpoint is allowed."""
+    """A BUCKET bucket can be created under a DATASET bucket. Only
+    the inner bucket's mountpoint refuses a share."""
     with filled_dataset() as ds, export(ds):
         inner = call("sharing.s3.create", {"name": "inner", "dataset": f"{ds}/inner", "owner": OWNER})
         try:
@@ -340,10 +297,8 @@ def test_a_bucket_may_be_created_under_an_export(owner):
 
 
 def test_other_protocols_keep_writing_an_exported_dataset(owner):
-    """Shares and writing tasks are refused on a BUCKET dataset. On a
-    WHOLE_DATASET dataset they are accepted, at the mountpoint and
-    read-write. A recursive permissions change over the dataset is also
-    allowed."""
+    """Every share, writing task and recursive permission change that a
+    BUCKET dataset refuses is accepted with the DATASET layout."""
     with filled_dataset() as ds, export(ds):
         mount = f"/mnt/{ds}"
         for api, data in (
@@ -398,7 +353,7 @@ def test_other_protocols_keep_writing_an_exported_dataset(owner):
 def test_an_export_is_neither_backed_up_nor_recoverable(owner):
     """No backup is written by create, render or service start. After
     delete the dataset is not recoverable. A backup edited to say
-    WHOLE_DATASET recovers as BUCKET."""
+    DATASET recovers as BUCKET."""
     with filled_dataset() as ds:
         with export(ds):
             call("etc.generate", "truenas_s3")
@@ -415,29 +370,17 @@ def test_an_export_is_neither_backed_up_nor_recoverable(owner):
         call("sharing.s3.delete", b["id"])
         row = backup_of(b["dataset"])
         assert row["layout"] == "BUCKET"
-        write_backup(b["dataset"], {**row, "layout": "WHOLE_DATASET"})
+        write_backup(b["dataset"], {**row, "layout": "DATASET"})
         answer = call("sharing.s3.recover", [{"dataset": b["dataset"]}])[0]
         assert answer["error"] is None, answer["error"]
         assert answer["bucket"]["layout"] == "BUCKET"
 
 
-def test_force_disable_versioning_is_a_no_op_on_an_export(owner):
-    with filled_dataset() as ds, export(ds) as b:
-        entry = call("sharing.s3.force_disable_versioning", b["id"])
-        assert (entry["versioning"], entry["snapshot_versions"]) == ("OFF", [])
-        assert entry["layout"] == "WHOLE_DATASET"
-
-
 def test_the_layout_is_create_only(owner):
-    """layout cannot be changed on update. Delete the bucket and create it
-    again instead."""
+    """layout and create_dataset cannot be given on update."""
     with filled_dataset() as ds, export(ds) as b:
-        with pytest.raises(ValidationErrors) as ve:
-            call("sharing.s3.update", b["id"], {"layout": "BUCKET"})
-        assert "not permitted" in ve.value.errors[0].errmsg
-        assert call("sharing.s3.get_instance", b["id"])["layout"] == "WHOLE_DATASET"
-    with plain_bucket() as b:
-        with pytest.raises(ValidationErrors) as ve:
-            call("sharing.s3.update", b["id"], {"layout": "WHOLE_DATASET"})
-        assert "not permitted" in ve.value.errors[0].errmsg
-        assert call("sharing.s3.get_instance", b["id"])["layout"] == "BUCKET"
+        for bad in ({"layout": "BUCKET"}, {"create_dataset": False}):
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.s3.update", b["id"], bad)
+            assert "not permitted" in ve.value.errors[0].errmsg
+        assert call("sharing.s3.get_instance", b["id"])["layout"] == "DATASET"

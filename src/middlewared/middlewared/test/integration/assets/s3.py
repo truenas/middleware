@@ -128,8 +128,8 @@ def s3_access_key(username: str, *, name: str | None = None, **kwargs):
     """One access key for an existing account.
 
     `manage_buckets=True` needs the account to hold `SHARING_S3_WRITE`;
-    `s3_account` is what arranges that. The entry carries its secret,
-    which is what a client signs with.
+    `s3_account` is what arranges that. The create result carries the
+    secret, which is what a client signs with.
     """
     key = call("s3.accesskey.create", {"name": name or f"{username} key", "username": username, **kwargs})
     try:

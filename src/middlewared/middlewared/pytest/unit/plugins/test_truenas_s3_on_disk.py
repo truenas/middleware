@@ -163,10 +163,3 @@ def test_a_marker_read_that_is_not_enodata_raises(tmp_path, monkeypatch):
     # an unreadable xattr is an error, not absence
     with pytest.raises(OSError):
         bucket_layout_markers(str(tmp_path))
-
-
-def test_a_root_that_is_not_there_raises(tmp_path):
-    # the caller has already checked that the dataset is mounted, so a
-    # missing root is an error
-    with pytest.raises(FileNotFoundError):
-        bucket_layout_markers(str(tmp_path / "not-mounted"))

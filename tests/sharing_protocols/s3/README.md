@@ -47,7 +47,7 @@ test object lock is worse than a red one.
 | `preferred` | `BUCKET_OWNER_PREFERRED`, owned by `alt` |
 | `denied` | a `DENY` grant naming its own owner |
 | `excluded` | dataset destroyed under a live row — serves 503 |
-| `exported` | `layout=WHOLE_DATASET`. The dataset is made and filled first, then set `readonly=on`. A child dataset is mounted under it |
+| `exported` | `layout=DATASET`. The dataset is made and filled first, then set `readonly=on`. A child dataset is mounted under it |
 
 Three constraints on that set:
 

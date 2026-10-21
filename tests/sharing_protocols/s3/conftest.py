@@ -163,16 +163,15 @@ def s3_deployment(s3_accounts):
     the start rather than per create; the excluded row's dataset is
     destroyed *before* the start, so the daemon meets the row already
     unservable and answers 503 for it rather than having to be restarted
-    into that state; the exported row's dataset is created, filled and set
-    read-only before the row is created, because a WHOLE_DATASET bucket
-    uses an existing dataset; and the listener is waited for, because a fresh
-    dataset costs a directory fanout before the socket ever accepts.
+    into that state; the exported row's dataset is made before the row,
+    because a DATASET bucket uses an existing dataset; and the listener
+    is waited for, because a fresh dataset costs a directory fanout
+    before the socket ever accepts.
     """
     main = s3_accounts["main"]
 
-    # The exported dataset has default properties, a few files, and a
-    # child dataset mounted under it. It is set read-only before the
-    # service starts. `s3_bucket` destroys it on teardown, child included.
+    # the exported dataset: a few files, a child dataset mounted under
+    # it, then read-only. `s3_bucket` destroys it on teardown.
     exported = dataset_for("exported")
     call("pool.dataset.create", {"name": exported})
     call("pool.dataset.create", {"name": f"{exported}/child"})
@@ -265,9 +264,8 @@ def s3_deployment(s3_accounts):
         # dataset destroyed under it, which is the only way to reach the
         # answer an unservable bucket owes.
         "excluded": {"object_ownership": "OBJECT_WRITER", "owner": MAIN_USER, "grants": mine},
-        # The WHOLE_DATASET bucket on the dataset made above. `main` owns
-        # it, so the refused writes in its tests are the owner's.
-        "exported": {"owner": MAIN_USER, "grants": mine, "layout": "WHOLE_DATASET"},
+        # main owns it. Its tests check that the owner's own writes are refused.
+        "exported": {"owner": MAIN_USER, "grants": mine, "layout": "DATASET"},
     }
 
     # **Every row is required, and a failure here fails the session.**

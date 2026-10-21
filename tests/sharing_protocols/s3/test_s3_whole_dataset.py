@@ -1,15 +1,8 @@
-"""WHOLE_DATASET buckets. The dataset already exists. The S3 service
-serves it read-only from its mount point and never writes to it.
+"""Buckets with the DATASET layout: an existing dataset served read-only.
 
-The service serves each file as a file that it did not write: a derived
-ETag, no tags, version id ``null``. The service refuses every write with
-``403 AccessDenied``. This includes the owner's writes. ``.zfs`` at the
-root is not served. A dataset mounted under the export is not served.
-It is not listed, and its keys return 404.
-
-``conftest`` wrote the files: ``a.txt`` and ``docs/2026/b.txt`` in the
-dataset, and ``child/c.txt`` in the child dataset mounted under it. The
-dataset is ``readonly=on``.
+``conftest`` wrote ``a.txt`` and ``docs/2026/b.txt`` in the dataset and
+``child/c.txt`` in a child dataset mounted under it, then set
+``readonly=on``.
 """
 
 import botocore.exceptions
@@ -50,9 +43,8 @@ def refused(call):
 
 
 def test_the_tree_serves_as_foreign_files(s3, export):
-    """Files are listed and served: the bytes, a derived ETag (not an
-    MD5), no version id, no tags. Directories appear only as prefixes,
-    never as keys."""
+    """Files are listed and served with a derived ETag, no version id and
+    no tags. Directories appear only as prefixes."""
     assert listed(s3, export) == TREE
     page = s3.list_objects_v2(Bucket=export, Delimiter="/")
     assert keys_of(page) == ["a.txt"]
@@ -80,9 +72,8 @@ def test_the_control_directory_is_absent_by_name(s3, export):
 
 
 def test_a_dataset_mounted_beneath_is_not_entered(s3, export):
-    """The child dataset's mount point does not appear in either listing,
-    with or without a delimiter. A prefix inside it lists nothing. Every
-    read at or under it returns 404."""
+    """The child dataset is in no listing. Every read at or under it
+    returns 404."""
     assert not [k for k in listed(s3, export) if k.startswith(f"{CHILD}/")]
     assert f"{CHILD}/" not in groups_of(s3.list_objects_v2(Bucket=export, Delimiter="/"))
     for kwargs in ({}, {"Delimiter": "/"}):

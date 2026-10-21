@@ -97,7 +97,7 @@ def s3_client(endpoint: str | None = None, *, access_key: str, secret_key: str, 
 
 
 def client_for(key: dict[str, Any], endpoint: str | None = None, **config):
-    """A client signing with the pair an `s3.accesskey` entry carries."""
+    """A client signing with the pair `s3.accesskey.create` returns."""
     return s3_client(endpoint, access_key=key["access_key"], secret_key=key["secret"], **config)
 
 

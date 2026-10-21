@@ -1,19 +1,3 @@
-"""Buckets: the S3 service's share-like entity.
-
-A bucket is a ZFS dataset this plugin creates and registers with the
-daemon. The daemon pins a registered dataset's mount. Creating,
-dropping, enabling or disabling a bucket and changing the owner, the
-grants or the audit mask apply to a running service on a reload;
-changing a field consumed at registration (the dataset, the models,
-the ETag mode) requires a restart. The daemon reports which applies
-per change, and middleware acts on that (lifecycle.py). The grants
-live on the bucket, so they can never outlive it.
-
-A `WHOLE_DATASET` bucket is different. Its dataset already exists. This
-plugin registers the dataset with the daemon as read-only. This plugin
-does not create, write to, or destroy that dataset.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -31,6 +15,7 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.api import api_method
 from middlewared.api.current import (
     S3AuditAction,
+    S3BucketLayout,
     S3Entry,
     SharingS3AuditChoicesArgs,
     SharingS3AuditChoicesResult,
@@ -89,31 +74,25 @@ __all__ = ("SharingS3Service", "S3FSAttachmentDelegate")
 AUDIT_ACTIONS: tuple[str, ...] = typing.get_args(S3AuditAction)
 
 BUCKET_LOCK = asyncio.Lock()
-"""Serializes bucket registry mutations. Interleaved, create's
-validate-then-insert and the read-modify-writes in update and
-force_disable_versioning lose an update or reach the unique `name` and
-`dataset` columns with an integrity error. Taken before lifecycle's
-render lock."""
+"""Serializes bucket registry mutations. Taken before lifecycle's render lock."""
 
 
-# a whole bucket row, whichever of the two shapes the caller sent one in
 EntryT = TypeVar("EntryT", bound=SharingS3Entry)
 
 MANAGED_NAME_MAX_SUFFIX = 10
-"""Highest `_N` suffix a derived dataset name uses. The names tried under the
-managed root are the name of the bucket, then that name with `_1` to `_10`.
-The limit stops an endless loop and gives an error the administrator can
-read."""
+"""We append an `_N` suffix on collision when users create new buckets through the S3 API.
+We set an upper bound of 10 because we don't want a pathologically broken script creating infinite datasets
+on TrueNAS, but in theory we can increase this. I think it's most likely to happen if someone writes a dumb
+CI workflow that rapidly creates / deletes buckets over S3 protocol without doing any server-side maintenance.
+Obviously, we don't want to wire S3 bucket deletion into actual dataset destruction and so unmanaged churn will
+eventually hit an admin-facing error here."""
 
 SHARE_ROOT = "s3data"
-"""The directory under a bucket's mount point that holds its objects. The
-daemon creates it at registration, and it is the one part of the dataset
-the administrator manages and another protocol may export; the rest of the
-dataset is the daemon's own state."""
+"""The directory under a bucket's mount point that holds its objects when layout is `BUCKET`."""
 
 
 class BucketPath(typing.NamedTuple):
-    """Where on a bucket's dataset a path is: `bucket_of_path`'s answer."""
+    """A path's location on a bucket's dataset, as returned by `bucket_of_path`."""
 
     name: str
     dataset: str
@@ -122,9 +101,7 @@ class BucketPath(typing.NamedTuple):
 
 
 def bucket_dataset_properties() -> ZFSResourceCreateProperties:
-    """What the S3 on-disk format requires of a bucket's dataset. A fresh
-    model per call, since the create rules write into the one they are
-    given."""
+    """These are our current defaults for new S3 buckets, and should be updated as we have more user feedback."""
     return ZFSResourceCreateProperties(
         # the first three are create-time only and would otherwise inherit
         # from the parent; the daemon never re-checks any of them
@@ -132,9 +109,6 @@ def bucket_dataset_properties() -> ZFSResourceCreateProperties:
         normalization="none",
         utf8only="off",
         xattr="sa",
-        # the daemon passes a directory's inheritable NFSv4 ACEs to every
-        # object it stages, and a POSIX ACL parent has none to pass.
-        # restricted keeps a chmod from another protocol from stripping them
         acltype="nfsv4",
         aclmode="restricted",
         aclinherit="passthrough",
@@ -144,18 +118,12 @@ def bucket_dataset_properties() -> ZFSResourceCreateProperties:
 BUCKET_DATASET_PROPERTIES: Mapping[str, str] = MappingProxyType(
     bucket_dataset_properties().model_dump(exclude_unset=True)
 )
-"""The same properties as a mapping, read off what a create sets so that
-a recover cannot come to check something else."""
+
 
 CREATE_TIME_PROPERTIES = frozenset({"casesensitivity", "normalization", "utf8only"})
-"""The three that take no later `zfs set`, so a dataset holding the
-wrong value can never be a bucket's."""
 
 
 class SharingS3Model(sa.Model):
-    """No column carries a default: every row is inserted whole from the
-    API model, whose defaults are the one place they are stated."""
-
     __tablename__ = "truenas_s3_bucket"
 
     id = sa.Column(sa.Integer(), primary_key=True)
@@ -163,9 +131,6 @@ class SharingS3Model(sa.Model):
     dataset = sa.Column(sa.String(255), unique=True)
     layout = sa.Column(sa.String(16))
     enabled = sa.Column(sa.Boolean())
-    # the uid is the owner; its name is resolved when read, never stored,
-    # so a renamed account reads as its new name and a reused name never
-    # inherits a bucket
     owner_uid = sa.Column(sa.Integer())
     grants = sa.Column(sa.JSON(list))
     permissions_model = sa.Column(sa.String(32))
@@ -177,24 +142,15 @@ class SharingS3Model(sa.Model):
     object_lock = sa.Column(sa.Boolean())
     object_lock_default_mode = sa.Column(sa.String(16), nullable=True)
     object_lock_default_days = sa.Column(sa.Integer(), nullable=True)
-    # NULL inherits the service default; an empty list audits nothing, so
-    # the column carries no type to turn NULL into an empty value
     audit = sa.Column(sa.JSON(None), nullable=True)
     audit_overflow = sa.Column(sa.String(16), nullable=True)
 
 
-# ZFS's snapshot name charset plus the two metacharacters the daemon
-# matches with; a comma is outside it, which is what lets the patterns
-# render comma separated
 SNAPSHOT_PATTERN_CHARS = frozenset(string.ascii_letters + string.digits + "-_.: *?")
 
 
 def is_ipv4_shaped(name: str) -> bool:
-    """Whether the standard parser reads `name` as an IPv4 address. The S3
-    service applies the same test (Rust's `std::net::Ipv4Addr`, the same
-    grammar), and the two must agree: a name only one side refuses is either
-    a rendered row the service refuses whole-file, or an S3 protocol create
-    refused for a reason its error cannot carry."""
+    """Fast check to prevent users from setting IP addresses as names. Symmetry with the s3 daemon"""
     try:
         ipaddress.IPv4Address(name)
     except ValueError:
@@ -207,13 +163,6 @@ MOUNTED_FILESYSTEM = (
     ("properties.mounted.raw", "=", "yes"),
     ("properties.mountpoint.raw", "^", "/"),
 )
-"""A dataset a bucket can be on: never a zvol, and mounted somewhere a
-path reaches. `zfs.resource.list` takes no filter of its own and yields
-volumes as well as filesystems, so this is applied to what it returns.
-
-Properties are read raw here and wherever a recovery looks at one: the
-parsed `value` is a bool for `mounted` and None for a literal `none`,
-while raw is the string ZFS prints, which is what a create sends."""
 
 RECOVER_PROPERTIES = (
     "mountpoint",
@@ -222,13 +171,11 @@ RECOVER_PROPERTIES = (
     "snapdir",
     *BUCKET_DATASET_PROPERTIES,
 )
-"""What a recovery reads off a dataset before it will take it."""
 
 
 def read_config_backups(mounts: dict[str, str]) -> list[dict[str, Any]]:
-    """Every dataset's backed-up row, under the dataset it was found on
-    rather than the one it names: a restored dataset carries the name it
-    had where it was written."""
+    """Generate a list of backup configuration read from mounted datasets. We keep a backup of
+    the database row in JSON form inside the hidden .truenas_s3 dir for BUCKET layout datasets."""
     found = []
     for dataset, mount in sorted(mounts.items()):
         try:
@@ -241,9 +188,6 @@ def read_config_backups(mounts: dict[str, str]) -> list[dict[str, Any]]:
 
 
 def write_config_backups(work: list[tuple[str, dict[str, Any]]]) -> list[tuple[str, Exception]]:
-    """Write each backup that differs from the row it should hold.
-    Returns failures rather than raising: on the render path, one
-    unwritable dataset must not take the deployment down."""
     failures = []
     for mount, row in work:
         try:
@@ -257,15 +201,14 @@ def write_config_backups(work: list[tuple[str, dict[str, Any]]]) -> list[tuple[s
 
 
 def recovery_blockers(properties: dict[str, Any], mounted_children: list[str]) -> list[str]:
-    """Why the S3 service could not serve this dataset. Each mirrors a
-    check it makes when it registers a bucket."""
+    """Why the S3 service could not serve this dataset. Each mirrors a check it makes when it registers a bucket."""
     def raw(name: str) -> str | None:
         prop = properties.get(name)
         return prop["raw"] if prop else None
 
     blockers: list[str] = []
     if raw("readonly") == "on":
-        blockers.append("The dataset is read-only, which every write path would answer EROFS to.")
+        blockers.append("The dataset is read-only.")
     for name, wanted in BUCKET_DATASET_PROPERTIES.items():
         found = raw(name)
         if found == wanted:
@@ -299,17 +242,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def get_path_field(self, data: SharingS3Entry | dict[str, Any]) -> str:
-        # the bucket is its dataset, mounted where every dataset middleware
-        # makes is: what the share machinery asks a path for (the locked
-        # check, the dataset attachment delegate) is answered from the
-        # dataset name rather than stored beside it
         dataset = data["dataset"] if isinstance(data, dict) else data.dataset
         return f"/mnt/{dataset}"
 
     @private
     async def bucket_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> PrincipalNames:
-        """Every owner and grant principal across the rows, resolved once
-        each rather than once per row."""
+        """Every owner and grant principal across the rows, resolved once each rather than once per row."""
         principals = Principals(uids=frozenset(row["owner_uid"] for row in rows), gids=frozenset())
         for row in rows:
             principals |= grant_principals(row["grants"])
@@ -333,34 +271,25 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         if await self.query(filters, {"select": ["id"]}):
             verrors.add(f"{schema}.name", "A bucket with this name already exists.")
 
-        whole_dataset = data.layout == "WHOLE_DATASET"
-        if whole_dataset:
+        dataset_layout = data.layout == "DATASET"
+        if dataset_layout:
             if data.versioning != "OFF":
                 verrors.add(
-                    f"{schema}.versioning", "A WHOLE_DATASET bucket is read-only and does not support versioning."
+                    f"{schema}.versioning", "A DATASET bucket is read-only and does not support versioning."
                 )
             if data.object_lock:
-                verrors.add(f"{schema}.object_lock", "Object lock is not supported on a WHOLE_DATASET bucket.")
+                verrors.add(f"{schema}.object_lock", "Object lock is not supported on a DATASET bucket.")
             if data.snapshot_versions:
                 verrors.add(
-                    f"{schema}.snapshot_versions", "Snapshot versions are not supported on a WHOLE_DATASET bucket."
+                    f"{schema}.snapshot_versions", "Snapshot versions are not supported on a DATASET bucket."
                 )
 
-        # Turning versioning on needs the license. A bucket that already has it
-        # keeps it, since the one way rule below never lets it return to OFF.
-        if data.versioning != "OFF" and not whole_dataset and (old is None or old.versioning == "OFF"):
+        # only turning versioning on needs the license
+        if data.versioning != "OFF" and not dataset_layout and (old is None or old.versioning == "OFF"):
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_VERSIONING)
             if not entitlement.entitled:
                 verrors.add(f"{schema}.versioning", entitlement.message)
 
-        # Two one-way fields. Object lock enablement is latched on the dataset
-        # root and never lowers: the S3 service refuses to serve a bucket whose
-        # row contradicts the latch, so turning it off here would only take the
-        # bucket out of service. Versioning has no way back to OFF — the
-        # on-disk format's own rule: stored versions would go unreachable, and
-        # a delete would unlink the live object where a versioned bucket mints
-        # a delete marker. force_disable_versioning is the one deliberate
-        # exception, and destroying the stored versions is its contract.
         if old:
             if old.object_lock and not data.object_lock:
                 verrors.add(f"{schema}.object_lock", "Object lock cannot be disabled once enabled.")
@@ -412,24 +341,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def bucket_of_path(
         self, path: str, dataset: str | None = None, relative_path: str | None = None
     ) -> BucketPath | None:
-        """The bucket whose dataset holds `path`, and where in it, or None
-        when none does.
-
-        The path is matched by the dataset the kernel resolved it to where
-        the caller has one (`dataset` and `relative_path`, as the shares and
-        tasks store them), which a case-insensitive parent, a symlink or a
-        bind mount cannot disguise; the deepest bucket answers where one
-        bucket's dataset sits inside another's. A path the kernel could not
-        resolve -- one below a locked bucket's mount point -- is matched
-        against `/mnt/<dataset>`, where every dataset middleware makes is
-        mounted (`get_path_field`).
-
-        `WHOLE_DATASET` buckets are skipped. The S3 service only reads
-        their datasets. Other services can share and write those datasets.
-        A `BUCKET` bucket's dataset can be mounted under a `WHOLE_DATASET`
-        bucket's dataset. A path inside the `BUCKET` bucket's dataset
-        matches the `BUCKET` bucket.
-        """
+        """Internal check for whether a given path is inside a BUCKET layout S3 share."""
         real = path if dataset is not None else await self.middleware.run_in_thread(os.path.realpath, path)
 
         def within(bucket: str) -> str | None:
@@ -445,15 +357,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 return None
             return real[len(mountpoint) + 1:]
 
-        # the rows rather than the entries: this runs on every path change
-        # of every share and task, and the extend resolves each owner
-        # through NSS
         rows = await self.middleware.call(
             "datastore.query", self._config.datastore, [], {"select": ["name", "dataset", "layout"]}
         )
         found: BucketPath | None = None
         for row in rows:
-            if row["layout"] == "WHOLE_DATASET":
+            if row["layout"] == "DATASET":
                 continue
             rel = within(row["dataset"])
             if rel is not None and (found is None or len(row["dataset"]) > len(found.dataset)):
@@ -469,14 +378,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         dataset: str | None = None,
         relative_path: str | None = None,
     ) -> None:
-        """Refuse any path on an S3 bucket's dataset to a caller that writes
-        it. A bucket's versioning, object lock and audit are the S3
-        service's, and a write from beside it bypasses all three, whether
-        under the objects or in the daemon's own state. `bucket_of_path`
-        says how the path is matched. A path on a `WHOLE_DATASET` bucket's
-        dataset is not refused, because the S3 service only reads that
-        dataset.
-        """
+        """Validation for whether the given path is OK for writes from a non-S3 service."""
         if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
             return
         verrors.add(
@@ -495,18 +397,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         dataset: str | None = None,
         relative_path: str | None = None,
     ) -> None:
-        """Refuse a path on an S3 bucket's dataset that is not its `s3data`
-        directory or under it. `s3data` holds the objects; everything else
-        on the dataset is the daemon's own state, which a share would hand
-        to everyone it reaches. Only shares ask this: what a backup or sync
-        task copies goes to the administrator, not to clients, so a task may
-        read the whole dataset. `bucket_of_path` says how the path is
-        matched.
-
-        A path above a bucket is not refused here: smbd declines to enter a
-        bucket's dataset by the daemon's root marker, and NFS does not cross
-        a mount.
-        """
+        """Refuse a share path on a BUCKET dataset unless it is the `s3data`
+        directory or under it."""
         if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
             return
         if bucket.within != SHARE_ROOT and not bucket.within.startswith(f"{SHARE_ROOT}/"):
@@ -518,22 +410,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     def normalize_ownership(self, data: EntryT) -> EntryT:
-        """The pair a row is stored as.
-
-        `permissions_model` and `object_ownership` are one axis each:
-        the first says how the S3 service treats the filesystem
-        permissions on the tree, the second which account an S3
-        operation runs as and whether the bucket supports S3 ACLs.
-        Neither is always stored as it was given.
-
-        A `MULTIPROTOCOL` row folds to `OBJECT_WRITER` whatever it was
-        given, as the S3 service does with it: the other protocols'
-        users own the filesystem permissions, so the caller's own uid is
-        the only one that may act, and such a row supports no S3 ACLs
-        under any value. Folded rather than refused, so that a shared
-        bucket may be created without restating the default, and stored
-        folded so the row reads back as the service runs it.
-        """
+        """Fold `object_ownership` to `OBJECT_WRITER` for a `MULTIPROTOCOL` row, as the S3 service does."""
         model, ownership = data.permissions_model, data.object_ownership
         if model == "MULTIPROTOCOL":
             ownership = "OBJECT_WRITER"
@@ -541,14 +418,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def resolve_owner(self, schema: str, username: str, verrors: ValidationErrors) -> int | None:
-        """The owner's uid, refusing root.
-
-        The owner bypasses the bucket's grants, owns the `s3data`
-        directory the service creates, and owns every object written
-        under `BUCKET_OWNER_ENFORCED`. As uid 0 that is an owner the
-        filesystem does not restrain either, which leaves the bucket's
-        access control stating nothing about what its owner reaches.
-        """
+        """Resolve the owner's uid. Root is refused."""
         try:
             user = await self.middleware.call("user.get_user_obj", {"username": username})
         except KeyError:
@@ -562,21 +432,15 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     def compress(self, data: SharingS3Entry, owner_uid: int) -> dict[str, Any]:
-        row = data.model_dump(exclude={"id", "locked", "owner", "tier"})
+        row = data.model_dump(exclude={"id", "locked", "owner", "tier", "create_dataset"})
         row["grants"] = [g.model_dump(exclude={"name"}) for g in data.grants]
         row["owner_uid"] = owner_uid
-        # Set semantics with the given order kept: the S3 service refuses a
-        # mask that names an action twice, and a real set would render in
-        # hash order, churning the file between generates.
         if isinstance(row["audit"], list):
             row["audit"] = list(dict.fromkeys(row["audit"]))
         return row
 
     @private
     async def mountpoint(self, dataset: str) -> str | None:
-        """Where the bucket's dataset is mounted, or None when the dataset
-        is gone. Read from ZFS whenever it is needed rather than kept: the
-        dataset is the bucket's identity and its mount point follows it."""
         rows = await self.call2(
             self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[dataset], properties=["mountpoint"])
         )
@@ -585,9 +449,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def owner_of_uid(self, schema: str, uid: int, verrors: ValidationErrors) -> str | None:
-        """The account a backed-up uid belongs to. The backup holds the
-        uid because the row does: an account renamed since is still the
-        owner, the name it was written under is not."""
+        """The account a backed-up owner uid belongs to."""
         try:
             user = await self.middleware.call("user.get_user_obj", {"uid": uid})
         except KeyError:
@@ -602,24 +464,17 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     def config_backup_row(self, entry: SharingS3Entry) -> dict[str, Any]:
-        """The row as it goes onto its dataset: the datastore row, the
-        one shape a recovery can insert back."""
+        """The datastore row as written to the config backup."""
         return self.compress(entry, entry.owner_uid)
 
     @private
     async def reconcile_config_backups(self, mounts: dict[str, str]) -> None:
-        """Bring every config backup up to date with its row.
-
-        On the render rather than beside each row write: every change to
-        a bucket renders, including the attachment delegate's `enabled`
-        toggle, which never passes `sharing.s3.update`. It also backfills
-        a bucket made before backups existed and repairs a failed write.
-        """
+        """Bring every config backup up to date with its database entry."""
         if not mounts:
             return
         try:
             entries: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
-            # WHOLE_DATASET buckets get no backup. Middleware writes nothing to their datasets.
+            # DATASET buckets get no backup
             work = [
                 (mounts[entry.dataset], self.config_backup_row(entry))
                 for entry in entries
@@ -627,8 +482,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             ]
             failures = await self.middleware.run_in_thread(write_config_backups, work)
         except Exception:
-            # a backup is only what a later recovery reads, so it never
-            # gets to refuse a render
+            # a failed backup write never fails the render
             self.logger.warning("s3: failed to reconcile the bucket config backups", exc_info=True)
             return
         for mount, error in failures:
@@ -636,26 +490,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def derive_dataset(self, schema: str, name: str, verrors: ValidationErrors) -> str | None:
-        """Select the dataset for a bucket that gives no `dataset` value.
-
-        This service decides the location, not the S3 daemon. An S3
-        client sends only a bucket name. The parent is the S3 service's
-        `managed_root_dataset` and the leaf is the name of the bucket.
-
-        If the leaf is in use, add a `_N` suffix. Do not use the existing
-        dataset and do not remove it. `sharing.s3.delete` keeps the
-        dataset and its objects. A new bucket with an old name must get a
-        new dataset. If it does not, it serves the objects of the old
-        bucket.
-
-        The separator is an underscore because a bucket name cannot
-        contain one. ZFS also permits `A-Z`, `:` and space, but an
-        underscore has no other meaning in a path, a shell or a ZFS user
-        property. The suffix is therefore unambiguous: `backups_1` is
-        always the second dataset for the bucket `backups`. A hyphen is
-        ambiguous, because `backups-1` is also the dataset for a bucket
-        named `backups-1`.
-        """
+        """Pick the dataset for a bucket created without `dataset`:
+        `managed_root_dataset/<name>`, with a `_N` suffix if that name is in use.
+        An existing dataset is never reused."""
         root = (await self.middleware.call("s3.config")).managed_root_dataset
         if not root:
             verrors.add(
@@ -671,10 +508,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         except ZFSPathNotFoundException:
             rows = []
         if not rows:
-            # `s3.update` refuses a root that does not exist, so the root
-            # was removed after that check. Reported here to name the
-            # setting. The create below would name the derived dataset
-            # and report a missing parent instead.
+            # the managed root was removed after s3.update checked it
             verrors.add(
                 f"{schema}.dataset",
                 f"The S3 service's managed_root_dataset {root!r} does not exist.",
@@ -682,9 +516,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             )
             return None
         taken = {row["name"] for row in rows}
-        # A bucket row keeps its dataset name even when the dataset is
-        # gone. The column is unique, so a derived name that matches one
-        # fails the insert instead of giving a validation error.
+        # a bucket row keeps its dataset name after the dataset is gone, and the column is unique
         taken |= {
             row["dataset"]
             for row in await self.middleware.call(
@@ -706,14 +538,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def create_dataset(self, schema: str, name: str) -> None:
-        """Create the bucket's dataset with the properties the S3 on-disk
-        format requires. The properties are stated here in full rather than
-        inherited from any other layer's defaults; normalization and utf8only
-        are internal-only create properties, which is what lets them override
-        a parent that would otherwise pass its own values down. The share
-        root under it, `s3data`, is the daemon's to create: registration
-        makes it on the first start, owned by the bucket's owner, and leaves
-        it as found from then on."""
+        """Create the bucket's dataset with the properties the S3 service requires."""
         verrors = ValidationErrors()
         try:
             await self.call2(
@@ -721,9 +546,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 ZFSResourceCreateArgsData(path=name, properties=bucket_dataset_properties()),
             )
         except ZFSPathAlreadyExistsException as e:
-            # the bucket owns its dataset from birth: that is what guarantees
-            # the create-time properties. Adopting an existing one is a
-            # separate feature
+            # an existing dataset is used only with create_dataset false
             verrors.add(f"{schema}.dataset", e.message, errno.EEXIST)
         except ZFSPathNotFoundException as e:
             verrors.add(f"{schema}.dataset", e.message, errno.ENOENT)
@@ -744,12 +567,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             self.logger.warning("%s: failed to remove the bucket dataset: %s", name, e.message)
 
     @private
-    async def validate_whole_dataset(self, schema: str, dataset: str, verrors: ValidationErrors) -> None:
-        """Check that the S3 service will accept `dataset` as a
-        `WHOLE_DATASET` bucket. Each check here matches a check that the
-        service makes at registration. A bad dataset is refused here with an
-        error message. Without these checks, the service would register the
-        bucket and return 503. This method writes nothing to the dataset."""
+    async def validate_existing_dataset(
+        self, schema: str, dataset: str, layout: S3BucketLayout, verrors: ValidationErrors
+    ) -> None:
+        """Refuse an existing dataset the S3 service would refuse at
+        registration. A `BUCKET` bucket also requires it empty."""
         field = f"{schema}.dataset"
         if has_internal_path(dataset):
             verrors.add(field, f"{dataset!r} is a system dataset.")
@@ -757,7 +579,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         try:
             rows = await self.call2(
                 self.s.zfs.resource.list_impl,
-                ZFSResourceQuery(paths=[dataset], properties=["mountpoint", "mounted", "xattr", "keystatus"]),
+                ZFSResourceQuery(paths=[dataset], properties=[*RECOVER_PROPERTIES, "keystatus"]),
             )
         except ZFSPathNotFoundException:
             rows = []
@@ -780,8 +602,6 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             verrors.add(field, f"{dataset!r} is mounted at {mount}, not at /mnt/{dataset}.")
             return
         await check_path_resides_within_volume(verrors, self.middleware, field, mount)
-        if properties["xattr"]["raw"] == "off":
-            verrors.add(field, f"{dataset!r} has xattr=off. The S3 service reads extended attributes on every object.")
         try:
             markers = await self.middleware.run_in_thread(bucket_layout_markers, mount)
         except OSError as e:
@@ -793,6 +613,18 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 f"{dataset!r} already holds an S3 bucket ({', '.join(markers)}). Use sharing.s3.recover to "
                 "register it as a bucket.",
             )
+            return
+        if layout == "DATASET":
+            if properties["xattr"]["raw"] == "off":
+                verrors.add(
+                    field, f"{dataset!r} has xattr=off. The S3 service reads extended attributes on every object."
+                )
+            return
+        for blocker in recovery_blockers(properties, []):
+            verrors.add(field, blocker)
+        # the size of a ZFS directory is its entry count, 2 when empty
+        if (await self.middleware.run_in_thread(os.stat, mount)).st_size > 2:
+            verrors.add(field, f"{dataset!r} is not empty. A BUCKET bucket requires an empty dataset.")
 
     @api_method(
         SharingS3CreateArgs,
@@ -805,64 +637,48 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         """
         Create an S3 bucket.
 
-        The bucket's dataset is created here, with the properties the S3
-        service requires, and must not exist beforehand. If you omit
-        ``dataset``, the dataset is created under the S3 service's
-        ``managed_root_dataset`` and takes the name of the bucket, with a
-        ``_N`` suffix if that name is in use. A bucket created through the S3
-        protocol always uses that default. Objects live in its
-        ``s3data`` directory, which the S3 service creates on its next start
-        owned by ``owner``. Under the ``S3`` permissions model the filesystem
-        permissions on that tree are ignored and the bucket's grants decide;
-        under ``MULTIPROTOCOL`` they are enforced as well, so a grantee other
-        than the owner reaches only what they allow and an ACL is set on the
-        directory as for any share. Which account a write is recorded as is
-        ``object_ownership``'s answer: the owner under
-        ``BUCKET_OWNER_ENFORCED``, which is the default and supports no S3
-        ACLs, and the account that put the object under the other two values.
-        Grants may be given in the same call. Creating a bucket reloads a
-        running S3 service rather than restarting it.
+        With ``create_dataset`` true, the dataset is created with the properties
+        the S3 service requires and must not exist beforehand. If ``dataset`` is
+        omitted, it is created under the S3 service's ``managed_root_dataset``
+        with the name of the bucket, plus a ``_N`` suffix if that name is in use.
+        Buckets created through the S3 protocol always use that default.
 
-        With the ``WHOLE_DATASET`` layout, nothing is created. ``dataset``
-        names an existing, mounted dataset. The S3 service serves that
-        dataset read-only from its mount point and never writes to it. The
-        dataset is refused when one of these is true: it is not a mounted
-        ZFS filesystem at ``/mnt/<dataset>``, it is locked, it has
-        ``xattr=off``, it is a system dataset, another bucket already uses
-        it, or it already holds an S3 bucket. For a dataset that already
-        holds an S3 bucket, use :method:`sharing.s3.recover`.
-        ``permissions_model`` defaults to ``MULTIPROTOCOL`` on a
-        ``WHOLE_DATASET`` bucket. ``versioning``, ``object_lock`` and
-        ``snapshot_versions`` are refused. A dataset mounted under the
-        ``WHOLE_DATASET`` dataset is allowed. The S3 service does not serve
-        anything in it.
+        With ``create_dataset`` false, ``dataset`` must be an existing mounted
+        dataset that is not a system dataset, is not used by another bucket and
+        does not already hold an S3 bucket. A ``BUCKET`` bucket also requires it
+        to be empty, with the properties a created dataset gets. Use
+        :method:`sharing.s3.recover` for a dataset that already holds a bucket.
+
+        With the ``DATASET`` layout, ``create_dataset`` defaults to false and
+        cannot be true. ``permissions_model`` defaults to ``MULTIPROTOCOL``.
+        ``versioning``, ``object_lock`` and ``snapshot_versions`` are not
+        supported.
         """
         async with BUCKET_LOCK:
             verrors = ValidationErrors()
-            whole_dataset = data.layout == "WHOLE_DATASET"
-            if whole_dataset and "permissions_model" not in data.model_fields_set:
-                data = data.model_copy(update={"permissions_model": "MULTIPROTOCOL"})
+            if data.layout == "DATASET":
+                defaults = {"permissions_model": "MULTIPROTOCOL", "create_dataset": False}
+                data = data.model_copy(update={k: v for k, v in defaults.items() if k not in data.model_fields_set})
+                if data.create_dataset:
+                    verrors.add("sharing_s3_create.create_dataset", "A DATASET bucket uses an existing dataset.")
             data = self.normalize_ownership(data)
             await self.validate(data, "sharing_s3_create", verrors)
             owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
             if data.dataset is None:
-                if whole_dataset:
-                    verrors.add(
-                        "sharing_s3_create.dataset",
-                        "A WHOLE_DATASET bucket requires `dataset`. The dataset is not created.",
-                    )
-                else:
+                if data.create_dataset:
                     data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
+                else:
+                    verrors.add("sharing_s3_create.dataset", "`dataset` is required when `create_dataset` is false.")
             elif await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
                 verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
-            elif whole_dataset:
-                await self.validate_whole_dataset("sharing_s3_create", data.dataset, verrors)
+            elif not data.create_dataset:
+                await self.validate_existing_dataset("sharing_s3_create", data.dataset, data.layout, verrors)
             verrors.check()
             assert owner_uid is not None
             assert data.dataset is not None
 
             # on failure, destroy only a dataset that this method created
-            created_dataset = not whole_dataset
+            created_dataset = data.create_dataset
             if created_dataset:
                 await self.create_dataset("sharing_s3_create", data.dataset)
             id_: int | None = None
@@ -872,10 +688,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 )
                 await render_and_apply(self.middleware)
             except Exception:
-                # Unwind to "no bucket": the row goes first, and the dataset only
-                # with it — a row that cannot be removed keeps its dataset, which
-                # is a consistent bucket, rather than a registered name with no
-                # storage behind it.
+                # remove the row first, then the dataset it owned
                 if id_ is not None:
                     try:
                         await self.middleware.call("datastore.delete", self._config.datastore, id_)
@@ -902,18 +715,17 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         """
         Update S3 bucket ``id``.
 
-        ``grants`` replaces the bucket's whole grant list. Enabling or
-        disabling the bucket and changing the owner, the grants or the audit
-        settings apply to a running S3 service on a reload; changing the
-        permissions model, the object ownership, the ETag mode, the snapshot
-        selection or object-lock enablement restarts it. The dataset and the
-        layout cannot be changed. Two fields move one way: object lock
-        cannot be disabled once enabled, and versioning cannot return to ``OFF``
-        (:method:`sharing.s3.force_disable_versioning` is the destructive
-        exception). Moving ``permissions_model`` off ``MULTIPROTOCOL`` requires
-        ``object_ownership`` to be stated in the same call: the stored
-        value on such a bucket is its ``OBJECT_WRITER`` fold, which would
-        otherwise take effect and enable S3 ACLs.
+        ``grants`` replaces the whole grant list. The dataset and the layout
+        cannot be changed. Object lock cannot be disabled once enabled.
+        Versioning cannot return to ``OFF`` except through
+        :method:`sharing.s3.force_disable_versioning`. Changing
+        ``permissions_model`` from ``MULTIPROTOCOL`` requires ``object_ownership``
+        in the same call.
+
+        Enabling or disabling the bucket and changing the owner, the grants or
+        the audit settings reload the S3 service. Changing the permissions model,
+        the object ownership, the ETag mode, the snapshot selection or object-lock
+        enablement restarts it.
         """
         async with BUCKET_LOCK:
             old = await self.get_instance(id_)
@@ -923,10 +735,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             given = data.model_dump(exclude_unset=True)
             verrors = ValidationErrors()
             new = self.normalize_ownership(new)
-            # Leaving MULTIPROTOCOL must name the ownership. The stored value
-            # on such a row is its OBJECT_WRITER fold, so a merge that kept it
-            # would land the flip on the loosest model — live S3 ACLs,
-            # writer-owned objects — when the bucket's creator never chose it.
+            # leaving MULTIPROTOCOL must state the ownership: the stored value is the OBJECT_WRITER fold
             if (
                 old.permissions_model == "MULTIPROTOCOL"
                 and new.permissions_model != "MULTIPROTOCOL"
@@ -939,9 +748,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                     "S3 ACLs.",
                 )
             await self.validate(new, "sharing_s3_update", verrors, old)
-            # an owner given by name is compared by the uid it resolves to: a
-            # renamed account is the same owner, a deleted and recreated one
-            # under the old name is not
+            # owners are compared by uid
             owner_uid = old.owner_uid
             if "owner" in given:
                 resolved = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
@@ -949,8 +756,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                     owner_uid = resolved
             verrors.check()
 
-            # a new owner takes the grants, not the directory: the share root is
-            # the deployment's once it exists, as it would be under any share
+            # a new owner is not applied to the s3data directory
             await self.middleware.call("datastore.update", self._config.datastore, id_, self.compress(new, owner_uid))
             await render_and_apply(self.middleware)
             return await self.get_instance(id_)
@@ -966,8 +772,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         """
         Deregister S3 bucket ``id``.
 
-        The bucket's dataset and every object in it are left in place, retained
-        objects included; the S3 service simply stops serving them. Restarts
+        The bucket's dataset and every object in it are left in place,
+        retained objects included. The S3 service stops serving them. Reloads
         the S3 service.
         """
         async with BUCKET_LOCK:
@@ -988,40 +794,24 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     )
     async def force_disable_versioning(self, audit_callback: AuditCallback, id_: int) -> SharingS3Entry:
         """
-        Force versioning off for S3 bucket ``id``, destroying its version
-        history.
+        Force versioning off for S3 bucket ``id``, destroying its version history.
 
         :method:`sharing.s3.update` refuses to turn versioning off once it has
-        been enabled or suspended, because the version history the bucket has
-        accumulated cannot survive it. This method is the deliberate
-        exception, for a bucket whose history is no longer wanted: it sets
-        ``versioning`` to ``OFF``, clears ``snapshot_versions``, and restarts
-        the S3 service — the one versioning change that applies only by a
-        restart, so expect the brief interruption; a stopped service applies
-        it at its next start. A bucket with object lock enabled is refused: a
-        locked bucket keeps its version history for as long as it exists.
+        been enabled or suspended. This method sets ``versioning`` to ``OFF``,
+        clears ``snapshot_versions`` and restarts the S3 service. A bucket with
+        object lock enabled is refused.
 
-        .. warning::
-
-            This operation is destructive and irreversible. Every prior
-            version of every object, and every delete marker, is permanently
-            lost. Version history stops being served the moment the change
-            applies, and the S3 service then slowly removes the previously
-            written version files in the background, so the space they occupy
-            is reclaimed gradually. ZFS snapshots of the bucket's dataset
-            still hold the old versions until those snapshots are destroyed.
-
-        Versioning may be enabled again later. That begins new history and
-        does not restore what this method destroyed, though old versions the
-        background cleanup has not yet removed reappear in the bucket's
-        history until it finishes.
+        .. warning:: This operation is destructive and irreversible. Every prior
+           version of every object and every delete marker is lost. The S3 service
+           removes the stored version files in the background, so space is
+           reclaimed gradually. ZFS snapshots of the dataset still hold the old
+           versions until they are destroyed. Enabling versioning again starts
+           new history and does not restore what was destroyed.
         """
         async with BUCKET_LOCK:
             bucket = await self.get_instance(id_)
             audit_callback(bucket.name)
-            # the row, then the latch: the daemon never clears the latch, so a
-            # root carrying one is a locked bucket even under a row that
-            # (historically) stopped saying so
+            # a root carrying the latch is a locked bucket whatever the row says
             locked = bucket.object_lock
             if not locked and (mount := await self.mountpoint(bucket.dataset)) is not None:
                 locked = await self.middleware.run_in_thread(has_latch, mount)
@@ -1039,13 +829,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 await self.middleware.call(
                     "datastore.update", self._config.datastore, id_, self.compress(new, bucket.owner_uid)
                 )
-            # rendered and applied even when the row did not move, so a call that
-            # failed between the row write and the apply can be retried
+            # rendered even when the row did not move, so a failed apply can be retried
             await render_and_apply(self.middleware)
             entry = await self.get_instance(id_)
             if changed:
-                # the CRUD wrapper emits CHANGED for create/update/delete; a
-                # custom row mutation owes sharing.s3.query subscribers the same
+                # emit CHANGED like the CRUD wrapper does
                 self.middleware.send_event("sharing.s3.query", "CHANGED", id=id_, fields=entry.model_dump())
             return entry
 
@@ -1061,40 +849,26 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         """
         Recover buckets from datasets that already hold their objects.
 
-        :method:`sharing.s3.delete` leaves the dataset and its objects in
-        place, and :method:`sharing.s3.create` will not adopt an existing
-        dataset, so this is the only way to register one again.
-        :method:`sharing.s3.recoverable_buckets` lists what can be recovered.
+        :method:`sharing.s3.delete` leaves the dataset and its objects in place.
+        This method registers such a dataset again from the configuration backup
+        middleware keeps in ``.truenas_s3/config_backup.json``.
+        :method:`sharing.s3.recoverable_buckets` lists what can be recovered. A
+        dataset with no backup is refused. A ``DATASET`` bucket has no backup.
+        Create it again instead.
 
-        Middleware writes the bucket row to
-        ``.truenas_s3/config_backup.json`` whenever it changes, and the bucket
-        is restored from that backup unchanged. A dataset with no backup is
-        refused. A ``WHOLE_DATASET`` bucket never has a backup, because
-        middleware writes nothing to its dataset. Create that bucket again
-        instead. Only ``name_override`` and ``owner_override`` may be given:
-        the first for when another bucket has taken the old name, the second
-        for a dataset restored onto a system where its uid belongs to someone
-        else. Change anything else with :method:`sharing.s3.update` after
-        recovering, where the one-way fields are checked against the row.
+        ``name_override`` and ``owner_override`` replace the stored name and
+        owner. Change anything else with :method:`sharing.s3.update` after
+        recovering.
 
-        Each dataset gets its own answer, in the order requested. A dataset
-        that cannot be recovered does not stop the others, and buckets that
-        were registered stay registered. The S3 service is reloaded once at
-        the end.
+        Each dataset gets its own result, in the order requested. A dataset that
+        cannot be recovered does not stop the others. The S3 service is reloaded
+        once at the end.
 
-        .. warning::
-
-            A recovered bucket is the same bucket as before, so its grants
-            come back as they were. Stored S3 ACLs also survive on the
-            dataset, so under an ``S3`` permissions model with
-            ``object_ownership`` other than ``BUCKET_OWNER_ENFORCED`` those
-            take effect again, against uids that may since have been reused.
+        .. warning:: A recovered bucket keeps its grants and any stored S3 ACLs,
+           which may now name reused uids.
         """
         async with BUCKET_LOCK:
-            # a name or a dataset an earlier entry claimed is not in the
-            # registry yet, so `validate` cannot see it. Claimed whether or
-            # not that entry went on to work, so the second mention of one
-            # reads as the duplicate it is
+            # names and datasets claimed earlier in this call are not in the registry yet
             claimed_names: set[str] = set()
             claimed_datasets: set[str] = set()
             rows: list[dict[str, Any] | None] = []
@@ -1117,17 +891,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 try:
                     ids.append(await self.middleware.call("datastore.insert", self._config.datastore, row))
                 except Exception as e:
-                    # validation held the unique columns under this lock, so
-                    # there is little left to fail here; what does is this
-                    # bucket's answer and not the others'
                     self.logger.warning("%s: failed to insert the recovered bucket row", row["dataset"], exc_info=True)
                     ids.append(None)
                     failures[i] = str(e)
 
             if any(id_ is not None for id_ in ids):
-                # what landed is in force, and stays whether or not the rest
-                # of the request did: nothing is unwound, so the registry and
-                # the rendered files never disagree
+                # nothing is unwound: what was inserted stays
                 await render_and_apply(self.middleware)
 
             recovered = []
@@ -1135,8 +904,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 entry = None
                 if id_ is not None:
                     entry = await self.get_instance(id_)
-                    # the CRUD wrapper emits ADDED for create; these inserts
-                    # owe sharing.s3.query subscribers the same
+                    # emit ADDED like the CRUD wrapper does
                     self.middleware.send_event("sharing.s3.query", "ADDED", id=id_, fields=entry.model_dump())
                 recovered.append(SharingS3RecoveredBucket(dataset=wanted.dataset, bucket=entry, error=failure))
             return recovered
@@ -1150,12 +918,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         claimed_datasets: set[str],
         verrors: ValidationErrors,
     ) -> dict[str, Any] | None:
-        """The datastore row one dataset would be recovered as, or None
-        with everything wrong with it on `verrors`.
-
-        `verrors` is this entry's alone, so what it holds is this entry's
-        answer.
-        """
+        """The datastore row for one dataset, or None with the errors on `verrors`."""
         dataset = wanted.dataset
         if dataset in claimed_datasets:
             verrors.add(f"{schema}.dataset", "This dataset is named twice in the same recovery.")
@@ -1225,14 +988,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         wanted: SharingS3RecoverBucket,
         verrors: ValidationErrors,
     ) -> SharingS3Create | None:
-        """The row a recovery will insert: the backup, under the name and
-        owner stated where they were. The backup names its owner by uid
-        because the row does, so an account renamed since is still the
-        owner and one on another appliance is not."""
-        # fields this method supplies itself, so they are not taken from the
-        # backup: the two it passes by keyword, the uid the owner is resolved
-        # from, the envelope's own field, and the layout. Only BUCKET buckets
-        # write a backup, so a recovered row is always BUCKET.
+        """The row to insert: the backup under the stated name and owner."""
+        # fields this method supplies itself, not the backup. Only BUCKET
+        # buckets write a backup, so a recovered row is always BUCKET.
         supplied = ("dataset", "layout", "owner", "owner_uid", "version_number")
 
         owner = wanted.owner_override
@@ -1267,13 +1025,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         properties: dict[str, Any],
         verrors: ValidationErrors,
     ) -> None:
-        """What the row needs of the dataset and cannot be told by it.
-
-        The one-way fields need no check here: the backup is inserted as
-        it stands, so nothing can weaken them. A backup edited by hand to
-        unlock a latched dataset costs the bucket its service, since the
-        S3 service checks object lock against the latch as well.
-        """
+        """Refuse a dataset whose properties cannot serve the row."""
         if new.snapshot_versions and (properties.get("snapdir") or {}).get("raw") == "disabled":
             verrors.add(
                 f"{schema}.dataset",
@@ -1292,14 +1044,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         Returns buckets that are no longer registered but whose datasets still
         exist.
 
-        :method:`sharing.s3.delete` leaves the dataset, its objects and the
-        config backup in place. This scans every mounted dataset that no
-        bucket uses and returns the configuration each backup holds.
-        :method:`sharing.s3.recover` registers exactly that.
-
-        Unmounted datasets are skipped, as are backups this version cannot
-        read. Middleware writes no backup for a ``WHOLE_DATASET`` bucket.
-        Because of this, its dataset is never listed.
+        Every mounted dataset no bucket uses is scanned for a configuration
+        backup, and the configuration each backup holds is returned.
+        :method:`sharing.s3.recover` registers exactly that. Unmounted datasets
+        and backups this version cannot read are skipped. A ``DATASET`` bucket
+        has no backup and is never listed.
         """
         used = {
             row["dataset"]
@@ -1317,10 +1066,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         }
         found = await self.middleware.run_in_thread(read_config_backups, mounts)
 
-        # through the same extend the registry's own rows take, so a
-        # recoverable bucket reads as the bucket it is. Per row rather
-        # than over all of them: one backup that will not read must not
-        # take the listing down, and there are never many
+        # per row, so one unreadable backup does not fail the listing
         buckets = []
         for row in found:
             try:
@@ -1362,17 +1108,12 @@ class S3FSAttachmentDelegate(LockableFSAttachmentDelegate[SharingS3Entry]):
     service_class = SharingS3Service
 
     async def remove_alert(self, attachment: SharingS3Entry) -> None:
-        # the missing-dataset alert is keyed by bucket id like the locked
-        # one, and a bucket that is deleted or toggled with its dataset is
-        # not missing it; a render raises it again if it still is
+        # a bucket deleted or toggled with its dataset is not missing it
         await super().remove_alert(attachment)
         await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, attachment.id)
 
     async def restart_reload_services(self, attachments: list[SharingS3Entry]) -> None:
-        # every path here is a registry change: a bucket disabled for an
-        # export or lock, re-enabled on import or unlock, or deleted with
-        # its dataset. The daemon pins a registered dataset's mount, so the
-        # restart has to land before the ZFS operation that follows
+        # the daemon pins a registered dataset's mount, so the restart must land before the ZFS operation
         await render_and_apply(self.middleware, force_restart=True)
 
 
