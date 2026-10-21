@@ -1,4 +1,5 @@
 import contextlib
+import functools
 import json
 import uuid
 
@@ -63,7 +64,7 @@ def truenas_connect_certificate():
 def webshare_server():
     """Run the Webshare services (auth, its proxy and the link service) against a fake registration.
 
-    Yields once `https://<host>:755` answers, so a test can log in right away.
+    Yields once both ports answer, so a test can log in and download right away.
     """
     with truenas_connect_certificate() as certificate:
         with truenas_connect_registered(certificate["id"]):
@@ -75,20 +76,21 @@ def webshare_server():
                 call("service.control", "STOP", "webshare", job=True)
 
 
-def _health():
+def _health(port, path):
     try:
-        return requests.get(f"https://{host().ip}:{AUTH_PORT}/webshare/health", verify=False, timeout=10).status_code
+        return requests.get(f"https://{host().ip}:{port}{path}", verify=False, timeout=10).status_code
     except requests.RequestException as e:
         return e
 
 
 def _wait_for_health():
-    poll(
-        _health,
-        condition=lambda value: value == 200,
-        timeout=60,
-        message="Webshare is not serving",
-    )
+    for port, path in ((AUTH_PORT, "/webshare/health"), (LINK_PORT, "/health")):
+        poll(
+            functools.partial(_health, port, path),
+            condition=lambda value: value == 200,
+            timeout=60,
+            message=f"Webshare is not serving on port {port}",
+        )
 
 
 class WebshareError(Exception):
