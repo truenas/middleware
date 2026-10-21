@@ -8,6 +8,10 @@ changing a field consumed at registration (the dataset, the models,
 the ETag mode) requires a restart. The daemon reports which applies
 per change, and middleware acts on that (lifecycle.py). The grants
 live on the bucket, so they can never outlive it.
+
+A `WHOLE_DATASET` bucket is different. Its dataset already exists. This
+plugin registers the dataset with the daemon as read-only. This plugin
+does not create, write to, or destroy that dataset.
 """
 
 from __future__ import annotations
@@ -52,12 +56,14 @@ from middlewared.api.current import (
     ZFSResourceCreateProperties,
     ZFSResourceQuery,
 )
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.zfs.exceptions import (
     ZFSDestroyFailedException,
     ZFSPathAlreadyExistsException,
     ZFSPathNotFoundException,
 )
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, SharingService, ValidationError, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
@@ -66,7 +72,14 @@ from middlewared.utils.types import AuditCallback
 
 from .grants import PrincipalNames, Principals, grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import MISSING_ALERT, render_and_apply
-from .on_disk import CONFIG_BACKUP, SIDE_TREE, has_latch, read_config_backup, write_config_backup
+from .on_disk import (
+    CONFIG_BACKUP,
+    SIDE_TREE,
+    bucket_layout_markers,
+    has_latch,
+    read_config_backup,
+    write_config_backup,
+)
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -148,6 +161,7 @@ class SharingS3Model(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(63), unique=True)
     dataset = sa.Column(sa.String(255), unique=True)
+    layout = sa.Column(sa.String(16))
     enabled = sa.Column(sa.Boolean())
     # the uid is the owner; its name is resolved when read, never stored,
     # so a renamed account reads as its new name and a reused name never
@@ -319,9 +333,22 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         if await self.query(filters, {"select": ["id"]}):
             verrors.add(f"{schema}.name", "A bucket with this name already exists.")
 
+        whole_dataset = data.layout == "WHOLE_DATASET"
+        if whole_dataset:
+            if data.versioning != "OFF":
+                verrors.add(
+                    f"{schema}.versioning", "A WHOLE_DATASET bucket is read-only and does not support versioning."
+                )
+            if data.object_lock:
+                verrors.add(f"{schema}.object_lock", "Object lock is not supported on a WHOLE_DATASET bucket.")
+            if data.snapshot_versions:
+                verrors.add(
+                    f"{schema}.snapshot_versions", "Snapshot versions are not supported on a WHOLE_DATASET bucket."
+                )
+
         # Turning versioning on needs the license. A bucket that already has it
         # keeps it, since the one way rule below never lets it return to OFF.
-        if data.versioning != "OFF" and (old is None or old.versioning == "OFF"):
+        if data.versioning != "OFF" and not whole_dataset and (old is None or old.versioning == "OFF"):
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_VERSIONING)
             if not entitlement.entitled:
                 verrors.add(f"{schema}.versioning", entitlement.message)
@@ -396,6 +423,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         resolve -- one below a locked bucket's mount point -- is matched
         against `/mnt/<dataset>`, where every dataset middleware makes is
         mounted (`get_path_field`).
+
+        `WHOLE_DATASET` buckets are skipped. The S3 service only reads
+        their datasets. Other services can share and write those datasets.
+        A `BUCKET` bucket's dataset can be mounted under a `WHOLE_DATASET`
+        bucket's dataset. A path inside the `BUCKET` bucket's dataset
+        matches the `BUCKET` bucket.
         """
         real = path if dataset is not None else await self.middleware.run_in_thread(os.path.realpath, path)
 
@@ -416,10 +449,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         # of every share and task, and the extend resolves each owner
         # through NSS
         rows = await self.middleware.call(
-            "datastore.query", self._config.datastore, [], {"select": ["name", "dataset"]}
+            "datastore.query", self._config.datastore, [], {"select": ["name", "dataset", "layout"]}
         )
         found: BucketPath | None = None
         for row in rows:
+            if row["layout"] == "WHOLE_DATASET":
+                continue
             rel = within(row["dataset"])
             if rel is not None and (found is None or len(row["dataset"]) > len(found.dataset)):
                 found = BucketPath(row["name"], row["dataset"], rel)
@@ -438,7 +473,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         it. A bucket's versioning, object lock and audit are the S3
         service's, and a write from beside it bypasses all three, whether
         under the objects or in the daemon's own state. `bucket_of_path`
-        says how the path is matched.
+        says how the path is matched. A path on a `WHOLE_DATASET` bucket's
+        dataset is not refused, because the S3 service only reads that
+        dataset.
         """
         if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
             return
@@ -582,10 +619,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             return
         try:
             entries: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
+            # WHOLE_DATASET buckets get no backup. Middleware writes nothing to their datasets.
             work = [
                 (mounts[entry.dataset], self.config_backup_row(entry))
                 for entry in entries
-                if entry.dataset in mounts
+                if entry.dataset in mounts and entry.layout == "BUCKET"
             ]
             failures = await self.middleware.run_in_thread(write_config_backups, work)
         except Exception:
@@ -705,6 +743,57 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         except ZFSDestroyFailedException as e:
             self.logger.warning("%s: failed to remove the bucket dataset: %s", name, e.message)
 
+    @private
+    async def validate_whole_dataset(self, schema: str, dataset: str, verrors: ValidationErrors) -> None:
+        """Check that the S3 service will accept `dataset` as a
+        `WHOLE_DATASET` bucket. Each check here matches a check that the
+        service makes at registration. A bad dataset is refused here with an
+        error message. Without these checks, the service would register the
+        bucket and return 503. This method writes nothing to the dataset."""
+        field = f"{schema}.dataset"
+        if has_internal_path(dataset):
+            verrors.add(field, f"{dataset!r} is a system dataset.")
+            return
+        try:
+            rows = await self.call2(
+                self.s.zfs.resource.list_impl,
+                ZFSResourceQuery(paths=[dataset], properties=["mountpoint", "mounted", "xattr", "keystatus"]),
+            )
+        except ZFSPathNotFoundException:
+            rows = []
+        if not rows:
+            verrors.add(field, f"{dataset!r} does not exist.", errno.ENOENT)
+            return
+        if rows[0]["type"] != "FILESYSTEM":
+            verrors.add(field, f"{dataset!r} is a volume, not a dataset.")
+            return
+        properties = rows[0]["properties"]
+        if properties["mounted"]["raw"] != "yes":
+            # a locked dataset is never mounted
+            if properties["keystatus"]["raw"] == "unavailable":
+                verrors.add(field, f"{dataset!r} is locked.")
+            else:
+                verrors.add(field, f"{dataset!r} is not mounted.")
+            return
+        mount = properties["mountpoint"]["raw"]
+        if mount != f"/mnt/{dataset}":
+            verrors.add(field, f"{dataset!r} is mounted at {mount}, not at /mnt/{dataset}.")
+            return
+        await check_path_resides_within_volume(verrors, self.middleware, field, mount)
+        if properties["xattr"]["raw"] == "off":
+            verrors.add(field, f"{dataset!r} has xattr=off. The S3 service reads extended attributes on every object.")
+        try:
+            markers = await self.middleware.run_in_thread(bucket_layout_markers, mount)
+        except OSError as e:
+            verrors.add(field, f"{mount}: {e.strerror}", e.errno or errno.EIO)
+            return
+        if markers:
+            verrors.add(
+                field,
+                f"{dataset!r} already holds an S3 bucket ({', '.join(markers)}). Use sharing.s3.recover to "
+                "register it as a bucket.",
+            )
+
     @api_method(
         SharingS3CreateArgs,
         SharingS3CreateResult,
@@ -733,21 +822,49 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         ACLs, and the account that put the object under the other two values.
         Grants may be given in the same call. Creating a bucket reloads a
         running S3 service rather than restarting it.
+
+        With the ``WHOLE_DATASET`` layout, nothing is created. ``dataset``
+        names an existing, mounted dataset. The S3 service serves that
+        dataset read-only from its mount point and never writes to it. The
+        dataset is refused when one of these is true: it is not a mounted
+        ZFS filesystem at ``/mnt/<dataset>``, it is locked, it has
+        ``xattr=off``, it is a system dataset, another bucket already uses
+        it, or it already holds an S3 bucket. For a dataset that already
+        holds an S3 bucket, use :method:`sharing.s3.recover`.
+        ``permissions_model`` defaults to ``MULTIPROTOCOL`` on a
+        ``WHOLE_DATASET`` bucket. ``versioning``, ``object_lock`` and
+        ``snapshot_versions`` are refused. A dataset mounted under the
+        ``WHOLE_DATASET`` dataset is allowed. The S3 service does not serve
+        anything in it.
         """
         async with BUCKET_LOCK:
             verrors = ValidationErrors()
+            whole_dataset = data.layout == "WHOLE_DATASET"
+            if whole_dataset and "permissions_model" not in data.model_fields_set:
+                data = data.model_copy(update={"permissions_model": "MULTIPROTOCOL"})
             data = self.normalize_ownership(data)
             await self.validate(data, "sharing_s3_create", verrors)
             owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
             if data.dataset is None:
-                data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
+                if whole_dataset:
+                    verrors.add(
+                        "sharing_s3_create.dataset",
+                        "A WHOLE_DATASET bucket requires `dataset`. The dataset is not created.",
+                    )
+                else:
+                    data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
             elif await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
                 verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
+            elif whole_dataset:
+                await self.validate_whole_dataset("sharing_s3_create", data.dataset, verrors)
             verrors.check()
             assert owner_uid is not None
             assert data.dataset is not None
 
-            await self.create_dataset("sharing_s3_create", data.dataset)
+            # on failure, destroy only a dataset that this method created
+            created_dataset = not whole_dataset
+            if created_dataset:
+                await self.create_dataset("sharing_s3_create", data.dataset)
             id_: int | None = None
             try:
                 id_ = await self.middleware.call(
@@ -767,8 +884,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                             "%s: failed to remove the bucket row after a failed create", data.name, exc_info=True
                         )
                     else:
-                        await self.destroy_dataset(data.dataset)
-                else:
+                        if created_dataset:
+                            await self.destroy_dataset(data.dataset)
+                elif created_dataset:
                     await self.destroy_dataset(data.dataset)
                 raise
             return await self.get_instance(id_)
@@ -788,9 +906,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         disabling the bucket and changing the owner, the grants or the audit
         settings apply to a running S3 service on a reload; changing the
         permissions model, the object ownership, the ETag mode, the snapshot
-        selection or object-lock enablement restarts it. The dataset cannot
-        be changed, and two fields move one way: object lock cannot be
-        disabled once enabled, and versioning cannot return to ``OFF``
+        selection or object-lock enablement restarts it. The dataset and the
+        layout cannot be changed. Two fields move one way: object lock
+        cannot be disabled once enabled, and versioning cannot return to ``OFF``
         (:method:`sharing.s3.force_disable_versioning` is the destructive
         exception). Moving ``permissions_model`` off ``MULTIPROTOCOL`` requires
         ``object_ownership`` to be stated in the same call: the stored
@@ -951,7 +1069,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         Middleware writes the bucket row to
         ``.truenas_s3/config_backup.json`` whenever it changes, and the bucket
         is restored from that backup unchanged. A dataset with no backup is
-        refused. Only ``name_override`` and ``owner_override`` may be given:
+        refused. A ``WHOLE_DATASET`` bucket never has a backup, because
+        middleware writes nothing to its dataset. Create that bucket again
+        instead. Only ``name_override`` and ``owner_override`` may be given:
         the first for when another bucket has taken the old name, the second
         for a dataset restored onto a system where its uid belongs to someone
         else. Change anything else with :method:`sharing.s3.update` after
@@ -1109,10 +1229,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         owner stated where they were. The backup names its owner by uid
         because the row does, so an account renamed since is still the
         owner and one on another appliance is not."""
-        # what this method supplies itself, and so may not take from the
-        # backup: the two it passes by keyword, the uid the owner is
-        # resolved from, and the envelope's own field
-        supplied = ("dataset", "owner", "owner_uid", "version_number")
+        # fields this method supplies itself, so they are not taken from the
+        # backup: the two it passes by keyword, the uid the owner is resolved
+        # from, the envelope's own field, and the layout. Only BUCKET buckets
+        # write a backup, so a recovered row is always BUCKET.
+        supplied = ("dataset", "layout", "owner", "owner_uid", "version_number")
 
         owner = wanted.owner_override
         if owner is None:
@@ -1177,7 +1298,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         :method:`sharing.s3.recover` registers exactly that.
 
         Unmounted datasets are skipped, as are backups this version cannot
-        read.
+        read. Middleware writes no backup for a ``WHOLE_DATASET`` bucket.
+        Because of this, its dataset is never listed.
         """
         used = {
             row["dataset"]

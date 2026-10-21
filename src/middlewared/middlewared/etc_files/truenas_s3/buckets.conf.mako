@@ -66,6 +66,10 @@ default_audit_overflow = ${config.default_audit_overflow.lower()}
 [bucket "${b.name}"]
 dataset = ${b.dataset}
 path = ${bucket.mountpoint}
+## omitted for BUCKET rows, because BUCKET is the daemon's default
+% if b.layout == "WHOLE_DATASET":
+layout = whole_dataset
+% endif
 owner = ${b.owner}
 owner_id = ${b.owner_uid}
 permissions_model = ${b.permissions_model.lower()}

@@ -21,7 +21,10 @@ from truenas_os_pyutils.io import atomic_write
 __all__ = (
     "CONFIG_BACKUP",
     "CONFIG_VERSION",
+    "LATCH_XATTR",
+    "ROOT_XATTR",
     "SIDE_TREE",
+    "bucket_layout_markers",
     "has_latch",
     "read_config_backup",
     "write_config_backup",
@@ -40,6 +43,19 @@ rebuild decides who reaches the objects."""
 
 LATCH_XATTR = "trusted.tns3_latch"
 """The S3 service's Object Lock latch, on the dataset root."""
+
+ROOT_XATTR = "trusted.tns3_root"
+"""The S3 service's root sentinel, on the dataset root of a bucket."""
+
+RESOLVE_BENEATH_ROOT = (
+    truenas_os.RESOLVE_BENEATH
+    | truenas_os.RESOLVE_NO_SYMLINKS
+    | truenas_os.RESOLVE_NO_MAGICLINKS
+    | truenas_os.RESOLVE_NO_XDEV
+)
+"""The resolve flags that the S3 service uses for a name under a
+dataset root. No symlinks, no other filesystems, nothing above the
+root."""
 
 
 def has_latch(mount: str) -> bool:
@@ -66,6 +82,51 @@ def has_latch(mount: str) -> bool:
     finally:
         os.close(fd)
     return True
+
+
+def bucket_layout_markers(mount: str) -> list[str]:
+    """Return the parts of the S3 service's bucket layout that the
+    dataset root at `mount` has. The parts are the root sentinel xattr,
+    the Object Lock latch xattr, and the `.truenas_s3` directory. Return
+    an empty list for a dataset that was never a bucket. This function
+    only checks that each part exists. It does not read the contents.
+    The service refuses a WHOLE_DATASET row if any of the three parts
+    exists.
+
+    Raise an error if `mount` cannot be opened or an xattr cannot be
+    read. The directory is opened with the same flags that the service
+    uses. A regular file named `.truenas_s3` does not count. A symlink
+    or a mount point with that name does count, because the service's
+    open fails on it.
+    """
+    found: list[str] = []
+    fd = truenas_os.openat2(mount, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for name in (ROOT_XATTR, LATCH_XATTR):
+            try:
+                truenas_os.fgetxattr(fd, name)
+            except OSError as e:
+                if e.errno != errno.ENODATA:
+                    raise
+            else:
+                found.append(name)
+        try:
+            side = truenas_os.openat2(
+                SIDE_TREE, os.O_RDONLY | os.O_DIRECTORY | os.O_NONBLOCK, dir_fd=fd, resolve=RESOLVE_BENEATH_ROOT
+            )
+        except OSError as e:
+            if e.errno in (errno.ENOENT, errno.ENOTDIR):
+                pass
+            elif e.errno in (errno.ELOOP, errno.EXDEV):
+                found.append(f"{SIDE_TREE}/")
+            else:
+                raise
+        else:
+            os.close(side)
+            found.append(f"{SIDE_TREE}/")
+    finally:
+        os.close(fd)
+    return found
 
 
 def backup_path(mount: str) -> str:

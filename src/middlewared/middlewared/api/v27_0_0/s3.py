@@ -32,6 +32,7 @@ __all__ = [
     "S3PrincipalType",
     "S3BucketName",
     "S3PermissionsModel",
+    "S3BucketLayout",
     "S3ObjectOwnership",
     "S3Grant",
     "S3GrantEntry",
@@ -100,6 +101,11 @@ S3PrincipalType = Literal["USER", "GROUP", "EVERYONE"]
 S3PermissionsModel = Literal["S3", "MULTIPROTOCOL"]
 """How the S3 service treats the filesystem permissions on a bucket's
 tree."""
+
+S3BucketLayout = Literal["BUCKET", "WHOLE_DATASET"]
+"""The layout of the bucket's dataset. BUCKET: the S3 service owns the
+dataset. WHOLE_DATASET: the dataset already exists, and the S3 service
+serves it read-only."""
 
 S3ObjectOwnership = Literal["BUCKET_OWNER_ENFORCED", "BUCKET_OWNER_PREFERRED", "OBJECT_WRITER"]
 """S3 Object Ownership: the bucket-level setting that controls ownership
@@ -371,11 +377,30 @@ class SharingS3Entry(BaseModel):
     )
     dataset: NonEmptyString = Field(
         description=(
-            "The ZFS dataset the bucket is. Created by `sharing.s3.create` and owned by it. Objects live in the "
-            "`s3data` directory under its mount point, which the S3 service creates on its next start, owned by "
-            "`owner`. Under the `MULTIPROTOCOL` permissions model the filesystem permissions on that tree "
-            "govern S3 callers too, so a grantee other than the owner reaches only what they allow; set an ACL "
-            "on the directory as for any share. Under `S3` they are ignored and the grants decide instead."
+            "The ZFS dataset of the bucket. With the `BUCKET` layout, `sharing.s3.create` creates the dataset "
+            "and the S3 service owns it. Objects are in the `s3data` directory under the mount point. The S3 "
+            "service creates that directory on its next start, owned by `owner`. With the `WHOLE_DATASET` "
+            "layout, the dataset already exists. The S3 service serves it read-only from its mount point and "
+            "never writes to it. With the `MULTIPROTOCOL` permissions model, the filesystem permissions on the "
+            "tree also apply to S3 callers. A grantee other than the owner can reach only what those "
+            "permissions allow. Set an ACL on the directory as for any share. With the `S3` model, the "
+            "filesystem permissions are ignored and the grants decide."
+        ),
+    )
+    layout: S3BucketLayout = Field(
+        default="BUCKET",
+        description=(
+            "The layout of the bucket's dataset. `BUCKET`: `sharing.s3.create` creates the dataset. Objects are "
+            "in its `s3data` directory. Only the S3 service writes to the dataset. `WHOLE_DATASET`: the dataset "
+            "named in `dataset` already exists. The S3 service serves it read-only from its mount point. The S3 "
+            "service never writes to the dataset. It refuses every write with `403 AccessDenied`. This includes "
+            "writes by the owner. Other protocols can still write to the dataset. The S3 service serves each "
+            "file as a file that it did not write: a derived ETag, no tags, no version id. `versioning`, "
+            "`object_lock` and `snapshot_versions` are not supported on a `WHOLE_DATASET` bucket. A dataset "
+            "mounted under the exported dataset is not served. It is not in listings, and its files cannot be "
+            "read. Create a separate bucket for it. Middleware writes no configuration backup to the dataset. "
+            "Because of this, `sharing.s3.recover` cannot recover a `WHOLE_DATASET` bucket. This field is set "
+            "at creation and cannot be changed."
         ),
     )
     enabled: bool = Field(default=True, description="Whether the bucket is served. Toggling restarts the S3 service.")
@@ -402,7 +427,9 @@ class SharingS3Entry(BaseModel):
             "set on the tree governs S3 callers too and narrowing it takes effect for them immediately. S3 ACLs "
             "are not supported on such a bucket at all, whatever `object_ownership` says, since no stored S3 "
             "record may decide what a write from another protocol could contradict. Which account an S3 "
-            "operation runs as is `object_ownership`'s answer, not this one's."
+            "operation runs as is `object_ownership`'s answer, not this one's. A `WHOLE_DATASET` bucket "
+            "defaults to `MULTIPROTOCOL` when this field is not given. `S3` can be set instead. Then only the "
+            "grants decide who can read."
         ),
     )
     object_ownership: S3ObjectOwnership = Field(
@@ -503,10 +530,12 @@ class SharingS3Create(SharingS3Entry):
     dataset: NonEmptyString | None = Field(
         default=None,
         description=(
-            "ZFS dataset for the bucket, created by this method. If you give no value, the dataset is created "
-            "under the S3 service's `managed_root_dataset` and takes the name of the bucket. An S3 protocol "
-            "CreateBucket request always uses that default. If that name is in use, a `_N` suffix is added. An "
-            "existing dataset is never used: `sharing.s3.delete` keeps the dataset and its objects."
+            "The ZFS dataset for the bucket. With the `BUCKET` layout, this method creates the dataset. If you "
+            "give no value, the dataset is created under the S3 service's `managed_root_dataset` with the name "
+            "of the bucket. An S3 protocol CreateBucket request always uses that default. If that name is in "
+            "use, a `_N` suffix is added. An existing dataset is never used, because `sharing.s3.delete` keeps "
+            "the dataset and its objects. With the `WHOLE_DATASET` layout, this field is required. It names an "
+            "existing, mounted dataset. This method does not create or change that dataset."
         ),
     )
     grants: list[S3Grant] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
@@ -516,6 +545,7 @@ class SharingS3Create(SharingS3Entry):
 
 class SharingS3Update(SharingS3Create, metaclass=ForUpdateMetaclass):
     dataset: Excluded = excluded_field()
+    layout: Excluded = excluded_field()
 
 
 class SharingS3CreateArgs(BaseModel):

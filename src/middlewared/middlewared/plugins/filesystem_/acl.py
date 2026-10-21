@@ -176,7 +176,9 @@ class FilesystemService(Service):
         Refuse a recursive change over the whole of an S3 bucket, whether the target is the mountpoint of a
         bucket's dataset or a traverse from above would descend into one. Only the bucket's ``s3data``
         directory is the administrator's to manage; the rest of the dataset is the S3 service's, and a
-        change over all of it may leave the bucket in a state the service does not expect.
+        change over all of it may leave the bucket in a state the service does not expect. ``WHOLE_DATASET``
+        buckets are not checked. The S3 service only reads their datasets. Recursive changes over those
+        datasets are allowed.
         """
         path = os.path.realpath(st.realpath)
         # dataset -> mountpoint of every mount the change covers in full: the target's own when it is a
@@ -192,7 +194,9 @@ class FilesystemService(Service):
             return
 
         buckets = self.middleware.call_sync(
-            "sharing.s3.query", [["dataset", "in", list(covered)]], {"select": ["name", "dataset"]}
+            "sharing.s3.query",
+            [["dataset", "in", list(covered)], ["layout", "=", "BUCKET"]],
+            {"select": ["name", "dataset"]},
         )
         crossed = []
         for bucket in buckets:

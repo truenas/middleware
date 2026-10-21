@@ -36,7 +36,7 @@ from middlewared.test.integration.assets.s3 import (
     user_grant,
     wait_for_listener,
 )
-from middlewared.test.integration.utils import call, pool
+from middlewared.test.integration.utils import call, pool, ssh
 import pytest
 from s3_client import client_for
 
@@ -163,10 +163,24 @@ def s3_deployment(s3_accounts):
     the start rather than per create; the excluded row's dataset is
     destroyed *before* the start, so the daemon meets the row already
     unservable and answers 503 for it rather than having to be restarted
-    into that state; and the listener is waited for, because a fresh
+    into that state; the exported row's dataset is created, filled and set
+    read-only before the row is created, because a WHOLE_DATASET bucket
+    uses an existing dataset; and the listener is waited for, because a fresh
     dataset costs a directory fanout before the socket ever accepts.
     """
     main = s3_accounts["main"]
+
+    # The exported dataset has default properties, a few files, and a
+    # child dataset mounted under it. It is set read-only before the
+    # service starts. `s3_bucket` destroys it on teardown, child included.
+    exported = dataset_for("exported")
+    call("pool.dataset.create", {"name": exported})
+    call("pool.dataset.create", {"name": f"{exported}/child"})
+    mount = f"/mnt/{exported}"
+    ssh(
+        f"mkdir -p {mount}/docs/2026 && printf alpha > {mount}/a.txt && printf bravo > {mount}/docs/2026/b.txt"
+        f" && printf charlie > {mount}/child/c.txt && chmod -R a+rX {mount} && zfs set readonly=on {exported}"
+    )
 
     # Every row grants `main` and nothing else: `alt` reaching anything
     # is what a stored ACL has to explain.
@@ -251,6 +265,9 @@ def s3_deployment(s3_accounts):
         # dataset destroyed under it, which is the only way to reach the
         # answer an unservable bucket owes.
         "excluded": {"object_ownership": "OBJECT_WRITER", "owner": MAIN_USER, "grants": mine},
+        # The WHOLE_DATASET bucket on the dataset made above. `main` owns
+        # it, so the refused writes in its tests are the owner's.
+        "exported": {"owner": MAIN_USER, "grants": mine, "layout": "WHOLE_DATASET"},
     }
 
     # **Every row is required, and a failure here fails the session.**
