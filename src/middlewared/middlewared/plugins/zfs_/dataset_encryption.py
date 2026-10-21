@@ -1,9 +1,23 @@
-import libzfs
+from typing import Any
 
+import libzfs
+from pydantic import Secret
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
 from middlewared.service import CallError, job, Service
 from middlewared.utils import filter_list
 
 from .utils import unlocked_zvols_fast, zvol_path_to_name
+
+
+class ZfsDatasetBulkProcessArgs(BaseModel):
+    name: str
+    params: Secret[Any]
+
+
+class ZfsDatasetBulkProcessResult(BaseModel):
+    result: list
 
 
 class ZFSDatasetService(Service):
@@ -184,6 +198,11 @@ class ZFSDatasetService(Service):
         except libzfs.ZFSException as e:
             raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
+    @api_method(
+        ZfsDatasetBulkProcessArgs,
+        ZfsDatasetBulkProcessResult,
+        private=True,
+    )
     @job()
     def bulk_process(self, job, name: str, params: list):
         f = getattr(self, name, None)
