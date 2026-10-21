@@ -18,7 +18,7 @@ from middlewared.api.base.model import (
     removed_event_model,
 )
 from middlewared.service_exception import CallError, InstanceNotFound
-from middlewared.utils.filter_list import filter_list
+from middlewared.utils.filter_list import filter_list, select_with_query_fields
 from middlewared.utils.type import copy_function_metadata
 
 from .base import ServiceBase
@@ -186,6 +186,9 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
             filters = []
 
         options = await self.get_options(options)
+        # Surface `select` to extend_context so services can skip expensive per-row work
+        # (e.g. lock-state lookups) when the relevant field isn't being selected.
+        extra = {**(options.get('extra') or {}), 'select': select_with_query_fields(filters, options)}
 
         # In case we are extending which may transform the result in numerous ways
         # we can only filter the final result. Exception is when forced to use sql
@@ -194,6 +197,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
             datastore_options = options.copy()
             for option in POST_EXTEND_OPTS:
                 datastore_options.pop(option, None)
+            datastore_options['extra'] = extra
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )
@@ -202,7 +206,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
             )
         else:
             result = await self.middleware.call(
-                'datastore.query', self._config.datastore, filters, options,
+                'datastore.query', self._config.datastore, filters, {**options, 'extra': extra},
             )
 
         if self._config.generic:
@@ -277,18 +281,24 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         copy_function_metadata(func, nf)
         return nf
 
+    def _get_instance_options(self, options):
+        options = options or {}
+        if self._config.datastore:
+            # Without this an extended query extends every row before filtering on the primary key.
+            # No extend_context reads across rows, so extending only the matching row gives the same entry.
+            options = {**options, 'force_sql_filters': True}
+        return options
+
     async def get_instance(self, id_, options=None) -> E:
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
 
         Please see `query` method documentation for `options`.
         """
-        options = options or {}
-
         instance = await self.middleware.call(
             f'{self._config.namespace}.query',
             [[self._config.datastore_primary_key, '=', id_]],
-            options
+            self._get_instance_options(options),
         )
         if not instance:
             raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
@@ -300,12 +310,10 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         """
         Synchronous implementation of `get_instance`.
         """
-        options = options or {}
-
         instance = self.middleware.call_sync(
             f'{self._config.namespace}.query',
             [[self._config.datastore_primary_key, '=', id_]],
-            options,
+            self._get_instance_options(options),
         )
         if not instance:
             raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')

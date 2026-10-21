@@ -109,7 +109,12 @@ class RsyncTaskEntry(BaseModel):
         description="Array of additional rsync command-line options.",
     )
     enabled: bool = Field(default=True, description="Whether this rsync task is enabled.")
-    locked: bool = Field(description="Whether this rsync task is currently locked (running).")
+    locked: bool | None = Field(
+        description=(
+            "Whether the task's path is on a locked dataset, which keeps the task from running. `null` if lock "
+            "information was not requested."
+        ),
+    )
     job: dict | None = Field(description="Information about the currently running job. `null` if no job is running.")
 
 

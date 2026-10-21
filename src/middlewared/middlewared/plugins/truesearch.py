@@ -7,9 +7,11 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import ZFSResourceQuery
+from middlewared.api.current import QueryOptions, ZFSResourceQuery
+from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.service import Service
-from middlewared.utils.smb import SearchProtocol
+from middlewared.utils.path import EXTERNAL_PATH
+from middlewared.utils.smb import SearchProtocol, SMBSharePurpose
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -133,12 +135,18 @@ class TrueSearchService(Service):
             return set()
 
         shares = await self.middleware.call(
-            'sharing.smb.query',
-            [['enabled', '=', True], ['locked', '=', False], ['path', '!=', 'EXTERNAL'],
-             ['purpose', '!=', 'TIMEMACHINE_SHARE']],
+            'sharing.smb.query', [[share_field.ENABLED, '=', True]], {'force_sql_filters': True},
         )
 
-        return {share['path'] for share in shares}
+        return {
+            share[share_field.PATH]
+            for share in shares
+            if (
+                share[share_field.LOCKED] is False
+                and share[share_field.PATH] != EXTERNAL_PATH
+                and share[share_field.PURPOSE] != SMBSharePurpose.TIMEMACHINE_SHARE
+            )
+        }
 
     async def webshare_directories(self) -> set[str]:
         """
@@ -152,12 +160,11 @@ class TrueSearchService(Service):
             return set()
 
         shares = await self.call2(
-            self.s.sharing.webshare.query,
-            [['enabled', '=', True], ['locked', '=', False]],
+            self.s.sharing.webshare.query, [['enabled', '=', True]], QueryOptions(force_sql_filters=True),
         )
         assert isinstance(shares, list)
 
-        return {share.path for share in shares}
+        return {share.path for share in shares if share.locked is False}
 
     RECONFIGURE_TIMER = None
 

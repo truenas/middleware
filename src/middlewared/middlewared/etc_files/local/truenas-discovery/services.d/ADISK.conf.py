@@ -1,7 +1,9 @@
 from truenas_pymdns.server.config import ServiceConfig, generate_service_config
 
 from middlewared.plugins.etc import FileShouldNotExist
+from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.utils.mdns import ip_addresses_to_interface_names
+from middlewared.utils.smb import SMBSharePurpose
 
 # Time Machine (adisk) TXT records:
 #   sys=adVF=0x100   -- required when _adisk._tcp is advertised; without it
@@ -21,10 +23,18 @@ def render(service, middleware, render_ctx):
     if not render_ctx['service.started_or_enabled']:
         raise FileShouldNotExist()
 
-    shares = middleware.call_sync('sharing.smb.query', [
-        ['OR', [['purpose', '=', 'TIMEMACHINE_SHARE'], ['options.timemachine', '=', True]]],
-        ['enabled', '=', True], ['locked', '=', False],
-    ])
+    shares = []
+    for s in middleware.call_sync('sharing.smb.query', [[share_field.ENABLED, '=', True]], {'force_sql_filters': True}):
+        if (
+            # Only LEGACY_SHARE options carry the timemachine key
+            (
+                s[share_field.PURPOSE] == SMBSharePurpose.TIMEMACHINE_SHARE
+                or s[share_field.OPTS].get(share_field.TIMEMACHINE) is True
+            )
+            and s[share_field.LOCKED] is False
+        ):
+            shares.append(s)
+
     if not shares:
         raise FileShouldNotExist()
 

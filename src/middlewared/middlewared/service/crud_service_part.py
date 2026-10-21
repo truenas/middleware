@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, cast, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
-from middlewared.utils.filter_list import filter_list
+from middlewared.utils.filter_list import filter_list, select_with_query_fields
 
 from .part import ServicePart
 
@@ -83,7 +83,7 @@ class CRUDServicePart[E, PK = int](ServicePart):
         extra = opts.get('extra', {}) or {}
         # Surface `select` to extend_context so services can skip expensive per-row work
         # (e.g. lock-state lookups) when the relevant field isn't being selected.
-        extra = {**extra, 'select': opts.get('select')}
+        extra = {**extra, 'select': select_with_query_fields(filters, opts)}
 
         rows = await self._query_rows(filters, options, extra)
 
