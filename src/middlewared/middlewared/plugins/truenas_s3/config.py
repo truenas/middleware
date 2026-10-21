@@ -303,9 +303,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 )
             )
 
-        if (new.default_audit or new.default_audit_overflow != "DROP") and (
-            (new.default_audit, new.default_audit_overflow) != (old.default_audit, old.default_audit_overflow)
-        ):
+        if new.default_audit or new.default_audit_overflow != "DROP":
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)
             if not entitlement.entitled:
                 verrors.add("s3_update.default_audit", entitlement.message)

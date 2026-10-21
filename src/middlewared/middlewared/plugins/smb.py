@@ -655,10 +655,7 @@ class SMBService(ConfigService):
                     'to users with full administrative privileges.'
                 )
 
-        if (
-            SearchProtocol.SPOTLIGHT in new['search_protocols']
-            and SearchProtocol.SPOTLIGHT not in old['search_protocols']
-        ):
+        if SearchProtocol.SPOTLIGHT in new['search_protocols']:
             if reasons := await self.call2(self.s.truesearch.unavailable_reasons):
                 verrors.add(
                     'smb_update.search_protocols',
@@ -998,7 +995,7 @@ class SharingSMBService(SharingService):
         old_aux = old[share_field.OPTS].get(share_field.AUX)
         new_aux = new[share_field.OPTS].get(share_field.AUX)
 
-        await self.validate(new, 'sharingsmb_update', verrors, old)
+        await self.validate(new, 'sharingsmb_update', verrors)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
 
@@ -1427,9 +1424,7 @@ class SharingSMBService(SharingService):
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
                 entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SMB_BLOCK_CLONING)
-                if not entitlement.entitled and (
-                    old is None or old[share_field.PURPOSE] != data[share_field.PURPOSE]
-                ):
+                if not entitlement.entitled:
                     verrors.add(
                         f'{schema_name}.{share_field.PURPOSE}',
                         entitlement.message
