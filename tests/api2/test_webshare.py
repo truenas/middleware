@@ -107,6 +107,7 @@ def test_webshare(share):
         r = requests.get(
             f"https://{host().ip}:{LINK_PORT}/api/download/{result['shareId']}/file", verify=False
         )
+        assert r.status_code == 200, (r.status_code, r.text)
         assert r.text == "Canary\n"
 
 
