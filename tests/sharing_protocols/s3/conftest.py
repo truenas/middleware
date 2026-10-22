@@ -36,7 +36,7 @@ from middlewared.test.integration.assets.s3 import (
     user_grant,
     wait_for_listener,
 )
-from middlewared.test.integration.utils import call, pool
+from middlewared.test.integration.utils import call, pool, ssh
 import pytest
 from s3_client import client_for
 
@@ -163,10 +163,22 @@ def s3_deployment(s3_accounts):
     the start rather than per create; the excluded row's dataset is
     destroyed *before* the start, so the daemon meets the row already
     unservable and answers 503 for it rather than having to be restarted
-    into that state; and the listener is waited for, because a fresh
-    dataset costs a directory fanout before the socket ever accepts.
+    into that state; the exported row's dataset is made before the row,
+    because a DATASET bucket uses an existing dataset; and the listener
+    is waited for, because a fresh dataset costs a directory fanout
+    before the socket ever accepts.
     """
     main = s3_accounts["main"]
+
+    # the exported dataset: a few files, a child dataset mounted under
+    # it, then read-only. `s3_bucket` destroys it on teardown.
+    exported = dataset_for("exported")
+    call("zfs.resource.create", {"path": f"{exported}/child", "create_ancestors": True})
+    mount = f"/mnt/{exported}"
+    ssh(
+        f"mkdir -p {mount}/docs/2026 && printf alpha > {mount}/a.txt && printf bravo > {mount}/docs/2026/b.txt"
+        f" && printf charlie > {mount}/child/c.txt && chmod -R a+rX {mount} && zfs set readonly=on {exported}"
+    )
 
     # Every row grants `main` and nothing else: `alt` reaching anything
     # is what a stored ACL has to explain.
@@ -251,6 +263,8 @@ def s3_deployment(s3_accounts):
         # dataset destroyed under it, which is the only way to reach the
         # answer an unservable bucket owes.
         "excluded": {"object_ownership": "OBJECT_WRITER", "owner": MAIN_USER, "grants": mine},
+        # main owns it. Its tests check that the owner's own writes are refused.
+        "exported": {"owner": MAIN_USER, "grants": mine, "layout": "DATASET"},
     }
 
     # **Every row is required, and a failure here fails the session.**
