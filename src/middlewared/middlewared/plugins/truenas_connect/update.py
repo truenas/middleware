@@ -292,7 +292,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             await self.delete_cert(tnc_config['certificate'])
 
     @api_method(
-        TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'], removed_in='v26',
+        TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'], removed_in='v27',
     )
     async def ip_choices(self):
         """

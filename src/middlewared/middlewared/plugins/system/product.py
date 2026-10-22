@@ -39,7 +39,7 @@ class SystemService(Service):
         SystemProductTypeArgs,
         SystemProductTypeResult,
         roles=["SYSTEM_PRODUCT_READ"],
-        removed_in="v27",
+        removed_in="v28",
     )
     def product_type(self):
         """Returns the type of the product"""
