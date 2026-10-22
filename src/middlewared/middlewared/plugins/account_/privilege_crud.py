@@ -6,11 +6,11 @@ from typing import Any
 from middlewared.api.current import GroupEntry, PrivilegeCreate, PrivilegeEntry, PrivilegeUpdate
 from middlewared.service import CallError, CRUDServicePart, ServiceContext, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.privilege import BuiltinPrivileges
 from middlewared.utils.privilege_constants import LocalBuiltinAdminGroups
 from middlewared.utils.types import AuditCallback
 
 from .privilege_admins import local_administrators
-from .privilege_constants import BuiltinPrivileges
 from .privilege_groups import get_groups, resolve_ds_groups, resolve_local_groups
 from .privilege_validate import validate_privilege
 

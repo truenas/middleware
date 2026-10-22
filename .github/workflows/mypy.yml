@@ -33,7 +33,6 @@ jobs:
             middlewared/plugins/account_/privilege.py \
             middlewared/plugins/account_/privilege_admins.py \
             middlewared/plugins/account_/privilege_compose.py \
-            middlewared/plugins/account_/privilege_constants.py \
             middlewared/plugins/account_/privilege_crud.py \
             middlewared/plugins/account_/privilege_groups.py \
             middlewared/plugins/account_/privilege_roles.py \

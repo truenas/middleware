@@ -1,9 +1,0 @@
-import enum
-
-__all__ = ("BuiltinPrivileges",)
-
-
-class BuiltinPrivileges(enum.Enum):
-    LOCAL_ADMINISTRATOR = "LOCAL_ADMINISTRATOR"
-    READONLY_ADMINISTRATOR = "READONLY_ADMINISTRATOR"
-    SHARING_ADMINISTRATOR = "SHARING_ADMINISTRATOR"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterable, Mapping
+import enum
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.base.full_admin import RESTRICTION
@@ -13,6 +14,12 @@ if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.auth import SessionManagerCredentials
     from middlewared.service_exception import ValidationErrors
+
+
+class BuiltinPrivileges(enum.Enum):
+    LOCAL_ADMINISTRATOR = "LOCAL_ADMINISTRATOR"
+    READONLY_ADMINISTRATOR = "READONLY_ADMINISTRATOR"
+    SHARING_ADMINISTRATOR = "SHARING_ADMINISTRATOR"
 
 
 def privilege_has_webui_access(privilege: dict[str, Any]) -> bool:

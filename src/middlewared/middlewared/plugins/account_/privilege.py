@@ -24,6 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, GenericCRUDService, filterable_api_method, private
 from middlewared.utils.allowlist import Allowlist, AllowListItem
+from middlewared.utils.privilege import BuiltinPrivileges
 from middlewared.utils.types import AuditCallback
 
 from .privilege_admins import before_group_delete, before_user_deactivation, local_administrators, used_local_gids
@@ -34,7 +35,6 @@ from .privilege_compose import (
     privileges_for_groups,
     roles_for_user,
 )
-from .privilege_constants import BuiltinPrivileges
 from .privilege_crud import PrivilegeModel, PrivilegeServicePart  # noqa: F401 (PrivilegeModel registers the table)
 from .privilege_roles import dump_role_manager, get_roles
 

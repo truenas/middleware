@@ -12,23 +12,23 @@ if TYPE_CHECKING:
 
 __all__ = ("dump_role_manager", "get_roles")
 
+ROLES_ENTRIES = [
+    PrivilegeRolesEntry(
+        name=name,
+        title=name,
+        includes=role.includes,
+        builtin=role.builtin,
+        stig=role.stig,
+    )
+    for name, role in ROLES.items()
+]
+
 
 def get_roles(
     filters: list[Any],
     options: QueryOptions,
 ) -> list[PrivilegeRolesEntry] | PrivilegeRolesEntry | int:
-    roles = [
-        PrivilegeRolesEntry(
-            name=name,
-            title=name,
-            includes=role.includes,
-            builtin=role.builtin,
-            stig=role.stig,
-        )
-        for name, role in ROLES.items()
-    ]
-
-    return filter_list(roles, filters, options, PrivilegeRolesEntry)
+    return filter_list(ROLES_ENTRIES, filters, options, PrivilegeRolesEntry)
 
 
 def dump_role_manager(middleware: Middleware) -> dict[str, Any]:

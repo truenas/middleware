@@ -622,7 +622,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 if method_name.startswith('_'):
                     continue
 
-                roles = getattr(getattr(service, method_name), 'roles', None) or []
+                method = getattr(service, method_name)
+                if not inspect.ismethod(method):
+                    continue
+
+                roles = getattr(method, 'roles', None) or []
 
                 if method_name in {'do_create', 'do_update', 'do_delete'}:
                     method_name = method_name.removeprefix('do_')

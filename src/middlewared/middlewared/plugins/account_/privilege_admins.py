@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, Any
 from middlewared.api.current import GroupEntry
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError
-
-from .privilege_constants import BuiltinPrivileges
+from middlewared.utils.privilege import BuiltinPrivileges
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
