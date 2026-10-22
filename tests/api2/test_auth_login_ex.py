@@ -119,7 +119,7 @@ def test_twofactor_login_no_api_access_denied(clear_ratelimit):
 
 
 def test_legacy_login_success():
-    """The removed-in-v27 auth.login still authenticates root over an older API version."""
+    """The legacy auth.login still authenticates root."""
     with client(auth=None, version=LEGACY_VERSION) as c:
         assert c.call("auth.login", "root", password()) is True
 
@@ -155,6 +155,6 @@ def test_legacy_login_with_twofactor(clear_ratelimit):
 
 
 def test_legacy_login_with_api_key_invalid():
-    """The removed-in-v27 auth.login_with_api_key returns False for a malformed key."""
+    """The legacy auth.login_with_api_key returns False for a malformed key."""
     with client(auth=None, version=LEGACY_VERSION) as c:
         assert c.call("auth.login_with_api_key", "not-a-valid-key") is False
