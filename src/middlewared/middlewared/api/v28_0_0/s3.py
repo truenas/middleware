@@ -17,7 +17,6 @@ from .zfs_tier import TierInfo
 
 __all__ = [
     "S3AccesskeyEntry",
-    "S3AccesskeyEntryWithSecret",
     "S3AccesskeyCreate",
     "S3AccesskeyUpdate",
     "S3AccesskeyCreateArgs",
@@ -140,6 +139,12 @@ class S3AccesskeyEntry(BaseModel):
         description="Whether the access key belongs to a local user account rather than a directory services one.",
     )
     access_key: S3AccessKeyId = Field(description="The S3 access key id clients sign requests with.")
+    secret: Secret[str | None] = Field(
+        description=(
+            "The S3 secret access key. Readable only by administrators holding `SHARING_S3_WRITE`; redacted for "
+            "everyone else. `null` when the secret was lost to a configuration restore without the secret seed."
+        ),
+    )
     enabled: bool = Field(
         description="Whether the access key may be used. A disabled key is refused by the S3 service."
     )
@@ -174,15 +179,6 @@ class S3AccesskeyEntry(BaseModel):
     )
 
 
-class S3AccesskeyEntryWithSecret(S3AccesskeyEntry):
-    secret: str = Field(
-        description=(
-            "The S3 secret access key. `s3.accesskey.create` and `s3.accesskey.update` with `rotate` return it "
-            "once. No query returns it."
-        ),
-    )
-
-
 class S3AccesskeyCreate(S3AccesskeyEntry):
     id: Excluded = excluded_field()
     username: LocalUsername | RemoteUsername = Field(description="Account the access key belongs to.")
@@ -207,7 +203,7 @@ class S3AccesskeyCreateArgs(BaseModel):
 
 
 class S3AccesskeyCreateResult(BaseModel):
-    result: S3AccesskeyEntryWithSecret = Field(description="The created access key, with its secret.")
+    result: S3AccesskeyEntry = Field(description="The created access key, including its secret.")
 
 
 class S3AccesskeyUpdate(S3AccesskeyCreate, metaclass=ForUpdateMetaclass):
@@ -216,9 +212,7 @@ class S3AccesskeyUpdate(S3AccesskeyCreate, metaclass=ForUpdateMetaclass):
     secret: Excluded = excluded_field()
     rotate: bool = Field(
         default=False,
-        description=(
-            "Generate a new secret access key under the same access key id. The result includes the new secret."
-        ),
+        description="Generate a new secret access key under the same access key id.",
     )
 
 
@@ -228,9 +222,7 @@ class S3AccesskeyUpdateArgs(BaseModel):
 
 
 class S3AccesskeyUpdateResult(BaseModel):
-    result: S3AccesskeyEntryWithSecret | S3AccesskeyEntry = Field(
-        description="The updated access key. With `rotate`, the result includes the new secret.",
-    )
+    result: S3AccesskeyEntry = Field(description="The updated access key, including its secret.")
 
 
 class S3AccesskeyDeleteArgs(BaseModel):

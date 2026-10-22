@@ -14,6 +14,7 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.alert.source.truenas_s3 import S3BucketDatasetMissingAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
+    S3AccesskeyEntry,
     S3BindipChoicesArgs,
     S3BindipChoicesResult,
     S3Entry,
@@ -30,7 +31,7 @@ from middlewared.service import SystemServicePart, SystemServiceService, Validat
 import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
 
-from .accesskey_crud import RenderedAccesskey, S3AccesskeyService
+from .accesskey_crud import S3AccesskeyService
 from .grants import grant_label, grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import MISSING_ALERT, render_and_apply
 
@@ -108,7 +109,7 @@ class RenderData:
     tls_key: str | None
     global_grants: list[RenderedGrant]
     buckets: list[RenderedBucket]
-    accesskeys: list[RenderedAccesskey]
+    accesskeys: list[S3AccesskeyEntry]
     audit_supported: bool
 
 
@@ -378,14 +379,14 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
 
         await self.middleware.call("sharing.s3.reconcile_config_backups", backed_up)
 
-        accesskeys: list[RenderedAccesskey] = await self.middleware.call("s3.accesskey.render_rows")
+        accesskeys: list[S3AccesskeyEntry] = await self.middleware.call("s3.accesskey.query")
         for key in accesskeys:
-            if key.entry.status == "USER_MISSING" and not key.entry.local:
+            if key.status == "USER_MISSING" and not key.local:
                 # a directory account that does not resolve now renders disabled until a later render finds it
                 self.logger.warning(
                     "s3: access key %s belongs to a directory services account that does not resolve, rendered "
                     "disabled",
-                    key.entry.access_key,
+                    key.access_key,
                 )
 
         return RenderData(

@@ -10,13 +10,14 @@ from time import sleep
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.utils import call, client, ssh
 
 S3_USER = "s3keyuser"
 ACCESS_KEY_RE = re.compile(r"^[A-Z0-9]{20}$")
 SECRET_RE = re.compile(r"^[A-Za-z0-9]{40}$")
+REDACTED = "********"
 CREDENTIALS_CONF = "/etc/truenas_s3/credentials.conf"
 
 
@@ -55,11 +56,19 @@ def test_create_generates_an_aws_shaped_pair(accesskey):
     assert accesskey["status"] == "ENABLED"
 
 
-def test_the_secret_is_returned_once(accesskey):
-    """`create` returns the secret. No query carries it, not even for a
-    full administrator."""
-    assert "secret" not in call("s3.accesskey.get_instance", accesskey["id"])
-    assert "secret" not in call("s3.accesskey.query", [["id", "=", accesskey["id"]]])[0]
+def test_secret_is_readable_by_write_role_only(accesskey):
+    """The secret stays readable to SHARING_S3_WRITE and is redacted for a
+    read-only role."""
+    entry = call("s3.accesskey.get_instance", accesskey["id"])
+    assert entry["secret"] == accesskey["secret"]
+
+    with unprivileged_user_client(roles=["SHARING_S3_READ"]) as c:
+        seen = c.call("s3.accesskey.get_instance", accesskey["id"])
+        assert seen["access_key"] == accesskey["access_key"]
+        assert seen["secret"] == REDACTED
+
+        with pytest.raises(CallError):
+            c.call("s3.accesskey.update", accesskey["id"], {"rotate": True})
 
 
 def test_supplied_pair_is_accepted(s3_user):
@@ -139,17 +148,11 @@ def test_access_key_never_authenticates_to_the_api(accesskey):
 
 
 def test_rotate_keeps_the_access_key(accesskey):
-    """The rotated secret is returned once and reaches the credentials
-    file."""
     rotated = call("s3.accesskey.update", accesskey["id"], {"rotate": True})
     assert rotated["access_key"] == accesskey["access_key"]
     assert rotated["secret"] != accesskey["secret"]
     assert SECRET_RE.match(rotated["secret"])
-    assert "secret" not in call("s3.accesskey.get_instance", accesskey["id"])
-
-    call("etc.generate", "truenas_s3")
-    rendered = ssh(f"grep -A1 '{accesskey['access_key']}' {CREDENTIALS_CONF}")
-    assert f"secret_key = {rotated['secret']}" in rendered
+    assert call("s3.accesskey.get_instance", accesskey["id"])["secret"] == rotated["secret"]
 
 
 def test_update_cannot_change_the_account_or_the_pair(accesskey):
@@ -168,7 +171,7 @@ def test_update_cannot_change_the_account_or_the_pair(accesskey):
     )
     assert updated["name"] == "renamed key"
     assert updated["status"] == "DISABLED"
-    assert "secret" not in updated
+    assert updated["secret"] == accesskey["secret"]
 
 
 def test_expiry_flips_the_status(s3_user):
@@ -252,7 +255,9 @@ def test_lost_secret_flips_the_status(accesskey):
         "datastore.sql",
         f"UPDATE truenas_s3_accesskey SET secret = NULL WHERE id = {accesskey['id']}",
     )
-    assert call("s3.accesskey.get_instance", accesskey["id"])["status"] == "SECRET_LOST"
+    entry = call("s3.accesskey.get_instance", accesskey["id"])
+    assert entry["secret"] is None
+    assert entry["status"] == "SECRET_LOST"
 
     rotated = call("s3.accesskey.update", accesskey["id"], {"rotate": True})
     assert rotated["status"] == "ENABLED"
