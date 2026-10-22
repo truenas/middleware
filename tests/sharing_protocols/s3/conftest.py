@@ -173,8 +173,7 @@ def s3_deployment(s3_accounts):
     # the exported dataset: a few files, a child dataset mounted under
     # it, then read-only. `s3_bucket` destroys it on teardown.
     exported = dataset_for("exported")
-    call("pool.dataset.create", {"name": exported})
-    call("pool.dataset.create", {"name": f"{exported}/child"})
+    call("zfs.resource.create", {"path": f"{exported}/child", "create_ancestors": True})
     mount = f"/mnt/{exported}"
     ssh(
         f"mkdir -p {mount}/docs/2026 && printf alpha > {mount}/a.txt && printf bravo > {mount}/docs/2026/b.txt"
