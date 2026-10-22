@@ -21,7 +21,7 @@ binding.
 API Key Format
 --------------
 
-Starting with TrueNAS 26, creating an API key returns both the raw key and precomputed SCRAM data:
+Starting with TrueNAS 27, creating an API key returns both the raw key and precomputed SCRAM data:
 
 .. code-block:: python
 
@@ -57,7 +57,7 @@ Installation
 
     pip install truenas-api-client
 
-Creating an API Key (TrueNAS 26+)
+Creating an API Key (TrueNAS 27+)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
@@ -89,7 +89,7 @@ Creating an API Key (TrueNAS 26+)
 
 The raw key (``raw_key``) can be used for legacy authentication or with older TrueNAS versions.
 The SCRAM data (``api_key_id``, ``client_key``, etc.) provides optimal performance and should
-be preferred for TrueNAS 26+.
+be preferred for TrueNAS 27+.
 
 Basic Authentication with Raw Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,7 +108,7 @@ Basic Authentication with Raw Key
 The ``login_with_api_key()`` method automatically detects server capabilities and uses SCRAM
 authentication if available, falling back to PLAIN authentication for older servers.
 
-Optimal Authentication with Precomputed Keys (TrueNAS 26+)
+Optimal Authentication with Precomputed Keys (TrueNAS 27+)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using precomputed SCRAM keys avoids expensive PBKDF2 computation (500,000 iterations) on each
@@ -118,7 +118,7 @@ authentication:
 
     from truenas_api_client import Client
 
-    # Using precomputed SCRAM data from TrueNAS 26+ api_key.create response
+    # Using precomputed SCRAM data from TrueNAS 27+ api_key.create response
     # IMPORTANT: Path must be absolute
     with Client('ws://truenas.local/api/current') as c:
         c.login_with_api_key('root', '/secure/path/my_api_key.json')
@@ -145,7 +145,7 @@ Specifying Authentication Mechanism
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SCRAM is the default mechanism. Pass ``auth_mechanism`` only to override it — most commonly to
-force legacy PLAIN authentication for a server that predates SCRAM (before TrueNAS 26):
+force legacy PLAIN authentication for a server that predates SCRAM (before TrueNAS 27):
 
 .. code-block:: python
 
@@ -201,7 +201,7 @@ Relative paths are not supported.
         "raw_key": "1-uz8DhKHFhRIUQIvjzabPYtpy5wf1DJ3ZBLlDgNVhRAFT7Y6pJGUlm0n3apwxWEU4"
     }
 
-**JSON format with precomputed SCRAM keys (optimal for TrueNAS 26+):**
+**JSON format with precomputed SCRAM keys (optimal for TrueNAS 27+):**
 
 .. code-block:: json
 
@@ -248,10 +248,10 @@ Usage with absolute file path:
         key_path = os.path.abspath('~/my_api_key.json')
         c.login_with_api_key('root', key_path)
 
-Migrating Existing API Keys from Pre-TrueNAS 26
+Migrating Existing API Keys from Pre-TrueNAS 27
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have API keys created before TrueNAS 26, you only have the raw key format.
+If you have API keys created before TrueNAS 27, you only have the raw key format.
 To get the precomputed SCRAM data for optimal performance, use the ``api_key.convert_raw_key`` API:
 
 .. code-block:: python
@@ -394,7 +394,7 @@ Where:
   When channel binding is used, the binding is carried inside ``c=`` and is therefore covered by the
   proof automatically (see `Channel Binding (SCRAM-PLUS)`_)
 
-**Using Precomputed Keys:** If you have precomputed SCRAM data from TrueNAS 26+ or from
+**Using Precomputed Keys:** If you have precomputed SCRAM data from TrueNAS 27+ or from
 ``api_key.convert_raw_key``, you can skip the expensive PBKDF2 computation and use the
 provided ``client_key``, ``stored_key``, and ``server_key`` directly.
 
@@ -1029,7 +1029,7 @@ Common error responses:
 
 **Method does not exist:**
   Server doesn't support ``auth.login_ex`` (pre-SCRAM version). The legacy ``auth.login_with_api_key``
-  method may still be available on those older servers (it was removed from the v27 API). Custom
+  method may still be available on those older servers (it was removed from the v28 API). Custom
   clients that need to support older servers can use ``auth.login_with_api_key`` as a fallback for
   pre-25.04 versions while preferring ``auth.login_ex`` for modern servers.
 
@@ -1042,7 +1042,7 @@ API Reference
 API Method: api_key.create
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates a new API key. Starting with TrueNAS 26, returns both raw key and precomputed SCRAM data.
+Creates a new API key. Starting with TrueNAS 27, returns both raw key and precomputed SCRAM data.
 
 **Parameters:**
 
@@ -1050,7 +1050,7 @@ Creates a new API key. Starting with TrueNAS 26, returns both raw key and precom
 - ``username`` (string): Username to associate with the key
 - ``expires_at`` (datetime, optional): Expiration timestamp
 
-**Returns (TrueNAS 26+):**
+**Returns (TrueNAS 27+):**
 
 Dictionary containing:
 
@@ -1083,7 +1083,7 @@ Dictionary containing:
 API Method: api_key.convert_raw_key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Converts a raw API key (from pre-TrueNAS 26 installations) into precomputed SCRAM components.
+Converts a raw API key (from pre-TrueNAS 27 installations) into precomputed SCRAM components.
 This method preserves the original salt to ensure compatibility with stored credentials.
 
 **Parameters:**
@@ -1105,7 +1105,7 @@ Dictionary containing:
 
 .. code-block:: python
 
-    # For keys created before TrueNAS 26
+    # For keys created before TrueNAS 27
     old_key = '1-uz8DhKHFhRIUQIvjzabPYtpy...'
     scram_data = client.call('api_key.convert_raw_key', old_key)
 

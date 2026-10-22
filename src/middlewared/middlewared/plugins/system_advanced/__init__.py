@@ -130,7 +130,7 @@ class SystemAdvancedService(GenericConfigService[SystemAdvancedEntry]):
         SystemAdvancedSyslogCertificateAuthorityChoicesResult,
         authorization_required=False,
         check_annotations=True,
-        removed_in='v27',
+        removed_in='v28',
     )
     async def syslog_certificate_authority_choices(self) -> EmptyDict:
         """
