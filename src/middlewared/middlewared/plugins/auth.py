@@ -586,12 +586,12 @@ class AuthService(Service):
         }
 
     @api_method(AuthLoginArgs, AuthLoginResult, cli_private=True, authentication_required=False, pass_app=True,
-                removed_in='v27')
+                removed_in='v28')
     async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
 
-        Deprecated and removed in v27. Use :method:`auth.login_ex` with ``mechanism="PASSWORD_PLAIN"``
+        Deprecated and removed in v28. Use :method:`auth.login_ex` with ``mechanism="PASSWORD_PLAIN"``
         (and :method:`auth.login_ex_continue` with ``mechanism="OTP_TOKEN"`` for the second factor).
         """
 
@@ -977,12 +977,12 @@ class AuthService(Service):
         return response
 
     @api_method(AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult, cli_private=True, authentication_required=False,
-                pass_app=True, removed_in='v27')
+                pass_app=True, removed_in='v28')
     async def login_with_api_key(self, app, api_key):
         """
         Authenticate session using API Key.
 
-        Deprecated and removed in v27. Use :method:`auth.login_ex` with ``mechanism="API_KEY_PLAIN"``
+        Deprecated and removed in v28. Use :method:`auth.login_ex` with ``mechanism="API_KEY_PLAIN"``
         (or ``mechanism="SCRAM"`` for SCRAM-based authentication).
         """
         try:
