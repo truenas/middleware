@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
+import enum
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.base.full_admin import RESTRICTION
@@ -13,6 +14,12 @@ if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.auth import SessionManagerCredentials
     from middlewared.service_exception import ValidationErrors
+
+
+class BuiltinPrivileges(enum.Enum):
+    LOCAL_ADMINISTRATOR = "LOCAL_ADMINISTRATOR"
+    READONLY_ADMINISTRATOR = "READONLY_ADMINISTRATOR"
+    SHARING_ADMINISTRATOR = "SHARING_ADMINISTRATOR"
 
 
 def privilege_has_webui_access(privilege: dict[str, Any]) -> bool:
@@ -33,7 +40,7 @@ def privilege_has_webui_access(privilege: dict[str, Any]) -> bool:
 
 
 def credential_has_full_admin(credential: SessionManagerCredentials) -> bool:
-    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:  # type: ignore[attr-defined]
+    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege'].roles:  # type: ignore[attr-defined]
         return True
 
     if isinstance(credential, TruenasNodeSessionManagerCredentials):
@@ -105,7 +112,7 @@ def app_can_see_secrets(app: App | None, role_prefix: str | None) -> bool:
 
 def privileges_group_mapping(
     privileges: list[dict[str, Any]],
-    group_ids: list[int],
+    group_ids: Collection[int | str],
     groups_key: str,
 ) -> dict[str, Any]:
     roles = set()

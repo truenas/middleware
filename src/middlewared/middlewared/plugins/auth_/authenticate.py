@@ -57,7 +57,7 @@ class AuthService(Service):
 
         groups_key = 'local_groups' if user['local'] else 'ds_groups'
         groups = set(user['grouplist'])
-        privileges = await self.middleware.call('privilege.privileges_for_groups', groups_key, groups)
+        privileges = await self.call2(self.s.privilege.privileges_for_groups, groups_key, groups)
         if not privileges:
             if not user['local']:
                 # Directory services issues can be particularly difficult to pin down and
@@ -72,7 +72,7 @@ class AuthService(Service):
         return {
             'username': user['pw_name'],
             'account_attributes': user['account_attributes'],
-            'privilege': await self.middleware.call('privilege.compose_privilege', privileges),
+            'privilege': await self.call2(self.s.privilege.compose_privilege, privileges),
         }
 
     @private
@@ -80,5 +80,5 @@ class AuthService(Service):
         return {
             'username': 'root',
             'account_attributes': ['LOCAL', 'SYS_ADMIN'],
-            'privilege': await self.middleware.call('privilege.full_privilege'),
+            'privilege': await self.call2(self.s.privilege.full_privilege),
         }

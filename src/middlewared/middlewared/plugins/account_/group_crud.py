@@ -280,7 +280,7 @@ class GroupServicePart(CRUDServicePart[GroupEntry]):
         if group.builtin:
             raise CallError("A built-in group cannot be deleted.", errno.EACCES)
 
-        await self.middleware.call("privilege.before_group_delete", group)
+        await self.call2(self.s.privilege.before_group_delete, group)
 
         nogroup = await self.middleware.call(
             "datastore.query",
@@ -332,7 +332,9 @@ class GroupServicePart(CRUDServicePart[GroupEntry]):
             )
             used_gids = {group["bsdgrp_gid"] for group in groups}
             used_gids |= {
-                gid for gid in (await self.middleware.call("privilege.used_local_gids")).keys() if gid >= MIN_AUTO_XID
+                gid
+                for gid in (await self.call2(self.s.privilege.used_local_gids)).keys()
+                if gid >= MIN_AUTO_XID
             }
             total_gids = used_gids | self.reserved_gids.in_use()
             if total_gids:

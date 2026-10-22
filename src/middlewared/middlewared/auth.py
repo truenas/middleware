@@ -87,7 +87,7 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         now = monotonic()
         self.user = user
         self.assurance = assurance
-        self.allowlist = Allowlist(user["privilege"]["allowlist"])
+        self.allowlist = Allowlist(user["privilege"].allowlist)
         self.is_user_session = True
         self.login_at = datetime.now(UTC)
         self.expiry = None
@@ -144,7 +144,7 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         return self.allowlist.authorize(method, resource)
 
     def has_role(self, role: str) -> bool:
-        return role in self.user["privilege"]["roles"]
+        return role in self.user["privilege"].roles
 
     def dump(self) -> dict[str, Any]:
         return {

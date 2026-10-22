@@ -4,7 +4,7 @@ from time import sleep, time
 
 import wbclient
 
-from middlewared.api.current import ServiceOptions
+from middlewared.api.current import PrivilegeCreate, ServiceOptions
 from middlewared.job import Job
 from middlewared.plugins.dns_client import DNSClientReverseLookupData
 from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
@@ -352,8 +352,8 @@ class ADJoinMixin:
 
         dom = wbclient.Ctx().domain()
 
-        existing_privileges = self.middleware.call_sync(
-            'privilege.query',
+        existing_privileges = self.call_sync2(
+            self.s.privilege.query,
             [["name", "=", domain.upper()]]
         )
 
@@ -361,12 +361,12 @@ class ADJoinMixin:
             return
 
         try:
-            self.middleware.call_sync('privilege.create', {
-                'name': domain.upper(),
-                'ds_groups': [f'{dom.sid}-512'],
-                'roles': ['FULL_ADMIN'],
-                'web_shell': True
-            })
+            self.call_sync2(self.s.privilege.create, PrivilegeCreate(
+                name=domain.upper(),
+                ds_groups=[f'{dom.sid}-512'],
+                roles=['FULL_ADMIN'],
+                web_shell=True
+            ))
         except Exception:
             # This should be non-fatal since admin can simply fix via
             # our webui

@@ -6,7 +6,7 @@ import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
-from middlewared.api.current import GroupGetGroupObj, ServiceOptions
+from middlewared.api.current import GroupGetGroupObj, PrivilegeCreate, ServiceOptions
 from middlewared.job import Job
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices import ipa, ipa_constants
@@ -158,8 +158,8 @@ class IPAJoinMixin:
     def _ipa_grant_privileges(self, domain: str) -> None:
         """ Grant domain admins ability to manage TrueNAS """
 
-        existing_privileges = self.middleware.call_sync(
-            'privilege.query',
+        existing_privileges = self.call_sync2(
+            self.s.privilege.query,
             [["name", "=", domain.upper()]]
         )
 
@@ -196,12 +196,12 @@ class IPAJoinMixin:
                 return
 
         try:
-            self.middleware.call_sync('privilege.create', {
-                'name': domain.upper(),
-                'ds_groups': [admins_grp.gr_gid],
-                'roles': ['FULL_ADMIN'],
-                'web_shell': True
-            })
+            self.call_sync2(self.s.privilege.create, PrivilegeCreate(
+                name=domain.upper(),
+                ds_groups=[admins_grp.gr_gid],
+                roles=['FULL_ADMIN'],
+                web_shell=True
+            ))
         except Exception:
             # This should be non-fatal since admin can simply fix via
             # our webui

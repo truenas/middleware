@@ -1,529 +1,216 @@
-import enum
-import errno
+from __future__ import annotations
 
-import wbclient
+from collections.abc import Collection
+from typing import TYPE_CHECKING, Any, cast
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
+    ComposedPrivilege,
     GroupEntry,
     PrivilegeBecomeReadonlyArgs,
     PrivilegeBecomeReadonlyResult,
+    PrivilegeCreate,
     PrivilegeCreateArgs,
     PrivilegeCreateResult,
     PrivilegeDeleteArgs,
     PrivilegeDeleteResult,
     PrivilegeEntry,
+    PrivilegeRolesEntry,
+    PrivilegeUpdate,
     PrivilegeUpdateArgs,
     PrivilegeUpdateResult,
     QueryOptions,
-    UnmappedGroupEntry,
     UserWebUiLoginDisabledAddedEvent,
 )
-from middlewared.plugins.account import unixhash_is_valid
-from middlewared.service import CallError, CRUDService, ValidationErrors, private
-from middlewared.service_exception import MatchNotFound
-import middlewared.sqlalchemy as sa
-from middlewared.utils.allowlist import Allowlist
-from middlewared.utils.privilege import privilege_has_webui_access, privileges_group_mapping
-from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalBuiltinAdminGroups
-from middlewared.utils.security import system_security_config_to_stig_type
+from middlewared.service import CallError, GenericCRUDService, filterable_api_method, private
+from middlewared.utils.allowlist import Allowlist, AllowListItem
+from middlewared.utils.privilege import BuiltinPrivileges
+from middlewared.utils.types import AuditCallback
 
-UNMAPPED_GROUP = UnmappedGroupEntry(gid=None, sid=None, group=None).model_dump()
+from .privilege_admins import before_group_delete, before_user_deactivation, local_administrators, used_local_gids
+from .privilege_compose import (
+    GroupsKey,
+    compose_privilege,
+    full_privilege,
+    privileges_for_groups,
+    roles_for_user,
+)
+from .privilege_crud import PrivilegeModel, PrivilegeServicePart  # noqa: F401 (PrivilegeModel registers the table)
+from .privilege_roles import dump_role_manager, get_roles
 
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
+    from middlewared.main import Middleware
 
-class BuiltinPrivileges(enum.Enum):
-    LOCAL_ADMINISTRATOR = "LOCAL_ADMINISTRATOR"
-    READONLY_ADMINISTRATOR = "READONLY_ADMINISTRATOR"
-    SHARING_ADMINISTRATOR = "SHARING_ADMINISTRATOR"
-
-
-class PrivilegeModel(sa.Model):
-    __tablename__ = "account_privilege"
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    builtin_name = sa.Column(sa.String(200), nullable=True)
-    name = sa.Column(sa.String(200))
-    local_groups = sa.Column(sa.JSON(list))
-    ds_groups = sa.Column(sa.JSON(list))
-    roles = sa.Column(sa.JSON(list))
-    web_shell = sa.Column(sa.Boolean())
+__all__ = ("PrivilegeService",)
 
 
-class PrivilegeService(CRUDService):
+class PrivilegeService(GenericCRUDService[PrivilegeEntry]):
 
-    keys = {}
+    _svc_part: PrivilegeServicePart
 
     class Config:
-        namespace = "privilege"
         datastore = "account.privilege"
-        datastore_extend = "privilege.item_extend"
-        datastore_extend_context = "privilege.item_extend_context"
         cli_namespace = "auth.privilege"
         entry = PrivilegeEntry
-        role_prefix = 'PRIVILEGE'
+        role_prefix = "PRIVILEGE"
+        generic = True
         events = [
             Event(
-                name='user.web_ui_login_disabled',
-                description='Sent when root user login to the Web UI is disabled.',
-                roles=['FULL_ADMIN'],
+                name="user.web_ui_login_disabled",
+                description="Sent when root user login to the Web UI is disabled.",
+                roles=["FULL_ADMIN"],
                 models={
-                    'ADDED': UserWebUiLoginDisabledAddedEvent,
+                    "ADDED": UserWebUiLoginDisabledAddedEvent,
                 }
             )
         ]
 
-    @private
-    async def item_extend_context(self, rows, extra):
-        return {
-            "groups": await self._groups(),
-        }
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        self._svc_part = PrivilegeServicePart(self.context)
 
-    @private
-    async def item_extend(self, item, context):
-        item["local_groups"] = self._local_groups(context["groups"], item["local_groups"])
-        item["ds_groups"] = await self._ds_groups(context["groups"], item["ds_groups"])
-        return item
-
-    @api_method(PrivilegeCreateArgs, PrivilegeCreateResult,
-                audit="Create privilege", audit_extended=lambda data: data["name"])
-    async def do_create(self, data):
+    @api_method(
+        PrivilegeCreateArgs,
+        PrivilegeCreateResult,
+        audit="Create privilege",
+        audit_extended=lambda data: data["name"],
+        check_annotations=True,
+    )
+    async def do_create(self, data: PrivilegeCreate) -> PrivilegeEntry:
         """
         Create a privilege.
         """
-        await self._validate("privilege_create", data)
+        return await self._svc_part.do_create(data)
 
-        id_ = await self.middleware.call(
-            "datastore.insert",
-            self._config.datastore,
-            data
-        )
-
-        return await self.get_instance(id_)
-
-    @api_method(PrivilegeUpdateArgs, PrivilegeUpdateResult, audit="Update privilege", audit_callback=True)
-    async def do_update(self, audit_callback, id_, data):
+    @api_method(
+        PrivilegeUpdateArgs,
+        PrivilegeUpdateResult,
+        audit="Update privilege",
+        audit_callback=True,
+        check_annotations=True,
+    )
+    async def do_update(self, audit_callback: AuditCallback, id_: int, data: PrivilegeUpdate) -> PrivilegeEntry:
         """
         Update the privilege ``id``.
         """
-        old = await self.get_instance(id_)
-        audit_callback(old["name"])
+        return await self._svc_part.do_update(audit_callback, id_, data)
 
-        new = old.copy()
-        new["local_groups"] = [g["gid"] for g in new["local_groups"]]
-
-        # Preference is for SID values rather than GIDS because they are universally unique
-        new["ds_groups"] = []
-        for g in old["ds_groups"]:
-            if g["sid"]:
-                new["ds_groups"].append(g["sid"])
-            else:
-                new["ds_groups"].append(g["gid"])
-
-        new.update(data)
-
-        verrors = ValidationErrors()
-
-        if new["builtin_name"]:
-            for k in ["name", "roles"]:
-                if new[k] != old[k]:
-                    verrors.add(f"privilege_update.{k}", "This field is read-only for built-in privileges")
-
-            builtin_privilege = BuiltinPrivileges(new["builtin_name"])
-
-            if builtin_privilege == BuiltinPrivileges.LOCAL_ADMINISTRATOR:
-                if LocalBuiltinAdminGroups.BUILTIN_ADMINISTRATORS not in new["local_groups"]:
-                    verrors.add(
-                        "privilege_update.local_groups",
-                        f"The group {LocalBuiltinAdminGroups.BUILTIN_ADMINISTRATORS.name.lower()} must be "
-                        "among grantees of the \"Local Administrator\" privilege."
-                    )
-
-                if not await self.call2(self.s.group.has_password_enabled_user, new["local_groups"]):
-                    verrors.add(
-                        "privilege_update.local_groups",
-                        "None of the members of these groups has password login enabled. At least one grantee of "
-                        "the \"Local Administrator\" privilege must have password login enabled."
-                    )
-            elif builtin_privilege == BuiltinPrivileges.READONLY_ADMINISTRATOR:
-                if new["web_shell"]:
-                    verrors.add(
-                        "privilege_update.web_shell",
-                        "Web shell access may not be enabled for the built-in group for "
-                        "read-only administrators."
-                    )
-
-        verrors.check()
-
-        new.update(data)
-
-        await self._validate("privilege_update", new, id_)
-
-        await self.middleware.call(
-            "datastore.update",
-            self._config.datastore,
-            id_,
-            new,
-        )
-
-        return await self.get_instance(id_)
-
-    @api_method(PrivilegeDeleteArgs, PrivilegeDeleteResult, audit="Delete privilege", audit_callback=True)
-    async def do_delete(self, audit_callback, id_):
+    @api_method(
+        PrivilegeDeleteArgs,
+        PrivilegeDeleteResult,
+        audit="Delete privilege",
+        audit_callback=True,
+        check_annotations=True,
+    )
+    async def do_delete(self, audit_callback: AuditCallback, id_: int) -> bool:
         """
         Delete the privilege ``id``.
         """
-        privilege = await self.get_instance(id_)
-        audit_callback(privilege["name"])
-
-        if privilege["builtin_name"]:
-            raise CallError("Unable to delete built-in privilege", errno.EPERM)
-
-        response = await self.middleware.call(
-            "datastore.delete",
-            self._config.datastore,
-            id_
-        )
-
-        return response
-
-    async def _validate(self, schema_name, data, id_=None):
-        verrors = ValidationErrors()
-
-        await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
-
-        groups = await self._groups()
-        for i, local_group_id in enumerate(data["local_groups"]):
-            if not self._local_groups(groups, [local_group_id], include_nonexistent=False):
-                verrors.add(
-                    f"{schema_name}.local_groups.{i}",
-                    f"{local_group_id}: local group does not exist. "
-                    "This error may be addressed by either re-creating the missing group "
-                    "with the specified group id or removing this entry from the privilege."
-                )
-                # If the group does not exist then cannot check the userns_idmap
-                continue
-
-            # Currently only local groups may have privileges
-            if groups['by_gid'][local_group_id].userns_idmap:
-                verrors.add(
-                    f"privilege_update.local_groups.{i}",
-                    "Privileges may not be granted to groups that have a user namespace idmap "
-                    "configured."
-                )
-
-        for i, ds_group_id in enumerate(data["ds_groups"]):
-            if not await self._ds_groups(groups, [ds_group_id], include_nonexistent=False):
-                verrors.add(
-                    f"{schema_name}.ds_groups.{i}",
-                    f"{ds_group_id}: directory service group does not exist. "
-                    "If the directory service state is healthy, then this error may be "
-                    "addressed by removing this entry from the privilege."
-                )
-
-        for i, role in enumerate(data["roles"]):
-            if role not in self.middleware.role_manager.roles:
-                verrors.add(f"{schema_name}.roles.{i}", "Invalid role")
-
-        verrors.check()
-
-    async def _groups(self):
-        groups = await self.call2(self.s.group.query)
-        by_gid = {group.gid: group for group in groups}
-        by_sid = {
-            group.sid: group
-            for group in groups
-            if group.sid is not None and not group.local
-        }
-
-        return {'by_gid': by_gid, 'by_sid': by_sid}
-
-    def _local_groups(self, groups, local_groups, *, include_nonexistent=True):
-        result = []
-        for gid in local_groups:
-            if group := groups['by_gid'].get(gid):
-                if group.local:
-                    result.append(group.model_dump())
-            else:
-                if include_nonexistent:
-                    result.append(UNMAPPED_GROUP | {"gid": gid})
-
-        return result
-
-    async def _ds_groups(self, groups, ds_groups, *, include_nonexistent=True):
-        """
-        Directory services group privileges may assigned by either GID or SID.
-        preference is for latter if it is available. The primary case where it
-        will not be available is if this is not active directory.
-        """
-        result = []
-
-        if (sids_to_check := [entry for entry in ds_groups if wbclient.sid_is_valid(str(entry))]):
-            try:
-                mapped_sids = (await self.middleware.call('idmap.convert_sids', sids_to_check))['mapped']
-            except Exception:
-                self.logger.warning('Failed to generate privileges for domain groups', exc_info=True)
-                return result
-        else:
-            mapped_sids = {}
-
-        for xid in ds_groups:
-            is_sid = False
-            if isinstance(xid, int):
-                if (group := groups['by_gid'].get(xid)) is None:
-                    gid = xid
-            else:
-                is_sid = True
-                if (group := groups['by_sid'].get(xid)) is None:
-                    unixid = mapped_sids.get(xid)
-                    if unixid is None or unixid['id_type'] == 'USER':
-                        gid = -1
-                    else:
-                        gid = unixid['id']
-
-            if group is None:
-                try:
-                    group = await self.call2(
-                        self.s.group.query, [["gid", "=", gid]], QueryOptions(get=True),
-                    )
-                except MatchNotFound:
-                    if include_nonexistent:
-                        unmapped_gid = None
-                        if gid != -1:
-                            unmapped_gid = gid
-
-                        unmapped_sid = None
-                        if is_sid:
-                            unmapped_sid = xid
-
-                        result.append(UNMAPPED_GROUP | {"gid": unmapped_gid, "sid": unmapped_sid})
-
-                    continue
-
-            if group.local:
-                continue
-
-            result.append(group.model_dump())
-
-        return result
-
-    @private
-    async def before_user_password_disable(self, user):
-        return await self.before_user_deactivation(
-            user,
-            'After disabling password for this user no password-enabled local user',
-        )
-
-    @private
-    async def before_user_delete(self, user):
-        return await self.before_user_deactivation(user, 'After deleting this user no local user')
-
-    @private
-    async def before_user_deactivation(self, user, error_text):
-        for privilege in await self.middleware.call(
-            'datastore.query',
-            'account.privilege',
-            [['builtin_name', '=', 'LOCAL_ADMINISTRATOR']],
-        ):
-            if not await self.call2(
-                self.s.group.has_password_enabled_user, privilege['local_groups'], [user['id']],
-            ):
-                raise CallError(
-                    f'{error_text} will have built-in privilege {privilege["name"]!r}.',
-                    errno.EACCES,
-                )
-
-    @private
-    async def before_group_delete(self, group: GroupEntry):
-        for privilege in await self.middleware.call('datastore.query', 'account.privilege'):
-            if group.gid in privilege['local_groups']:
-                raise CallError(
-                    f'This group is used by privilege {privilege["name"]!r}. Please remove it from that privilege '
-                    'first, then delete the group.',
-                    errno.EACCES,
-                )
-
-    @private
-    async def used_local_gids(self):
-        gids = {}
-        for privilege in await self.middleware.call('datastore.query', 'account.privilege', [], {'order_by': ['id']}):
-            for gid in privilege['local_groups']:
-                gids.setdefault(gid, privilege)
-
-        return gids
-
-    @private
-    async def privileges_for_groups(self, groups_key, group_ids):
-        """
-        group_ids here are based on NSS group_list output.
-
-        Directory services groups may have privileges assigned by SID, which
-        are set on the domain controller rather than locally on TrueNAS.
-
-        This means we expand the set of group_ids to include SID mappings for
-        permissions evaluation.
-
-        If for some reason libwbclient raises an exception during the attempt
-        to convert unix gids to SIDs, then the domain is probably unhealthy and
-        permissions failure is acceptable. We do not need to log here as there will
-        be other failures / alerts and we don't want to spam logs unnecessarily.
-        """
-        if groups_key == 'ds_groups':
-            try:
-                sids = await self.middleware.call(
-                    'idmap.convert_unixids',
-                    [{'id_type': 'GROUP', 'id': x} for x in group_ids]
-                )
-            except Exception:
-                group_ids = set(group_ids)
-            else:
-                group_ids = set(group_ids) | set([s['sid'] for s in sids['mapped'].values()])
-        else:
-            group_ids = set(group_ids)
-
-        privileges = await self.middleware.call('datastore.query', 'account.privilege')
-        return privileges_group_mapping(privileges, group_ids, groups_key)['privileges']
-
-    @private
-    async def compose_privilege(self, privileges):
-        security_config = await self.call2(self.s.system.security.config)
-        enabled_stig = system_security_config_to_stig_type(security_config)
-
-        compose = {
-            'roles': set(),
-            'allowlist': [],
-            'web_shell': False,
-            'webui_access': False,
-        }
-        for privilege in privileges:
-            for role in privilege['roles']:
-                compose['roles'] |= self.middleware.role_manager.roles_for_role(role, enabled_stig)
-
-                compose['allowlist'].extend(self.middleware.role_manager.allowlist_for_role(role, enabled_stig))
-
-            compose['web_shell'] |= privilege['web_shell']
-            compose['webui_access'] |= privilege_has_webui_access(privilege)
-
-        if enabled_stig:
-            compose['web_shell'] = False
-
-        return compose
-
-    @private
-    async def roles_for_user(self, username):
-        """
-        Return the roles currently granted to `username` by evaluating its
-        group membership as reported by NSS.
-
-        Directory services cache entries are not authoritative for privilege
-        determination. They carry no group membership, because populating it
-        while enumerating the domain would require a group lookup per account
-        and overload the domain controller, and so `user.query` reports an
-        empty `roles` list for every directory services account. Anything that
-        determines privilege must go directly through NSS the way that
-        authentication does.
-        """
-        try:
-            user_obj = await self.middleware.call('user.get_user_obj', {
-                'username': username, 'get_groups': True
-            })
-        except KeyError:
-            return []
-
-        privileges = await self.privileges_for_groups(
-            'local_groups' if user_obj['local'] else 'ds_groups',
-            # synthetic accounts (container root) have no group list
-            user_obj['grouplist'] or []
-        )
-        if not privileges:
-            return []
-
-        return sorted((await self.compose_privilege(privileges))['roles'])
-
-    @private
-    async def full_privilege(self):
-        return {
-            'roles': {'FULL_ADMIN'},
-            'allowlist': [ALLOW_LIST_FULL_ADMIN.copy()],
-            'web_shell': True,
-            'webui_access': True,
-        }
-
-    previous_always_has_root_password_enabled_value = None
-
-    @private
-    async def always_has_root_password_enabled(self, users=None, groups=None):
-        if users is None:
-            users = await self.middleware.call('user.query', [['local', '=', True]])
-        if groups is None:
-            groups = await self.call2(self.s.group.query, [['local', '=', True]])
-
-        root_user = next(u for u in users if u['username'] == 'root')
-        users = await self.local_administrators([root_user['id']], users, groups)
-        if not users:
-            value = True
-        else:
-            value = False
-
-            if self.previous_always_has_root_password_enabled_value:
-                usernames = [user['username'] for user in users]
-                self.middleware.send_event(
-                    'user.web_ui_login_disabled', 'ADDED', id=None, fields={'usernames': usernames},
-                )
-
-        self.previous_always_has_root_password_enabled_value = value
-        return value
-
-    @private
-    async def local_administrators(self, exclude_user_ids=None, users=None, groups=None):
-        exclude_user_ids = exclude_user_ids or []
-        if users is None:
-            users = await self.middleware.call('user.query', [['local', '=', True]])
-        if groups is None:
-            groups = await self.call2(self.s.group.query, [['local', '=', True]])
-
-        local_administrator_privilege = await self.middleware.call(
-            'datastore.query',
-            'account.privilege',
-            [['builtin_name', '=', BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
-            {'get': True},
-        )
-        local_administrators = await self.call2(
-            self.s.group.get_password_enabled_users,
-            local_administrator_privilege['local_groups'],
-            exclude_user_ids,
-            groups,
-        )
-        if not local_administrators:
-            root_user = next(u for u in users if u['username'] == 'root')
-            if root_user['id'] not in exclude_user_ids:
-                if unixhash_is_valid(root_user['unixhash']):
-                    # This can only be if `always_has_root_password_enabled` is `True`
-                    local_administrators = [root_user]
-
-        return local_administrators
+        return await self._svc_part.do_delete(audit_callback, id_)
 
     @api_method(
         PrivilegeBecomeReadonlyArgs,
         PrivilegeBecomeReadonlyResult,
-        roles=['READONLY_ADMIN'],
+        roles=["READONLY_ADMIN"],
         pass_app=True,
-        pass_app_require=True
+        pass_app_require=True,
+        check_annotations=True,
     )
-    async def become_readonly(self, app):
+    async def become_readonly(self, app: App) -> None:
         """ Reduce the privileges of the current user credentials to ``READONLY_ADMINS``.
         This action prevents the session from making configuration changes. It also redacts
         sensitive data in API output. """
-        if not app.authenticated_credentials.is_user_session:
-            raise CallError(f'{app.authenticated_credentials.class_name}: unexpected credential type')
+        credentials = app.authenticated_credentials
+        if credentials is None:
+            raise CallError("An unauthenticated session has no privileges to reduce")
+
+        if not credentials.is_user_session:
+            raise CallError(f"{credentials.class_name()}: unexpected credential type")
 
         # Compose a privilege based on only the READONLY_ADMINISTRATOR builtin privilege
-        ro_admin = await self.query(
-            [['builtin_name', '=', BuiltinPrivileges.READONLY_ADMINISTRATOR.value]],
-            {'get': True}
+        ro_admin = await self.middleware.call(
+            "datastore.query",
+            "account.privilege",
+            [["builtin_name", "=", BuiltinPrivileges.READONLY_ADMINISTRATOR.value]],
+            {"get": True},
         )
-        composed_privilege = await self.compose_privilege([ro_admin])
+        composed_privilege = await compose_privilege(self.context, [ro_admin])
 
-        # Set the current credential allowlist based on this privilege
-        allowlist = Allowlist(composed_privilege['allowlist'])
-        app.authenticated_credentials.allowlist = allowlist
-        app.authenticated_credentials.user['privilege'] = composed_privilege
+        # Set the current credential allowlist based on this privilege. The schema types the entries
+        # loosely, but every one of them is an `AllowListItem`.
+        allowlist = Allowlist(cast("list[AllowListItem]", composed_privilege.allowlist))
+        credentials.allowlist = allowlist
+        credentials.user["privilege"] = composed_privilege  # type: ignore[attr-defined]
+
+    @filterable_api_method(item=PrivilegeRolesEntry, authorization_required=False, check_annotations=True)
+    async def roles(
+        self,
+        filters: list[Any],
+        options: QueryOptions,
+    ) -> list[PrivilegeRolesEntry] | PrivilegeRolesEntry | int:
+        """
+        Get all available roles.
+        """
+        return get_roles(filters, options)
+
+    @private
+    async def before_user_password_disable(self, user: dict[str, Any]) -> None:
+        await before_user_deactivation(
+            self.context,
+            user,
+            "After disabling password for this user no password-enabled local user",
+        )
+
+    @private
+    async def before_user_delete(self, user: dict[str, Any]) -> None:
+        await before_user_deactivation(self.context, user, "After deleting this user no local user")
+
+    @private
+    async def before_group_delete(self, group: GroupEntry) -> None:
+        await before_group_delete(self.context, group)
+
+    @private
+    async def used_local_gids(self) -> dict[int, dict[str, Any]]:
+        return await used_local_gids(self.context)
+
+    @private
+    async def privileges_for_groups(
+        self,
+        groups_key: GroupsKey,
+        group_ids: Collection[int],
+    ) -> list[dict[str, Any]]:
+        return await privileges_for_groups(self.context, groups_key, group_ids)
+
+    @private
+    async def compose_privilege(self, privileges: list[dict[str, Any]]) -> ComposedPrivilege:
+        return await compose_privilege(self.context, privileges)
+
+    @private
+    async def roles_for_user(self, username: str) -> list[str]:
+        return await roles_for_user(self.context, username)
+
+    @private
+    async def full_privilege(self) -> ComposedPrivilege:
+        return full_privilege()
+
+    @private
+    async def always_has_root_password_enabled(
+        self,
+        users: list[dict[str, Any]] | None = None,
+        groups: list[GroupEntry] | None = None,
+    ) -> bool:
+        return await self._svc_part.always_has_root_password_enabled(users, groups)
+
+    @private
+    async def local_administrators(
+        self,
+        exclude_user_ids: list[int] | None = None,
+        users: list[dict[str, Any]] | None = None,
+        groups: list[GroupEntry] | None = None,
+    ) -> list[dict[str, Any]]:
+        return await local_administrators(self.context, exclude_user_ids, users, groups)
+
+    @private
+    async def dump_role_manager(self) -> dict[str, Any]:
+        return dump_role_manager(self.middleware)

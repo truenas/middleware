@@ -168,7 +168,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
                 "This access key belongs to an account that no longer exists, so it cannot manage buckets.",
             )
             return
-        roles = await self.middleware.call("privilege.roles_for_user", username)
+        roles = await self.call2(self.s.privilege.roles_for_user, username)
         if "SHARING_S3_WRITE" not in roles:
             verrors.add(
                 f"{schema_name}.manage_buckets",

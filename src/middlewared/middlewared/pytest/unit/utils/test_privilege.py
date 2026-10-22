@@ -3,6 +3,7 @@ import types
 
 import pytest
 
+from middlewared.api.current import ComposedPrivilege
 from middlewared.auth import SessionManagerCredentials, UserSessionManagerCredentials
 from middlewared.plugins.service.utils import app_has_write_privilege_for_service
 from middlewared.utils.account.authenticator import UserPamAuthenticator
@@ -15,6 +16,7 @@ from middlewared.utils.privilege import (
     credential_has_full_admin,
     privilege_has_webui_access,
 )
+from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 
 origin = ConnectionOrigin(family=AF_UNIX, pid=1, uid=0, gid=0, loginuid=0)
 pam_hdl = UserPamAuthenticator(username='test', origin=origin)
@@ -31,9 +33,9 @@ def test_privilege_has_webui_access(privilege, expected):
 
 
 @pytest.mark.parametrize('credential,expected', [
-    ({'username': 'BOB', 'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
-    ({'username': 'BOB', 'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
-    ({'username': 'BOB', 'privilege': {'allowlist': [{'method': '*', 'resource': '*'}], 'roles': []}}, True),
+    ({'username': 'BOB', 'privilege': ComposedPrivilege(roles={'READONLY_ADMIN'}, allowlist=[])}, False),
+    ({'username': 'BOB', 'privilege': ComposedPrivilege(roles={'FULL_ADMIN'}, allowlist=[])}, True),
+    ({'username': 'BOB', 'privilege': ComposedPrivilege(roles=set(), allowlist=[ALLOW_LIST_FULL_ADMIN])}, True),
 ])
 def test_privilege_has_full_admin(credential, expected):
     user_cred = UserSessionManagerCredentials(credential, AA_LEVEL1, pam_hdl)
@@ -46,46 +48,46 @@ def test_privilege_has_full_admin(credential, expected):
 
 
 @pytest.mark.parametrize('service,credential,expected', [
-    ('cifs', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
-    ('cifs', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
-    ('cifs', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
-    ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, True),
-    ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
-    ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
-    ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
-    ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
-    ('nfs', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, False),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, True),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
-    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
-    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
-    ('iscsitarget', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
-    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, False),
-    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
-    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, True),
-    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
-    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
-    ('ftp', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, False),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, True),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
-    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
-    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
-    ('nvmet', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
-    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, False),
-    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
-    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
-    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
-    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, True),
+    ('cifs', {'privilege': ComposedPrivilege(roles={'READONLY_ADMIN'}, allowlist=[])}, False),
+    ('cifs', {'privilege': ComposedPrivilege(roles={'FULL_ADMIN'}, allowlist=[])}, True),
+    ('cifs', {'privilege': ComposedPrivilege(roles=set(), allowlist=[ALLOW_LIST_FULL_ADMIN])}, True),
+    ('cifs', {'privilege': ComposedPrivilege(roles={'SHARING_SMB_WRITE'}, allowlist=[])}, True),
+    ('cifs', {'privilege': ComposedPrivilege(roles={'SHARING_NFS_WRITE'}, allowlist=[])}, False),
+    ('cifs', {'privilege': ComposedPrivilege(roles={'SHARING_ISCSI_WRITE'}, allowlist=[])}, False),
+    ('cifs', {'privilege': ComposedPrivilege(roles={'SHARING_FTP_WRITE'}, allowlist=[])}, False),
+    ('cifs', {'privilege': ComposedPrivilege(roles={'SHARING_NVME_TARGET_WRITE'}, allowlist=[])}, False),
+    ('nfs', {'privilege': ComposedPrivilege(roles={'READONLY_ADMIN'}, allowlist=[])}, False),
+    ('nfs', {'privilege': ComposedPrivilege(roles={'FULL_ADMIN'}, allowlist=[])}, True),
+    ('nfs', {'privilege': ComposedPrivilege(roles=set(), allowlist=[ALLOW_LIST_FULL_ADMIN])}, True),
+    ('nfs', {'privilege': ComposedPrivilege(roles={'SHARING_SMB_WRITE'}, allowlist=[])}, False),
+    ('nfs', {'privilege': ComposedPrivilege(roles={'SHARING_NFS_WRITE'}, allowlist=[])}, True),
+    ('nfs', {'privilege': ComposedPrivilege(roles={'SHARING_ISCSI_WRITE'}, allowlist=[])}, False),
+    ('nfs', {'privilege': ComposedPrivilege(roles={'SHARING_FTP_WRITE'}, allowlist=[])}, False),
+    ('nfs', {'privilege': ComposedPrivilege(roles={'SHARING_NVME_TARGET_WRITE'}, allowlist=[])}, False),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles={'READONLY_ADMIN'}, allowlist=[])}, False),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles={'FULL_ADMIN'}, allowlist=[])}, True),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles=set(), allowlist=[ALLOW_LIST_FULL_ADMIN])}, True),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles={'SHARING_SMB_WRITE'}, allowlist=[])}, False),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles={'SHARING_NFS_WRITE'}, allowlist=[])}, False),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles={'SHARING_ISCSI_WRITE'}, allowlist=[])}, True),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles={'SHARING_FTP_WRITE'}, allowlist=[])}, False),
+    ('iscsitarget', {'privilege': ComposedPrivilege(roles={'SHARING_NVME_TARGET_WRITE'}, allowlist=[])}, False),
+    ('ftp', {'privilege': ComposedPrivilege(roles={'READONLY_ADMIN'}, allowlist=[])}, False),
+    ('ftp', {'privilege': ComposedPrivilege(roles={'FULL_ADMIN'}, allowlist=[])}, True),
+    ('ftp', {'privilege': ComposedPrivilege(roles=set(), allowlist=[ALLOW_LIST_FULL_ADMIN])}, True),
+    ('ftp', {'privilege': ComposedPrivilege(roles={'SHARING_SMB_WRITE'}, allowlist=[])}, False),
+    ('ftp', {'privilege': ComposedPrivilege(roles={'SHARING_NFS_WRITE'}, allowlist=[])}, False),
+    ('ftp', {'privilege': ComposedPrivilege(roles={'SHARING_ISCSI_WRITE'}, allowlist=[])}, False),
+    ('ftp', {'privilege': ComposedPrivilege(roles={'SHARING_FTP_WRITE'}, allowlist=[])}, True),
+    ('ftp', {'privilege': ComposedPrivilege(roles={'SHARING_NVME_TARGET_WRITE'}, allowlist=[])}, False),
+    ('nvmet', {'privilege': ComposedPrivilege(roles={'READONLY_ADMIN'}, allowlist=[])}, False),
+    ('nvmet', {'privilege': ComposedPrivilege(roles={'FULL_ADMIN'}, allowlist=[])}, True),
+    ('nvmet', {'privilege': ComposedPrivilege(roles=set(), allowlist=[ALLOW_LIST_FULL_ADMIN])}, True),
+    ('nvmet', {'privilege': ComposedPrivilege(roles={'SHARING_SMB_WRITE'}, allowlist=[])}, False),
+    ('nvmet', {'privilege': ComposedPrivilege(roles={'SHARING_NFS_WRITE'}, allowlist=[])}, False),
+    ('nvmet', {'privilege': ComposedPrivilege(roles={'SHARING_ISCSI_WRITE'}, allowlist=[])}, False),
+    ('nvmet', {'privilege': ComposedPrivilege(roles={'SHARING_FTP_WRITE'}, allowlist=[])}, False),
+    ('nvmet', {'privilege': ComposedPrivilege(roles={'SHARING_NVME_TARGET_WRITE'}, allowlist=[])}, True),
 
 ])
 def test_privilege_has_write_to_service(service, credential, expected):
@@ -105,7 +107,7 @@ def test_privilege_has_write_to_service(service, credential, expected):
 ])
 def test_app_can_see_secrets_for_user_session(roles, role_prefix, expected):
     user_cred = UserSessionManagerCredentials(
-        {'username': 'BOB', 'privilege': {'allowlist': [], 'roles': roles}}, AA_LEVEL1, pam_hdl,
+        {'username': 'BOB', 'privilege': ComposedPrivilege(roles=set(roles), allowlist=[])}, AA_LEVEL1, pam_hdl,
     )
     app = types.SimpleNamespace(authenticated_credentials=user_cred)
     assert app_can_see_secrets(app, role_prefix) == expected

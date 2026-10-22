@@ -165,7 +165,7 @@ async def common_validation(
                 errno.EEXIST,
             )
 
-        if privilege := (await context.middleware.call("privilege.used_local_gids")).get(gid):
+        if privilege := (await context.call2(context.s.privilege.used_local_gids)).get(gid):
             verrors.add(
                 f"{schema}.gid",
                 f"A privilege {privilege['name']!r} already uses this group ID.",

@@ -99,6 +99,7 @@ if typing.TYPE_CHECKING:
     from .utils.types import EventType
 
 from middlewared.plugins.account_.group import GroupService
+from middlewared.plugins.account_.privilege import PrivilegeService
 from middlewared.plugins.acme_dns_authenticator import DNSAuthenticatorService as ACMEDNSAuthenticatorService
 from middlewared.plugins.acme_protocol import ACMEProtocolService
 from middlewared.plugins.acme_registration import ACMERegistrationService
@@ -300,6 +301,7 @@ class ServiceContainer(BaseServiceContainer):
         self.nfs = NFSService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
+        self.privilege = PrivilegeService(middleware)
         self.pwenc = PWEncService(middleware)
         self.replication = ReplicationService(middleware)
         self.reporting = ReportingService(middleware)
@@ -617,7 +619,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                     role_manager.register_method(f'{namespace}.{method}', [f'{role_prefix}_{role}'])
 
             for method_name in dir(service):
-                roles = getattr(getattr(service, method_name), 'roles', None) or []
+                if method_name.startswith('_'):
+                    continue
+
+                method = getattr(service, method_name)
+                if not inspect.ismethod(method):
+                    continue
+
+                roles = getattr(method, 'roles', None) or []
 
                 if method_name in {'do_create', 'do_update', 'do_delete'}:
                     method_name = method_name.removeprefix('do_')
