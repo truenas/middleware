@@ -32,6 +32,7 @@ __all__ = [
     "S3PrincipalType",
     "S3BucketName",
     "S3PermissionsModel",
+    "S3BucketLayout",
     "S3ObjectOwnership",
     "S3Grant",
     "S3GrantEntry",
@@ -101,6 +102,10 @@ S3PermissionsModel = Literal["S3", "MULTIPROTOCOL"]
 """How the S3 service treats the filesystem permissions on a bucket's
 tree."""
 
+S3BucketLayout = Literal["BUCKET", "DATASET"]
+"""BUCKET: the S3 service owns the dataset and writes to it. DATASET: the
+S3 service serves an existing dataset read-only."""
+
 S3ObjectOwnership = Literal["BUCKET_OWNER_ENFORCED", "BUCKET_OWNER_PREFERRED", "OBJECT_WRITER"]
 """S3 Object Ownership: the bucket-level setting that controls ownership
 of objects uploaded to a bucket and disables or enables ACLs."""
@@ -110,12 +115,11 @@ S3BucketName = Annotated[str, Field(min_length=3, max_length=63, pattern=r"^[a-z
 dots (..) and names shaped like an IPv4 address are not permitted."""
 
 S3AccessKeyId = Annotated[str, Field(pattern=r"^[A-Z0-9]{16,128}$")]
-"""An S3 access key id. Uppercase alphanumerics only, so it is safe inside
-the quoted section heading of the S3 service's credentials file."""
+"""An S3 access key id: 16 to 128 uppercase letters and digits."""
 
 S3SecretKey = Annotated[str, Field(min_length=16, max_length=128, pattern=r"^[\x21-\x7E]+$")]
-"""An S3 secret access key. Printable ASCII with no whitespace, so the
-value survives the S3 service's whitespace-trimming config reader."""
+"""An S3 secret access key: 16 to 128 printable ASCII characters with no
+whitespace."""
 
 S3AccesskeyStatus = Literal["ENABLED", "DISABLED", "EXPIRED", "USER_MISSING", "SECRET_LOST"]
 
@@ -152,18 +156,16 @@ class S3AccesskeyEntry(BaseModel):
     last_used_at: datetime | None = Field(
         default=None,
         description=(
-            "Time the S3 service last accepted a request signed with this key, or `null` if the key has never "
-            "been used. The S3 service reports this at intervals, so a recent request can be absent for a short "
-            "time. This field is read-only."
+            "Timestamp of when the S3 service last accepted a request signed with this key. The value is "
+            "`null` if the key has never been used. Access Key timestamps are updated from the S3 service at periodic "
+            "intervals. This field is read-only."
         ),
     )
     manage_buckets: bool = Field(
         default=False,
         description=(
-            "Whether this access key may create and delete buckets through the S3 protocol. Setting it requires "
-            "the account that owns the key to hold the `SHARING_S3_WRITE` role, checked when a call turns it on. "
-            "It scopes the key, not the account: an account may hold several access keys, and leaving this off on "
-            "one of them affects neither its other keys nor its own access to `sharing.s3.create`."
+            "Whether this access key may create, delete, or modify buckets through the S3 protocol. Setting it "
+            "requires the account that owns the key to hold the `SHARING_S3_WRITE` role."
         ),
     )
     status: S3AccesskeyStatus = Field(
@@ -365,29 +367,32 @@ class SharingS3Entry(BaseModel):
     id: int = Field(description="Unique identifier for the bucket.")
     name: S3BucketName = Field(
         description=(
-            "Bucket name, following the S3 rules. Three to 63 characters of lowercase letters, digits, dots and "
-            "hyphens, starting and ending with a letter or digit, no adjacent dots, and never an IPv4 address."
+            "Bucket name must be three to 63 characters of lowercase letters, digits, dots and "
+            "hyphens, starting and ending with a letter or digit, no adjacent dots, and not an IP address."
         ),
     )
     dataset: NonEmptyString = Field(
         description=(
-            "The ZFS dataset the bucket is. Created by `sharing.s3.create` and owned by it. Objects live in the "
-            "`s3data` directory under its mount point, which the S3 service creates on its next start, owned by "
-            "`owner`. Under the `MULTIPROTOCOL` permissions model the filesystem permissions on that tree "
-            "govern S3 callers too, so a grantee other than the owner reaches only what they allow; set an ACL "
-            "on the directory as for any share. Under `S3` they are ignored and the grants decide instead."
+            "The ZFS dataset of the bucket. The location of S3 data within the dataset depends on the `layout` field."
         ),
     )
-    enabled: bool = Field(default=True, description="Whether the bucket is served. Toggling restarts the S3 service.")
+    layout: S3BucketLayout = Field(
+        default="BUCKET",
+        description=(
+            "This create-time mutable field determines where S3 objects are located within the share. "
+            "If set to `BUCKET` (the default), then the S3 share is a conventional S3 bucket that supports "
+            "writes through the S3 protocol. Data must be accessed through the `s3data` directory inside the "
+            "dataset. If set to `DATASET`, then the entire dataset contents are exposed as S3 objects, but S3 protocol "
+            "access is restricted to read only operations. This setting is available to S3 protocol access to non-S3 "
+            "data, for example, SMB or NFS shares."
+        ),
+    )
+    enabled: bool = Field(default=True, description="Whether the bucket is served. Changing it reloads the S3 service.")
     owner: NonEmptyString = Field(
         description=(
             "Account that owns the bucket and bypasses its grants, owns the `s3data` directory when the S3 "
             "service creates it, and owns every object written under the `BUCKET_OWNER_ENFORCED` object "
-            "ownership setting. "
-            "Given by name, held by uid: the name is resolved when set and again whenever the "
-            "bucket is read, so a renamed account reads as its new name, a reused name never inherits the bucket, "
-            "and an account that no longer exists reads as its uid. Changing the owner later moves the grants, not "
-            "the directory."
+            "ownership setting."
         ),
     )
     owner_uid: int = Field(description="The uid that owns the bucket.")
@@ -395,14 +400,12 @@ class SharingS3Entry(BaseModel):
     permissions_model: S3PermissionsModel = Field(
         default="S3",
         description=(
-            "How the S3 service treats the filesystem permissions on the bucket's tree. `S3` when the S3 "
-            "service is the only door: those permissions are ignored in their entirety, and access is decided "
-            "by the bucket's grants and, where `object_ownership` supports them, its S3 ACLs. `MULTIPROTOCOL` "
-            "when SMB or NFS share the tree: the filesystem ACL is enforced as well as the grants, so an ACL "
-            "set on the tree governs S3 callers too and narrowing it takes effect for them immediately. S3 ACLs "
-            "are not supported on such a bucket at all, whatever `object_ownership` says, since no stored S3 "
-            "record may decide what a write from another protocol could contradict. Which account an S3 "
-            "operation runs as is `object_ownership`'s answer, not this one's."
+            "How the S3 service treats the filesystem permissions on the bucket's tree. "
+            "When `S3` is set, access is solely determined by the bucket's grants and object ACL if the "
+            "`object_ownership` bucket configuration field is not set to `BUCKET_OWNER_ENFORCED`. In this "
+            "configuration, filesystem ACLs are not evaluated by the S3 server. "
+            "When `MULTIPROTOCOL` is set, filesystem ACLs are enforced in addition to S3 protocol access "
+            "control mechanisms. S3 shares with `DATASET` layout default to the `MULTIPROTOCOL` permissions model."
         ),
     )
     object_ownership: S3ObjectOwnership = Field(
@@ -503,10 +506,10 @@ class SharingS3Create(SharingS3Entry):
     dataset: NonEmptyString | None = Field(
         default=None,
         description=(
-            "ZFS dataset for the bucket, created by this method. If you give no value, the dataset is created "
-            "under the S3 service's `managed_root_dataset` and takes the name of the bucket. An S3 protocol "
-            "CreateBucket request always uses that default. If that name is in use, a `_N` suffix is added. An "
-            "existing dataset is never used: `sharing.s3.delete` keeps the dataset and its objects."
+            "The ZFS dataset for the bucket. With the `BUCKET` layout, `sharing.s3.create` creates the dataset, "
+            "which must not exist. When this field is omitted, the dataset is created under the S3 service's "
+            "`managed_root_dataset` with the name of the bucket, plus a `_N` suffix if that name is in use. "
+            "With the `DATASET` layout, this field is required and must name an existing dataset."
         ),
     )
     grants: list[S3Grant] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
@@ -516,6 +519,7 @@ class SharingS3Create(SharingS3Entry):
 
 class SharingS3Update(SharingS3Create, metaclass=ForUpdateMetaclass):
     dataset: Excluded = excluded_field()
+    layout: Excluded = excluded_field()
 
 
 class SharingS3CreateArgs(BaseModel):
@@ -552,7 +556,7 @@ class SharingS3ForceDisableVersioningResult(BaseModel):
 
 
 class SharingS3RecoverableBucket(SharingS3Entry):
-    """Configuration of a bucket that is no longer registered, read from the backup on its dataset."""
+    """The stored configuration of a bucket that is no longer registered."""
 
     id: Excluded = excluded_field()
     locked: Excluded = excluded_field()

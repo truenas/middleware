@@ -1,13 +1,3 @@
-"""Turn a configuration change into what the S3 service can take.
-
-The files are rendered, then the running daemon is asked over its control
-socket to reload them, and it answers: reloading, or refused because a
-key that holds to a restart moved, or refused because the files do not
-load. The daemon is the one authority on which change costs what, so
-nothing here keeps a copy of that list. Render and ask are serialized so
-two callers cannot interleave a render with the other's answer.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -25,21 +15,16 @@ SERVICE = "s3"
 ETC_GROUP = "truenas_s3"
 MISSING_ALERT = "S3BucketDatasetMissing"
 CONTROL_SOCKET = "/run/truenas_s3/control"
-# a reload resolves every credential through NSS before it answers; a
-# directory that is slow to answer is the daemon's to time out, not ours
+# a reload resolves every credential through NSS, so a slow directory makes it slow
 CONTROL_TIMEOUT = 120
 
 _lock = asyncio.Lock()
 
 
 def ask_reload() -> str | None:
-    """Ask the daemon to reload and return the first word of its answer,
-    or None when no daemon is listening.
-
-    The protocol is one line each way (crates/daemon/README.md in the
-    truenas_s3 repository): `reloading`, `restart <why>`, `invalid <why>`
-    or `draining`. The text after the word is for a person.
-    """
+    """Ask the daemon to reload. Returns the first word of its answer,
+    `reloading`, `restart`, `invalid` or `draining`, or None when no daemon
+    is listening."""
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
             sock.settimeout(CONTROL_TIMEOUT)
@@ -59,16 +44,11 @@ def ask_reload() -> str | None:
 
 
 async def render_and_apply(middleware: Middleware, *, force_restart: bool = False) -> str | None:
-    """Regenerate the S3 service's files and put them in force.
-
-    Returns "RELOAD" when the daemon took them in place, "RESTART" when it
-    could not and was restarted, or None when it is not running (the
-    files are regenerated either way, so a later start picks them up). A
-    deployment the daemon cannot load is an error: the running one stays
-    in force and nothing is restarted, since a start would refuse the
-    same files. `force_restart` is for callers that know the registry
-    moved in a way the files cannot show, such as a dataset mount point.
-    """
+    """Regenerate the S3 service's files and apply them. Returns "RELOAD" when
+    the daemon reloaded, "RESTART" when it had to be restarted, or None when
+    it is not running. Files the daemon cannot load are an error, and the
+    running service keeps the old ones. `force_restart` is for registry
+    changes the files cannot show, such as a dataset mountpoint."""
     async with _lock:
         await middleware.call("etc.generate", ETC_GROUP)
 
@@ -99,9 +79,7 @@ async def render_and_apply(middleware: Middleware, *, force_restart: bool = Fals
 
 
 async def start_or_restart(middleware: Middleware) -> None:
-    """For a registry change while the service may be stopped but enabled,
-    such as a pool import bringing bucket rows back: start it if it is
-    enabled and not running, restart it if it is."""
+    """Start the service if it is enabled and not running, restart it if it is running."""
     async with _lock:
         await middleware.call("etc.generate", ETC_GROUP)
         svc: ServiceEntry = await middleware.call("service.query", [["service", "=", SERVICE]], {"get": True})

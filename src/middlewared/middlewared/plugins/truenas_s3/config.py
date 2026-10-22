@@ -41,13 +41,13 @@ if TYPE_CHECKING:
 __all__ = ("S3Service",)
 
 OWNER_ID_SEED_BYTES = 28
-"""The seed is 56 hex digits; generate_token returns hex, two per byte."""
+"""The seed is 56 hex digits. generate_token returns two hex digits per byte."""
 
 MAX_LISTENERS = 8
 """The daemon's ceiling on listen addresses, plaintext and TLS together."""
 
 MAX_SERVERS = 12
-"""The daemon's ceiling on reactor threads, held under its credential broker's ring limit."""
+"""The daemon's ceiling on reactor threads."""
 
 BASE_HOST_CHARS = frozenset(string.ascii_lowercase + string.digits + ".-")
 """The daemon's base-host grammar: lowercase DNS name bytes and nothing else."""
@@ -72,8 +72,7 @@ class S3Model(sa.Model):
     default_audit_overflow = sa.Column(sa.String(16), default="DROP")
     global_grants = sa.Column(sa.JSON(list), default=[])
     managed_root_dataset = sa.Column(sa.String(255), default="")
-    # the two per-appliance identities the daemon wants stated once and never
-    # moved. Generated on the first read and never exposed through the API.
+    # per-appliance identities, generated on first read and never exposed through the API
     host_id = sa.Column(sa.String(64), default="")
     owner_id_seed = sa.Column(sa.String(64), default="")
 
@@ -115,9 +114,7 @@ class RenderData:
 
 
 def _listen_text(listeners: Sequence[S3Listener]) -> tuple[str, str]:
-    """[server] listen and listen_tls: the plaintext and the TLS addresses,
-    comma separated, an IPv6 address in brackets. No listener at all is
-    every address on port 9000 in plaintext."""
+    """[server] listen and listen_tls, comma separated, IPv6 in brackets."""
     if not listeners:
         listeners = [S3Listener(address="0.0.0.0")]
     plain: list[str] = []
@@ -130,15 +127,8 @@ def _listen_text(listeners: Sequence[S3Listener]) -> tuple[str, str]:
 
 
 def _base_hosts(*names: str | None) -> str:
-    """[server] base_hosts: the DNS bases the S3 service answers
-    virtual-hosted requests under, derived from the system's own hostname
-    rather than asked for. Each candidate is folded to lowercase and
-    screened against the daemon's grammar — DNS name bytes only, no leading
-    or trailing dot, never an all-numeric dotted name — because the daemon
-    refuses the whole file over one entry outside it, and the hostname
-    fields admit spellings (an FQDN's trailing dot, say) it does not. A
-    name the screen drops costs virtual-hosted addressing under that name,
-    never the service; path-style requests are served either way."""
+    """[server] base_hosts: the DNS bases for virtual-hosted requests, derived
+    from the system hostname. Names outside the daemon's grammar are dropped."""
     hosts: list[str] = []
     for name in names:
         host = (name or "").lower().removesuffix(".")
@@ -156,37 +146,21 @@ def _base_hosts(*names: str | None) -> str:
 
 
 def _version_token(version: str) -> str:
-    """The appliance release for the S3 service's `truenas_version` key,
-    which the SOSAPI declaration's `ModelName` carries. The daemon refuses
-    the whole file over a value outside its version-token grammar, so a
-    release string that ever fell outside it is omitted instead — the
-    daemon then names its own version."""
+    """The appliance release for `truenas_version`. Omitted when it does not
+    fit the daemon's version-token grammar."""
     return version if 0 < len(version) <= 64 and set(version) <= VERSION_TOKEN_CHARS else ""
 
 
 def _rendered_grants(grants: Sequence[S3GrantEntry], bucket: str) -> list[RenderedGrant]:
-    """Each grant under the heading its section carries: the principal
-    kind, its label (quoted, stripped of what would break the grammar) and
-    the bucket, `*` for every bucket. A user and a group may share a label,
-    but the same principal twice is a duplicate section the daemon refuses;
-    validation keeps a list free of those, and the last one wins here as a
-    backstop.
-
-    Two *different* principals may still share a label — a local and a
-    directory account resolving to one name, or a stripped label landing
-    on another's — and a duplicated heading refuses the whole file, so
-    colliders are disambiguated with their xid. The label is display
-    only; the xid key below is what the daemon matches on."""
+    """Each grant under its section heading. Colliding labels are suffixed
+    with their xid so the headings stay unique."""
     by_principal: dict[tuple[str, int | None], S3GrantEntry] = {}
     for grant in grants:
         by_principal[(grant.principal_type, grant.xid)] = grant
     labels = {
         key: grant_label(grant) for key, grant in by_principal.items() if grant.principal_type != "EVERYONE"
     }
-    # Suffix every member of a colliding label group with its own xid. A
-    # suffixed label can in turn collide with a literal one, so repeat
-    # until the headings are unique — which each round's distinct-xid
-    # suffix guarantees is reached.
+    # repeat until the headings are unique: a suffixed label can collide with a literal one
     while True:
         groups: dict[tuple[str, str], list[tuple[str, int | None]]] = {}
         for key, label in labels.items():
@@ -219,9 +193,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return entry
 
     async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
-        """The entry is constructed from this rather than validated, so the
-        nested rows are made models here, once, and every reader past this
-        point holds `S3Listener` and `S3GrantEntry`."""
+        """Converts the nested rows to `S3Listener` and `S3GrantEntry`."""
         if isinstance(data.get("certificate"), dict):
             data["certificate"] = data["certificate"]["id"]
         for key in ("host_id", "owner_id_seed"):
@@ -232,9 +204,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return data
 
     async def _identity(self) -> dict[str, str]:
-        """host_id and owner_id_seed, generated on first use. host_id names
-        the appliance in every error body; owner_id_seed is the top of every
-        canonical owner id, so changing it would rewrite them all."""
+        """host_id and owner_id_seed, generated on first use."""
         row = await self.middleware.call("datastore.config", self._datastore)
         update = {}
         if not row["host_id"]:
@@ -247,8 +217,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return {"host_id": row["host_id"], "owner_id_seed": row["owner_id_seed"]}
 
     async def bindip_choices(self) -> dict[str, str]:
-        # the static addresses (the VIPs on HA), the loopbacks for a
-        # deployment served only from the box itself, and the wildcards
+        # static addresses, loopbacks and wildcards
         choices = await self.middleware.call(
             "interface.ip_in_use", {"static": True, "loopback": True, "any": True, "ipv4": True, "ipv6": True}
         )
@@ -270,8 +239,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                     f"s3_update.listeners.{i}.address",
                     f"Cannot use {listener.address}. Please provide a valid ip address.",
                 )
-            # the daemon binds every entry, and the same address twice
-            # would bind twice
+            # a duplicate address would bind twice
             if (listener.address, listener.port) in seen:
                 verrors.add(f"s3_update.listeners.{i}", "The same address and port may only be listed once.")
             seen.add((listener.address, listener.port))
@@ -290,8 +258,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 "A listener served over TLS needs a certificate, and no UI certificate is set to fall back on.",
             )
 
-        # every thread is a ring with its own pool; more than the CPUs
-        # the system has serves nothing but the memory bill
+        # more threads than CPUs only costs memory
         ceiling = min(os.cpu_count() or 1, MAX_SERVERS)
         if new.servers > ceiling:
             verrors.add("s3_update.servers", f"This system serves with at most {ceiling} reactor threads.")
@@ -315,15 +282,12 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         verrors.check()
 
         if new.certificate is not None and new.certificate != old.certificate:
-            # the certificate files are rendered by the ssl group; make sure
-            # they exist before the daemon is pointed at them
+            # the certificate files must exist before the daemon is pointed at them
             await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
 
         update = new.model_dump(exclude={"id"})
         update["global_grants"] = [g.model_dump(exclude={"name"}) for g in new.global_grants]
-        # Set semantics with the given order kept: the S3 service refuses a
-        # mask that names an action twice, and a real set would render in
-        # hash order, churning the file between generates.
+        # dedupe keeping order: the daemon refuses a repeated action
         if isinstance(update["default_audit"], list):
             update["default_audit"] = list(dict.fromkeys(update["default_audit"]))
         await self.middleware.call("datastore.update", self._datastore, old.id, update)
@@ -331,16 +295,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return await self.config()
 
     async def _validate_managed_root(self, dataset: str, verrors: ValidationErrors) -> None:
-        """Check the parent dataset for buckets created through S3.
-
-        Checked at update time, not at create time. An S3 client cannot
-        correct this setting. The administrator who sets it gets one
-        error here, instead of one error for each bucket create.
-
-        The dataset must exist. This method does not create it: a typed
-        name can be a typo, and a new dataset would have no owner, no
-        quota and no chosen properties.
-        """
+        """The managed root must exist. Checked here so an S3 client never hits the error."""
         field = "s3_update.managed_root_dataset"
         try:
             rows = await self.call2(
@@ -354,37 +309,23 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             verrors.add(field, f"{dataset!r} is a volume, not a dataset.")
 
     async def effective_certificate(self, cert_id: int | None) -> int | None:
-        """The certificate the TLS listeners serve: the chosen one, or the
-        UI's when none is chosen. One certificate to manage for the box
-        unless a deployment wants otherwise."""
+        """The chosen certificate, or the UI's when none is chosen."""
         if cert_id is not None:
             return cert_id
         ui_certificate: int | None = (await self.middleware.call("system.general.config"))["ui_certificate"]
         return ui_certificate
 
     async def certificate_paths(self, cert_id: int | None) -> tuple[str | None, str | None]:
-        """Where the certificate's pair is rendered, or nothing when none is
-        chosen. Not judged here: the daemon checks the pair at start-up and
-        on every reload and refuses the deployment when it is unusable,
-        which keeps a TLS listener from ever serving without it."""
+        """Paths of the certificate pair, or nothing when none is chosen."""
         if cert_id is None:
             return None, None
         cert = await self.call2(self.s.certificate.get_instance, cert_id)
         return cert.certificate_path, cert.privatekey_path
 
     async def render_data(self) -> RenderData:
-        """Everything the etc templates render, gathered once per generate
-        and shaped so a template only loops and prints.
-
-        The daemon reads every file whole and one malformed value refuses
-        the entire load, so what a template must never print is decided
-        here: a certificate pair with no TLS listener is not rendered, a
-        grant heading's label is stripped of what would break
-        its grammar, and a bucket whose dataset is gone keeps its row at the
-        mount point it would have, so the daemon answers 503 for it rather
-        than saying it never existed. That last case raises the alert here
-        too, since this is where it is seen.
-        """
+        """Everything the etc templates read, gathered once per generate. A bucket
+        whose dataset is gone is still rendered, so the daemon answers 503 for it,
+        and an alert is raised."""
         config = await self.config()
         identity = await self._identity()
         tls_cert, tls_key = await self.certificate_paths(await self.effective_certificate(config.certificate))
@@ -392,8 +333,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         if not listen_tls:
             tls_cert = tls_key = None
 
-        # virtual-hosted addressing under the system's own names: the
-        # virtual hostname is the one clients reach an HA pair by
+        # the virtual hostname is the one clients reach an HA pair by
         net = await self.middleware.call("network.configuration.config")
         host = net.get("hostname_virtual") or net["hostname"]
         domain = net.get("domain") or ""
@@ -416,16 +356,15 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         )
 
         rendered_buckets = []
-        # for the config backup below. `mounted` rather than a mount point
-        # alone: an unmounted dataset still reports one, and a write there
-        # lands on the parent filesystem. Read raw: the parsed value is a bool
+        # `mounted` rather than the mountpoint: an unmounted dataset still reports one.
+        # DATASET buckets get no backup.
         backed_up: dict[str, str] = {}
         for bucket in buckets:
             live = datasets.get(bucket.dataset)
             mountpoint = live["properties"]["mountpoint"]["value"] if live else None
             if not mountpoint or not mountpoint.startswith("/"):
                 mountpoint = f"/mnt/{bucket.dataset}"
-            elif live is not None and live["properties"]["mounted"]["raw"] == "yes":
+            elif bucket.layout == "BUCKET" and live is not None and live["properties"]["mounted"]["raw"] == "yes":
                 backed_up[bucket.dataset] = mountpoint
             if bucket.enabled and live is None:
                 await self.call2(
@@ -443,9 +382,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         accesskeys: list[S3AccesskeyEntry] = await self.middleware.call("s3.accesskey.query")
         for key in accesskeys:
             if key.status == "USER_MISSING" and not key.local:
-                # a directory services account that does not resolve right now
-                # may just be a directory that is not answering; the key renders
-                # disabled until the next render finds the account again
+                # a directory account that does not resolve now renders disabled until a later render finds it
                 self.logger.warning(
                     "s3: access key %s belongs to a directory services account that does not resolve, rendered "
                     "disabled",
@@ -492,11 +429,9 @@ class S3Service(SystemServiceService[S3Entry]):
         """
         Update the S3 service configuration.
 
-        Changing the listeners, the reactor thread count or the region
-        restarts the S3 service, draining in-flight requests for up to 30
-        seconds. Every other change applies with a reload, the certificate
-        included: a different one, or the UI certificate changing while
-        the service follows it, rotates in place.
+        Changing the listeners, the reactor thread count or the region restarts
+        the S3 service. Every other change applies with a reload, the certificate
+        included.
         """
         return await self._svc_part.do_update(data)
 
@@ -517,7 +452,5 @@ class S3Service(SystemServiceService[S3Entry]):
 
     @private
     async def reconfigure(self, force_restart: bool = False) -> str | None:
-        """Re-render the S3 service's files and reload or restart it as the
-        change requires. The one path every change to a bucket, grant,
-        access key or account takes."""
+        """Re-render the S3 service's files and reload or restart it as the change requires."""
         return await render_and_apply(self.middleware, force_restart=force_restart)

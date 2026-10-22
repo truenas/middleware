@@ -1,11 +1,3 @@
-"""The TrueNAS S3 service plugin family.
-
-`s3` is the global service configuration and holds `s3.accesskey`, the
-SigV4 credential pairs; `sharing.s3` is the bucket, the share-like
-entity. Every change funnels through `s3.reconfigure`, which renders the
-daemon's files and reloads or restarts it as the diff requires.
-"""
-
 from __future__ import annotations
 
 import ipaddress
@@ -46,12 +38,8 @@ class S3ServicePortDelegate(ServicePortDelegate):
 
 
 def _wildcard_listeners(state: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """The listeners a reset falls back to: one wildcard per address
-    family and port the old list served, TLS kept — and preferred, where
-    one port carried plaintext and TLS on different addresses of one
-    family. Falling back to the daemon's plaintext default instead would
-    take a TLS-only deployment into the clear on every address, with the
-    certificate still held and nothing to say TLS had stopped."""
+    """Wildcard listeners for a reset: one per address family and port,
+    keeping TLS where it was served."""
     wanted: dict[tuple[str, int], bool] = {}
     for listener in state:
         v6 = ipaddress.ip_address(listener["address"]).version == 6
@@ -63,11 +51,8 @@ def _wildcard_listeners(state: list[dict[str, Any]]) -> list[dict[str, Any]]:
 class S3ListenDelegate(
     SystemServiceListenDelegateMixin[list[dict[str, Any]]], ConfigServiceListenDelegate[list[dict[str, Any]]]
 ):
-    """What an interface losing a static address does to the listeners
-    naming it: the multiple-address base reads a list of addresses, this
-    reads the address out of each listener, and a reset falls back to
-    wildcards that keep each port's TLS posture rather than to the
-    daemon's plaintext default."""
+    """Resets listeners that name an address an interface lost to wildcards
+    that keep each port's TLS."""
 
     async def get_listen_state(self, ips: list[str]) -> list[dict[str, Any]]:
         config: S3Entry = await self.middleware.call("s3.config")
@@ -81,29 +66,15 @@ class S3ListenDelegate(
 
 
 class S3LicenseReconcileDelegate(LicenseReconcileDelegate):
-    """What a license change does to a running S3 service: a restart.
-
-    The daemon asks `truenas.entitlements.check` for `S3_VERSIONING` and
-    `S3_AUDIT` once, before it registers a bucket, and holds the answer
-    for the life of the process -- a reload re-reads its files and not
-    the license, by design, so that every registration-consumed fact
-    arrives the same way. A restart is therefore the only thing that
-    puts a new license in force: a revoked versioning entitlement stops
-    minting versions and a granted one brings an object-lock bucket the
-    daemon excluded at start back into service. Nothing else restarts
-    the service on a license change.
-
-    RESTART starts a unit that is not running, which a license change
-    must not do, so the delegate runs only while the service is up; a
-    stopped service reads the license fresh at its next start anyway.
-    """
+    """Restart the S3 service on a license change. The daemon reads the
+    license once at start, so a reload does not pick up a new one. Runs only
+    while the service is up."""
 
     name = "s3"
     etc_groups = (ETC_GROUP,)
     service = SERVICE
     action = LicenseReconcileAction.RESTART
-    # after `user`: the credentials file the restart renders resolves
-    # every access key's account through NSS
+    # after `user`: the credentials file resolves every account through NSS
     order = 30
 
     async def should_run(self, middleware: Middleware) -> bool:
@@ -119,8 +90,7 @@ class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
     # the daemon rotates the pair on a reload: a renewal rides one
 
     async def state(self, cert_id: int) -> bool:
-        # a chosen certificate is held whether or not a listener serves it
-        # yet; the UI's is held only while none is chosen and one does
+        # hold the chosen certificate, or the UI's while none is chosen
         config: S3Entry = await self.middleware.call("s3.config")
         if config.certificate is not None:
             return config.certificate == cert_id
@@ -147,9 +117,7 @@ async def _user_deleted(middleware: Middleware, user_id: int) -> None:
 
 
 async def _ui_settings_updated(middleware: Middleware, config: dict[str, Any]) -> None:
-    # a service following the UI certificate follows it here: the files
-    # a different certificate renders to are other paths, which the
-    # daemon rotates to on reload
+    # a different certificate renders to other paths, which the daemon rotates to on reload
     s3: S3Entry = await middleware.call("s3.config")
     if s3.certificate is None and any(listener.tls for listener in s3.listeners):
         await _reconfigure(middleware)
@@ -157,14 +125,12 @@ async def _ui_settings_updated(middleware: Middleware, config: dict[str, Any]) -
 
 async def _pool_post_import(middleware: Middleware, pool: dict[str, Any] | None) -> None:
     if pool is None:
-        # the boot-time bulk import renders the etc group through its own
-        # checkpoint, and the unit starts on its own
+        # the boot-time import renders the etc group through its own checkpoint
         return
     prefix = f"{pool['name']}/"
     buckets = await middleware.call("sharing.s3.query", [["enabled", "=", True]])
     if any(b.dataset == pool["name"] or b.dataset.startswith(prefix) for b in buckets):
-        # rows coming back into the registry are a change the daemon refuses
-        # on a reload
+        # rows returning to the registry need a restart
         try:
             await start_or_restart(middleware)
         except Exception:
@@ -188,10 +154,7 @@ async def setup(middleware: Middleware) -> None:
         middleware.services.truenas.license.register_reconcile_delegate,
         S3LicenseReconcileDelegate(),
     )
-    # an access key change re-renders the credentials file; an account change
-    # can move a resolved name or turn a key into USER_MISSING, and a stale
-    # file at the daemon's next load would refuse the whole credentials file;
-    # a network change can move the hostname the base_hosts derive from
+    # access key, account and network changes all move what the credentials file or base_hosts render
     for hook in (
         "s3.accesskey.post_create",
         "s3.accesskey.post_update",
