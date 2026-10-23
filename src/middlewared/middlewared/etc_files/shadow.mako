@@ -21,7 +21,10 @@
         root_always_enabled = middleware.call_sync('privilege.always_has_root_password_enabled')
 
     if sec['max_password_age'] and password_full_admin_users:
-        unexpired = filter_list(password_full_admin_users, [
+        aged_admin_users = filter_list(password_full_admin_users, [
+           ['password_age', '!=', None]
+        ])
+        unexpired = filter_list(aged_admin_users, [
            ['password_age', '<', sec['max_password_age'] - 1]
         ])
         if unexpired:

@@ -2078,6 +2078,20 @@ class UserService(CRUDService):
                 f'{username}: user is not local to the TrueNAS server.'
             )
 
+        if entry['password_disabled']:
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: password authentication disabled for user'
+            )
+
+        if entry['locked']:
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: user account is locked.'
+            )
+
+        verrors.check()
+
         # Require submitting password twice if this is not a full admin session
         # and does not have a one-time password.
         if not is_full_admin and not is_otp_login:
@@ -2103,25 +2117,12 @@ class UserService(CRUDService):
         await self.password_security_validate('user.set_password', verrors, password, history, 'new_password')
         min_password_age = (await self.middleware.call('system.security.config'))['min_password_age']
 
-        verrors.check()
-
-        if not password_aging_override and min_password_age and entry['password_age'] < min_password_age:
-            verrors.add(
-                'user.set_password.username',
-                f'{username}: password changed too recently. Minimum password age is: {min_password_age}'
-            )
-
-        if entry['password_disabled']:
-            verrors.add(
-                'user.set_password.username',
-                f'{username}: password authentication disabled for user'
-            )
-
-        if entry['locked']:
-            verrors.add(
-                'user.set_password.username',
-                f'{username}: user account is locked.'
-            )
+        if not password_aging_override and min_password_age and entry['password_age'] is not None:
+            if entry['password_age'] < min_password_age:
+                verrors.add(
+                    'user.set_password.username',
+                    f'{username}: password changed too recently. Minimum password age is: {min_password_age}'
+                )
 
         verrors.check()
 

@@ -596,6 +596,57 @@ def test_stig_min_password_age(readonly_admin):
             c.call('user.update', readonly_admin['id'], {'password': 'canary'})
 
 
+def test_min_password_age_null_password_age(readonly_admin, set_fips_available):
+    """ A password change dated in the future gives the account a null password age.
+        The minimum age check must skip the account instead of comparing against null. """
+    tomorrow = int((datetime.now(UTC) + timedelta(days=1)).timestamp())
+    with Client() as c:
+        c.call('datastore.update', 'account.bsdusers', readonly_admin['id'], {
+            'bsdusr_last_password_change': tomorrow
+        })
+        c.call('etc.generate', 'shadow')
+        assert c.call('user.get_instance', readonly_admin['id'])['password_age'] is None
+
+    with security_config(min_password_age=3):
+        with Client() as c2:
+            resp = c2.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': readonly_admin['username'],
+                'password': readonly_admin['password']
+            })
+            assert resp['response_type'] == 'SUCCESS'
+            assert 'PASSWORD_CHANGE_REQUIRED' not in resp['user_info']['account_attributes']
+
+            c2.call('user.set_password', {
+                'username': readonly_admin['username'],
+                'old_password': readonly_admin['password'],
+                'new_password': 'canary3'
+            })
+
+
+def test_max_password_age_null_password_age(local_full_admin, set_fips_available):
+    """ Shadow generation and the expiration alert source must both tolerate an
+        account whose password age is null. `etc.generate` swallows a template
+        failure, so the shadow entry is checked rather than the call result. """
+    tomorrow = datetime.now(UTC) + timedelta(days=1)
+    with Client() as c:
+        c.call('datastore.update', 'account.bsdusers', local_full_admin['id'], {
+            'bsdusr_last_password_change': int(tomorrow.timestamp())
+        })
+        assert c.call('user.get_instance', local_full_admin['id'])['password_age'] is None
+
+    with security_config(max_password_age=60):
+        with Client() as c:
+            c.call('etc.generate', 'shadow')
+
+            shadow = get_shadow_entry(local_full_admin['username'])
+            assert shadow['lastchange'] == datetime_to_epoch_days(tomorrow), shadow['raw_value']
+            assert shadow['max_password_age'] == 60, shadow['raw_value']
+
+            alerts = c.call('alert.run_source', 'SecurityLocalUserAccountExpiration')
+            assert not any(alert['klass'] == 'AlertSourceRunFailed' for alert in alerts), str(alerts)
+
+
 def test_password_disable(local_full_admin):
     """ Verify the user shadow entry is '<username>:*:::::::' when password is disabled """
 
