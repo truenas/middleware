@@ -1,3 +1,5 @@
+from typing import Any
+
 from middlewared.utils.privilege_constants import LocalBuiltinAdminGroups, LocalBuiltinGroups
 
 ADMIN_UID = 950
@@ -40,7 +42,7 @@ CONTAINER_ROOT_UID = 2147000001
 # local user/group may have an id in this range.
 IDMAP_COUNT = 65536
 
-SYNTHETIC_CONTAINER_ROOT = {
+SYNTHETIC_CONTAINER_ROOT: dict[str, Any] = {
     'pw_name': 'truenas_container_unpriv_root',
     'pw_uid': CONTAINER_ROOT_UID,
     'pw_gid': 2147000001,

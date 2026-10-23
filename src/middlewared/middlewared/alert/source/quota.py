@@ -8,7 +8,7 @@ from truenas_os_pyutils.mount import iter_mountinfo
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.api.current import MailSendMessage
+from middlewared.api.current import MailSendMessage, UserGetUserObj
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.utils.size import format_size
 
@@ -139,7 +139,9 @@ class QuotaAlertSource(ThreadedAlertSource):
                 owner = self._get_owner(ds, props, mntinfo)
                 if owner != 0:
                     try:
-                        self.middleware.call_sync('user.get_user_obj', {'uid': owner})
+                        self.middleware.call_sync2(
+                            self.middleware.services.user.get_user_obj, UserGetUserObj(uid=owner),
+                        )
                     except KeyError:
                         to = None
                         logger.debug("Unable to query user with uid %r", owner)

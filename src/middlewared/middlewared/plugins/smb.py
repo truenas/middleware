@@ -37,6 +37,7 @@ from middlewared.api.current import (
     SMBUnixcharsetChoicesResult,
     SMBUpdateArgs,
     SMBUpdateResult,
+    UserGetUserObj,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
@@ -541,7 +542,7 @@ class SMBService(ConfigService):
                 verrors.add('smb_update.guest', '"root" is not a permitted guest account')
 
             try:
-                await self.middleware.call("user.get_user_obj", {"username": new["guest"]})
+                await self.call2(self.s.user.get_user_obj, UserGetUserObj(username=new["guest"]))
             except KeyError:
                 verrors.add('smb_update.guest', f'{new["guest"]}: user does not exist')
 
@@ -1526,10 +1527,10 @@ class SharingSMBService(SharingService):
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
         if not ds_enabled:
-            local_smb_user_cnt = await self.middleware.call(
-                'user.query',
+            local_smb_user_cnt = await self.call2(
+                self.s.user.query,
                 [['smb', '=', True], ['local', '=', True]],
-                {'count': True}
+                QueryOptions(count=True),
             )
             if local_smb_user_cnt == 0:
                 verrors.add(
@@ -1755,9 +1756,9 @@ class SharingSMBService(SharingService):
 
             match entry['ae_who_id']['id_type']:
                 case 'USER':
-                    sid = (await self.middleware.call(
-                        'user.query', [['uid', '=', entry['ae_who_id']['id']]], {'get': True},
-                    ))['sid']
+                    sid = (await self.call2(
+                        self.s.user.query, [['uid', '=', entry['ae_who_id']['id']]], QueryOptions(get=True),
+                    )).sid
                 case 'GROUP' | 'BOTH':
                     sid = (await self.call2(
                         self.s.group.query, [['gid', '=', entry['ae_who_id']['id']]], QueryOptions(get=True),

@@ -14,6 +14,7 @@ from middlewared.api.current import (
     S3AccesskeyUpdate,
     S3AccesskeyUpdateArgs,
     S3AccesskeyUpdateResult,
+    UserGetUserObj,
 )
 from middlewared.plugins.idmap_.idmap_constants import BASE_SYNTHETIC_DATASTORE_ID
 from middlewared.service import CRUDServicePart, GenericCRUDService, ValidationErrors, private
@@ -73,13 +74,14 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
                 continue
 
             try:
-                pwdobj = await self.middleware.call(
-                    "user.get_user_obj", {"uid": synthetic_id - BASE_SYNTHETIC_DATASTORE_ID}
+                pwdobj = await self.call2(
+                    self.s.user.get_user_obj,
+                    UserGetUserObj(uid=synthetic_id - BASE_SYNTHETIC_DATASTORE_ID),
                 )
             except KeyError:
                 by_id[synthetic_id] = None
             else:
-                by_id[synthetic_id] = pwdobj["pw_name"]
+                by_id[synthetic_id] = pwdobj.pw_name
 
         return {"by_id": by_id, "by_sid": {}, "now": utc_now(naive=False)}
 
@@ -180,10 +182,10 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_create", data.name, data.expires_at, verrors)
 
-        users = await self.middleware.call("user.query", [["username", "=", data.username]])
+        users = await self.call2(self.s.user.query, [["username", "=", data.username]])
         if not users:
             verrors.add("s3_accesskey_create.username", "User does not exist.")
-        elif users[0]["uid"] == 0:
+        elif users[0].uid == 0:
             # a root-owned key is restrained by no permission or grant
             verrors.add(
                 "s3_accesskey_create.username",
@@ -202,13 +204,13 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         verrors.check()
 
         user = users[0]
-        if user["local"]:
-            user_identifier = str(user["id"])
-        elif user["sid"]:
-            user_identifier = user["sid"]
+        if user.local:
+            user_identifier = str(user.id)
+        elif user.sid:
+            user_identifier = user.sid
         else:
             # DS but no SID; fall back to the synthesized DB id (derived from the UID)
-            user_identifier = str(user["id"])
+            user_identifier = str(user.id)
 
         # an omitted Secret field arrives as None rather than Secret(None)
         secret = data.secret.get_secret_value() if data.secret is not None else None

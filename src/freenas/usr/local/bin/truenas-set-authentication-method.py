@@ -4,7 +4,8 @@ import sys
 
 import sqlite3
 
-from middlewared.plugins.account import ADMIN_UID, ADMIN_GID, crypted_password
+from middlewared.plugins.account.constants import ADMIN_GID, ADMIN_UID
+from middlewared.plugins.account.password import crypted_password
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.time_utils import utc_now
 
