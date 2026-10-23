@@ -6,6 +6,8 @@ from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
+from auto_config import ha
+
 
 POOL_NAME = "test_rename_pool"
 
@@ -280,3 +282,26 @@ def test_zfs_resource_rename_no_unmount_with_force_unmount_is_rejected(rename_te
         })
     assert ve.value.attribute == "zfs.resource.rename"
     assert ve.value.errno == errno.EINVAL
+
+
+def test_zfs_resource_rename_moves_stored_keys(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src, dst = f"{pool}/test_rename_keys", f"{pool}/test_rename_keys_new"
+    call("zfs.resource.create", {"path": src, "encryption": {"key": "0" * 64}})
+    call("zfs.resource.create", {"path": f"{src}/child", "encryption": {"key": "1" * 64}})
+    call("zfs.resource.rename", {"current_name": src, "new_name": dst, "force": True})
+    assert call("zfs.resource.encryption.export_key", {"path": dst}, job=True) == "0" * 64
+    assert call("zfs.resource.encryption.export_key", {"path": f"{dst}/child"}, job=True) == "1" * 64
+
+
+@pytest.mark.skipif(not ha, reason="Test only valid for HA")
+def test_zfs_resource_rename_moves_failover_passphrases(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src, dst = f"{pool}/test_rename_passphrase", f"{pool}/test_rename_passphrase_new"
+    call("zfs.resource.create", {"path": src})
+    call("zfs.resource.create", {"path": f"{src}/enc", "encryption": {"passphrase": "passphrase123"}})
+    call("zfs.resource.rename", {"current_name": src, "new_name": dst, "force": True})
+    for keys in (call("failover.encryption_keys"), call("failover.call_remote", "failover.encryption_keys")):
+        assert {name: k for name, k in keys["zfs"].items() if name.startswith(f"{pool}/")} == {
+            f"{dst}/enc": "passphrase123"
+        }

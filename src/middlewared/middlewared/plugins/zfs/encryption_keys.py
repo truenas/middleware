@@ -23,6 +23,7 @@ __all__ = (
     "delete_keys",
     "path_filters",
     "read_hex_key_from_pipe",
+    "rename_keys",
     "resolve_key_options",
     "retrieve_keys_from_file",
     "store_key",
@@ -72,6 +73,19 @@ def delete_keys(context: ServiceContext, filters: list[Any]) -> None:
         if ds["kmip_uid"]:
             context.call_sync2(context.s.kmip.reset_zfs_key, ds["name"], ds["kmip_uid"], background=True)
         context.middleware.call_sync("datastore.delete", DATASET_DATABASE_MODEL_NAME, ds["id"])
+
+
+def rename_keys(context: ServiceContext, old: str, new: str) -> None:
+    # Filtered in Python: as a datastore filter, SQL LIKE would treat "_" as a wildcard and ignore case.
+    rows = filter_list(
+        context.middleware.call_sync("datastore.query", DATASET_DATABASE_MODEL_NAME), [path_filters(old)]
+    )
+    for ds in rows:
+        context.middleware.call_sync(
+            "datastore.update", DATASET_DATABASE_MODEL_NAME, ds["id"], {"name": new + ds["name"].removeprefix(old)}
+        )
+    if rows:
+        context.call_sync2(context.s.kmip.sync_zfs_keys)
 
 
 def stored_keys(context: ServiceContext, filters: list[Any]) -> dict[str, str]:
