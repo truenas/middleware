@@ -33,7 +33,9 @@ class StatxAttr(IntFlag):
     DAX = 0x00200000
 
 
-STATX_DEFAULT_MASK = truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE
+STATX_DEFAULT_MASK = (
+    truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE | truenas_os.STATX_ZFSFLAGS
+)
 
 
 class StatxEntryResult(TypedDict, total=False):
