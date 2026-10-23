@@ -27,7 +27,7 @@ class NTPHealthCheckAlertSource(AlertSource):
             return None
 
         try:
-            peers = await self.middleware.call("system.ntpserver.peers")
+            peers = await self.call2(self.s.system.ntpserver.peers, [], {})
         except Exception:
             self.middleware.logger.warning("Failed to retrieve peers.", exc_info=True)
             peers = []

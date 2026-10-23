@@ -35,6 +35,12 @@ def should_add_default_nts(addresses, domain_member):
     return not domain_member and len(addresses) == 3 and frozenset(addresses) in DEFAULT_SERVERS
 
 
+def is_single_word(address):
+    """Whether the API would take `address`. chronyd reads what follows whitespace in a `server` line as options, and
+    what follows a line break as directives of its own."""
+    return bool(address) and not any(c.isspace() for c in address)
+
+
 def upgrade():
     with op.batch_alter_table("system_ntpserver", schema=None) as batch_op:
         batch_op.add_column(sa.Column("ntp_nts", sa.Boolean(), nullable=False, server_default="0"))
@@ -43,11 +49,11 @@ def upgrade():
         batch_op.add_column(sa.Column("require_nts", sa.Boolean(), nullable=False, server_default="0"))
 
     conn = op.get_bind()
-    addresses = [row[0] for row in conn.execute(sa.text("SELECT ntp_address FROM system_ntpserver"))]
+    servers = conn.execute(sa.text("SELECT id, ntp_address FROM system_ntpserver")).fetchall()
     domain_member = conn.execute(sa.text(
         "SELECT 1 FROM directoryservices WHERE enable = 1 AND service_type IN ('ACTIVEDIRECTORY', 'IPA')"
     )).first() is not None
-    if should_add_default_nts(addresses, domain_member):
+    if should_add_default_nts([address for _, address in servers], domain_member):
         for address in NTS_SERVERS:
             conn.execute(
                 sa.text(
@@ -57,6 +63,11 @@ def upgrade():
                 ),
                 {"address": address},
             )
+
+    # Stored before the API took only single words
+    for id_, address in servers:
+        if not is_single_word(address):
+            conn.execute(sa.text("DELETE FROM system_ntpserver WHERE id = :id"), {"id": id_})
 
 
 def downgrade():

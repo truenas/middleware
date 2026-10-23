@@ -28,7 +28,7 @@ def nts_source(name, key_length=32, cookies=8):
 async def reason(peers, nts_authdata):
     m = Middleware()
     m["system.time_info"] = Mock(return_value={"uptime_seconds": 600})
-    m["system.ntpserver.peers"] = Mock(return_value=peers)
+    m.services.system.ntpserver.peers = Mock(return_value=peers)
     m.services.system.ntpserver.nts_authdata = nts_authdata
 
     alert = await NTPHealthCheckAlertSource(m).check()

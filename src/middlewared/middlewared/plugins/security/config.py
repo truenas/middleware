@@ -60,7 +60,8 @@ class SystemSecurityConfigServicePart(ConfigServicePart[SystemSecurityEntry]):
         await self._update(new)
 
         if new.require_nts != old_config.require_nts:
-            await self._restart_chronyd(is_ha)
+            # chrony's `authselectmode`; service.control restarts chronyd on the other controller too (`ha_propagate`)
+            await (await self.call2(self.s.service.control, "RESTART", "ntpd")).wait(raise_error=True)
 
         reboot_reason = None
         reboot_other_node = False
@@ -109,14 +110,3 @@ class SystemSecurityConfigServicePart(ConfigServicePart[SystemSecurityEntry]):
             await self.middleware.call("smb.push_local_accounts_to_standby")
 
         return await self.config()
-
-    async def _restart_chronyd(self, is_ha: bool) -> None:
-        """Apply `require_nts` (chrony's `authselectmode`) on this controller and, on HA, on the other one too."""
-        await (await self.call2(self.s.service.control, "RESTART", "ntpd")).wait(raise_error=True)
-        if is_ha:
-            try:
-                await self.middleware.call(
-                    "failover.call_remote", "service.control", ["RESTART", "ntpd"], {"job": True}
-                )
-            except Exception:
-                self.logger.warning("ntp: failed to apply the NTS requirement on the other controller", exc_info=True)
