@@ -37,7 +37,9 @@ class StatxAttr(IntFlag):
 
 STATX_ATTRIBUTE = Literal['COMPRESSED', 'IMMUTABLE', 'APPEND', 'NODUMP', 'ENCRYPTED', 'AUTOMOUNT', 'MOUNT_ROOT',
                           'VERIFY', 'DAX']
-STATX_DEFAULT_MASK = truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE
+STATX_DEFAULT_MASK = (
+    truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE | truenas_os.STATX_ZFSFLAGS
+)
 
 
 class StatxEntryResult(TypedDict, total=False):

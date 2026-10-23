@@ -34,6 +34,15 @@ def acl_is_present(xat_list: list[str]) -> bool:
     return bool(set(xat_list) & ACL_XATTRS)
 
 
+def zfs_acl_is_trivial(st: truenas_os.StatxResult) -> bool:
+    """
+    True if ZFS reported a trivial NFSv4 ACL via statx, in which case there is
+    no ACL to find and listxattr can be skipped. False is not conclusive: ZFS
+    only reports this on NFSv4 ACL datasets.
+    """
+    return bool(st.stx_mask & truenas_os.STATX_ZFSFLAGS and st.stx_zfsflags & truenas_os.ZFSFlags.ACL_TRIVIAL)
+
+
 class FS_ACL_Type(enum.StrEnum):
     NFS4 = 'NFS4'
     POSIX1E = 'POSIX1E'
