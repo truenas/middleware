@@ -21,6 +21,7 @@ def render(service, middleware):
                 "name": share.name,
                 "path": share.path,
                 "is_home_base": share.is_home_base,
+                "readonly": share.readonly,
             }
             for share in shares
         ],

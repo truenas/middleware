@@ -105,6 +105,45 @@ def test_duplicate_name_rejected(webshare_entitled, base):
         assert "Share with this name already exists." in str(ve.value)
 
 
+def test_home_base_share_cannot_be_created_readonly(webshare_entitled, base):
+    with pytest.raises(ValidationErrors) as ve:
+        call("sharing.webshare.create", {"name": "home", "path": base, "is_home_base": True, "readonly": True})
+
+    assert [(error.attribute, error.errmsg) for error in ve.value.errors] == [
+        (
+            "sharing_webshare_create.readonly",
+            "The home directory base share cannot be read-only, because Webshare creates home directories under it.",
+        ),
+    ]
+
+    assert call("sharing.webshare.query", [["name", "=", "home"]]) == []
+
+
+def test_home_base_share_cannot_be_made_readonly(webshare_entitled, base):
+    with webshare_share(base, "home", {"is_home_base": True}) as share:
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.webshare.update", share["id"], {"readonly": True})
+
+        assert [error.attribute for error in ve.value.errors] == ["sharing_webshare_update.readonly"]
+
+        assert call("sharing.webshare.get_instance", share["id"])["readonly"] is False
+
+        # Only the home base share itself is refused, not every share on a system that has one.
+        with dataset("webshare_readonly") as ds:
+            with webshare_share(f"/mnt/{ds}", "dept", {"readonly": True}) as dept:
+                assert dept["readonly"] is True
+
+
+def test_readonly_share_cannot_become_home_base(webshare_entitled, base):
+    with webshare_share(base, "dept", {"readonly": True}) as share:
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.webshare.update", share["id"], {"is_home_base": True})
+
+        assert [error.attribute for error in ve.value.errors] == ["sharing_webshare_update.readonly"]
+
+        assert call("sharing.webshare.get_instance", share["id"])["is_home_base"] is False
+
+
 def test_locking_dataset_marks_share_locked(webshare_entitled):
     with dataset(
         "webshare_encrypted",
