@@ -246,7 +246,8 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         # Middleware has already determined that the token string matches, but
         # we still need to generate the utmp entry
         if self.is_user_session:
-            self.user = self.root_credentials.user  # type: ignore[attr-defined]
+            # Copy because `become_readonly` updates it, and the parent session must stay intact
+            self.user = self.root_credentials.user.copy()  # type: ignore[attr-defined]
 
         self.allowlist = self.root_credentials.allowlist
 
@@ -273,10 +274,22 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         return self.token.is_valid()
 
     def authorize(self, method: HttpVerb, resource: str) -> bool:
-        return self.token.parent_credentials.authorize(method, resource)
+        if not self.token.parent_credentials.authorize(method, resource):
+            return False
+
+        if not self.is_user_session:
+            return True
+
+        return self.allowlist.authorize(method, resource)
 
     def has_role(self, role: str) -> bool:
-        return self.token.parent_credentials.has_role(role)
+        if not self.token.parent_credentials.has_role(role):
+            return False
+
+        if not self.is_user_session:
+            return True
+
+        return role in self.user['privilege'].roles
 
     def notify_used(self) -> None:
         self.root_credentials.notify_used()
