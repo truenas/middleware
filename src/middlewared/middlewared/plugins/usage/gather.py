@@ -340,7 +340,9 @@ async def gather_pools(service: Service, context: GatherContext) -> dict[str, An
 
 @gather_stat
 async def gather_services(service: Service, context: GatherContext) -> dict[str, Any]:
-    return {"services": context["services"]}
+    # TrueSearch has no "Start Automatically" flag; it runs whenever it is licensed and has shares to index
+    truesearch = {"name": "truesearch", "enabled": await service.call2(service.s.truesearch.enabled)}
+    return {"services": context["services"] + [truesearch]}
 
 
 @gather_stat
