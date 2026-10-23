@@ -38,7 +38,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.plugins.filesystem_.utils import apply_zfs_attrs_recursive
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
-from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
+from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID, zfs_acl_is_trivial
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
 from truenas_os_pyutils.io import safe_open
@@ -407,7 +407,7 @@ class FilesystemService(Service):
 
         # None request_mask means "everything"
         if request_mask is None or (request_mask & DirectoryRequestMask.ZFS_ATTRS):
-            # Make sure this is actually ZFS before issuing FS ioctls
+            # ZFS attributes are only available on ZFS
             try:
                 self.get_zfs_attributes(str(path))
             except CallError:
@@ -545,7 +545,7 @@ class FilesystemService(Service):
         except KeyError:
             stat['group'] = None
 
-        stat['acl'] = acl_is_present(os.listxattr(path))
+        stat['acl'] = not zfs_acl_is_trivial(st['st']) and acl_is_present(os.listxattr(path))
 
         return stat
 

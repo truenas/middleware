@@ -16,9 +16,9 @@ import pathlib
 from collections import namedtuple
 from collections.abc import Callable
 from typing import Any, Generic, Literal, TypeVar, overload
-from truenas_os import AT_EMPTY_PATH, AT_FDCWD, openat2, RESOLVE_NO_SYMLINKS, statx, StatxResult
-from .acl import acl_is_present
-from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
+from truenas_os import AT_EMPTY_PATH, AT_FDCWD, openat2, RESOLVE_NO_SYMLINKS, STATX_ZFSFLAGS, statx, StatxResult
+from .acl import acl_is_present, zfs_acl_is_trivial
+from .attrs import zfs_attributes_dump
 from .constants import FileType
 from .stat_x import statx_entry_impl, StatxEntryResult, STATX_DEFAULT_MASK
 from .utils import path_in_ctldir
@@ -311,22 +311,16 @@ class DirectoryIterator(Generic[T_DirEntry]):
 
             if self.__request_mask & int(DirectoryRequestMask.ACL):
                 # try to avoid listing xattrs twice
-                acl = acl_is_present(os.listxattr(fd) if xattrs is None else xattrs)
+                acl = not zfs_acl_is_trivial(st['st']) and acl_is_present(
+                    os.listxattr(fd) if xattrs is None else xattrs
+                )
             else:
                 acl = None
 
-            if self.__request_mask & int(DirectoryRequestMask.ZFS_ATTRS):
-                try:
-                    attr_mask = fget_zfs_file_attributes(fd)
-                    zfs_attrs = zfs_attributes_dump(attr_mask)
-                except OSError as e:
-                    # non-ZFS filesystems will fail with ENOTTY or EINVAL
-                    # In this case we set `None` to indicate non-ZFS
-                    if e.errno not in (errno.ENOTTY, errno.EINVAL):
-                        raise e from None
-
-                    zfs_attrs = None
+            if self.__request_mask & int(DirectoryRequestMask.ZFS_ATTRS) and st['st'].stx_mask & STATX_ZFSFLAGS:
+                zfs_attrs = zfs_attributes_dump(st['st'].stx_zfsflags)
             else:
+                # Only ZFS fills STATX_ZFSFLAGS. `None` indicates non-ZFS.
                 zfs_attrs = None
 
             if self.__request_mask & int(DirectoryRequestMask.CTLDIR):

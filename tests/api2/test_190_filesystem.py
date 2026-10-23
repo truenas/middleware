@@ -483,3 +483,29 @@ def test_mkdir_chmod_failure():
         assert st["mode"] == mkdir_st["mode"]
         # mkdir succeeded, but chmod failed so we get mode based on inherited ACL (SMB preset)
         assert stat.S_IMODE(st["mode"]) == 0o770
+
+
+def test_listdir_zfs_attrs_and_acl_from_statx():
+    """listdir zfs_attrs / acl come from statx; check them against the ioctl and the ACL itself."""
+    with (
+        create_dataset("listdir_zfsflags", {"share_type": "SMB"}) as ds,
+        create_dataset("listdir_zfsflags/child"),
+    ):
+        base = f"/mnt/{ds}"
+        ssh(f"mkdir {base}/d && touch {base}/f {base}/trivial && ln -s f {base}/lnk")
+        call("filesystem.set_zfs_attributes", {
+            "path": f"{base}/f", "zfs_file_attributes": {"hidden": True, "system": True}
+        }, job=True)
+        call("filesystem.setperm", {"path": f"{base}/trivial", "options": {"stripacl": True}}, job=True)
+
+        entries = {e["name"]: e for e in call("filesystem.listdir", base)}
+        for name in ("d", "f", "trivial", "child", "lnk"):
+            target = f"{base}/f" if name == "lnk" else f"{base}/{name}"
+            zfs_attrs = call("filesystem.get_zfs_attributes", target)
+            assert set(entries[name]["zfs_attrs"]) == {k.upper() for k, v in zfs_attrs.items() if v}, name
+            assert entries[name]["acl"] is not call("filesystem.getacl", target)["trivial"], name
+
+        assert {"HIDDEN", "SYSTEM"} <= set(entries["f"]["zfs_attrs"])
+        assert entries["trivial"]["acl"] is False
+        assert call("filesystem.stat", f"{base}/trivial")["acl"] is False
+        assert call("filesystem.stat", f"{base}/f")["acl"] is True
