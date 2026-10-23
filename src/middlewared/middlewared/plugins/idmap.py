@@ -10,8 +10,9 @@ from middlewared.api.current import (
     IdmapDomainClearIdmapCacheResult,
     QueryOptions,
     ServiceOptions,
+    UserGetUserObj,
 )
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
+from middlewared.plugins.account.constants import CONTAINER_ROOT_UID
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
     SID_LOCAL_GROUP_PREFIX,
@@ -305,9 +306,9 @@ class IdmapDomainService(Service):
 
         if sid.startswith(SID_LOCAL_USER_PREFIX):
             uid = int(sid[len(SID_LOCAL_USER_PREFIX):])
-            u = self.middleware.call_sync('user.get_user_obj', {'uid': uid})
+            u = self.call_sync2(self.s.user.get_user_obj, UserGetUserObj(uid=uid))
             return {
-                'name': f'Unix User{separator}{u["pw_name"]}',
+                'name': f'Unix User{separator}{u.pw_name}',
                 'id': uid,
                 'id_type': IDType.USER.name,
                 'sid': sid
@@ -354,10 +355,10 @@ class IdmapDomainService(Service):
             name = group.name
             xid = group.gid
         elif rid > BASE_RID_USER:
-            user = self.middleware.call_sync('user.get_instance', rid - BASE_RID_USER)
+            user = self.call_sync2(self.s.user.get_instance, rid - BASE_RID_USER)
             id_type = IDType.USER.name
-            name = user['username']
-            xid = user['uid']
+            name = user.username
+            xid = user.uid
         else:
             # Log an error message and fall through to winbind or sssd to resolve it
             self.logger.warning('%s: unexpected local SID value', sid)
@@ -441,10 +442,10 @@ class IdmapDomainService(Service):
         return group.group
 
     async def _user_name(self, uid: int) -> str:
-        user = await self.middleware.call(
-            'user.query', [['uid', '=', uid]], {'get': True, 'order_by': ['username']},
+        user = await self.call2(
+            self.s.user.query, [['uid', '=', uid]], QueryOptions(get=True, order_by=['username']),
         )
-        return user['username']
+        return user.username
 
     @private
     async def synthetic_user(self, passwd: dict, sid: str | None) -> dict | None:

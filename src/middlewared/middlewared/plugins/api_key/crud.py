@@ -13,6 +13,7 @@ from middlewared.api.current import (
     ApiKeyEntryWithKey,
     ApiKeyScramData,
     ApiKeyUpdate,
+    UserGetUserObj,
 )
 from middlewared.plugins.idmap_.idmap_constants import BASE_SYNTHETIC_DATASTORE_ID
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
@@ -83,13 +84,14 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
                 continue
 
             try:
-                pwdobj = await self.middleware.call(
-                    "user.get_user_obj", {"uid": synthetic_id - BASE_SYNTHETIC_DATASTORE_ID}
+                pwdobj = await self.call2(
+                    self.s.user.get_user_obj,
+                    UserGetUserObj(uid=synthetic_id - BASE_SYNTHETIC_DATASTORE_ID),
                 )
             except KeyError:
                 by_id[synthetic_id] = None
             else:
-                by_id[synthetic_id] = pwdobj["pw_name"]
+                by_id[synthetic_id] = pwdobj.pw_name
 
         # Convert legacy keys into the appropriate local administrator account.
         if result := _tf.tnfilter(users, filters=_ADMIN_UID_FILTER, options=_ADMIN_UID_GET_OPTS):
@@ -213,8 +215,8 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
             data.model_dump(),
             verrors,
         )
-        users = await self.middleware.call(
-            "user.query",
+        users = await self.call2(
+            self.s.user.query,
             [["username", "=", data.username]],
         )
         if not users:
@@ -227,13 +229,13 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         verrors.check()
 
         user = users[0]
-        if user["local"]:
-            user_identifier = str(user["id"])
-        elif user["sid"]:
-            user_identifier = user["sid"]
+        if user.local:
+            user_identifier = str(user.id)
+        elif user.sid:
+            user_identifier = user.sid
         else:
             # DS but no SID; fall back to synthesized DB id (derived from UID)
-            user_identifier = str(user["id"])
+            user_identifier = str(user.id)
 
         raw_key = generate_string(string_size=RAW_KEY_SZ)
         auth_data = await self.to_thread(generate_api_key_auth_data, raw_key)

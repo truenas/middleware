@@ -145,8 +145,8 @@ class TwoFactorAuthService(ConfigService):
     def get_users_config(self):
         users = []
         mapping = {
-            user['sid']: user for user in self.middleware.call_sync(
-                'user.query', [['local', '=', False], ['sid', '!=', None]]
+            user.sid: user for user in self.call_sync2(
+                self.s.user.query, [['local', '=', False], ['sid', '!=', None]]
             )
         }
         for config in self.middleware.call_sync(
@@ -157,7 +157,7 @@ class TwoFactorAuthService(ConfigService):
             if config['user']:
                 username = config['user']['bsdusr_username']
             elif user := mapping.get(config['user_sid']):
-                username = user['username']
+                username = user.username
                 ad_user = True
 
             if username:

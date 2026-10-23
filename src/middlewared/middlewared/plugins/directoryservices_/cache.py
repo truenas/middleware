@@ -5,7 +5,7 @@ from pydantic import Field, model_validator
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.api.current import GroupEntry, GroupGetGroupObj, UserEntry
+from middlewared.api.current import GroupEntry, GroupGetGroupObj, UserEntry, UserGetUserObj
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from middlewared.service import Service, job
@@ -131,15 +131,16 @@ class DSCache(Service):
                     else:
                         who = {'uid': data.get('id')}
 
-                    pwdobj = self.middleware.call_sync('user.get_user_obj', {
-                        'get_groups': False, 'sid_info': options['smb']
-                    } | who)
-                    if options['smb'] and pwdobj['sid'] is None:
+                    pwdobj = self.call_sync2(
+                        self.s.user.get_user_obj,
+                        UserGetUserObj(get_groups=False, sid_info=options['smb'], **who),
+                    )
+                    if options['smb'] and pwdobj.sid is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
                     entry = self.middleware.call_sync('idmap.synthetic_user',
-                                                      pwdobj, pwdobj['sid'])
+                                                      pwdobj.model_dump(), pwdobj.sid)
                     if entry is None:
                         return None
                 else:

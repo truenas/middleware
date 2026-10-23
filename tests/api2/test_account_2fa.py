@@ -4,7 +4,7 @@ import time
 import pytest
 
 from auto_config import ha
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import temporary_update, user, unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.two_factor_auth import (
@@ -228,3 +228,61 @@ def test_renew_2fa_secret_for_another_user_is_forbidden():
             c.call("user.renew_2fa_secret", "root", {})
 
         assert ve.value.errno == errno.EPERM
+
+
+# ---------------------------------------------------------------------------
+# enabling SSH password login requires the account's own 2FA secret once
+# two-factor authentication guards the SSH service
+# ---------------------------------------------------------------------------
+@pytest.fixture
+def sshpw_home():
+    with dataset("cov2fa_sshpw_homedir") as homedir:
+        yield f"/mnt/{homedir}"
+
+
+def test_create_ssh_password_enabled_requires_user_2fa(sshpw_home):
+    # A brand-new account cannot have a 2FA secret yet, so the rejection tells the
+    # caller to create it without SSH password access and turn that on afterwards.
+    with enabled_twofactor_auth(ssh=True):
+        with pytest.raises(ValidationErrors) as ve:
+            call("user.create", {
+                "username": "cov2fasshc",
+                "full_name": "cov 2fa ssh create",
+                "group_create": True,
+                "smb": False,
+                "password": "test1234",
+                "home": sshpw_home,
+                "ssh_password_enabled": True,
+            })
+
+    message = str(ve.value)
+    assert "2FA for this user needs to be explicitly configured" in message, message
+    assert "User will be created with SSH password access disabled" in message, message
+    # the rejection happens before the primary group is created, so nothing is left behind
+    assert call("group.query", [["name", "=", "cov2fasshc"]]) == []
+
+
+def test_update_ssh_password_enabled_requires_user_2fa(sshpw_home):
+    # The account exists with no secret, so turning SSH password login on is refused
+    # until `user.renew_2fa_secret` gives it one -- and accepted immediately after.
+    with user({
+        "username": "cov2fasshu",
+        "full_name": "cov 2fa ssh update",
+        "group_create": True,
+        "smb": False,
+        "password": "test1234",
+        "home": sshpw_home,
+    }) as u:
+        assert call("user.get_instance", u["id"])["twofactor_auth_configured"] is False
+
+        with enabled_twofactor_auth(ssh=True):
+            with pytest.raises(ValidationErrors) as ve:
+                call("user.update", u["id"], {"ssh_password_enabled": True})
+
+            assert "2FA for this user needs to be explicitly configured" in str(ve.value), ve.value
+
+            call("user.renew_2fa_secret", "cov2fasshu", {"otp_digits": 6, "interval": 30})
+            assert call("user.get_instance", u["id"])["twofactor_auth_configured"] is True
+
+            updated = call("user.update", u["id"], {"ssh_password_enabled": True})
+            assert updated["ssh_password_enabled"] is True

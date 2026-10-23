@@ -101,3 +101,19 @@ def test_directory_services_api_key(service_type):
                 key_info = call('api_key.query', [['username', '=', username]], {'get': True})
                 assert key_info['local'] is False
                 assert key_info['revoked'] is False, key_info['revoked_reason']
+
+
+@pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY', 'IPA', 'LDAP'])
+def test_directory_services_set_password(service_type):
+    """
+    Password resets apply to local accounts only. Directory services cache entries
+    carry no password hash and no password history, and so the account check has to
+    reject them before `user.set_password` reads those fields.
+    """
+    with directoryservice(service_type) as ds:
+        username = ds['account'].user_obj['pw_name']
+
+        with pytest.raises(ValidationErrors) as ve:
+            call('user.set_password', {'username': username, 'new_password': 'Canary1234!'})
+
+        assert 'not local to the TrueNAS server' in str(ve.value), ve.value

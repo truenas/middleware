@@ -13,7 +13,7 @@ class APISchemaContract(Contract):
             "middlewared.api.base",
             "middlewared.utils.lang",
             # FIXME: These should not be imported
-            "middlewared.plugins.account_.constants",
+            "middlewared.plugins.account.constants",
             "middlewared.plugins.idmap_.idmap_constants",
             "middlewared.plugins.smb_.constants",
             "middlewared.plugins.zfs_.validation_utils",

@@ -9,6 +9,7 @@ from middlewared.api.current import (
     PoolDatasetGetQuotaResult,
     PoolDatasetSetQuotaArgs,
     PoolDatasetSetQuotaResult,
+    UserGetUserObj,
 )
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service import Service, private
@@ -227,9 +228,9 @@ class PoolDatasetService(Service):
                 if not q['id'].isdigit():
                     try:
                         if id_type == 'user':
-                            xid = (await self.middleware.call(
-                                'user.get_user_obj', {'username': q['id']},
-                            ))['pw_uid']
+                            xid = (await self.call2(
+                                self.s.user.get_user_obj, UserGetUserObj(username=q['id']),
+                            )).pw_uid
                         else:
                             xid = (await self.call2(
                                 self.s.group.get_group_obj, GroupGetGroupObj(groupname=q['id']),

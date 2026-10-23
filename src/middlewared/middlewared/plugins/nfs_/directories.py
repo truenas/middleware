@@ -40,7 +40,7 @@ def name_to_id_conversion(context: ServiceContext, name: BuiltinName, name_type:
     try:
         resolved: BuiltinName
         if name_type == "user":
-            resolved = context.middleware.call_sync("user.get_builtin_user_id", name)
+            resolved = context.call_sync2(context.s.user.get_builtin_user_id, name)
         else:
             resolved = context.call_sync2(context.s.group.get_builtin_group_id, name)
     except Exception as e:

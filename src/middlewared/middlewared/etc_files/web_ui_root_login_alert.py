@@ -7,9 +7,9 @@ if TYPE_CHECKING:
 
 
 async def render(service, middleware: 'Middleware', render_ctx):
-    root_user = next(u for u in render_ctx['user.query'] if u['username'] == 'root')
+    root_user = next(u for u in render_ctx['user.query'] if u.username == 'root')
 
-    if root_user['password_disabled'] and await middleware.call2(
+    if root_user.password_disabled and await middleware.call2(
         middleware.services.privilege.always_has_root_password_enabled,
         render_ctx['user.query'],
         render_ctx['group.query'],

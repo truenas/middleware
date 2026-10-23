@@ -13,7 +13,7 @@ from truenas_authenticator import UserPamAuthenticator as TrueNASUserPamAuthenti
 from truenas_pypam import MSGStyle, PAMCode
 import truenas_pyscram
 
-from middlewared.plugins.account_.constants import ADMIN_UID
+from middlewared.plugins.account.constants import ADMIN_UID
 from middlewared.utils.auth import OTPW_MANAGER, OTPWResponseCode
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.health import DSHealthObj

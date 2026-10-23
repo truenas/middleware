@@ -41,6 +41,8 @@ from middlewared.api.current import (
     AuthTerminateOtherSessionsResult,
     AuthTerminateSessionArgs,
     AuthTerminateSessionResult,
+    QueryOptions,
+    UserGetUserObj,
 )
 from middlewared.auth import (
     AuthenticationContext,
@@ -50,7 +52,7 @@ from middlewared.auth import (
     UserSessionManagerCredentials,
     dump_credentials,
 )
-from middlewared.plugins.account_.constants import TRUENAS_PAM_API_KEY_SERVICE, TRUENAS_PAM_SERVICE
+from middlewared.plugins.account.constants import TRUENAS_PAM_API_KEY_SERVICE, TRUENAS_PAM_SERVICE
 from middlewared.plugins.auth_.login_ex_impl import (
     login_ex_api_key_plain,
     login_ex_oath_token,
@@ -408,19 +410,19 @@ class AuthService(Service):
             account_admin = True
 
         username = data['username']
-        user_data = self.middleware.call_sync('user.query', [['username', '=', username]])
+        user_data = self.call_sync2(self.s.user.query, [['username', '=', username]])
         if not user_data:
             raise ValidationError('auth.generate_onetime_password.username', f'{username}: user does not exist.')
 
         verrors = ValidationErrors()
 
-        if user_data[0]['password_disabled']:
+        if user_data[0].password_disabled:
             verrors.add(
                 'auth.generate_onetime_password.username',
                 f'{username}: password authentication is disabled for account.'
             )
 
-        if user_data[0]['locked']:
+        if user_data[0].locked:
             verrors.add(
                 'auth.generate_onetime_password.username',
                 f'{username}: account is locked.'
@@ -428,7 +430,7 @@ class AuthService(Service):
 
         verrors.check()
 
-        return OTPW_MANAGER.generate_for_uid(user_data[0]['uid'], account_admin)
+        return OTPW_MANAGER.generate_for_uid(user_data[0].uid, account_admin)
 
     @api_method(
         AuthGenerateTokenArgs, AuthGenerateTokenResult,
@@ -1050,7 +1052,9 @@ class AuthService(Service):
             attributes = {}
 
         try:
-            twofactor_config = await self.middleware.call('user.twofactor_config', user['pw_name'])
+            twofactor_config = (
+                await self.call2(self.s.user.twofactor_config, user['pw_name'])
+            ).model_dump()
         except Exception:
             self.logger.error('%s: failed to look up 2fa details', exc_info=True)
             twofactor_config = None
@@ -1110,15 +1114,15 @@ class AuthService(Service):
         # Local accounts may have hit soft limit for requiring password change
         # If they hit a hard limit then they wouldn't be here (auth would have failed)
         if 'LOCAL' in account_attributes:
-            user_entry = await self.middleware.call('user.query', [
+            user_entry = await self.call2(self.s.user.query, [
                 ['username', '=', username],
                 ['local', '=', True]
-            ], {'get': True})
-            if user_entry['password_change_required']:
+            ], QueryOptions(get=True))
+            if user_entry.password_change_required:
                 account_attributes.append('PASSWORD_CHANGE_REQUIRED')
 
         return {
-            **(await self.middleware.call('user.get_user_obj', {'username': username})),
+            **(await self.call2(self.s.user.get_user_obj, UserGetUserObj(username=username))).model_dump(),
             'privilege': credentials.user['privilege'],
             'account_attributes': account_attributes
         }
@@ -1148,16 +1152,18 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
         # We first have to convert the UID to a username to send to PAM. The PAM
         # authenticator will handle retrieving group membership and setting account flags
         try:
-            user_info = await middleware.call('user.get_user_obj', {'uid': origin.uid})
+            user_info = await middleware.call2(
+                middleware.services.user.get_user_obj, UserGetUserObj(uid=origin.uid),
+            )
         except KeyError:
             # User does not exist
             return
 
-        authenticator = UnixPamAuthenticator(username=user_info['pw_name'], origin=origin)
-        resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'], '')
+        authenticator = UnixPamAuthenticator(username=user_info.pw_name, origin=origin)
+        resp = await middleware.run_in_thread(authenticator.authenticate, user_info.pw_name, '')
         if resp.code != PAMCode.PAM_SUCCESS:
             middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
-                                    user_info['pw_name'], resp.reason)
+                                    user_info.pw_name, resp.reason)
             return
 
         # Use the user_info from the authenticator (contains more information than user.get_user_obj)

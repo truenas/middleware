@@ -1,12 +1,13 @@
 <%
-from middlewared.utils.filter_list import filter_list
-
-mapped = filter_list(render_ctx['user.query'], [
-    ['local', '=', True],
-    ['userns_idmap', 'nin', [0, None]],
-    ['roles', '=', []]
-])
+mapped = [
+    user for user in render_ctx['user.query']
+    if user.local and user.userns_idmap not in (0, None) and not user.roles
+]
 %>\
 % for user in mapped:
-0:${user['uid']}:${user['uid'] if user['userns_idmap'] == 'DIRECT' else user['userns_idmap']}
+% if user.userns_idmap == 'DIRECT':
+0:${user.uid}:${user.uid}
+% else:
+0:${user.uid}:${user.userns_idmap}
+% endif
 % endfor
