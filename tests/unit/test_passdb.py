@@ -12,6 +12,7 @@ from middlewared.plugins.smb_.util_account_policy import (
 )
 from middlewared.utils.crypto import generate_nt_hash
 from time import sleep, time
+from truenas_api_client import Client
 
 PDB_DOMAIN = 'CANARY'
 PDB_DOM_SID = 'S-1-5-21-710078819-430336432-4106732522'
@@ -100,6 +101,13 @@ def passdb_dir():
     with open('/etc/smb4.conf', 'w') as f:
         f.write(f'[global]\n    passdb backend = tdbsam:{util_passdb.PASSDB_PATH}\n')
         f.flush()
+
+    try:
+        yield
+    finally:
+        # the tests that follow need the real smb.conf, not the stub
+        with Client() as c:
+            c.call('etc.generate', 'smb')
 
 
 @pytest.fixture(scope='function')
