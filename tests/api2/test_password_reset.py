@@ -158,3 +158,14 @@ def test_password_reset_via_onetime_password():
         # Verify that password change worked
         with client(auth=(acct.username, TEST_PASSWORD2_2)):
             pass
+
+
+def test_set_password_synthetic_container_root():
+    """ The synthetic container root account has no stored password hash or history. """
+    with pytest.raises(ValidationErrors) as ve:
+        call('user.set_password', {
+            'username': 'truenas_container_unpriv_root',
+            'new_password': 'NewCovPass1!'
+        })
+
+    assert 'user account is locked' in str(ve.value), ve.value

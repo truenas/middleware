@@ -59,17 +59,21 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
             ["locked", "=", False]
         ])
 
-        expiring = filter_list(unlocked_local_accounts, [
+        aged_local_accounts = filter_list(unlocked_local_accounts, [
+            ["password_age", "!=", None]
+        ])
+
+        expiring = filter_list(aged_local_accounts, [
             ["password_age", ">=", sec["max_password_age"] - security.PASSWORD_PROMPT_AGE],
             ["password_age", "<", sec["max_password_age"]],
         ])
 
-        expired = filter_list(unlocked_local_accounts, [
+        expired = filter_list(aged_local_accounts, [
             ["password_age", ">=", sec["max_password_age"]]
         ])
 
         # Generate this alert an extra day early since we don't want to risk admin lockout
-        active_full_admins = filter_list(unlocked_local_accounts, [
+        active_full_admins = filter_list(aged_local_accounts, [
             ["roles", "rin", "FULL_ADMIN"],
             ["password_age", "<", sec["max_password_age"] - 1],
         ])
