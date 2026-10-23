@@ -3,7 +3,7 @@ from typing import Any
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 
-__all__ = ("normalize_asdict_result",)
+__all__ = ("USER_PROP_RENAME_DICT", "normalize_asdict_result")
 
 USER_PROP_RENAME_DICT = MappingProxyType(
     {

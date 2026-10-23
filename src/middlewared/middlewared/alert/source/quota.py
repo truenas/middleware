@@ -8,7 +8,8 @@ from truenas_os_pyutils.mount import iter_mountinfo
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.api.current import MailSendMessage
+from middlewared.api.current import MailSendMessage, ZFSResourceQuery
+from middlewared.plugins.zfs.normalization import USER_PROP_RENAME_DICT
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.utils.size import format_size
 
@@ -72,9 +73,25 @@ class QuotaAlertSource(ThreadedAlertSource):
         alerts: list[Alert[Any]] = []
         hostname = self.middleware.call_sync("system.hostname")
         mntinfo = list(iter_mountinfo())
-        rv = self.middleware.call_sync("pool.dataset.query_for_quota_alert")
-        for ds, info in rv["datasets"].items():
-            props, uprops = info["properties"], info["user_properties"]
+        rows: list[dict[str, Any]] = self.middleware.call_sync2(
+            self.middleware.services.zfs.resource.list_impl,
+            ZFSResourceQuery(
+                properties=["used", "usedbydataset", "quota", "refquota", "available", "mounted", "mountpoint"],
+                get_user_properties=True,
+                get_children=True,
+                exclude_internal_paths=False,
+            ),
+        )
+        pools = {
+            row["name"]: row["properties"]["used"]["value"] + row["properties"]["available"]["value"]
+            for row in rows
+            if row["name"] == row["pool"]
+        }
+        for info in rows:
+            if info["type"] == "VOLUME":
+                continue
+            ds = info["name"]
+            props, uprops = info["properties"], info["user_properties"] or {}
             for quota_property in ("quota", "refquota"):
                 quota_value = props[quota_property]["value"]
                 if quota_value == 0:
@@ -83,7 +100,9 @@ class QuotaAlertSource(ThreadedAlertSource):
                     continue
 
                 warn_prop = TNUserProp[f"{quota_property.upper()}_WARN"]
-                warning_threshold = self.__cast_threshold(uprops[warn_prop.value])
+                warning_threshold = self.__cast_threshold(
+                    uprops.get(USER_PROP_RENAME_DICT[warn_prop.value], warn_prop.default())
+                )
                 if warning_threshold == 0:
                     # there is a quota on the dataset but there is
                     # no warning threshold configured or the value
@@ -91,7 +110,9 @@ class QuotaAlertSource(ThreadedAlertSource):
                     continue
 
                 crit_prop = TNUserProp[f"{quota_property.upper()}_CRIT"]
-                critical_threshold = self.__cast_threshold(uprops[crit_prop.value])
+                critical_threshold = self.__cast_threshold(
+                    uprops.get(USER_PROP_RENAME_DICT[crit_prop.value], crit_prop.default())
+                )
                 if critical_threshold == 0:
                     # there is a quota on the dataset but there is
                     # no critical threshold configured or the value
@@ -107,7 +128,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                     if refquota_value and refquota_value < quota_value:
                         continue
 
-                    if quota_value > rv["pools"][info["pool"]]:
+                    if quota_value > pools[info["pool"]]:
                         # Quota larger than zpool's total size will never
                         # be exceeded but will break our logic
                         continue

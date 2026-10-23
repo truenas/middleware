@@ -3,7 +3,6 @@ import errno
 from typing import Any
 
 from pydantic import ValidationError as PydanticValidationError
-import truenas_pylibzfs
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -18,9 +17,7 @@ from middlewared.api.current import (
     ZFSResourceUserspaceSetArgsData,
 )
 from middlewared.plugins.pool_.snapshot import rekey_validation_error
-from middlewared.plugins.zfs_.utils import TNUserProp
-from middlewared.service import Service, private
-from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.service import Service
 from middlewared.service_exception import ValidationError
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
@@ -137,53 +134,10 @@ def _build(model, schema, plan, **kwargs):
         )
 
 
-def quota_alert_cb(hdl, state):
-    if hdl.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME:
-        return True
-
-    info = hdl.asdict(
-        properties={
-            truenas_pylibzfs.ZFSProperty.USED,
-            truenas_pylibzfs.ZFSProperty.USEDBYDATASET,
-            truenas_pylibzfs.ZFSProperty.QUOTA,
-            truenas_pylibzfs.ZFSProperty.REFQUOTA,
-            truenas_pylibzfs.ZFSProperty.AVAILABLE,
-            truenas_pylibzfs.ZFSProperty.MOUNTED,
-            truenas_pylibzfs.ZFSProperty.MOUNTPOINT,
-        },
-        get_user_properties=True,
-    )
-    for propstring, default in TNUserProp.quotas():
-        info['user_properties'].setdefault(propstring, default)
-        try:
-            info['user_propertites'] = int(info['user_properties'][propstring])
-        except Exception:
-            # if we can't parse this (i.e. someone changed something by hand)
-            # we'll play it safe and just default to 0
-            info['user_propertites'] = 0
-
-    if hdl.name == hdl.pool_name:
-        state['pools'][hdl.name] = info['properties']['used']['value'] + info['properties']['available']['value']
-
-    state['datasets'][hdl.name] = info
-    hdl.iter_filesystems(callback=quota_alert_cb, state=state, fast=True)
-    return True
-
-
 class PoolDatasetService(Service):
 
     class Config:
         namespace = 'pool.dataset'
-
-    @private
-    @pass_thread_local_storage
-    def query_for_quota_alert(self, tls):
-        """Called, at time of writing, exclusively
-        by our alert system to inform users of quota
-        thresholds."""
-        state = {"pools": dict(), "datasets": dict()}
-        tls.lzh.iter_root_filesystems(callback=quota_alert_cb, state=state)
-        return state
 
     @api_method(
         PoolDatasetGetQuotaArgs,
