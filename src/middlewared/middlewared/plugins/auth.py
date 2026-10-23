@@ -1151,12 +1151,19 @@ class AuthService(Service):
 
     async def _me(self, app):
         credentials = app.authenticated_credentials
+        session_privilege = None
         if isinstance(credentials, TokenSessionManagerCredentials):
+            if credentials.is_user_session:
+                session_privilege = credentials.user['privilege']
+
             if root_credentials := credentials.token.root_credentials():
                 credentials = root_credentials
 
         if not isinstance(credentials, UserSessionManagerCredentials):
             raise CallError(f'You are logged in using {credentials.class_name()}')
+
+        if session_privilege is None:
+            session_privilege = credentials.user['privilege']
 
         username = credentials.user['username']
 
@@ -1173,7 +1180,7 @@ class AuthService(Service):
 
         return {
             **(await self.middleware.call('user.get_user_obj', {'username': username})),
-            'privilege': credentials.user['privilege'],
+            'privilege': session_privilege,
             'account_attributes': account_attributes
         }
 
