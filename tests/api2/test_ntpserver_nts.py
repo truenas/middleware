@@ -5,7 +5,6 @@ import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.utils import call, mock, ssh
-from middlewared.test.integration.utils.system import reset_systemd_svcs
 from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 CONFIG_FILE = "/etc/chrony/chrony.conf"
@@ -23,22 +22,17 @@ def ntp_servers_removed():
 
     While an NTS server is configured, chronyd only adjusts the clock while one is reachable, so nothing a test adds
     may outlive it. The originals are restored with `force` so that the restore does not depend on reaching them.
-
-    Every change restarts chronyd, and systemd refuses a sixth start within ten seconds, which leaves chronyd stopped.
-    The count is cleared before the test and before the restore, so that chronyd runs for both.
     """
     original = call("system.ntpserver.query")
     for server in original:
         call("system.ntpserver.delete", server["id"])
 
     try:
-        reset_systemd_svcs("chronyd")
         yield
     finally:
         for server in call("system.ntpserver.query"):
             call("system.ntpserver.delete", server["id"])
 
-        reset_systemd_svcs("chronyd")
         for server in original:
             call("system.ntpserver.create", {k: v for k, v in server.items() if k != "id"} | {"force": True})
 

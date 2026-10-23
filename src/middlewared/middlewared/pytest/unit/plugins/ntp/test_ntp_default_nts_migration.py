@@ -6,7 +6,7 @@ import pytest
 import middlewared
 
 MIGRATION = os.path.join(
-    os.path.dirname(middlewared.__file__), "alembic", "versions", "27.0", "2026-10-01_12-00_ntp_nts.py"
+    os.path.dirname(middlewared.__file__), "alembic", "versions", "27.0", "2026-10-23_12-00_ntp_nts.py"
 )
 
 

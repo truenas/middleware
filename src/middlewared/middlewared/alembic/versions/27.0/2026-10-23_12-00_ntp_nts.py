@@ -1,8 +1,8 @@
 """NTS
 
 Revision ID: 04a6293d595a
-Revises: 98358f332844
-Create Date: 2026-10-01 12:00:00.000000+00:00
+Revises: bbce11d3cbd7
+Create Date: 2026-10-23 12:00:00.000000+00:00
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "04a6293d595a"
-down_revision = "98358f332844"
+down_revision = "bbce11d3cbd7"
 branch_labels = None
 depends_on = None
 
