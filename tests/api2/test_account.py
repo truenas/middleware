@@ -661,6 +661,14 @@ def test_set_password_disabled_user():
         assert "password authentication disabled" in str(ve.value), ve.value
 
 
+def test_set_password_synthetic_container_root():
+    """ The synthetic container root account has no stored password hash or history. """
+    with pytest.raises(ValidationErrors) as ve:
+        call("user.set_password", {"username": CONTAINER_ROOT_NAME, "new_password": "NewCovPass1!"})
+
+    assert "user account is locked" in str(ve.value), ve.value
+
+
 def test_set_password_other_user_forbidden():
     with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         with pytest.raises(CallError) as ve:

@@ -83,7 +83,8 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
 
         if not any(
             # Generate this alert an extra day early since we don't want to risk admin lockout
-            "FULL_ADMIN" in acct["roles"] and acct["password_age"] < max_pw_age - 1
+            "FULL_ADMIN" in acct["roles"] and acct["password_age"] is not None
+            and acct["password_age"] < max_pw_age - 1
             for acct in unlocked_local_accounts
         ):
             # Once per day we check whether we've potentially locked out all
@@ -101,7 +102,8 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
         expiring_accounts = ", ".join(
             acct["username"]
             for acct in unlocked_local_accounts
-            if max_pw_age - security.PASSWORD_PROMPT_AGE <= acct["password_age"] < max_pw_age
+            if acct["password_age"] is not None
+            and max_pw_age - security.PASSWORD_PROMPT_AGE <= acct["password_age"] < max_pw_age
         )
         if expiring_accounts:
             alerts.append(Alert(LocalAccountExpiringAlert(accounts=expiring_accounts)))
@@ -110,7 +112,7 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
         expired_accounts = ", ".join(
             acct["username"]
             for acct in unlocked_local_accounts
-            if acct["password_age"] >= max_pw_age
+            if acct["password_age"] is not None and acct["password_age"] >= max_pw_age
         )
         if expired_accounts:
             alerts.append(Alert(LocalAccountExpiredAlert(accounts=expired_accounts)))
