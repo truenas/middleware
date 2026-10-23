@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import Iterator
 import contextlib
 import enum
-import errno
 import os
 import typing
 
@@ -17,10 +16,10 @@ import truenas_os
 
 from middlewared.api.current import FilesystemDirEntry
 
-from .acl import acl_is_present
-from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
+from .acl import acl_is_present, zfs_acl_is_trivial
+from .attrs import zfs_attributes_dump
 from .constants import FileType
-from .stat_x import StatxAttr, StatxEtype
+from .stat_x import STATX_DEFAULT_MASK, StatxAttr, StatxEtype
 from .utils import get_mount_info_for_path, path_in_ctldir
 
 
@@ -75,22 +74,19 @@ def _statx_attr_names(stx_attributes: int) -> list[
     ]
 
 
-def _zfs_attrs_for(fd: int) -> list[
+def _zfs_attrs_for(st: truenas_os.StatxResult) -> list[
     typing.Literal['READONLY', 'HIDDEN', 'SYSTEM', 'ARCHIVE', 'IMMUTABLE', 'NOUNLINK', 'APPENDONLY', 'NODUMP', 'OPAQUE',
                    'AV_QUARANTINED', 'AV_MODIFIED', 'REPARSE', 'OFFLINE', 'SPARSE'
 ]] | None:
-    try:
-        return zfs_attributes_dump(fget_zfs_file_attributes(fd))  # type: ignore[return-value]
-    except OSError as e:
-        # ENOTTY/EINVAL: not a ZFS filesystem.  Match historical None sentinel.
-        if e.errno in (errno.ENOTTY, errno.EINVAL):
-            return None
-        raise
+    # Only ZFS fills STATX_ZFSFLAGS.  Match historical None sentinel for everything else.
+    if not st.stx_mask & truenas_os.STATX_ZFSFLAGS:
+        return None
+    return zfs_attributes_dump(st.stx_zfsflags)  # type: ignore[return-value]
 
 
 @contextlib.contextmanager
 def _readable_meta_fd(item: truenas_os.IterInstance, item_path: str) -> Iterator[int]:
-    """Yield an fd suitable for stat / listxattr / ZFS ioctls on the entry's
+    """Yield an fd suitable for stat / listxattr on the entry's
     target inode.
 
     The three entry shapes the iterator can produce:
@@ -99,7 +95,7 @@ def _readable_meta_fd(item: truenas_os.IterInstance, item_path: str) -> Iterator
     * symlink — ``item.fd`` is O_PATH on the link itself; we want the target,
       so we open ``item_path`` (which follows the link).
     * mountpoint — ``item.fd`` is O_PATH on the mount root.  statx works but
-      listxattr / ioctl return EBADF.  Reopening via ``/proc/self/fd/<fd>``
+      listxattr returns EBADF.  Reopening via ``/proc/self/fd/<fd>``
       upgrades to O_RDONLY through the procfs magic-link, which is race-free
       against concurrent mount-table changes.
     """
@@ -135,10 +131,7 @@ def _build_entry(
         # iter_filesystem_contents gives us O_PATH on the symlink itself.
         # Follow the link (path-based) so stat / xattr / zfs reflect the target.
         try:
-            st = truenas_os.statx(
-                item_path,
-                mask=truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE,
-            )
+            st = truenas_os.statx(item_path, mask=STATX_DEFAULT_MASK)
         except FileNotFoundError:
             return None
     else:
@@ -152,7 +145,9 @@ def _build_entry(
         with _readable_meta_fd(item, item_path) as meta_fd:
             xattrs = None
             acl = None
-            if mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
+            if mask & DirectoryRequestMask.ACL and not mask & DirectoryRequestMask.XATTRS and zfs_acl_is_trivial(st):
+                acl = False
+            elif mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
                 try:
                     xattr_list = os.listxattr(meta_fd)
                 except OSError:
@@ -164,7 +159,7 @@ def _build_entry(
                 if mask & DirectoryRequestMask.ACL:
                     acl = acl_is_present(xattr_list)
 
-            zfs_attrs = _zfs_attrs_for(meta_fd) if mask & DirectoryRequestMask.ZFS_ATTRS else None
+            zfs_attrs = _zfs_attrs_for(st) if mask & DirectoryRequestMask.ZFS_ATTRS else None
     except OSError:
         # Symlink target became unreachable between statx and open, or the
         # mountpoint's procfs reopen failed.  Skip the entry like a broken link.
