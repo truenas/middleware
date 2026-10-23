@@ -280,3 +280,13 @@ def test_zfs_resource_rename_no_unmount_with_force_unmount_is_rejected(rename_te
         })
     assert ve.value.attribute == "zfs.resource.rename"
     assert ve.value.errno == errno.EINVAL
+
+
+def test_zfs_resource_rename_moves_stored_keys(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src, dst = f"{pool}/test_rename_keys", f"{pool}/test_rename_keys_new"
+    call("zfs.resource.create", {"path": src, "encryption": {"key": "0" * 64}})
+    call("zfs.resource.create", {"path": f"{src}/child", "encryption": {"key": "1" * 64}})
+    call("zfs.resource.rename", {"current_name": src, "new_name": dst, "force": True})
+    assert call("zfs.resource.encryption.export_key", {"path": dst}, job=True) == "0" * 64
+    assert call("zfs.resource.encryption.export_key", {"path": f"{dst}/child"}, job=True) == "1" * 64

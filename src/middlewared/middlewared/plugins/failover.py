@@ -1201,6 +1201,17 @@ async def hook_pool_dataset_post_delete_lock(middleware, dataset):
     await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset]})
 
 
+async def hook_pool_dataset_post_rename(middleware, old, new):
+    keys = (await middleware.call('failover.encryption_keys'))['zfs']
+    datasets = [
+        {'name': new + name.removeprefix(old), 'passphrase': passphrase}
+        for name, passphrase in keys.items() if name == old or name.startswith(f'{old}/')
+    ]
+    if datasets:
+        await middleware.call('failover.remove_encryption_keys', {'datasets': [old], 'sync_keys': False})
+        await middleware.call('failover.update_encryption_keys', {'datasets': datasets})
+
+
 async def hook_pool_dataset_change_key(middleware, dataset_data):
     key_format = dataset_data['key_format'].upper()
     if key_format == 'PASSPHRASE' or dataset_data['old_key_format'].upper() == 'PASSPHRASE':
@@ -1349,6 +1360,7 @@ async def setup(middleware):
     middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
     middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete_lock, sync=True)
     middleware.register_hook('dataset.post_lock', hook_pool_dataset_post_delete_lock, sync=True)
+    middleware.register_hook('dataset.post_rename', hook_pool_dataset_post_rename, sync=True)
     middleware.register_hook('dataset.post_unlock', hook_pool_dataset_unlock, sync=True)
     middleware.register_hook('dataset.change_key', hook_pool_dataset_change_key, sync=True)
     middleware.register_hook(

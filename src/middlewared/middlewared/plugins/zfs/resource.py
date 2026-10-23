@@ -51,6 +51,7 @@ from middlewared.api.current import (
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
+from . import encryption_keys as _keys
 from . import path_is_locked_impl as _path_is_locked
 from . import resource_attachments as _attachments
 from . import resource_create as _create
@@ -472,6 +473,8 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def rename_impl(self, tls: Any, data: ZFSResourceRenameArgsData) -> None:
         _ops.rename_impl(tls, data)
+        _keys.rename_keys(self.context, data.current_name, data.new_name)
+        self.middleware.call_hook_sync("dataset.post_rename", data.current_name, data.new_name)
         if not has_internal_path(data.current_name):
             self.middleware.send_event("zfs.resource.list", "REMOVED", id=data.current_name)
         if not has_internal_path(data.new_name):
