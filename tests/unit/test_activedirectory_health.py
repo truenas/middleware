@@ -37,6 +37,9 @@ SAF_PINNED_HOST = "dc-joined.ad.example.com"
 
 SMB_CONFIG = {"workgroup": "AD", "netbiosname": "TRUENAS"}
 
+# What system.ntpserver.domain_clock_advice says on a system whose NTP servers use NTS
+CLOCK_ADVICE = "Correct the domain controller's clock."
+
 # winbindd's view of the local SAM domain SID and the configured server SID. These
 # agree on a healthy system; the stale-SID health check fires when they diverge.
 LOCAL_SAM_SID = "S-1-5-21-1111111111-2222222222-3333333333"
@@ -91,6 +94,8 @@ def harness(saf_cache_file):
                 # (rather than via smb.local_server_sid) so the health check never
                 # synthesizes/persists a random SID as a side effect.
                 return {"cifs_SID": LOCAL_SAM_SID}
+            case "system.ntpserver.domain_clock_advice":
+                return CLOCK_ADVICE
             case _:
                 raise AssertionError(f"unexpected middleware call: {name}")
 
@@ -853,3 +858,45 @@ def test__test_machine_account_password_temp_config_disables_rdns_and_canonicali
     assert captured.get("dns_canonicalize_hostname") == "false", (
         "temp krb5.conf must set dns_canonicalize_hostname=false to mirror NAS-138687"
     )
+
+
+# ---- Clock skew ----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("offset", [400, -400])
+def test__health_check_ad_faults_on_clock_skew_in_either_direction(harness, offset):
+    """
+    Either clock may be the one ahead. Kerberos fails the same way in both cases, and the
+    error carries the advice that fits the system's NTP servers (with NTS ones configured,
+    taking time from the domain controller no longer works).
+    """
+    with patch(
+        "middlewared.plugins.directoryservices_.activedirectory_health_mixin.get_domain_info",
+        return_value=LIBADS_DOMAIN_INFO | {"server_time_offset": offset},
+    ):
+        with pytest.raises(ADHealthError) as exc:
+            harness._health_check_ad()
+
+    assert exc.value.reason == ADHealthCheckFailReason.NTP_EXCESSIVE_SLEW
+    assert exc.value.errmsg.startswith("Time offset from Active Directory domain exceeds maximum permitted value.")
+    assert exc.value.errmsg.endswith(f" {CLOCK_ADVICE}")
+
+
+def test__health_check_ad_reports_clock_skew_without_advice_it_cannot_get(harness):
+    call_sync = harness.middleware.call_sync.side_effect
+
+    def advice_fails(name, *args, **kwargs):
+        if name == "system.ntpserver.domain_clock_advice":
+            raise RuntimeError("system.ntpserver is unavailable")
+        return call_sync(name, *args, **kwargs)
+
+    harness.middleware.call_sync.side_effect = advice_fails
+    with patch(
+        "middlewared.plugins.directoryservices_.activedirectory_health_mixin.get_domain_info",
+        return_value=LIBADS_DOMAIN_INFO | {"server_time_offset": 400},
+    ):
+        with pytest.raises(ADHealthError) as exc:
+            harness._health_check_ad()
+
+    assert exc.value.reason == ADHealthCheckFailReason.NTP_EXCESSIVE_SLEW
+    assert exc.value.errmsg.endswith("This may indicate an NTP misconfiguration.")

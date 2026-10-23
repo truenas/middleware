@@ -3,6 +3,7 @@ import pytest
 
 from middlewared.api.base import BaseModel, SingleLineNonEmptyString, SingleLineString
 from middlewared.api.base.handler.full_admin import full_admin_payload_fields
+from middlewared.api.v28_0_0.system_ntpserver import NTPServerCreate, NTPServerEntry, NTPServerUpdate
 from middlewared.api.v28_0_0.ups import UPSEntry, UPSUpdate, UPSUpdateArgs
 
 # Every UPS field that a template interpolates bare into `ups.conf`, `upsd.users` or `upsmon.conf`. A line
@@ -74,6 +75,34 @@ class TestUPSFields:
 
     def test_a_clean_value_repairs_the_field(self):
         assert UPSUpdate(description="clean").description == "clean"
+
+
+class TestNTPServerFields:
+    """`address` is interpolated bare into a `server` line of `chrony.conf`, which chronyd parses as root."""
+
+    @pytest.mark.parametrize("model", [NTPServerCreate, NTPServerUpdate])
+    @pytest.mark.parametrize("break_", BREAKS)
+    def test_write_models_reject_a_line_break(self, model, break_):
+        with pytest.raises(ValueError, match="Line breaks are not allowed"):
+            model(address=f"pool.ntp.org{break_}pidfile /etc/passwd")
+
+    @pytest.mark.parametrize("model", [NTPServerCreate, NTPServerUpdate])
+    @pytest.mark.parametrize("address", ["pool.ntp.org nts", "pool.ntp.org\tport 1234", " pool.ntp.org"])
+    def test_write_models_reject_whitespace(self, model, address):
+        """chronyd would read whatever follows the whitespace as options of the `server` directive."""
+        with pytest.raises(ValueError, match="String should match pattern"):
+            model(address=address)
+
+    def test_create_rejects_an_empty_address(self):
+        with pytest.raises(ValueError, match="String should have at least 1 character"):
+            NTPServerCreate(address="")
+
+    def test_the_entry_still_reads_a_stored_line_break(self):
+        """`system.ntpserver.update` starts by reading the entry; constraining it would make the row unrepairable."""
+        assert NTPServerEntry(id=1, address="legacy\nvalue")
+
+    def test_a_clean_value_repairs_the_field(self):
+        assert NTPServerUpdate(address="2.pool.ntp.org").address == "2.pool.ntp.org"
 
 
 def test_the_marked_ups_fields_are_still_marked():

@@ -26,6 +26,16 @@ class SystemSecurityEntry(BaseModel):
     enable_gpos_stig: bool = Field(
         description="When set, enables compatibility with the General Purpose Operating System STIG.",
     )
+    require_nts: bool = Field(
+        default=False,
+        description=(
+            "Use only NTP servers with Network Time Security (NTS) to adjust the system clock.\n\n"
+            "The system ignores servers without NTS. This includes servers from DHCP. If no NTS server is reachable, "
+            "the system does not adjust the clock.\n\n"
+            "This option requires at least one configured NTS server. While this option is enabled, the system does "
+            "not save a server without NTS. It also does not delete the last NTS server."
+        ),
+    )
     min_password_age: PositiveInt | None = Field(
         default=None,
         description=(
