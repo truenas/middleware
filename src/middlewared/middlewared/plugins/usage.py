@@ -326,7 +326,9 @@ class UsageService(Service):
         return {'pools': pool_list, 'total_raw_capacity': total_raw_capacity}
 
     async def gather_services(self, context):
-        return {'services': context['services']}
+        # TrueSearch has no "Start Automatically" flag; it runs whenever it is licensed and has shares to index
+        truesearch = {'name': 'truesearch', 'enabled': await self.call2(self.s.truesearch.enabled)}
+        return {'services': context['services'] + [truesearch]}
 
     async def gather_nfs(self, context_unused):
         num_clients = await self.middleware.call('nfs.client_count')
