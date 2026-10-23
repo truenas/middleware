@@ -10,6 +10,12 @@ class WebShareService(SimpleService):
 
     systemd_unit = "truenas-webshare-auth"
     systemd_async_start = True
+    systemd_sidecar_units = [
+        "truenas-webshare-caddy",
+        "truenas-webshare-link",
+        "truenas-webshare-link-caddy",
+        "truenas-webshare-mcp",
+    ]
 
     async def after_start(self):
         await self.call2(self.s.truesearch.configure)
