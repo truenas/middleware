@@ -95,11 +95,15 @@ class CRUDServiceMetabase(ServiceBase):
 
             # GenericCRUDService.query/get_instance use the type-vars `E` and `PK` in
             # their string annotations.  Inject the concrete types so
-            # that check_method_annotations can eval() them
+            # that check_method_annotations can eval() them.  A service may define its own
+            # `query` (e.g. to document it), which leaves `get_instance` inherited from a
+            # different module, so every module we are about to decorate out of needs them.
             if is_generic_crud:
-                mod = sys.modules[klass.query.__module__].__dict__
-                mod['E'] = entry
-                mod['PK'] = entry.model_fields[config.datastore_primary_key].annotation
+                pk = entry.model_fields[config.datastore_primary_key].annotation
+                for method in (klass.query, klass.get_instance):
+                    mod = sys.modules[method.__module__].__dict__
+                    mod['E'] = entry
+                    mod['PK'] = pk
 
             if (
                 any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or

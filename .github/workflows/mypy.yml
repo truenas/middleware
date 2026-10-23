@@ -24,19 +24,7 @@ jobs:
             middlewared/alert/ \
             middlewared/api/base/ \
             middlewared/common/ \
-            middlewared/plugins/account_/group.py \
-            middlewared/plugins/account_/group_builtin.py \
-            middlewared/plugins/account_/group_crud.py \
-            middlewared/plugins/account_/group_members.py \
-            middlewared/plugins/account_/group_obj.py \
-            middlewared/plugins/account_/group_validate.py \
-            middlewared/plugins/account_/privilege.py \
-            middlewared/plugins/account_/privilege_admins.py \
-            middlewared/plugins/account_/privilege_compose.py \
-            middlewared/plugins/account_/privilege_crud.py \
-            middlewared/plugins/account_/privilege_groups.py \
-            middlewared/plugins/account_/privilege_roles.py \
-            middlewared/plugins/account_/privilege_validate.py \
+            middlewared/plugins/account/ \
             middlewared/plugins/acme_protocol/ \
             middlewared/plugins/acme_dns_authenticator/ \
             middlewared/plugins/acme_registration/ \

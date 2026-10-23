@@ -55,7 +55,7 @@ from middlewared.api.current import (
 )
 from middlewared.common.event_source.manager import Subscriber
 from middlewared.event import TypedEventSource
-from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
+from middlewared.plugins.account.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.filesystem_.utils import apply_zfs_attrs_recursive
 from middlewared.plugins.zfs.utils import has_internal_path
@@ -522,7 +522,7 @@ class FilesystemService(Service):
             user: str | None = pwd.getpwuid(st['st'].stx_uid).pw_name
         except KeyError:
             if st['st'].stx_uid == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
-                user = SYNTHETIC_CONTAINER_ROOT['pw_name']  # type: ignore[assignment]
+                user = SYNTHETIC_CONTAINER_ROOT['pw_name']
             else:
                 user = None
 

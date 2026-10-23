@@ -98,8 +98,9 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
-from middlewared.plugins.account_.group import GroupService
-from middlewared.plugins.account_.privilege import PrivilegeService
+from middlewared.plugins.account.group import GroupService
+from middlewared.plugins.account.privilege import PrivilegeService
+from middlewared.plugins.account.user import UserService
 from middlewared.plugins.acme_dns_authenticator import DNSAuthenticatorService as ACMEDNSAuthenticatorService
 from middlewared.plugins.acme_protocol import ACMEProtocolService
 from middlewared.plugins.acme_registration import ACMERegistrationService
@@ -324,6 +325,7 @@ class ServiceContainer(BaseServiceContainer):
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)
         self.usage = UsageService(middleware)
+        self.user = UserService(middleware)
         self.vm = VMService(middleware)
         self.webshare = WebshareService(middleware)
         self.zettarepl = ZettareplService(middleware)
@@ -686,7 +688,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 'catalog',
             ]
             try:
-                return beginning.index(plugin)
+                return beginning.index(plugin.split('.')[0])
             except ValueError:
                 return len(beginning)
         setup_funcs = sorted(setup_funcs, key=sort_key)

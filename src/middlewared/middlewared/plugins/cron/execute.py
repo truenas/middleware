@@ -3,7 +3,7 @@ from __future__ import annotations
 import errno
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import CronJobSchedule, MailSendMessage
+from middlewared.api.current import CronJobSchedule, MailSendMessage, QueryOptions
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.user_context import run_command_with_user_context
 
@@ -45,9 +45,9 @@ def execute_cron_task(context: ServiceContext, job: Job, task_id: int, skip_disa
 
     job.set_progress(85, 'Executed Cron Task')
     if cp.stdout:
-        email = (
-            context.middleware.call_sync('user.query', [['username', '=', cron_task.user]], {'get': True})
-        )['email']
+        email = context.call_sync2(
+            context.s.user.query, [['username', '=', cron_task.user]], QueryOptions(get=True),
+        ).email
         stdout = cp.stdout.decode()
         if email:
             text = (

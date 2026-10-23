@@ -4,7 +4,14 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypedDict
 
-from middlewared.api.current import GroupGetGroupObj, S3Access, S3Grant, S3GrantEntry, S3PrincipalType
+from middlewared.api.current import (
+    GroupGetGroupObj,
+    S3Access,
+    S3Grant,
+    S3GrantEntry,
+    S3PrincipalType,
+    UserGetUserObj,
+)
 from middlewared.service import ValidationErrors
 
 if TYPE_CHECKING:
@@ -57,7 +64,9 @@ async def principal_names(middleware: Middleware, principals: Principals) -> Pri
     users: dict[int, str] = {}
     for uid in principals.uids:
         try:
-            users[uid] = (await middleware.call("user.get_user_obj", {"uid": uid}))["pw_name"]
+            users[uid] = (await middleware.call2(
+                middleware.services.user.get_user_obj, UserGetUserObj(uid=uid),
+            )).pw_name
         except KeyError:
             pass
     groups: dict[int, str] = {}
@@ -105,7 +114,7 @@ async def validate_grants(
             verrors.add(f"{schema}.{i}.xid", f"xid is required for a {principal_type} grant.")
         elif principal_type == "USER":
             try:
-                await middleware.call("user.get_user_obj", {"uid": xid})
+                await middleware.call2(middleware.services.user.get_user_obj, UserGetUserObj(uid=xid))
             except KeyError:
                 verrors.add(f"{schema}.{i}.xid", f"No user with uid {xid} exists.")
         else:

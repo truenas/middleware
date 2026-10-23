@@ -65,12 +65,14 @@ class MailService(GenericConfigService[MailEntry]):
     @private
     async def local_administrators_emails(self) -> list[str]:
         return list(
-            set(
-                user["email"]
-                for user in await self.middleware.call(
-                    "user.query", [["roles", "rin", "FULL_ADMIN"], ["local", "=", True], ["email", "!=", None]]
+            {
+                user.email
+                for user in await self.call2(
+                    self.s.user.query,
+                    [["roles", "rin", "FULL_ADMIN"], ["local", "=", True], ["email", "!=", None]],
                 )
-            )
+                if user.email is not None
+            }
         )
 
     @api_method(

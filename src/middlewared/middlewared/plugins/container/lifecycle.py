@@ -15,7 +15,7 @@ from truenas_pylibvirt import (
 from truenas_pylibvirt import Error as PyLibvirtError
 
 from middlewared.api.current import ContainerEntry, ContainerNICDevice, ContainerStopOptions, ZFSResourceQuery
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
+from middlewared.plugins.account.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
 
@@ -231,10 +231,10 @@ def _build_default_idmap_items(
         ['userns_idmap', 'nin', [0, None]],
         ['roles', '=', []],
     ]
-    users = context.middleware.call_sync('user.query', idmap_filters)
+    users = context.call_sync2(context.s.user.query, idmap_filters)
     groups = context.call_sync2(context.s.group.query, idmap_filters)
 
-    uid_passthroughs = [_resolve_target(u['uid'], u['userns_idmap']) for u in users]
+    uid_passthroughs = [_resolve_target(u.uid, u.userns_idmap) for u in users]
     gid_passthroughs = [_resolve_target(g.gid, g.userns_idmap) for g in groups]
 
     return _build_idmap_items(uid_passthroughs), _build_idmap_items(gid_passthroughs)

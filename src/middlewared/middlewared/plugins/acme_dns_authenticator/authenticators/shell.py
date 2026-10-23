@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from middlewared.api.current import ShellSchemaArgs
+from middlewared.api.current import ShellSchemaArgs, UserGetUserObj
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.user_context import run_command_with_user_context
@@ -47,7 +47,7 @@ class ShellAuthenticator(Authenticator):
         # 3) User can access the script in question
         verrors = ValidationErrors()
         try:
-            await middleware.call('user.get_user_obj', {'username': data['user']})
+            await middleware.call2(middleware.services.user.get_user_obj, UserGetUserObj(username=data['user']))
         except KeyError:
             verrors.add('user', f'Unable to locate {data["user"]!r} user')
 
