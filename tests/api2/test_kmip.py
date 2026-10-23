@@ -322,6 +322,24 @@ def test_kmip_zfs_key_cache_retained_after_push(kmip_certificate, encrypted_data
     wait_for(lambda: call("kmip.kmip_sync_pending") is False)
 
 
+def test_kmip_zfs_key_follows_dataset_rename(kmip_certificate):
+    key = "a" * 64
+    with dataset("kmip_rename") as parent:
+        src, dst = f"{parent}/src", f"{parent}/dst"
+        call("zfs.resource.create", {"path": src, "encryption": {"key": key}})
+        with kmip_enabled(kmip_certificate["id"], manage_zfs_keys=True):
+            wait_for(lambda: encrypted_dataset_row(src)["kmip_uid"])
+            assert encrypted_dataset_row(src)["encryption_key"] is None
+
+            call("zfs.resource.rename", {"current_name": src, "new_name": dst, "force": True})
+            wait_for(lambda: not call("core.get_jobs", [
+                ["method", "=", "kmip.sync_zfs_keys"], ["state", "in", ["WAITING", "RUNNING"]],
+            ]))
+            keys = call("kmip.retrieve_zfs_keys")
+            assert {name: k for name, k in keys.items() if name.startswith(f"{parent}/")} == {dst: key}
+            assert call("zfs.resource.encryption.export_key", {"path": dst}, job=True) == key
+
+
 def test_kmip_sed_keys_pushed_and_pulled(kmip_certificate):
     with global_sed_password() as password, sed_disk_password() as disk_id:
         with kmip_enabled(kmip_certificate["id"], manage_sed_disks=True):
