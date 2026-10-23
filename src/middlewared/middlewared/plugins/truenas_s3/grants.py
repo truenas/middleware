@@ -1,10 +1,3 @@
-"""Grant lists, shared by buckets and the service's global grants.
-
-The datastore holds a grant as a row of three keys, and a query hands
-those rows over untyped. `GrantRow` is what the two functions that read
-them ask for, so that boundary is the last place a grant is a dict.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
@@ -19,8 +12,7 @@ if TYPE_CHECKING:
 
 
 class GrantRow(TypedDict):
-    """A grant as the datastore's JSON column holds it: what `compress`
-    writes from an `S3Grant`, with no name."""
+    """A grant as stored in the datastore's JSON column, without a name."""
 
     principal_type: S3PrincipalType
     xid: int | None
@@ -40,11 +32,8 @@ class Principals:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class PrincipalNames:
-    """The current name of every principal a query's rows name, resolved
-    once each through NSS, which is what the daemon will resolve them
-    through too. An id that does not resolve is absent; it reads as its
-    number, since a display label the daemon never matches on must not
-    fail the row."""
+    """The current name of every principal the rows name, resolved once
+    through NSS. An id that does not resolve is absent."""
 
     users: Mapping[int, str]
     groups: Mapping[int, str]
@@ -56,8 +45,7 @@ class PrincipalNames:
         return self.groups.get(gid, str(gid))
 
     def label(self, principal_type: S3PrincipalType, xid: int | None) -> str:
-        """A grant's display name: the account's, or its number; empty for
-        everyone, who has neither."""
+        """A grant's display name: the account name, its number, or empty for everyone."""
         if principal_type == "USER" and xid is not None:
             return self.user(xid)
         if principal_type == "GROUP" and xid is not None:
@@ -89,18 +77,15 @@ def grant_principals(rows: Iterable[GrantRow]) -> Principals:
 
 
 def label_grants(rows: Iterable[GrantRow], names: PrincipalNames) -> list[S3GrantEntry]:
-    """The stored grants as entries, each carrying its principal's current
-    name for display. The daemon never matches on the name; the xid is the
-    identity."""
+    """The stored grants as entries with each principal's current name."""
     return [
         S3GrantEntry.model_validate({**row, "name": names.label(row["principal_type"], row["xid"])}) for row in rows
     ]
 
 
 def grant_label(grant: S3GrantEntry) -> str:
-    """The quoted NAME of a rendered grant heading. A label the daemon never
-    resolves, but a quote inside it breaks the heading grammar and an empty
-    one is refused, either of which refuses the whole load."""
+    """The quoted NAME of a rendered grant heading. Quotes and newlines are
+    stripped, and an empty label falls back to the xid."""
     label = grant.name.replace('"', "").replace("\n", "").replace("\r", "").strip()
     return label or str(grant.xid)
 

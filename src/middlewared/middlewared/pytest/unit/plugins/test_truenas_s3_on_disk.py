@@ -12,7 +12,9 @@ from middlewared.plugins.truenas_s3.on_disk import (
     CONFIG_BACKUP,
     CONFIG_VERSION,
     LATCH_XATTR,
+    ROOT_XATTR,
     SIDE_TREE,
+    bucket_layout_markers,
     has_latch,
     read_config_backup,
     write_config_backup,
@@ -118,3 +120,46 @@ def test_a_latch_read_that_is_not_enodata_raises(tmp_path, monkeypatch):
     # absence must not be guessed: it would disarm the latch
     with pytest.raises(OSError):
         has_latch(str(tmp_path))
+
+
+def test_the_bucket_layout_markers_are_named_as_found(tmp_path, monkeypatch):
+    store: dict[str, bytes] = {}
+
+    def fgetxattr(fd, name):
+        try:
+            return store[name]
+        except KeyError:
+            raise OSError(errno.ENODATA, "No data available")
+
+    monkeypatch.setattr("truenas_os.fgetxattr", fgetxattr)
+    mount = str(tmp_path)
+    assert bucket_layout_markers(mount) == [], "a dataset that was never a bucket"
+    store[ROOT_XATTR] = b"\x00"
+    assert bucket_layout_markers(mount) == [ROOT_XATTR]
+    store[LATCH_XATTR] = b"\x00"
+    assert bucket_layout_markers(mount) == [ROOT_XATTR, LATCH_XATTR]
+    (tmp_path / SIDE_TREE).mkdir(mode=0o700)
+    assert bucket_layout_markers(mount) == [ROOT_XATTR, LATCH_XATTR, f"{SIDE_TREE}/"]
+
+
+def test_a_side_tree_is_a_directory_or_what_the_service_refuses_as_one(tmp_path, monkeypatch):
+    monkeypatch.setattr("truenas_os.fgetxattr", lambda fd, name: (_ for _ in ()).throw(OSError(errno.ENODATA, "")))
+    mount = str(tmp_path)
+    # a regular file named .truenas_s3 is not a side tree. The service agrees.
+    (tmp_path / SIDE_TREE).write_text("")
+    assert bucket_layout_markers(mount) == []
+    (tmp_path / SIDE_TREE).unlink()
+    # the service's open fails on a symlink named .truenas_s3. The
+    # symlink counts as present.
+    (tmp_path / SIDE_TREE).symlink_to("elsewhere")
+    assert bucket_layout_markers(mount) == [f"{SIDE_TREE}/"]
+
+
+def test_a_marker_read_that_is_not_enodata_raises(tmp_path, monkeypatch):
+    def fgetxattr(fd, name):
+        raise OSError(errno.EIO, "I/O error")
+
+    monkeypatch.setattr("truenas_os.fgetxattr", fgetxattr)
+    # an unreadable xattr is an error, not absence
+    with pytest.raises(OSError):
+        bucket_layout_markers(str(tmp_path))
