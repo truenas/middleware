@@ -69,3 +69,21 @@ def test_failed_destroy_is_audited_as_unsuccessful():
     ):
         with pytest.raises(ValidationError):
             call("zfs.resource.destroy", payload)
+
+
+def test_userspace_set_audit_names_every_id():
+    with dataset("audit_zfs_resource_userspace") as ds:
+        payload = {
+            "path": ds,
+            "quotas": [{"type": "user", "xid": 4000, "quota": 1048576}, {"type": "group", "xid": 4001, "objquota": 10}],
+        }
+        with expect_audit_method_calls(
+            [
+                {
+                    "method": "zfs.resource.userspace.set",
+                    "params": [payload],
+                    "description": f"ZFS resource userspace set {ds} (user:4000, group:4001)",
+                }
+            ]
+        ):
+            call("zfs.resource.userspace.set", payload)

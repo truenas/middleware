@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import errno
-from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import truenas_pylibzfs
@@ -11,7 +10,7 @@ from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
 from middlewared.service_exception import CallError, ValidationError
 
 from . import zvol_utils
-from .create_impl import ZFS_INVALID_INPUT_ERRORS
+from .create_impl import libzfs_error
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
 from .resource_attachments import DELEGATES
@@ -33,16 +32,7 @@ if TYPE_CHECKING:
     from middlewared.service import ServiceContext
 
 SCHEMA = "zfs.resource.set"
-
-
-ZFS_ERRNO = MappingProxyType(
-    {
-        truenas_pylibzfs.ZFSError.EZFS_BUSY: errno.EBUSY,
-        truenas_pylibzfs.ZFSError.EZFS_IO: errno.EIO,
-        truenas_pylibzfs.ZFSError.EZFS_NOSPC: errno.ENOSPC,
-        truenas_pylibzfs.ZFSError.EZFS_PERM: errno.EPERM,
-    }
-)
+NOENT_MESSAGE = "was removed while its properties were being set"
 
 
 def _read(ds: Any, natives: list[str], user: bool) -> dict[str, Any]:
@@ -52,16 +42,6 @@ def _read(ds: Any, natives: list[str], user: bool) -> dict[str, Any]:
         get_source=False,
     )
     return row
-
-
-def _phase_error(
-    path: str, e: Any, attribute: str, invalid_message: str, other_message: str
-) -> CallError | ValidationError:
-    if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
-        return CallError(f"{path!r} was removed while its properties were being set.", errno.ENOENT)
-    if e.code in ZFS_INVALID_INPUT_ERRORS:
-        return ValidationError(attribute, invalid_message, errno.EINVAL)
-    return CallError(other_message, ZFS_ERRNO.get(e.code, errno.EFAULT))
 
 
 def touched_names(data: ZFSResourceSetArgsData) -> tuple[list[str], list[str]]:
@@ -97,26 +77,28 @@ def set_impl(tls: Any, data: ZFSResourceSetArgsData) -> dict[str, Any]:
     try:
         ds = tls.lzh.open_resource(name=path)
     except truenas_pylibzfs.ZFSException as e:
-        raise _phase_error(path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}") from e
+        raise libzfs_error(
+            path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}", NOENT_MESSAGE
+        ) from e
     try:
         if properties:
             try:
                 ds.set_properties(properties=properties)
             except truenas_pylibzfs.ZFSException as e:
-                raise _phase_error(
-                    path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}"
+                raise libzfs_error(
+                    path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}", NOENT_MESSAGE
                 ) from e
         if data.user_properties:
             try:
                 ds.set_user_properties(user_properties=data.user_properties)
             except truenas_pylibzfs.ZFSException as e:
-                raise _phase_error(path, e, f"{SCHEMA}.user_properties", f"{e}", f"{e}") from e
+                raise libzfs_error(path, e, f"{SCHEMA}.user_properties", f"{e}", f"{e}", NOENT_MESSAGE) from e
         for name in data.inherit:
             try:
                 ds.inherit_property(property=name)
             except truenas_pylibzfs.ZFSException as e:
                 message = f"Failed to inherit {name!r} on {path!r}: {e}"
-                raise _phase_error(path, e, f"{SCHEMA}.inherit.{name}", message, message) from e
+                raise libzfs_error(path, e, f"{SCHEMA}.inherit.{name}", message, message, NOENT_MESSAGE) from e
     except ValueError as e:
         raise CallError(
             f"ZFS rejected a property name or value for {path!r} that middleware accepted: {e}", errno.EINVAL
