@@ -1,8 +1,9 @@
-import hashlib
 import subprocess
 import sys
+import traceback
 
 from middlewared.plugins.system_vendor.vendor import get_vendor
+from middlewared.scripts.hexos_identity import selected_identity
 from middlewared.utils.vendor import Vendors
 
 
@@ -20,10 +21,11 @@ def load_envvars(envvars_file: str):
 
 def get_hostid() -> str | None:
     try:
-        with open("/etc/hostid", "rb") as f:
-            return hashlib.file_digest(f, "sha256").hexdigest()
+        return selected_identity()[1]
     except Exception:
-        pass
+        sys.stderr.write('HexOS identity: cannot select a valid installation identity; '
+                         'run truenas-hexos-identity status\n')
+        traceback.print_exc(file=sys.stderr)
 
 
 def start_hexos_websocat():

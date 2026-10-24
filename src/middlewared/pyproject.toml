@@ -22,6 +22,7 @@ setup_cgroups = "middlewared.scripts.setup_cgroups:main"
 middlewared = "middlewared.main:main"
 wait_on_disks = "middlewared.scripts.wait_on_disks:main"
 start_vendor_service = "middlewared.scripts.vendor_service:main"
+truenas-hexos-identity = "middlewared.scripts.hexos_identity:main"
 
 [tool.mypy]
 plugins = [

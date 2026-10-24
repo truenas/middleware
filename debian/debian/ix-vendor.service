@@ -11,6 +11,7 @@ TimeoutStartSec=30
 RestartSec=10
 ExecStart=-/usr/bin/start_vendor_service
 StandardOutput=null
+StandardError=journal
 
 [Install]
 WantedBy=truenas.target
