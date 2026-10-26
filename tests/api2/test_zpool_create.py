@@ -316,8 +316,15 @@ REJECTED = [
         1,
         lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]},
         {"filesystem_properties": {"compression": "bogus"}},
-        [("zpool.create.filesystem_properties", "'compression' must be one of")],
+        [("data.filesystem_properties.compression", "Input should be")],
         id="bad-filesystem-property-value",
+    ),
+    pytest.param(
+        1,
+        lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]},
+        {"filesystem_properties": {"recordsize": "3K"}},
+        [("zpool.create.filesystem_properties", "'recordsize' must be power of 2 from 512B to")],
+        id="filesystem-property-value-zfs-refuses",
     ),
     pytest.param(
         1,

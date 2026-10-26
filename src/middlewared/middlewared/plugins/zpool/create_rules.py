@@ -122,6 +122,11 @@ def resolve_create_request(data: ZpoolCreate) -> tuple[ZpoolCreateProperties, Zp
         properties.dedup_table_quota = "auto"
 
     fs = data.filesystem_properties.model_copy()
+    # a new root has no limit, and ZFS refuses a zero quota or refquota
+    if fs.quota == 0:
+        fs.quota = None
+    if fs.refquota == 0:
+        fs.refquota = None
     if fs.atime is None:
         fs.atime = "off"
     if fs.acltype is None:
@@ -141,7 +146,7 @@ def resolve_create_request(data: ZpoolCreate) -> tuple[ZpoolCreateProperties, Zp
         fs.mountpoint = f"/{data.name}"
     if fs.recordsize is None and has_draid(data):
         # small blocks perform poorly on dRAID vdevs
-        fs.recordsize = "1M"
+        fs.recordsize = 1024 * 1024
     return properties, fs
 
 

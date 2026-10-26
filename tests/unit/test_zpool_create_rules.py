@@ -94,23 +94,19 @@ def test_vdev_type_vocabulary_is_native(vtype):
 
 
 @pytest.mark.parametrize(
-    "prop",
+    "prop,expected",
     [
-        {"compression": "zstd-fast-500"},
-        {"compression": "gzip-9"},
-        {"dedup": "sha256,verify"},
-        {"recordsize": "128K"},
-        {"quota": "none"},
-        {"special_small_blocks": "64K"},
-        {"copies": "2"},
-        # values ZFS accepts but a hand-kept vocabulary would not know; the binding's dry run judges them
-        {"acltype": "disabled"},
-        {"aclinherit": "secure"},
+        ({"compression": "zstd-fast-500"}, {"compression": "zstd-fast-500"}),
+        ({"compression": "gzip-9"}, {"compression": "gzip-9"}),
+        ({"dedup": "sha256,verify"}, {"dedup": "sha256,verify"}),
+        ({"recordsize": "128K"}, {"recordsize": "131072"}),
+        ({"special_small_blocks": "64K"}, {"special_small_blocks": "65536"}),
+        ({"copies": 2}, {"copies": "2"}),
     ],
 )
-def test_filesystem_property_values_pass_through_the_model(prop):
+def test_filesystem_property_values_reach_zfs_as_zfs_resource_canonicalizes_them(prop, expected):
     data = request(filesystem_properties=prop)
-    assert properties_to_zfs(data.filesystem_properties) == prop
+    assert properties_to_zfs(data.filesystem_properties) == expected
 
 
 def test_public_properties_are_accepted():
@@ -150,16 +146,21 @@ def test_defaults_fill_only_unset_fields():
     }
 
 
+def test_zero_quota_and_refquota_are_not_sent():
+    _, fs = resolve_create_request(request(filesystem_properties={"quota": "none", "refquota": 0}))
+    assert not {"quota", "refquota"} & properties_to_zfs(fs).keys()
+
+
 def test_draid_defaults_recordsize():
     data = request(topology={"data": [{"type": "draid1", "disks": ["a", "b", "c"], "draid_data_disks": 1}]})
     _, fs = resolve_create_request(data)
-    assert fs.recordsize == "1M"
+    assert fs.recordsize == 1024 * 1024
     data = request(
         topology={"data": [{"type": "draid1", "disks": ["a", "b", "c"], "draid_data_disks": 1}]},
         filesystem_properties={"recordsize": "512K"},
     )
     _, fs = resolve_create_request(data)
-    assert fs.recordsize == "512K"
+    assert fs.recordsize == 512 * 1024
 
 
 def test_dedup_table_quota_defaults_to_auto_with_dedup():

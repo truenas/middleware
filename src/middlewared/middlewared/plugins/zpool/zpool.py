@@ -168,9 +168,10 @@ class ZpoolService(Service):
 
         ``topology`` is the vdev grammar of ``zpool create`` keyed the way :method:`zpool.query` reports it,
         ``properties`` are ``-o`` pool properties and ``filesystem_properties`` are ``-O`` root filesystem
-        properties, all given by native name and handed to ZFS as-is. Fields left null take the TrueNAS
-        defaults. The pool is created through ``truenas_pylibzfs`` and returned as :method:`zpool.query`
-        reports it, so the entry reflects the values as canonicalized by ZFS, not the input.
+        properties, all given by native name; root filesystem properties take the value types
+        :method:`zfs.resource.create` accepts. Fields left null take the TrueNAS defaults. The pool is created
+        through ``truenas_pylibzfs`` and returned as :method:`zpool.query` reports it, so the entry reflects
+        the values as canonicalized by ZFS, not the input.
 
         Every disk referenced by the topology is formatted first, so a disk that is currently in use fails
         validation before any disk is touched. On an HA system this must run on the active controller.
