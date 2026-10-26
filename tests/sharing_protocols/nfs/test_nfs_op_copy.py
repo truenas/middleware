@@ -38,7 +38,7 @@ RECORDSIZE_PROP = {"recordsize": "128K"}
 
 def _bcloneused():
     res = call(
-        "zpool.query_impl",
+        "zpool.query",
         {"pool_names": [pool], "properties": ["bcloneused"]},
     )
     return int(res[0]["properties"]["bcloneused"]["value"])
