@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from middlewared.api.current import ZpoolQuery
 from datetime import timedelta
 from typing import Any
 
@@ -13,6 +12,7 @@ from middlewared.alert.base import (
     UnavailableException,
 )
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.api.current import ZpoolQuery
 
 
 @dataclass(kw_only=True)

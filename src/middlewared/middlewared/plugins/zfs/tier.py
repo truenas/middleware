@@ -27,7 +27,6 @@ from truenas_zfstierd_common import (
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ZpoolQuery,
     ZFSResourceQuery,
     ZFSResourceSetArgsData,
     ZFSResourceSetProperties,
@@ -52,6 +51,7 @@ from middlewared.api.current import (
     ZfsTierRewriteJobStatusResult,
     ZfsTierUpdateArgs,
     ZfsTierUpdateResult,
+    ZpoolQuery,
 )
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.event import TypedEventSource

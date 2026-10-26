@@ -4,13 +4,13 @@ from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    ZpoolQuery,
     DiskEntry,
     DiskQueryAddedEvent,
     DiskQueryChangedEvent,
     DiskQueryRemovedEvent,
     DiskUpdateArgs,
     DiskUpdateResult,
+    ZpoolQuery,
 )
 from middlewared.service import CRUDService, ValidationError, filterable_api_method, private
 import middlewared.sqlalchemy as sa

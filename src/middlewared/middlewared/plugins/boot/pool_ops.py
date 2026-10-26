@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from middlewared.service import CallError
 from middlewared.api.current import ZpoolQuery
+from middlewared.service import CallError
 from middlewared.utils import run
 from middlewared.utils.boot.models import BootFormatOptions, BootUpdateInitramfsOptions
 from middlewared.utils.boot.pool import boot_pool

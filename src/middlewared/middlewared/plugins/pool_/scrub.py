@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Literal
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    ZpoolScrubRun,
     PoolScanChangedEvent,
     PoolScrubCreateArgs,
     PoolScrubCreateResult,
@@ -17,6 +16,7 @@ from middlewared.api.current import (
     PoolScrubScrubResult,
     PoolScrubUpdateArgs,
     PoolScrubUpdateResult,
+    ZpoolScrubRun,
 )
 from middlewared.plugins.zpool.exceptions import ZpoolException
 from middlewared.plugins.zpool.scrub_impl import scrub_pool

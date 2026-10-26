@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from middlewared.api.current import ZpoolQuery
 from typing import Any
 
 from truenas_zfstierd_client import enum_jobs, get_info
@@ -13,6 +12,7 @@ from middlewared.alert.base import (
     AlertLevel,
     ThreadedAlertSource,
 )
+from middlewared.api.current import ZpoolQuery
 from middlewared.plugins.zfs.utils import special_vdev_thresholds
 
 

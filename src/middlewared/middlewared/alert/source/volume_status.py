@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from middlewared.api.current import ZpoolQuery
 from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
+from middlewared.api.current import ZpoolQuery
 from middlewared.plugins.zfs_.zfs_events import VOLUME_STATUS_ALERTS
 from middlewared.utils.zfs import query_imported_fast_impl
 
