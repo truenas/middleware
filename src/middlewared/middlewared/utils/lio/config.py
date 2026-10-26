@@ -147,6 +147,19 @@ def _read(path: pathlib.Path) -> str:
         return ""
 
 
+def _rmdir(path: pathlib.Path):
+    """rmdir a configfs directory, logging a failure. Teardown carries on past
+    one: the kernel refuses with EBUSY while something still depends on the
+    item (a session or a PR registration holding a mapped LUN, for example),
+    and the directories above it then fail with ENOTEMPTY."""
+    try:
+        path.rmdir()
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        logger.warning("lio: failed to remove %s: %s", path, e)
+
+
 def _wait_for(path: pathlib.Path, retries: int = 10) -> bool:
     """Wait for a configfs file to appear after creating a directory."""
     while not path.exists() and retries > 0:
@@ -471,14 +484,8 @@ def _delete_storage_object(so_dir: pathlib.Path):
     if alua_dir.exists():
         for group_dir in list(alua_dir.iterdir()):
             if group_dir.is_dir() and group_dir.name != ALUA_DEFAULT_GROUP:
-                try:
-                    group_dir.rmdir()
-                except OSError:
-                    pass
-    try:
-        so_dir.rmdir()
-    except OSError:
-        pass
+                _rmdir(group_dir)
+    _rmdir(so_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -1023,14 +1030,8 @@ def _delete_acl(acl_dir: pathlib.Path):
             for child in d.iterdir():
                 if child.is_symlink():
                     child.unlink()
-            try:
-                d.rmdir()
-            except OSError:
-                pass
-    try:
-        acl_dir.rmdir()
-    except OSError:
-        pass
+            _rmdir(d)
+    _rmdir(acl_dir)
 
 
 def _delete_iscsi_tpg(tpg_dir: pathlib.Path):
@@ -1050,20 +1051,14 @@ def _delete_iscsi_tpg(tpg_dir: pathlib.Path):
                 for child in d.iterdir():
                     if child.is_symlink():
                         child.unlink()
-                try:
-                    d.rmdir()
-                except OSError:
-                    pass
+                _rmdir(d)
 
     # Remove portals
     np_dir = tpg_dir / "np"
     if np_dir.exists():
         for d in list(np_dir.iterdir()):
             if d.is_dir():
-                try:
-                    d.rmdir()
-                except OSError:
-                    pass
+                _rmdir(d)
 
     # Disable and remove TPG
     enable = tpg_dir / "enable"
@@ -1072,10 +1067,7 @@ def _delete_iscsi_tpg(tpg_dir: pathlib.Path):
             _write(enable, "0")
         except OSError:
             pass
-    try:
-        tpg_dir.rmdir()
-    except OSError:
-        pass
+    _rmdir(tpg_dir)
 
 
 def _delete_iscsi_target(target_dir: pathlib.Path):
@@ -1083,10 +1075,7 @@ def _delete_iscsi_target(target_dir: pathlib.Path):
     for d in list(target_dir.iterdir()):
         if d.is_dir() and d.name.startswith("tpgt_"):
             _delete_iscsi_tpg(d)
-    try:
-        target_dir.rmdir()
-    except OSError:
-        pass
+    _rmdir(target_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -1317,10 +1306,7 @@ def _delete_fc_target(target_dir: pathlib.Path):
     for d in list(target_dir.iterdir()):
         if d.is_dir() and d.name.startswith("tpgt_"):
             _delete_iscsi_tpg(d)
-    try:
-        target_dir.rmdir()
-    except OSError:
-        pass
+    _rmdir(target_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -1449,20 +1435,14 @@ def teardown_lio_config():
         for entry in list(ISCSI_DIR.iterdir()):
             if entry.is_dir() and entry.name != "discovery_auth":
                 _delete_iscsi_target(entry)
-        try:
-            ISCSI_DIR.rmdir()
-        except OSError:
-            pass
+        _rmdir(ISCSI_DIR)
 
     # FC targets
     if FC_DIR.exists():
         for entry in list(FC_DIR.iterdir()):
             if entry.is_dir():
                 _delete_fc_target(entry)
-        try:
-            FC_DIR.rmdir()
-        except OSError:
-            pass
+        _rmdir(FC_DIR)
 
     # Storage objects -- remove SOs, then the backstore group dir, then core.
     # The kernel holds a module reference on target_core_iblock / target_core_file
@@ -1474,11 +1454,10 @@ def teardown_lio_config():
             for entry in list(backstore.iterdir()):
                 if entry.is_dir():
                     _delete_storage_object(entry)
-            try:
-                backstore.rmdir()
-            except OSError:
-                pass
+            _rmdir(backstore)
     if core_dir.exists():
+        # A kernel default group: configfs refuses rmdir with EPERM, so a
+        # failure here is expected and not logged.
         try:
             core_dir.rmdir()
         except OSError:
