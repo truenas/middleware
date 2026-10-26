@@ -6,9 +6,10 @@ import errno
 from types import SimpleNamespace
 
 import pytest
+from truenas_pylibzfs import constants
 
 from middlewared.api.base.handler.accept import accept_params
-from middlewared.api.current import ZpoolCreate, ZpoolCreateArgs
+from middlewared.api.current import ZpoolCreate, ZpoolCreateArgs, ZpoolCreateTopology
 from middlewared.plugins.zpool.create_impl import (
     assemble_create_pool_vdev_kwargs,
     binding_location,
@@ -91,6 +92,11 @@ def test_creation_only_properties_are_rejected(prop, value):
 def test_vdev_type_vocabulary_is_native(vtype):
     with pytest.raises(ValidationErrors):
         request(topology={"data": [{"type": vtype, "disks": ["sda"]}]})
+
+
+def test_data_description_quotes_the_binding_width_limits():
+    description = ZpoolCreateTopology.model_fields["data"].description
+    assert f"capped at {constants.MAX_MIRROR_WIDTH} disks and RAIDZ at {constants.MAX_RAIDZ_WIDTH}." in description
 
 
 @pytest.mark.parametrize(

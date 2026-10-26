@@ -1,7 +1,6 @@
 from typing import Annotated, Literal
 
 from pydantic import Field, PositiveInt
-from truenas_pylibzfs import constants
 
 from middlewared.api.base import BaseModel, Excluded, NonEmptyString, Private, excluded_field
 
@@ -265,7 +264,7 @@ class ZpoolCreateTopology(BaseModel):
         min_length=1,
         description=(
             "Storage vdevs. Unless `force_topology` is set they must share one type and width, and mirrors are "
-            f"capped at {constants.MAX_MIRROR_WIDTH} disks and RAIDZ at {constants.MAX_RAIDZ_WIDTH}."
+            "capped at 4 disks and RAIDZ at 15."
         ),
     )
     log: list[ZpoolCreateVdev] = Field(default=[], description="ZFS Intent Log (SLOG) vdevs: `disk` or `mirror`.")
