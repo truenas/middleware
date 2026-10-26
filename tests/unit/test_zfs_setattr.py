@@ -1,3 +1,4 @@
+import contextlib
 import ctypes
 import errno
 import fcntl
@@ -9,11 +10,13 @@ import time
 
 import pytest
 import truenas_os
-from truenas_os_pyutils.mount import statmount
+from truenas_os_pyutils.mount import statmount, umount
 from truenas_os_pyutils.namespace import idmap_userns
 import truenas_pylibzfs
 
 SETATTR = "system.truenas_setattr"
+NFS4ACL = "system.nfs4_acl_xdr"
+POSIXACL = "system.posix_acl_access"
 MODE, UID, GID, ATIME, MTIME, BTIME, DOS, ACL = (1 << i for i in range(8))
 UTIME_NOW = (1 << 30) - 1
 UTIME_OMIT = (1 << 30) - 2
@@ -46,6 +49,17 @@ WRITE = truenas_os.NFS4Perm.WRITE_DATA
 WRITE_ATTRS = truenas_os.NFS4Perm.WRITE_ATTRIBUTES
 WRITE_OWNER = truenas_os.NFS4Perm.WRITE_OWNER
 WRITE_ACL = truenas_os.NFS4Perm.WRITE_ACL
+
+RW = truenas_os.POSIXPerm.READ | truenas_os.POSIXPerm.WRITE
+POSIX_ACL = truenas_os.POSIXACL.from_aces(
+    [
+        truenas_os.POSIXAce(truenas_os.POSIXTag.USER_OBJ, RW),
+        truenas_os.POSIXAce(truenas_os.POSIXTag.USER, RW, OTHER),
+        truenas_os.POSIXAce(truenas_os.POSIXTag.GROUP_OBJ, truenas_os.POSIXPerm.READ),
+        truenas_os.POSIXAce(truenas_os.POSIXTag.MASK, RW),
+        truenas_os.POSIXAce(truenas_os.POSIXTag.OTHER, truenas_os.POSIXPerm.READ),
+    ]
+)
 
 names = itertools.count()
 
@@ -237,7 +251,7 @@ def allow(path, who, perms):
 
 
 def acl_bytes(path):
-    return os.getxattr(path, "system.nfs4_acl_xdr")
+    return os.getxattr(path, NFS4ACL)
 
 
 @pytest.fixture(scope="module")
@@ -438,6 +452,13 @@ def test_birth_time(folder, role, mode, expected):
         assert stat(path)["btime"] == ns(T1)
 
 
+def test_birth_time_now(folder):
+    path = mk(folder)
+    assert run_as("owner", setter(path, pack(BTIME, btime=T1))) == 0
+    assert run_as("owner", setter(path, pack(BTIME, btime=(0, UTIME_NOW)))) == 0
+    assert abs(stat(path)["btime"] - time.time_ns()) < 10**9
+
+
 def test_older_mtime_lowers_birth_time(folder):
     a, b = twins(folder)
     assert run_as("owner", lambda: os.utime(a, ns=(ns(T2), ns(T0)))) == 0
@@ -523,9 +544,11 @@ def test_immutable_bits_need_cap_linux_immutable(folder, bit, role, expected):
         clear_dos(a, bit)
 
 
-def test_reparse_refused(folder):
+def test_reparse(folder):
     path = mk(folder)
     assert run_as("owner", setter(path, pack(DOS, dos_set=ZFS.REPARSE))) == errno.EPERM
+    assert run_as("owner", setter(path, pack(DOS, dos_clear=ZFS.REPARSE))) == 0
+    assert run_as("root", setter(path, pack(DOS, dos_clear=VISIBLE))) == 0
 
 
 def test_opaque_unsupported(folder):
@@ -615,11 +638,14 @@ def test_xattr_create_flag_refused(nfs4_folder):
     assert run_as("owner", setter(path, pack(MODE, 0o600, 0o7777), os.XATTR_CREATE)) == errno.EINVAL
 
 
-def test_omitted_times_change_nothing(nfs4_folder):
+@pytest.mark.parametrize("role", ["owner", "other"])
+def test_omitted_times_change_nothing(nfs4_folder, role):
     path = mk(nfs4_folder)
     before = stat(path)
-    assert run_as("owner", setter(path, pack(ATIME | MTIME, atime=(0, UTIME_OMIT), mtime=(0, UTIME_OMIT)))) == 0
-    assert (stat(path)["atime"], stat(path)["mtime"]) == (before["atime"], before["mtime"])
+    time.sleep(0.05)
+    omit = pack(ATIME | MTIME, atime=(0, UTIME_OMIT), mtime=(0, UTIME_OMIT))
+    assert run_as(role, setter(path, omit)) == 0
+    assert stat(path) == before
 
 
 def test_never_read_or_listed(nfs4_folder):
@@ -646,22 +672,56 @@ def test_mode_leaves_acl_as_chmod_does(request, acl_folder, expected):
 
 
 def test_mode_leaves_posix_acl_as_chmod_does(posix_folder):
-    rw = truenas_os.POSIXPerm.READ | truenas_os.POSIXPerm.WRITE
-    acl = truenas_os.POSIXACL.from_aces(
-        [
-            truenas_os.POSIXAce(truenas_os.POSIXTag.USER_OBJ, rw),
-            truenas_os.POSIXAce(truenas_os.POSIXTag.USER, rw, OTHER),
-            truenas_os.POSIXAce(truenas_os.POSIXTag.GROUP_OBJ, truenas_os.POSIXPerm.READ),
-            truenas_os.POSIXAce(truenas_os.POSIXTag.MASK, rw),
-            truenas_os.POSIXAce(truenas_os.POSIXTag.OTHER, truenas_os.POSIXPerm.READ),
-        ]
-    )
     a, b = twins(posix_folder)
     for path in (a, b):
-        os.setxattr(path, "system.posix_acl_access", acl.access_bytes())
+        os.setxattr(path, POSIXACL, POSIX_ACL.access_bytes())
     assert run_as("owner", lambda: os.chmod(a, 0o640)) == 0
     assert run_as("owner", setter(b, pack(MODE, 0o640, 0o7777))) == 0
-    assert os.getxattr(a, "system.posix_acl_access") == os.getxattr(b, "system.posix_acl_access")
+    assert os.getxattr(a, POSIXACL) == os.getxattr(b, POSIXACL)
+
+
+@contextlib.contextmanager
+def overlay(folder):
+    lower, upper, work, merged = (os.path.join(folder, d) for d in ("lower", "upper", "work", "merged"))
+    for d in (lower, upper, work, merged):
+        os.mkdir(d)
+    libc = ctypes.CDLL(None, use_errno=True)
+    opts = f"lowerdir={lower},upperdir={upper},workdir={work}".encode()
+    if libc.mount(b"overlay", merged.encode(), b"overlay", ctypes.c_ulong(0), opts) != 0:
+        raise OSError(ctypes.get_errno(), "mount overlay")
+    try:
+        yield lower, upper, merged
+    finally:
+        umount(merged)
+
+
+@pytest.mark.parametrize("role", ["owner", "other", "root"])
+def test_overlay_refuses_setattr(folder, role):
+    with overlay(folder) as (lower, upper, merged):
+        path = mk(lower)
+        name = os.path.basename(path)
+        assert run_as(role, setter(os.path.join(merged, name), pack(MODE, 0o600, 0o7777))) == errno.EOPNOTSUPP
+        assert stat(path)["mode"] == 0o644
+        assert not os.path.exists(os.path.join(upper, name))
+
+
+def test_overlay_hides_nfs4_acl(nfs4_folder):
+    with overlay(nfs4_folder) as (lower, upper, merged):
+        path = os.path.join(merged, os.path.basename(mk(lower)))
+        assert run_as("owner", lambda: os.getxattr(path, NFS4ACL)) == errno.EOPNOTSUPP
+        assert run_as("owner", lambda: os.setxattr(path, NFS4ACL, acl_bytes(mk(lower)))) == errno.EOPNOTSUPP
+        assert NFS4ACL not in os.listxattr(path)
+
+
+def test_overlay_passes_other_xattrs(posix_folder):
+    with overlay(posix_folder) as (lower, upper, merged):
+        plain = mk(lower)
+        path = os.path.join(merged, os.path.basename(mk(lower)))
+        os.setxattr(path, "user.x", b"1")
+        assert os.getxattr(path, "user.x") == b"1"
+        for p in (plain, path):
+            os.setxattr(p, POSIXACL, POSIX_ACL.access_bytes())
+        assert os.getxattr(path, POSIXACL) == os.getxattr(plain, POSIXACL)
 
 
 @pytest.fixture
