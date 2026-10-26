@@ -22,7 +22,7 @@ def validate_quotas(data: ZFSResourceUserspaceSetArgsData) -> None:
         attribute = f"{SCHEMA_SET}.quotas.{i}"
         if q.quota is None and q.objquota is None:
             raise ValidationError(attribute, "At least one of 'quota' or 'objquota' must be given.", errno.EINVAL)
-        if q.type != "project" and q.xid == 0:
+        if q.xid == 0:
             raise ValidationError(f"{attribute}.xid", f"Quotas cannot be set on {q.type} id 0.", errno.EINVAL)
         if (q.type, q.xid) in seen:
             raise ValidationError(

@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal
 
-from pydantic import BeforeValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field
 
 from middlewared.api.base import BaseModel, NonEmptyString, UniqueList, ZFSSpaceLimit
 
@@ -16,7 +16,8 @@ __all__ = (
 )
 
 
-UserspaceType = Literal["user", "group", "project"]
+UserspaceType = Literal["user", "group"]
+UINT64_MAX = 2**64 - 1
 
 
 def _obj_quota(value: Any) -> Any:
@@ -25,7 +26,14 @@ def _obj_quota(value: Any) -> Any:
     return value
 
 
-ObjQuota = Annotated[int, BeforeValidator(_obj_quota), Field(ge=0)]
+def _fits_u64(value: int) -> int:
+    if value > UINT64_MAX:
+        raise ValueError(f"Must not exceed {UINT64_MAX}.")
+    return value
+
+
+Quota = Annotated[ZFSSpaceLimit, AfterValidator(_fits_u64)]
+ObjQuota = Annotated[int, BeforeValidator(_obj_quota), Field(ge=0), AfterValidator(_fits_u64)]
 
 
 class ZFSResourceUserspaceQuery(BaseModel):
@@ -37,15 +45,16 @@ class ZFSResourceUserspaceQuery(BaseModel):
         ),
     )
     types: UniqueList[UserspaceType] = Field(
+        default=["user", "group"],
         min_length=1,
-        description="Kinds of userspace accounting to read: per user, per group or per project.",
+        description="Kinds of userspace accounting to read. Defaults to both users and groups.",
     )
 
 
 class ZFSResourceUserspaceEntry(BaseModel):
     dataset: str = Field(description="Path of the filesystem the row belongs to.")
-    type: UserspaceType = Field(description="Whether `xid` is a user, group or project id.")
-    xid: int = Field(description="The numeric user, group or project id. Names are not resolved.")
+    type: UserspaceType = Field(description="Whether `xid` is a user or group id.")
+    xid: int = Field(description="The numeric user or group id. Names are not resolved.")
     used: int = Field(description="Bytes charged to `xid`. 0 means none.")
     quota: int = Field(description="Space limit of `xid` in bytes. 0 means no limit.")
     objused: int = Field(description="Number of objects charged to `xid`. 0 means none.")
@@ -61,9 +70,9 @@ class ZFSResourceUserspaceListResult(BaseModel):
 
 
 class ZFSResourceUserspaceQuota(BaseModel):
-    type: UserspaceType = Field(description="Whether `xid` is a user, group or project id.")
-    xid: int = Field(ge=0, le=4294967295, description="The numeric user, group or project id.")
-    quota: ZFSSpaceLimit | None = Field(
+    type: UserspaceType = Field(description="Whether `xid` is a user or group id.")
+    xid: int = Field(ge=0, le=4294967295, description="The numeric user or group id.")
+    quota: Quota | None = Field(
         default=None,
         description=(
             "Space limit, as a byte count or a size string such as '10G'. 0 or 'none' removes the limit. Null leaves "

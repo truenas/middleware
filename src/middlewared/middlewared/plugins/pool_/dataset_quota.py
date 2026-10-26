@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 import errno
-from typing import Any
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -16,7 +15,7 @@ from middlewared.api.current import (
     ZFSResourceUserspaceQuery,
     ZFSResourceUserspaceSetArgsData,
 )
-from middlewared.plugins.pool_.snapshot import rekey_validation_error
+from middlewared.plugins.pool_.utils import rekey_validation_error
 from middlewared.service import Service
 from middlewared.service_exception import ValidationError
 from middlewared.utils.filter_list import filter_list
@@ -50,15 +49,23 @@ def userspace_rows_to_legacy(rows, quota_type):
 
 
 @dataclass(slots=True)
+class UserspaceItem:
+    type: str
+    xid: int
+    row: int
+    """Index of the first legacy row for this type and id, where an error on the id is reported."""
+    limits: dict[str, tuple[int, int]] = field(default_factory=dict)
+    """`quota` or `objquota` mapped to its value and the index of the legacy row that last set it."""
+
+    def payload(self):
+        return {'type': self.type, 'xid': self.xid} | {name: value for name, (value, _) in self.limits.items()}
+
+
+@dataclass(slots=True)
 class SetQuotaPlan:
-    items: list[dict[str, Any]] = field(default_factory=list)
-    props: dict[str, int] = field(default_factory=dict)
-    first_index: list[int] = field(default_factory=list)
-    """Index of the first legacy row that contributed to each item."""
-    field_index: dict[tuple[int, str], int] = field(default_factory=dict)
-    """Index of the legacy row that last set an item's `quota` or `objquota`."""
-    legacy_type: list[str] = field(default_factory=list)
-    prop_index: dict[str, int] = field(default_factory=dict)
+    items: list[UserspaceItem] = field(default_factory=list)
+    props: dict[str, tuple[int, int]] = field(default_factory=dict)
+    """Dataset property mapped to its value and the index of the legacy row that last set it."""
 
 
 def translate_set_quota(quotas):
@@ -69,21 +76,19 @@ def translate_set_quota(quotas):
     for i, q in enumerate(quotas):
         value = q['quota_value'] or 0
         if q['quota_type'] == 'DATASET':
-            name = q['id'].lower()
-            plan.props[name] = value
-            plan.prop_index[name] = i
+            plan.props[q['id'].lower()] = (value, i)
             continue
 
         type_ = 'user' if q['quota_type'].startswith('USER') else 'group'
-        limit = 'objquota' if q['quota_type'].endswith('OBJ') else 'quota'
-        if (j := items.get((type_, q['id']))) is None:
-            j = items[(type_, q['id'])] = len(plan.items)
-            plan.items.append({'type': type_, 'xid': q['id'], 'quota': None, 'objquota': None})
-            plan.first_index.append(i)
-            plan.legacy_type.append(q['quota_type'])
-        plan.items[j][limit] = value
-        plan.field_index[(j, limit)] = i
+        if (item := items.get((type_, q['id']))) is None:
+            item = items[(type_, q['id'])] = UserspaceItem(type_, q['id'], i)
+            plan.items.append(item)
+        item.limits['objquota' if q['quota_type'].endswith('OBJ') else 'quota'] = (value, i)
     return plan
+
+
+def _under(attribute, schema):
+    return attribute == schema or attribute.startswith(f'{schema}.')
 
 
 def rekey_set_quota_error(e, plan):
@@ -92,34 +97,21 @@ def rekey_set_quota_error(e, plan):
     if attribute in (f'{USERSPACE_SET}.path', RESOURCE_SET, f'{RESOURCE_SET}.path'):
         return ValidationError('dataset', e.errmsg, e.errno)
 
-    if attribute == USERSPACE_SET or attribute.startswith(f'{USERSPACE_SET}.'):
-        parts = attribute.removeprefix(USERSPACE_SET).removeprefix('.').split('.')
-        if parts[0] != 'quotas' or len(parts) < 2 or not parts[1].isdigit():
-            return ValidationError('quotas', e.errmsg, e.errno)
-        j = int(parts[1])
-        row = plan.first_index[j]
-        if len(parts) == 2:
-            return ValidationError(f'quotas.{row}', e.errmsg, e.errno)
-        if parts[2] == 'xid':
-            # The duplicate check reports on the same attribute, so the id itself picks the legacy wording.
-            if plan.items[j]['xid'] == 0:
-                legacy_type = plan.legacy_type[j].lower()
-                return ValidationError(
-                    f'quotas.{row}.id',
-                    f'Setting {legacy_type} quota on {legacy_type[0]}id [0] is not permitted',
-                    e.errno,
-                )
-            return ValidationError(f'quotas.{row}.id', e.errmsg, e.errno)
-        if parts[2] in ('quota', 'objquota'):
-            return ValidationError(
-                f'quotas.{plan.field_index.get((j, parts[2]), row)}.quota_value', e.errmsg, e.errno,
-            )
-        return ValidationError(f'quotas.{row}', e.errmsg, e.errno)
+    prefix = f'{USERSPACE_SET}.quotas.'
+    if attribute.startswith(prefix):
+        index, _, rest = attribute.removeprefix(prefix).partition('.')
+        name = rest.split('.')[0]
+        item = plan.items[int(index)]
+        if name == 'xid':
+            return ValidationError(f'quotas.{item.row}.id', e.errmsg, e.errno)
+        if name in item.limits:
+            return ValidationError(f'quotas.{item.limits[name][1]}.quota_value', e.errmsg, e.errno)
 
-    if attribute == RESOURCE_SET or attribute.startswith(f'{RESOURCE_SET}.'):
-        prefix = f'{RESOURCE_SET}.properties.'
-        if attribute.startswith(prefix) and (name := attribute.removeprefix(prefix).split('.')[0]) in plan.prop_index:
-            return ValidationError(f'quotas.{plan.prop_index[name]}.quota_value', e.errmsg, e.errno)
+    prefix = f'{RESOURCE_SET}.properties.'
+    if attribute.startswith(prefix) and (name := attribute.removeprefix(prefix).split('.')[0]) in plan.props:
+        return ValidationError(f'quotas.{plan.props[name][1]}.quota_value', e.errmsg, e.errno)
+
+    if _under(attribute, USERSPACE_SET) or _under(attribute, RESOURCE_SET):
         return ValidationError('quotas', e.errmsg, e.errno)
     return e
 
@@ -228,19 +220,33 @@ class PoolDatasetService(Service):
                 except Exception:
                     self.logger.debug('Failed to convert %s [%s] to id.', id_type, q['id'], exc_info=True)
                     raise ValidationError(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')
+            if xid == 0:
+                raise ValidationError(
+                    f'quotas.{i}.id', f'Setting {quota_type} quota on {id_type[0]}id [0] is not permitted'
+                )
             quotas.append(q | {'id': xid})
 
         plan = translate_set_quota(quotas)
         userspace = props = None
         if plan.items:
-            userspace = _build(ZFSResourceUserspaceSetArgsData, USERSPACE_SET, plan, path=ds, quotas=plan.items)
+            userspace = _build(
+                ZFSResourceUserspaceSetArgsData, USERSPACE_SET, plan, path=ds,
+                quotas=[item.payload() for item in plan.items],
+            )
         if plan.props:
-            props = _build(ZFSResourceSetArgsData, RESOURCE_SET, plan, path=ds, properties=plan.props)
+            props = _build(
+                ZFSResourceSetArgsData, RESOURCE_SET, plan, path=ds,
+                properties={name: value for name, (value, _) in plan.props.items()},
+            )
+
+        # Dataset limits are accepted on a locked dataset, so the refused userspace write would leave this half applied.
+        if userspace is not None and props is not None and self.call_sync2(self.s.zfs.resource.path_is_locked, ds):
+            raise ValidationError('dataset', f'{ds!r} is locked. Unlock it first.', errno.EACCES)
 
         try:
-            if userspace is not None:
-                self.call_sync2(self.s.zfs.resource.userspace.set, userspace)
             if props is not None:
                 self.call_sync2(self.s.zfs.resource.set, props)
+            if userspace is not None:
+                self.call_sync2(self.s.zfs.resource.userspace.set, userspace)
         except ValidationError as e:
             raise rekey_set_quota_error(e, plan)

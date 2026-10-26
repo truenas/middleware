@@ -41,7 +41,7 @@ class ZFSResourceUserspaceService(Service):
     )
     def list(self, data: ZFSResourceUserspaceQuery) -> builtins.list[ZFSResourceUserspaceEntry]:
         """
-        List the space and object usage and limits ZFS accounts per user, group or project on filesystems.
+        List the space and object usage and limits ZFS accounts per user or group on filesystems.
 
         A row is returned for every id ZFS has accounting for, including ids that only use space and have no limit.
         A usage or limit of 0 means none. Ids are not resolved to names.
@@ -51,7 +51,7 @@ class ZFSResourceUserspaceService(Service):
         none of their own are the ``defaultuserquota`` family of properties, also read with
         :method:`zfs.resource.list`.
 
-        A validation error is raised when:
+        A path that does not exist is skipped, but the whole call fails with a validation error when:
 
         - a snapshot path is supplied (``EINVAL``)
         - a path is a volume (``EINVAL``)
@@ -69,7 +69,7 @@ class ZFSResourceUserspaceService(Service):
                 "jsonrpc": "2.0",
                 "id": 1,
                 "method": "zfs.resource.userspace.list",
-                "params": [{"paths": ["tank/home"], "types": ["user", "group"]}]
+                "params": [{"paths": ["tank/home"]}]
             }
         """
         return _ops.list_userspace(self.context, data)
@@ -84,11 +84,12 @@ class ZFSResourceUserspaceService(Service):
     )
     def set(self, data: ZFSResourceUserspaceSetArgsData) -> None:
         """
-        Set or remove the space and object limits of users, groups or projects on a filesystem.
+        Set or remove the space and object limits of users or groups on a filesystem.
 
-        A limit left as null is not changed and a limit of 0 or ``"none"`` is removed. Read the result back with
-        :method:`zfs.resource.userspace.list`. Limits on the filesystem itself are set with
-        :method:`zfs.resource.set`.
+        A limit left as null is not changed and a limit of 0 or ``"none"`` is removed. Limits are written as the
+        ``<type>quota@<xid>`` and ``<type>objquota@<xid>`` properties of the filesystem, for example
+        ``userquota@1000``. Read the result back with :method:`zfs.resource.userspace.list`. Limits on the
+        filesystem itself are set with :method:`zfs.resource.set`.
 
         A validation error is raised when:
 

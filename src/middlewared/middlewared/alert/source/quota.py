@@ -73,8 +73,8 @@ class QuotaAlertSource(ThreadedAlertSource):
         alerts: list[Alert[Any]] = []
         hostname = self.middleware.call_sync("system.hostname")
         mntinfo = list(iter_mountinfo())
-        rows: list[dict[str, Any]] = self.middleware.call_sync2(
-            self.middleware.services.zfs.resource.list_impl,
+        rows: list[dict[str, Any]] = self.call_sync2(
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(
                 properties=["used", "usedbydataset", "quota", "refquota", "available", "mounted", "mountpoint"],
                 get_user_properties=True,

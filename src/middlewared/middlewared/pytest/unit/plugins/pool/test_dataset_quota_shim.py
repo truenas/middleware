@@ -4,6 +4,7 @@ import pytest
 
 from middlewared.api.current import ZFSResourceUserspaceEntry
 from middlewared.plugins.pool_.dataset_quota import (
+    UserspaceItem,
     rekey_set_quota_error,
     translate_set_quota,
     userspace_rows_to_legacy,
@@ -24,42 +25,37 @@ def test_translate_merges_rows_per_id_and_keeps_the_last_value():
         ]
     )
     assert plan.items == [
-        {"type": "user", "xid": 1000, "quota": 4096, "objquota": 0},
-        {"type": "group", "xid": 1000, "quota": 2048, "objquota": None},
+        UserspaceItem("user", 1000, 0, {"quota": (4096, 4), "objquota": (0, 2)}),
+        UserspaceItem("group", 1000, 3, {"quota": (2048, 3)}),
     ]
-    assert plan.props == {"quota": 0}
+    assert plan.items[1].payload() == {"type": "group", "xid": 1000, "quota": 2048}
+    assert plan.props == {"quota": (0, 1)}
 
 
 @pytest.mark.parametrize(
-    "attribute,xid,expected_attribute,expected_message",
+    "attribute,expected_attribute",
     [
-        (
-            "zfs.resource.userspace.set.quotas.0.xid",
-            0,
-            "quotas.2.id",
-            "Setting groupobj quota on gid [0] is not permitted",
-        ),
-        ("zfs.resource.userspace.set.quotas.0.xid", 5, "quotas.2.id", "msg"),
-        ("zfs.resource.userspace.set.quotas.0.objquota", 5, "quotas.3.quota_value", "msg"),
-        ("zfs.resource.userspace.set.quotas.0", 5, "quotas.2", "msg"),
-        ("zfs.resource.userspace.set.path", 5, "dataset", "msg"),
-        ("zfs.resource.set.properties.refquota", 5, "quotas.1.quota_value", "msg"),
-        ("zfs.resource.set.properties", 5, "quotas", "msg"),
-        ("zfs.resource.set.path", 5, "dataset", "msg"),
-        ("zfs.resource.set", 5, "dataset", "msg"),
+        ("zfs.resource.userspace.set.quotas.0.xid", "quotas.2.id"),
+        ("zfs.resource.userspace.set.quotas.0.objquota", "quotas.3.quota_value"),
+        ("zfs.resource.userspace.set.quotas", "quotas"),
+        ("zfs.resource.userspace.set.path", "dataset"),
+        ("zfs.resource.set.properties.refquota", "quotas.1.quota_value"),
+        ("zfs.resource.set.properties", "quotas"),
+        ("zfs.resource.set.path", "dataset"),
+        ("zfs.resource.set", "dataset"),
     ],
 )
-def test_rekey_reports_on_the_legacy_row(attribute, xid, expected_attribute, expected_message):
+def test_rekey_reports_on_the_legacy_row(attribute, expected_attribute):
     plan = translate_set_quota(
         [
             {"quota_type": "DATASET", "id": "QUOTA", "quota_value": 1},
             {"quota_type": "DATASET", "id": "REFQUOTA", "quota_value": 1},
-            {"quota_type": "GROUPOBJ", "id": xid, "quota_value": 1},
-            {"quota_type": "GROUPOBJ", "id": xid, "quota_value": 2},
+            {"quota_type": "GROUPOBJ", "id": 5, "quota_value": 1},
+            {"quota_type": "GROUPOBJ", "id": 5, "quota_value": 2},
         ]
     )
     e = rekey_set_quota_error(ValidationError(attribute, "msg", errno.EINVAL), plan)
-    assert (e.attribute, e.errmsg, e.errno) == (expected_attribute, expected_message, errno.EINVAL)
+    assert (e.attribute, e.errmsg, e.errno) == (expected_attribute, "msg", errno.EINVAL)
 
 
 def test_legacy_rows_leave_out_zero_values_and_unresolved_names():

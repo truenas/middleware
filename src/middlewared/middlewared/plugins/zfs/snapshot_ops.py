@@ -24,7 +24,6 @@ from middlewared.api.current import (
 from middlewared.service_exception import CallError, ValidationError
 
 from . import resource_query as _resource_query
-from .create_impl import ZFS_INVALID_INPUT_ERRORS
 from .destroy_impl import destroy_impl as _raw_destroy
 from .exceptions import (
     ZFSDestroyFailedException,
@@ -56,7 +55,13 @@ from .snapshot_hold_release_impl import hold_impl as _raw_hold
 from .snapshot_hold_release_impl import release_impl as _raw_release
 from .snapshot_query_impl import query_snapshots_impl
 from .snapshot_rollback_impl import rollback_impl as _raw_rollback
-from .utils import has_internal_path, open_resource, reject_overlapping_paths, reject_protected_path
+from .utils import (
+    ZFS_INVALID_INPUT_ERRORS,
+    has_internal_path,
+    open_resource,
+    reject_overlapping_paths,
+    reject_protected_path,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

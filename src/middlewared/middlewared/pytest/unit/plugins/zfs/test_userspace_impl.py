@@ -107,10 +107,10 @@ def test_set_impl_never_writes_to_a_locked_filesystem(zfs_exception):
             [{"xid": 1001, "quota_type": ZFSUserQuota.GROUPOBJ_QUOTA, "value": 0}],
         ),
         (
-            {"type": "project", "xid": 0, "quota": "none", "objquota": 5},
+            {"type": "user", "xid": 1000, "quota": "none", "objquota": 5},
             [
-                {"xid": 0, "quota_type": ZFSUserQuota.PROJECT_QUOTA, "value": 0},
-                {"xid": 0, "quota_type": ZFSUserQuota.PROJECTOBJ_QUOTA, "value": 5},
+                {"xid": 1000, "quota_type": ZFSUserQuota.USER_QUOTA, "value": 0},
+                {"xid": 1000, "quota_type": ZFSUserQuota.USEROBJ_QUOTA, "value": 5},
             ],
         ),
     ],

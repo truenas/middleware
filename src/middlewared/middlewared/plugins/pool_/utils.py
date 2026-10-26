@@ -1,5 +1,7 @@
+from collections.abc import Mapping
 from pathlib import Path
 import re
+from types import MappingProxyType
 import typing
 from typing import TypedDict
 
@@ -7,10 +9,10 @@ from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.plugins.zfs_.utils import TNUserProp
+from middlewared.service_exception import ValidationError, ValidationErrors
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
-    from middlewared.service_exception import ValidationErrors
 
 RE_DRAID_DATA_DISKS = re.compile(r':\d*d')
 RE_DRAID_SPARE_DISKS = re.compile(r':\d*s')
@@ -135,3 +137,28 @@ POOL_DS_CREATE_PROPERTIES = POOL_BASE_PROPERTIES + (
     PropertyDef('casesensitivity', 'casesensitivity', str.lower, True, False),
     PropertyDef('volblocksize', 'volblocksize', None, False, False),
 )
+
+
+def rekey_validation_error(
+    e: ValidationError, source: str, target: str, fields: Mapping[str, str] = MappingProxyType({}),
+) -> ValidationError:
+    """Report an error of `source` on the pool attribute. A field named in `fields` keeps the rest of its path under
+    the mapped attribute, any other attribute of `source` becomes `target`."""
+    attribute = e.attribute or ''
+    if attribute != source and not attribute.startswith(f'{source}.'):
+        return e
+    field, _, rest = attribute.removeprefix(source).removeprefix('.').partition('.')
+    if field in fields:
+        return ValidationError(f'{fields[field]}.{rest}' if rest else fields[field], e.errmsg, e.errno)
+    return ValidationError(target, e.errmsg, e.errno)
+
+
+def rekey_validation_errors(
+    e: ValidationErrors, source: str, target: str, fields: Mapping[str, str] = MappingProxyType({}),
+) -> ValidationErrors:
+    verrors = ValidationErrors()
+    for attribute, errmsg, errno_ in e:
+        verrors.add_validation_error(rekey_validation_error(
+            ValidationError(f'{source}.{attribute}' if attribute else source, errmsg, errno_), source, target, fields,
+        ))
+    return verrors

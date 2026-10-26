@@ -1,66 +1,20 @@
-import errno
-from types import MappingProxyType
 from typing import Any, Literal
 
 import truenas_pylibzfs
-
-from middlewared.service_exception import CallError, ValidationError
 
 from .exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
 from .mount_unmount_impl import mount_impl
 
 __all__ = (
-    "ZFS_ERRNO",
-    "ZFS_INVALID_INPUT_ERRORS",
     "ZFS_TYPE_MAP",
     "create_ancestors",
     "create_leaf",
-    "libzfs_error",
 )
 
 ZFS_TYPE_MAP = {
     "FILESYSTEM": truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM,
     "VOLUME": truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME,
 }
-
-ZFS_INVALID_INPUT_ERRORS = frozenset(
-    {
-        truenas_pylibzfs.ZFSError.EZFS_BADPROP,
-        truenas_pylibzfs.ZFSError.EZFS_BADTYPE,
-        truenas_pylibzfs.ZFSError.EZFS_BADVERSION,
-        truenas_pylibzfs.ZFSError.EZFS_INVALIDNAME,
-        truenas_pylibzfs.ZFSError.EZFS_NAMETOOLONG,
-        truenas_pylibzfs.ZFSError.EZFS_NOTSUP,
-        truenas_pylibzfs.ZFSError.EZFS_PROPNONINHERIT,
-        truenas_pylibzfs.ZFSError.EZFS_PROPREADONLY,
-        truenas_pylibzfs.ZFSError.EZFS_PROPSPACE,
-        truenas_pylibzfs.ZFSError.EZFS_PROPTYPE,
-        truenas_pylibzfs.ZFSError.EZFS_VOLTOOBIG,
-    }
-)
-"""ZFSException codes from a create that mean the caller's input was the
-problem (bad property name/value/type, bad name) rather than an
-operational failure."""
-
-ZFS_ERRNO = MappingProxyType(
-    {
-        truenas_pylibzfs.ZFSError.EZFS_BUSY: errno.EBUSY,
-        truenas_pylibzfs.ZFSError.EZFS_IO: errno.EIO,
-        truenas_pylibzfs.ZFSError.EZFS_NOSPC: errno.ENOSPC,
-        truenas_pylibzfs.ZFSError.EZFS_PERM: errno.EPERM,
-    }
-)
-
-
-def libzfs_error(
-    path: str, e: Any, attribute: str, invalid_message: str, other_message: str, noent_message: str
-) -> CallError | ValidationError:
-    if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
-        return CallError(f"{path!r} {noent_message}.", errno.ENOENT)
-    if e.code in ZFS_INVALID_INPUT_ERRORS:
-        return ValidationError(attribute, invalid_message, errno.EINVAL)
-    return CallError(other_message, ZFS_ERRNO.get(e.code, errno.EFAULT))
-
 
 def _create_one(
     tls: Any,

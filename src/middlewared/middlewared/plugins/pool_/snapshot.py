@@ -1,4 +1,3 @@
-from collections.abc import Mapping
 import errno
 from types import MappingProxyType
 from typing import Any
@@ -33,6 +32,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotRenameArgsData,
     ZFSResourceSnapshotRollbackArgsData,
 )
+from middlewared.plugins.pool_.utils import rekey_validation_error, rekey_validation_errors
 from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service import (
     CRUDService,
@@ -42,32 +42,6 @@ from middlewared.service import (
     filterable_api_method,
 )
 from middlewared.utils.filter_list import filter_list
-
-
-def rekey_validation_error(
-    e: ValidationError, source: str, target: str, fields: Mapping[str, str] = MappingProxyType({}),
-) -> ValidationError:
-    """Report an error of `source` on the pool attribute. A field named in `fields` keeps the rest of its path under
-    the mapped attribute, any other attribute of `source` becomes `target`."""
-    attribute = e.attribute or ''
-    if attribute != source and not attribute.startswith(f'{source}.'):
-        return e
-    field, _, rest = attribute.removeprefix(source).removeprefix('.').partition('.')
-    if field in fields:
-        return ValidationError(f'{fields[field]}.{rest}' if rest else fields[field], e.errmsg, e.errno)
-    return ValidationError(target, e.errmsg, e.errno)
-
-
-def rekey_validation_errors(
-    e: ValidationErrors, source: str, target: str, fields: Mapping[str, str] = MappingProxyType({}),
-) -> ValidationErrors:
-    verrors = ValidationErrors()
-    for attribute, errmsg, errno_ in e:
-        verrors.add_validation_error(rekey_validation_error(
-            ValidationError(f'{source}.{attribute}' if attribute else source, errmsg, errno_), source, target, fields,
-        ))
-    return verrors
-
 
 CREATE_FIELDS = MappingProxyType({'exclude': 'pool.snapshot.create.exclude'})
 RENAME_FIELDS = MappingProxyType({'force': 'pool.snapshot.rename.force'})

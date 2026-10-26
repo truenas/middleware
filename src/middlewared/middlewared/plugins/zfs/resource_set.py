@@ -10,7 +10,6 @@ from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
 from middlewared.service_exception import CallError, ValidationError
 
 from . import zvol_utils
-from .create_impl import libzfs_error
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
 from .resource_attachments import DELEGATES
@@ -25,7 +24,7 @@ from .set_rules import (
     validate_request,
     validate_set,
 )
-from .utils import reject_protected_path, reject_snapshot_path
+from .utils import libzfs_error, reject_protected_path, reject_snapshot_path
 
 if TYPE_CHECKING:
     from middlewared.api.current import ZFSResourceSetArgsData
@@ -78,7 +77,11 @@ def set_impl(tls: Any, data: ZFSResourceSetArgsData) -> dict[str, Any]:
         ds = tls.lzh.open_resource(name=path)
     except truenas_pylibzfs.ZFSException as e:
         raise libzfs_error(
-            path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}", NOENT_MESSAGE
+            path,
+            e,
+            native_attribute,
+            other_message=f"Failed to set properties on {path!r}: {e}",
+            noent_message=NOENT_MESSAGE,
         ) from e
     try:
         if properties:
@@ -86,19 +89,37 @@ def set_impl(tls: Any, data: ZFSResourceSetArgsData) -> dict[str, Any]:
                 ds.set_properties(properties=properties)
             except truenas_pylibzfs.ZFSException as e:
                 raise libzfs_error(
-                    path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}", NOENT_MESSAGE
+                    path,
+                    e,
+                    native_attribute,
+                    other_message=f"Failed to set properties on {path!r}: {e}",
+                    noent_message=NOENT_MESSAGE,
                 ) from e
         if data.user_properties:
             try:
                 ds.set_user_properties(user_properties=data.user_properties)
             except truenas_pylibzfs.ZFSException as e:
-                raise libzfs_error(path, e, f"{SCHEMA}.user_properties", f"{e}", f"{e}", NOENT_MESSAGE) from e
+                raise libzfs_error(
+                    path,
+                    e,
+                    f"{SCHEMA}.user_properties",
+                    other_message=f"{e}",
+                    invalid_message=f"{e}",
+                    noent_message=NOENT_MESSAGE,
+                ) from e
         for name in data.inherit:
             try:
                 ds.inherit_property(property=name)
             except truenas_pylibzfs.ZFSException as e:
                 message = f"Failed to inherit {name!r} on {path!r}: {e}"
-                raise libzfs_error(path, e, f"{SCHEMA}.inherit.{name}", message, message, NOENT_MESSAGE) from e
+                raise libzfs_error(
+                    path,
+                    e,
+                    f"{SCHEMA}.inherit.{name}",
+                    other_message=message,
+                    invalid_message=message,
+                    noent_message=NOENT_MESSAGE,
+                ) from e
     except ValueError as e:
         raise CallError(
             f"ZFS rejected a property name or value for {path!r} that middleware accepted: {e}", errno.EINVAL
