@@ -81,6 +81,16 @@ def test__roles_have_correct_stig_assignment(nostig_roles, role_name):
         assert role_to_check.full_admin is False
 
 
+@pytest.mark.parametrize('role_name', list(ROLES.keys()))
+def test__role_includes_resolve(tmp_role_manager, role_name):
+    for included in ROLES[role_name].includes:
+        assert included != role_name
+        assert included in ROLES
+
+    # A self-referencing include would recurse forever here
+    assert role_name in tmp_role_manager.roles_for_role(role_name, None)
+
+
 @pytest.mark.parametrize('role,method,enabled_stig_type,resources', [
     ('READONLY_ADMIN', 'CALL', None, READONLY_ADMIN_METHODS),
     ('READONLY_ADMIN', 'CALL', security.STIGType.GPOS, READONLY_ADMIN_METHODS),
