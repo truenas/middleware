@@ -64,6 +64,7 @@ def userns_idmap_to_db(userns_idmap: str | int | None) -> int:
 class GroupServicePart(CRUDServicePart[GroupEntry]):
     _datastore = "account.bsdgroups"
     _datastore_prefix = "bsdgrp_"
+    _datastore_sql_filters = frozenset(("id", "gid", "group", "builtin", "smb"))
     _entry = GroupEntry
 
     def __init__(self, context: ServiceContext) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Sequence
 from typing import TYPE_CHECKING, Any, cast, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN
@@ -18,6 +18,32 @@ if TYPE_CHECKING:
 
 __all__ = ('CRUDServicePart',)
 
+# The rest disagree: `~`, `^`, `$` and `rin` are case-insensitive in SQL, and `!=`, `<`, `<=`,
+# `>` and `>=` drop rows where the column is NULL.
+SQL_ONLY_FILTER_OPERATORS = frozenset(('=', 'in', 'nin'))
+
+
+def filters_are_sql_only(filters: Sequence[Any], fields: frozenset[str]) -> bool:
+    for f in filters:
+        if not isinstance(f, (list, tuple)):
+            return False
+
+        if len(f) == 2:
+            if f[0] != 'OR' or not isinstance(f[1], (list, tuple)) or not f[1]:
+                return False
+            if not filters_are_sql_only(f[1], fields):
+                return False
+            continue
+
+        if len(f) != 3:
+            return False
+
+        field, op, _ = f
+        if op not in SQL_ONLY_FILTER_OPERATORS or field not in fields:
+            return False
+
+    return True
+
 
 class CRUDServicePart[E, PK = int](ServicePart):
     __slots__ = ()
@@ -25,6 +51,7 @@ class CRUDServicePart[E, PK = int](ServicePart):
     _datastore: str
     _datastore_prefix: str = ''
     _datastore_primary_key: str = 'id'
+    _datastore_sql_filters: frozenset[str] = frozenset()
     _entry: type[E]
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
@@ -79,6 +106,9 @@ class CRUDServicePart[E, PK = int](ServicePart):
             filters = []
         if options is None:
             options = QueryOptions()
+        if filters and filters_are_sql_only(filters, self._datastore_sql_filters):
+            options = options.model_copy(update={'force_sql_filters': True})
+
         opts = options.model_dump()
         extra = opts.get('extra', {}) or {}
         # Surface `select` to extend_context so services can skip expensive per-row work

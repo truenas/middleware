@@ -23,6 +23,7 @@ class CloudCredentialModel(sa.Model):
 
 class CredentialsServicePart(CRUDServicePart[CredentialsEntry]):
     _datastore = "system.cloudcredentials"
+    _datastore_sql_filters = frozenset(("id", "name"))
     _entry = CredentialsEntry
 
     def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

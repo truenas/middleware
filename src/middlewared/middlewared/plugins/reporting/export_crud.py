@@ -30,6 +30,7 @@ class ReportingExportsModel(sa.Model):
 
 class ReportingExportsServicePart(CRUDServicePart[ReportingExportsEntry]):
     _datastore = "reporting.exporters"
+    _datastore_sql_filters = frozenset(("id", "name", "enabled"))
     _entry = ReportingExportsEntry
 
     def __init__(self, context: ServiceContext) -> None:

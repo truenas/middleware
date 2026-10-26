@@ -44,6 +44,9 @@ class PeriodicSnapshotTaskModel(sa.Model):
 class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]):
     _datastore = 'storage.task'
     _datastore_prefix = 'task_'
+    _datastore_sql_filters = frozenset((
+        'id', 'dataset', 'recursive', 'lifetime_value', 'lifetime_unit', 'enabled', 'naming_schema', 'allow_empty',
+    ))
     _entry = PeriodicSnapshotTaskEntry
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:

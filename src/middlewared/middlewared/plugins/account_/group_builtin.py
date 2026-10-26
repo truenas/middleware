@@ -3,7 +3,6 @@ from __future__ import annotations
 import errno
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import QueryOptions
 from middlewared.service_exception import CallError
 
 if TYPE_CHECKING:
@@ -17,11 +16,7 @@ async def get_builtin_group_id(context: ServiceContext, group_name: str) -> int:
         BUILTIN_GIDS.update(
             {
                 group.group: group.gid
-                for group in await context.call2(
-                    context.s.group.query,
-                    [["builtin", "=", True]],
-                    QueryOptions(force_sql_filters=True),
-                )
+                for group in await context.call2(context.s.group.query, [["builtin", "=", True]])
             }
         )
 

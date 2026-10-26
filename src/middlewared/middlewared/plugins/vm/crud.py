@@ -96,6 +96,13 @@ class VMModel(sa.Model):
 
 class VMServicePart(CRUDServicePart[VMEntry]):
     _datastore = 'vm.vm'
+    _datastore_sql_filters = frozenset((
+        'id', 'name', 'description', 'vcpus', 'memory', 'min_memory', 'autostart', 'time', 'bootloader', 'cores',
+        'threads', 'hyperv_enlightenments', 'shutdown_timeout', 'cpu_mode', 'cpu_model', 'cpuset', 'nodeset',
+        'pin_vcpus', 'hide_from_msr', 'suspend_on_snapshot', 'ensure_display_device', 'arch_type', 'video_model',
+        'machine_type', 'uuid', 'command_line_args', 'bootloader_ovmf', 'trusted_platform_module',
+        'enable_cpu_topology_extension', 'enable_secure_boot',
+    ))
     _entry = VMEntry
 
     def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:

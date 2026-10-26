@@ -14,13 +14,7 @@ from truenas_pylibvirt import (
 )
 from truenas_pylibvirt import Error as PyLibvirtError
 
-from middlewared.api.current import (
-    ContainerEntry,
-    ContainerNICDevice,
-    ContainerStopOptions,
-    QueryOptions,
-    ZFSResourceQuery,
-)
+from middlewared.api.current import ContainerEntry, ContainerNICDevice, ContainerStopOptions, ZFSResourceQuery
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
@@ -93,9 +87,7 @@ def start_on_boot(context: ServiceContext) -> None:
     except Exception:
         context.logger.error('Failed to reconcile container runtime state', exc_info=True)
 
-    for container in context.call_sync2(
-        context.s.container.query, [("autostart", "=", True)], QueryOptions(force_sql_filters=True)
-    ):
+    for container in context.call_sync2(context.s.container.query, [("autostart", "=", True)]):
         try:
             start(context, container.id)
         except Exception as e:

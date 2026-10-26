@@ -2,8 +2,6 @@
     import random
     import shlex
 
-    from middlewared.api.current import QueryOptions
-
     system_advanced = middleware.call_sync2(middleware.services.system.advanced.config)
     resilver = middleware.call_sync("pool.resilver.config")
     boot_pool = middleware.call_sync2(middleware.services.boot.pool_name)
@@ -23,8 +21,7 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule, "root", f"midclt call cronjob.run {job.id} true"))}
     % endfor
 
-## Force SQL filters to avoid needlessly running extend on disabled tasks
-    % for job in middleware.call_sync2(middleware.services.rsynctask.query, [["enabled", "=", True]], QueryOptions(force_sql_filters=True)):
+    % for job in middleware.call_sync2(middleware.services.rsynctask.query, [["enabled", "=", True]]):
 <%
     if job.locked:
         middleware.call_sync2(middleware.services.rsynctask.generate_locked_alert, job.id)
@@ -35,7 +32,7 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule, 
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule.model_dump(), "root", f"midclt call rsynctask.run {job.id}"))}
     % endfor
 
-    % for job in middleware.call_sync2(middleware.services.cloudsync.query, [["enabled", "=", True]], QueryOptions(force_sql_filters=True)):
+    % for job in middleware.call_sync2(middleware.services.cloudsync.query, [["enabled", "=", True]]):
 <%
     if job.locked:
         middleware.call_sync2(middleware.services.cloudsync.generate_locked_alert, job.id)
@@ -46,7 +43,7 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule.m
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule.model_dump(), "root", f"midclt call cloudsync.sync {job.id}"))}
     % endfor
 
-    % for job in middleware.call_sync2(middleware.services.cloud_backup.query, [["enabled", "=", True]], QueryOptions(force_sql_filters=True)):
+    % for job in middleware.call_sync2(middleware.services.cloud_backup.query, [["enabled", "=", True]]):
 <%
     if job.locked:
         middleware.call_sync2(middleware.services.cloud_backup.generate_locked_alert, job.id)

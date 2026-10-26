@@ -48,6 +48,11 @@ class RsyncTaskModel(sa.Model):
 class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
     _datastore = "tasks.rsync"
     _datastore_prefix = "rsync_"
+    _datastore_sql_filters = frozenset((
+        "id", "path", "dataset", "relative_path", "remotehost", "remoteport", "remotemodule", "desc", "user",
+        "recursive", "times", "compress", "archive", "delete", "quiet", "preserveperm", "preserveattr", "enabled",
+        "mode", "remotepath", "direction",
+    ))
     _entry = RsyncTaskEntry
 
     async def local_path_info(self, data: dict[str, Any]) -> LocalPathInfo | None:

@@ -55,6 +55,7 @@ class S3AccesskeyModel(sa.Model):
 
 class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
     _datastore = "truenas_s3.accesskey"
+    _datastore_sql_filters = frozenset(("id", "name", "access_key", "enabled", "manage_buckets"))
     _entry = S3AccesskeyEntry
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:

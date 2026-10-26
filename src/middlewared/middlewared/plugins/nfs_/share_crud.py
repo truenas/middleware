@@ -35,6 +35,10 @@ class NFSShareModel(sa.Model):
 class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMixin):
     _datastore = "sharing.nfs_share"
     _datastore_prefix = "nfs_"
+    _datastore_sql_filters = frozenset((
+        "id", "path", "dataset", "relative_path", "comment", "ro", "maproot_user", "maproot_group", "mapall_user",
+        "mapall_group", "expose_snapshots", "enabled",
+    ))
     _entry = SharingNFSEntry
 
     include_tier_info = True

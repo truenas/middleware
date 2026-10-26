@@ -55,6 +55,7 @@ def to_payload(privilege: PrivilegeEntry) -> PrivilegeCreate:
 
 class PrivilegeServicePart(CRUDServicePart[PrivilegeEntry]):
     _datastore = "account.privilege"
+    _datastore_sql_filters = frozenset(("id", "builtin_name", "name", "web_shell"))
     _entry = PrivilegeEntry
 
     def __init__(self, context: ServiceContext) -> None:
