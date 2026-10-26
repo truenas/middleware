@@ -21,7 +21,11 @@ class LXCConfigEntry(BaseModel):
     preferred_pool: str | None = Field(default=None, description="Default pool used by containers and image datasets.")
     bridge: str | None = Field(
         default=None,
-        description="Network bridge interface for virtualized instance networking. `null` if not configured.",
+        description=(
+            "Bridge that new container NICs attach to by default. `null` selects the automatically managed "
+            "`truenasbr0` bridge, which provides DHCP, DNS and NAT for containers. Changing it does not move existing "
+            "NICs."
+        ),
     )
     v4_network: IPv4Network = Field(description="IPv4 network CIDR for the container bridge network.")
     v6_network: IPv6Network = Field(description="IPv6 network CIDR for the container bridge network.")

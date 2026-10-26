@@ -545,13 +545,15 @@ def test_capabilities(ubuntu_image, configuration, has):
         assert normalize(ssh(nsenter(c, "capsh --print"))) == normalize(s)
 
 
-def test_network(started_ubuntu_container):
+def test_network(ubuntu_container):
+    call("container.device.create", {"container": ubuntu_container["id"], "attributes": {"dtype": "NIC"}})
+    call("container.start", ubuntu_container["id"])
     for i in itertools.count(1):
         try:
-            assert ssh(nsenter(started_ubuntu_container, f"ping -c 1 {host().ip}"))
-            assert ssh(nsenter(started_ubuntu_container, "ping -c 1 8.8.8.8"))
+            assert ssh(nsenter(ubuntu_container, f"ping -c 1 {host().ip}"))
+            assert ssh(nsenter(ubuntu_container, "ping -c 1 8.8.8.8"))
             assert "inet " in ssh(
-                nsenter(started_ubuntu_container, "ip -4 addr show dev eth0")
+                nsenter(ubuntu_container, "ip -4 addr show dev eth0")
             )
             break
         except AssertionError:

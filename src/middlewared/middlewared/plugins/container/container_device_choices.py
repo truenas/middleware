@@ -5,12 +5,11 @@ from truenas_pylibvirt.utils.usb import get_all_usb_devices
 from middlewared.api.current import ContainerDeviceNicAttachChoices, USBPassthroughDevice
 from middlewared.service import ServiceContext
 
-from .bridge import container_bridge_name
+from .bridge import BRIDGE_NAME
 
 
 def nic_attach_choices(context: ServiceContext) -> ContainerDeviceNicAttachChoices:
-    container_bridge = container_bridge_name(context)
-    bridge: list[str] = [container_bridge]
+    bridge: list[str] = [BRIDGE_NAME]
     macvlan: list[str] = []
     for inf in context.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']}):
         if inf.startswith('br'):

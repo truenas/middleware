@@ -22,6 +22,7 @@ from middlewared.service import CallError, ServiceContext
 import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.nic import normalize_mac, random_mac
 
+from .bridge import BRIDGE_NAME
 from .crud import ContainerCreateWithDataset
 from .dataset import ensure_datasets
 from .info import license_active
@@ -282,6 +283,7 @@ async def migrate(context: ServiceContext, job: Job) -> None:
         raise CallError('System is not licensed to use containers.')
 
     storage_pools = legacy_configuration_pools(legacy_configuration[0])
+    default_bridge = legacy_configuration[0]['bridge'] or BRIDGE_NAME
     existing_containers = [container.name for container in await context.call2(context.s.container.query)]
     # Scanned once for the whole run: a USB device replugged midway through would otherwise
     # hand two containers two different views of the same machine.
@@ -290,7 +292,7 @@ async def migrate(context: ServiceContext, job: Job) -> None:
         # One unusable pool must not stop the pools that come after it.
         try:
             await context.to_thread(
-                migrate_specific_pool, context, job, storage_pool, existing_containers, connected_usb
+                migrate_specific_pool, context, job, storage_pool, existing_containers, default_bridge, connected_usb
             )
         except Exception as e:
             context.logger.error('Unable to migrate containers on pool %r', storage_pool, exc_info=True)
@@ -307,7 +309,7 @@ def legacy_configuration_pools(legacy_configuration: dict[str, typing.Any]) -> s
 async def migrate_devices(
     context: ServiceContext, job: Job, manifest: dict[str, typing.Any], container_instance: ContainerEntry,
     connected_usb: dict[tuple[str, str], list[str]],
-) -> None:
+) -> bool:
     devices = manifest['devices']
     container_name = container_instance.name
     nic_choices = await context.call2(context.s.container.device.nic_attach_choices)
@@ -317,6 +319,7 @@ async def migrate_devices(
     # run: two containers configured for the same dongle is valid, only one of them can be
     # running at a time, whereas one container holding two rows for it never starts at all.
     claimed_usb: set[str | tuple[str, str]] = set()
+    nic_migrated = False
     for device_name, device_data in devices.items():
         dtype = None
         try:
@@ -425,10 +428,14 @@ async def migrate_devices(
                         f'Unable to create container device for {device_name!r} {dtype} incus '
                         f'device: {e!r}.\n'.encode()
                     )
+                else:
+                    nic_migrated = nic_migrated or device_payload['dtype'] == 'NIC'
+
+    return nic_migrated
 
 
 def migrate_specific_pool(
-    context: ServiceContext, job: Job, pool: str, existing_containers: list[str],
+    context: ServiceContext, job: Job, pool: str, existing_containers: list[str], default_bridge: str,
     connected_usb: dict[tuple[str, str], list[str]],
 ) -> None:
     assert job.logs_fd is not None
@@ -555,9 +562,24 @@ def migrate_specific_pool(
                 )
             )
             existing_containers.append(name)
-            context.run_coroutine(
+            if not context.run_coroutine(
                 migrate_devices(context, job, manifest['container'], container_instance, connected_usb)
-            )
+            ):
+                try:
+                    context.middleware.call_sync('datastore.insert', 'container.device', {
+                        'attributes': {
+                            'dtype': 'NIC',
+                            'nic_attach': default_bridge,
+                            'type': 'VIRTIO',
+                            'trust_guest_rx_filters': False,
+                            'mac': normalize_mac(config.get('volatile.eth0.hwaddr')) or random_mac(),
+                        },
+                        'container_id': container_instance.id,
+                    })
+                except Exception as e:
+                    job.logs_fd.write(
+                        f'Unable to create container device for default NIC of {name!r}: {e!r}.\n'.encode()
+                    )
         except Exception as e:
             if renamed and container_instance is None:
                 # The dataset was moved but no container row was created. Left there it
