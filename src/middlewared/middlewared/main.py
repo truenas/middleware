@@ -61,7 +61,7 @@ from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.lang import undefined
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
-from .utils.mock import coerce_mock_result, get_mock_return_model
+from .utils.mock import coerce_mock_result, get_mock_return_model, mock_args_match
 from .utils.nss.pwd import getpwnam
 from .utils.plugins import LoadPluginsMixin
 from .utils.prctl import set_cmdline, set_name
@@ -1714,7 +1714,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def _mock_method(self, name: str, params: typing.Iterable) -> typing.Callable | None:
         if mocks := self.mocks.get(name):
             for args, mock in mocks:
-                if args == list(params):
+                if mock_args_match(args, list(params)):
                     return mock
             for args, mock in mocks:
                 if args is None:
