@@ -1,7 +1,7 @@
 """Webshare readonly
 
 Revision ID: 2f08b4c7a1d9
-Revises: d5e404a65f70
+Revises: 9a4e61c0f2d7
 Create Date: 2026-10-20 11:00:00.000000+00:00
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "2f08b4c7a1d9"
-down_revision = "d5e404a65f70"
+down_revision = "9a4e61c0f2d7"
 branch_labels = None
 depends_on = None
 
