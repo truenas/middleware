@@ -28,7 +28,7 @@ def get_hostid() -> str | None:
         pass
 
 
-def get_system_id() -> str | None:
+def get_global_id() -> str | None:
     try:
         return query_config_table("system_globalid")["system_uuid"]
     except Exception:
@@ -68,10 +68,10 @@ def start_hexos_websocat():
     ip_address = ip_output.partition("src")[-1].split()[0]
 
     remote_server = f"{url}/server/{hostid_hash}/{ip_address}"
-    # Hostids collide across installs; system_id is a random UUID made on first boot.
+    # Hostids collide across installs; gid is a random UUID made on first boot.
     # The hostid hash stays in the path so HexOS can match servers it already knows by it.
-    if system_id := get_system_id():
-        remote_server += f"?system_id={system_id}"
+    if gid := get_global_id():
+        remote_server += f"?gid={gid}"
 
     # Start a transient service
     subprocess.run([
