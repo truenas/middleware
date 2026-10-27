@@ -102,6 +102,9 @@ class PoolService(Service):
                     "label": "80802394992848654"
                 }]
             }
+
+        .. deprecated:: 28.0.0
+            Use :method:`zpool.offline` instead.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
 
@@ -113,7 +116,7 @@ class PoolService(Service):
 
         audit_callback(f'{", ".join(get_disk_paths(found[1]))} in {pool["name"]!r} pool')
 
-        await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
+        await self.middleware.call('zpool.offline', {'pool_name': pool['name'], 'vdev_guid': found[1]['guid']})
 
         return True
 
@@ -138,6 +141,9 @@ class PoolService(Service):
                     "label": "80802394992848654"
                 }]
             }
+
+        .. deprecated:: 28.0.0
+            Use :method:`zpool.online` instead.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
 
@@ -150,7 +156,7 @@ class PoolService(Service):
 
         audit_callback(f'{", ".join(get_disk_paths(found[1]))} in {pool["name"]!r} pool')
 
-        await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
+        await self.middleware.call('zpool.online', {'pool_name': pool['name'], 'vdev_guid': found[1]['guid']})
 
         return True
 

@@ -71,12 +71,6 @@ class ZFSPoolService(Service):
         except (libzfs.ZFSException, OSError) as e:
             raise CallError(str(e))
 
-    def offline(self, name: str, label: str):
-        """
-        Offline device `label` from the pool `pool`.
-        """
-        self.__zfs_vdev_operation(name, label, lambda target: target.offline())
-
     def online(self, name: str, label: str, expand: bool = False):
         """
         Online device `label` from the pool `pool`.

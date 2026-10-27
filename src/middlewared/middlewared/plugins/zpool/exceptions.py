@@ -15,6 +15,10 @@ __all__ = (
     "ZpoolScrubNotDueException",
     "ZpoolResiliverInProgressException",
     "ZpoolTooManyScrubsException",
+    "ZpoolVdevIsCacheException",
+    "ZpoolVdevIsSpareException",
+    "ZpoolVdevNotDiskException",
+    "ZpoolVdevNotFoundException",
 )
 
 
@@ -163,6 +167,50 @@ class ZpoolTooManyScrubsException(ZpoolException):
             'will result in an unresponsive system. Refusing to start scrub.'
         )
         super().__init__(running)
+
+    def __str__(self):
+        return self.message
+
+
+class ZpoolVdevNotFoundException(ZpoolException):
+    errno = errno.ENOENT
+
+    def __init__(self, pool: str, guid: str):
+        self.message = f"{pool!r}: no vdev with GUID {guid}"
+        super().__init__(pool, guid)
+
+    def __str__(self):
+        return self.message
+
+
+class ZpoolVdevNotDiskException(ZpoolException):
+    errno = errno.EINVAL
+
+    def __init__(self, pool: str, guid: str, vdev_type: str):
+        self.message = f"{pool!r}: vdev {guid} is a {vdev_type} vdev, not a disk"
+        super().__init__(pool, guid, vdev_type)
+
+    def __str__(self):
+        return self.message
+
+
+class ZpoolVdevIsCacheException(ZpoolException):
+    errno = errno.EINVAL
+
+    def __init__(self, pool: str, guid: str):
+        self.message = f"{pool!r}: vdev {guid} is a cache device, which cannot be taken offline"
+        super().__init__(pool, guid)
+
+    def __str__(self):
+        return self.message
+
+
+class ZpoolVdevIsSpareException(ZpoolException):
+    errno = errno.EINVAL
+
+    def __init__(self, pool: str, guid: str):
+        self.message = f"{pool!r}: vdev {guid} is a hot spare that is not in use"
+        super().__init__(pool, guid)
 
     def __str__(self):
         return self.message

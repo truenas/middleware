@@ -1,18 +1,36 @@
+from collections.abc import Iterator
+import contextlib
 import threading
 from typing import Any
+
+from truenas_pylibzfs import ZFSException
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
     ZPoolEntry,
+    ZPoolOffline,
+    ZPoolOfflineArgs,
+    ZPoolOfflineResult,
+    ZPoolOnline,
+    ZPoolOnlineArgs,
+    ZPoolOnlineResult,
     ZPoolQueryAddedEvent,
     ZPoolQueryArgs,
     ZPoolQueryChangedEvent,
     ZPoolQueryRemovedEvent,
     ZPoolQueryResult,
 )
-from middlewared.service import Service, private
+from middlewared.service import CallError, Service, ValidationError, private
 from middlewared.service.decorators import pass_thread_local_storage
 
+from .device_state_impl import offline_impl, online_impl
+from .exceptions import (
+    ZpoolNotFoundException,
+    ZpoolVdevIsCacheException,
+    ZpoolVdevIsSpareException,
+    ZpoolVdevNotDiskException,
+    ZpoolVdevNotFoundException,
+)
 from .query_impl import query_impl
 
 # Properties baked into every emitted `zpool.query` event so that subscribers
@@ -28,6 +46,23 @@ EVENT_PROPERTIES = (
     "dedup_table_size",
     "dedup_table_quota",
 )
+
+
+@contextlib.contextmanager
+def vdev_state_errors(schema: str) -> Iterator[None]:
+    try:
+        yield
+    except ZpoolNotFoundException as e:
+        raise ValidationError(f"{schema}.pool_name", str(e), e.errno)
+    except (
+        ZpoolVdevNotFoundException,
+        ZpoolVdevNotDiskException,
+        ZpoolVdevIsCacheException,
+        ZpoolVdevIsSpareException,
+    ) as e:
+        raise ValidationError(f"{schema}.vdev_guid", str(e), e.errno)
+    except ZFSException as e:
+        raise CallError(f"{e.action}: {e.description}")
 
 
 class ZPoolService(Service):
@@ -186,6 +221,72 @@ class ZPoolService(Service):
         for pool in results:
             rv.append(ZPoolEntry(**pool))
         return rv
+
+    @api_method(
+        ZPoolOfflineArgs,
+        ZPoolOfflineResult,
+        roles=["POOL_WRITE"],
+        audit="Disk offline",
+        audit_extended=lambda data: f"{data['vdev_guid']} in {data['pool_name']!r} pool",
+        check_annotations=True,
+    )
+    @pass_thread_local_storage
+    def offline(self, tls, data: ZPoolOffline) -> None:
+        """
+        Take a disk of a pool offline, as ``zpool offline`` does.
+
+        ZFS stops reading from and writing to the disk until :method:`zpool.online` brings it back, and the
+        offline state persists across reboots and pool imports. The disk is named by its ``guid`` from the
+        ``topology`` of :method:`zpool.query`.
+
+        A validation error is raised when the pool or the disk does not exist, when the GUID names a vdev that
+        is not a disk (a mirror, a RAIDZ or dRAID group, or a dRAID distributed spare), when the disk is a hot
+        spare that is not in use, or when it is a cache device, which ZFS cannot bring back online on a pool
+        whose ``autoexpand`` property is on. ZFS refuses to take a disk offline when the pool would have no
+        valid replica of its data left.
+
+        .. versionadded:: 28.0.0
+
+        Example:
+
+        .. code:: json
+
+            {"pool_name": "tank", "vdev_guid": "80802394992848654"}
+        """
+        with vdev_state_errors("zpool.offline"):
+            offline_impl(tls.lzh, data.pool_name, data.vdev_guid)
+
+    @api_method(
+        ZPoolOnlineArgs,
+        ZPoolOnlineResult,
+        roles=["POOL_WRITE"],
+        audit="Disk online",
+        audit_extended=lambda data: f"{data['vdev_guid']} in {data['pool_name']!r} pool",
+        check_annotations=True,
+    )
+    @pass_thread_local_storage
+    def online(self, tls, data: ZPoolOnline) -> None:
+        """
+        Bring a disk of a pool back online, as ``zpool online`` does.
+
+        The disk is named by its ``guid`` from the ``topology`` of :method:`zpool.query`. ZFS resilvers whatever
+        was written to the pool while the disk was offline. The call can succeed while the disk stays unusable,
+        so check afterwards that its ``state`` in :method:`zpool.query` is ``ONLINE``.
+
+        A validation error is raised when the pool or the disk does not exist, when the GUID names a vdev that
+        is not a disk (a mirror, a RAIDZ or dRAID group, or a dRAID distributed spare), or when the disk is a hot
+        spare that is not in use.
+
+        .. versionadded:: 28.0.0
+
+        Example:
+
+        .. code:: json
+
+            {"pool_name": "tank", "vdev_guid": "80802394992848654"}
+        """
+        with vdev_state_errors("zpool.online"):
+            online_impl(tls.lzh, data.pool_name, data.vdev_guid)
 
     @private
     def send_change_event(self, pool_name: str, event_type: str = "CHANGED"):
