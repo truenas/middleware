@@ -89,20 +89,16 @@ class DomainConnection(
 
         # This is largely the same as normal `activate()` with addition of clearing local caches
         # and replacing state file (secrets.tdb).
-        clustered = self.middleware.call_sync('smb.config')['stateful_failover']
-
         match (enabled_ds := self._get_enabled_ds()):
             case None:
                 return
             case DSType.IPA:
-                if not clustered:
-                    self.middleware.call_sync('directoryservices.secrets.restore')
-                    self._reconcile_standby_local_sid()
+                self.middleware.call_sync('directoryservices.secrets.restore')
+                self._reconcile_standby_local_sid()
                 activate_fn = self._ipa_activate
             case DSType.AD:
-                if not clustered:
-                    self.middleware.call_sync('directoryservices.secrets.restore')
-                    self._reconcile_standby_local_sid()
+                self.middleware.call_sync('directoryservices.secrets.restore')
+                self._reconcile_standby_local_sid()
                 activate_fn = self._ad_activate
             case DSType.LDAP:
                 activate_fn = self._ldap_activate

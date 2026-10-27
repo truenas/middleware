@@ -21,32 +21,25 @@ from .constants import SAMBA_BOOTENV_DIR
 
 LOCAL_SHARE_INFO_FILE = os.path.join(SAMBA_BOOTENV_DIR, 'share_info.tdb')
 SHARE_INFO_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.RAW)
-SHARE_INFO_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.RAW, True)
 SHARE_INFO_VERSION_KEY = 'INFO/version'
 SHARE_INFO_SD_PREFIX = 'SECDESC/'
 SHARE_INFO_VERSION_DATA = pack('<I', 3)
-TDB_SHARE_INFO_CONFIG = (LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS)
-CTDB_SHARE_INFO_CONFIG = ('share_info.tdb', SHARE_INFO_CTDB_OPTIONS)
 
 
-def _share_info_db_config(cluster: bool) -> tuple[str, TDBOptions]:
-    return CTDB_SHARE_INFO_CONFIG if cluster else TDB_SHARE_INFO_CONFIG
-
-
-def fetch_share_acl(share_name: str, cluster: bool) -> bytes:
+def fetch_share_acl(share_name: str) -> bytes:
     """ fetch packed NT security descriptor for SMB share """
-    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
+    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
         return hdl.get(f'{SHARE_INFO_SD_PREFIX}{share_name.lower()}')
 
 
-def set_version_share_info(cluster: bool):
-    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
+def set_version_share_info():
+    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
         hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
 
 
-def store_share_acl(share_name: str, val: bytes, cluster: bool) -> None:
+def store_share_acl(share_name: str, val: bytes) -> None:
     """ write packed NT security descriptor for SMB share to server running configuration """
-    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
+    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
         # The version key is written on every store, not only when the file is created.
         # Reading a missing share_info.tdb creates it (the handle is opened with O_CREAT),
         # so the file existing does not mean the key is present, and samba deletes every
@@ -59,9 +52,9 @@ def store_share_acl(share_name: str, val: bytes, cluster: bool) -> None:
         hdl.flush()
 
 
-def remove_share_acl(share_name: str, cluster: bool) -> None:
+def remove_share_acl(share_name: str) -> None:
     """ remove ACL from share causing default entry of S-1-1-0 FULL_CONTROL """
-    with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
+    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
         hdl.delete(f'{SHARE_INFO_SD_PREFIX}{share_name.lower()}')
         hdl.flush()
 
@@ -75,9 +68,8 @@ class ShareSec(Service):
     @filterable_api_method(private=True)
     def entries(self, filters, options):
         # TDB file contains INFO/version key that we don't want to return
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         try:
-            with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
+            with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
                 # Security descriptors are base64-encoded here rather than in the database
                 # because this is where they leave middleware. Both API consumers and the
                 # backup copy in the share config require a string.
@@ -96,8 +88,6 @@ class ShareSec(Service):
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
         ACLs which can be viewed by calling `filesystem.getacl`.
         """
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
-
         if share_name.upper() == 'HOMES':
             share_filter = [['options.home', '=', True]]
         else:
@@ -110,15 +100,13 @@ class ShareSec(Service):
         except MatchNotFound as exc:
             raise CallError(f'{share_name}: share does not exist') from exc
 
-        if not cluster and not os.path.exists(LOCAL_SHARE_INFO_FILE):
-            set_version_share_info(False)
+        if not os.path.exists(LOCAL_SHARE_INFO_FILE):
+            set_version_share_info()
 
         try:
-            if not (sd_bytes := fetch_share_acl(share_name, cluster)):
+            if not (sd_bytes := fetch_share_acl(share_name)):
                 # An entry that samba cannot unmarshall gets the same treatment as a
-                # missing one so that we report what samba enforces. A zero-length
-                # value is also how ctdb represents a deleted key until it vacuums
-                # the tombstone.
+                # missing one so that we report what samba enforces.
                 raise MatchNotFound(share_name)
 
             share_acl = sd_bytes_to_share_acl(sd_bytes)
@@ -146,8 +134,6 @@ class ShareSec(Service):
 
         `ae_type` can be ALLOWED or DENIED.
         """
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
-
         if data['share_name'].upper() == 'HOMES':
             share_filter = [['options.home', '=', True]]
         else:
@@ -159,7 +145,7 @@ class ShareSec(Service):
             raise CallError(f'{data["share_name"]}: share does not exist') from exc
 
         share_sd_bytes = share_acl_to_sd_bytes(data['share_acl'])
-        store_share_acl(data['share_name'], share_sd_bytes, cluster)
+        store_share_acl(data['share_name'], share_sd_bytes)
 
         self.middleware.call_sync(
             'datastore.update', 'sharing.cifs_share', config_share['id'],
@@ -171,7 +157,6 @@ class ShareSec(Service):
         Write stored share acls to share_info.tdb. This should only be called
         if share_info.tdb contains default entries.
         """
-        cluster = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         shares = self.middleware.call_sync('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
         for share in shares:
             share_name = 'HOMES' if share['home'] else share['name']
@@ -185,14 +170,14 @@ class ShareSec(Service):
                 # Nothing to flush. Drop any entry samba cannot unmarshall so that it
                 # applies its own default rather than reporting an empty ACL.
                 try:
-                    if not fetch_share_acl(share_name, cluster):
-                        remove_share_acl(share_name, cluster)
+                    if not fetch_share_acl(share_name):
+                        remove_share_acl(share_name)
                 except MatchNotFound:
                     pass
 
                 continue
 
-            store_share_acl(share_name, sd_bytes, cluster)
+            store_share_acl(share_name, sd_bytes)
 
     @periodic(3600, run_on_start=False)
     def check_share_info_tdb(self):

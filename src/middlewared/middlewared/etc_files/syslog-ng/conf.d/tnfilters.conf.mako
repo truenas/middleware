@@ -44,13 +44,6 @@ filter f_tnremote {
 filter f_nfs_mountd {
   program("rpc.mountd") and level(debug..notice);
 };
-filter f_ctdb {
-  program("ctdbd") or
-  program("ctdb-recoverd") or
-  program("ctdb-recovery") or
-  program("ctdb-takeover") or
-  program("ctdb-eventd");
-};
 filter f_scst {
   program("iscsi-scstd") or
   program("scst") or
@@ -71,6 +64,9 @@ filter f_discovery {
 filter f_truenas_s3 {
   program("s3d");
 };
+filter f_truenas_smbhad {
+  program("truenas_smbhad");
+};
 
 # TrueNAS middleware filters
 % for tnlog in ALL_LOG_FILES:
@@ -82,10 +78,10 @@ filter f_truenas_exclude {
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_tnaudit_all) and
-  not filter(f_ctdb) and
   not filter(f_scst) and
   not filter(f_discovery) and
-  not filter(f_truenas_s3);
+  not filter(f_truenas_s3) and
+  not filter(f_truenas_smbhad);
 };
 
 #####################

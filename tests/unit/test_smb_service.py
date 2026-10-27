@@ -504,3 +504,19 @@ def test__tiering_not_overridden_by_aux_params():
         tiering_enabled=True
     )
     assert conf['shadow:no_dataset_traversal'] is True
+
+
+def test__stateful_failover_disabled():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert 'truenas stateful failover' not in conf
+
+
+def test__stateful_failover():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG | {'stateful_failover': True}, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert conf['truenas stateful failover'] is True

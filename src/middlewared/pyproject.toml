@@ -55,7 +55,6 @@ module = [
     "mako.*",
     "pam.*",
     "samba.*",
-    "pyctdb.*",
     "pyinotify.*",
     "pyudev.*",
     "tdb.*",
