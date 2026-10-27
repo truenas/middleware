@@ -312,12 +312,20 @@ class iSCSILIOService(Service):
 
     @private
     def set_alua_active(self):
-        """Set the local node's ALUA target port group to ACTIVE_OPTIMIZED.
+        """Set the local node's ALUA target port group to ACTIVE_OPTIMIZED and
+        the peer's group to the state the ACTIVE node gives it.
 
         Called on the new ACTIVE node after become_active() and all LUN
         backends are open (vrrp_master post-failover).
+
+        The peer's group must be written here too: on the node that was
+        STANDBY it still holds ACTIVE_OPTIMIZED, and nothing else rewrites it
+        until the peer comes back, syncs and calls refresh_alua_states.  Until
+        then REPORT TARGET PORT GROUPS would advertise the down peer as the
+        optimized path.
         """
-        self._set_local_alua_state(ALUA_STATE.OPTIMIZED)
+        remote_state = self._master_remote_alua_state(self.ha_state())
+        self._set_alua_states(ALUA_STATE.OPTIMIZED, remote_state)
 
     @private
     def set_alua_nonoptimized(self):
@@ -331,42 +339,49 @@ class iSCSILIOService(Service):
 
     @private
     def refresh_alua_states(self):
-        """Re-evaluate the 4-row ALUA state table and write both controller groups.
+        """Re-evaluate the ALUA state table and write both controller groups.
 
         Called on the ACTIVE node via failover.call_remote when the STANDBY's
         ha_state transitions to 'synced', to update the remote group from
-        TRANSITIONING to NONOPTIMIZED.
+        UNAVAILABLE or TRANSITIONING to NONOPTIMIZED.
 
         Reads failover.node, failover.status, and ha_state live so the result
         is always consistent with current system state.
         """
-        node = self.middleware.call_sync('failover.node')
         failover_status = self.middleware.call_sync('failover.status')
-        is_master = failover_status == 'MASTER'
+        ha_state = self.ha_state()
 
-        try:
-            ha_state = (LIO_HA_DIR / 'ha_state').read_text().strip()
-        except OSError:
-            ha_state = 'disconnected'
-        synced = ha_state == 'synced'
-
-        if node == 'A':
-            local_group = ALUA_GROUP_A
-            remote_group = ALUA_GROUP_B
-        else:
-            local_group = ALUA_GROUP_B
-            remote_group = ALUA_GROUP_A
-
-        if is_master:
+        if failover_status == 'MASTER':
             local_state = ALUA_STATE.OPTIMIZED
-            remote_state = (
-                ALUA_STATE.NONOPTIMIZED if synced else ALUA_STATE.TRANSITIONING
-            )
+            remote_state = self._master_remote_alua_state(ha_state)
         else:
             local_state = (
-                ALUA_STATE.NONOPTIMIZED if synced else ALUA_STATE.TRANSITIONING
+                ALUA_STATE.NONOPTIMIZED if ha_state == 'synced' else ALUA_STATE.TRANSITIONING
             )
             remote_state = ALUA_STATE.OPTIMIZED
+
+        self._set_alua_states(local_state, remote_state)
+
+    @staticmethod
+    def _master_remote_alua_state(ha_state: str) -> ALUA_STATE:
+        """The state the ACTIVE node gives the peer's group for a given
+        lio_ha `ha_state`.  Must match the table in
+        utils/lio/config.py, which the reconciler applies."""
+        if ha_state == 'synced':
+            return ALUA_STATE.NONOPTIMIZED
+        if ha_state == 'disconnected':
+            return ALUA_STATE.UNAVAILABLE
+        return ALUA_STATE.TRANSITIONING
+
+    @private
+    def _set_alua_states(self, local_state: ALUA_STATE, remote_state: ALUA_STATE):
+        """Write `local_state` to this node's controller group and
+        `remote_state` to the peer's, for every storage object.  Missing group
+        directories are skipped, as in _set_local_alua_state."""
+        if self.middleware.call_sync('failover.node') == 'A':
+            local_group, remote_group = ALUA_GROUP_A, ALUA_GROUP_B
+        else:
+            local_group, remote_group = ALUA_GROUP_B, ALUA_GROUP_A
 
         for backstore in (IBLOCK_DIR, FILEIO_DIR):
             if not backstore.exists():
