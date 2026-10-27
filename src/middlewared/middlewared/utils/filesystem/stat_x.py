@@ -31,6 +31,10 @@ class StatxAttr(IntFlag):
     MOUNT_ROOT = 0x00002000
     VERIFY = 0x00100000
     DAX = 0x00200000
+    # TrueNAS kernels report the ACL type of the file system, neither bit
+    # when it keeps no ACL
+    POSIXACL = 0x0100000000000000
+    NFSV4ACL = 0x0200000000000000
 
 
 STATX_DEFAULT_MASK = (
