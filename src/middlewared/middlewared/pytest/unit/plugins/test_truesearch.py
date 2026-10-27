@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -91,3 +92,60 @@ async def test_unavailable_reasons_reports_boot_pool_and_licensing_together():
     install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "CE")
 
     assert await create_service(m, TrueSearchService).unavailable_reasons() == [BOOT_POOL_REASON, NOT_LICENSED]
+
+
+@pytest.fixture
+def truesearch(monkeypatch):
+    monkeypatch.setattr(TrueSearchService, "MOUNT_CHECK_DELAY", 0.01)
+    m = Middleware()
+    m.create_task = asyncio.create_task
+    svc = TrueSearchService(m)
+    svc.raw_directories = AsyncMock(return_value={"/mnt/tank/share"})
+    svc.configure = AsyncMock()
+    return svc
+
+
+@pytest.mark.asyncio
+async def test_burst_of_mounts_is_checked_once(truesearch):
+    await truesearch.schedule_mount_check("/mnt/tank/share/ds0")
+    first_timer = truesearch.mount_check_timer
+    for i in range(1, 100):
+        await truesearch.schedule_mount_check(f"/mnt/tank/share/ds{i}")
+    # Each mount restarts the delay
+    assert first_timer.cancelled()
+    # The last timer was armed before this sleep with a shorter delay, so the check runs first
+    await asyncio.sleep(0.1)
+    truesearch.raw_directories.assert_awaited_once()
+    truesearch.configure.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_mount_during_a_check_is_checked_by_the_next_one(truesearch):
+    later_mounts = ["/mnt/tank/share/child"]
+
+    async def raw_directories():
+        # Another dataset is mounted while the check looks up the directories
+        if later_mounts:
+            await truesearch.schedule_mount_check(later_mounts.pop())
+        return {"/mnt/tank/share"}
+
+    truesearch.raw_directories = raw_directories
+    await truesearch.schedule_mount_check("/mnt/tank/other")
+    # Run the checks the timers would run, one after the other, instead of waiting for them
+    await truesearch.check_mounted_paths()
+    truesearch.configure.assert_not_awaited()
+    await truesearch.check_mounted_paths()
+    truesearch.configure.assert_awaited_once()
+    # Don't let the second mount's timer fire after the test
+    truesearch.mount_check_timer.cancel()
+
+
+@pytest.mark.asyncio
+async def test_service_state_is_not_queried_when_search_is_off():
+    m = Middleware()
+    m["smb.config"] = Mock(return_value={"search_protocols": []})
+    m.services.webshare.config = AsyncMock(return_value=Mock(search=False))
+    started_or_enabled = Mock(return_value=True)
+    m["service.started_or_enabled"] = started_or_enabled
+    assert await TrueSearchService(m).raw_directories() == set()
+    started_or_enabled.assert_not_called()
