@@ -65,6 +65,7 @@ from . import share_presets as _share_presets
 from .encryption_service import ZFSResourceEncryptionService
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService, audit_target
+from .userspace import ZFSResourceUserspaceService
 from .utils import has_internal_path
 
 if TYPE_CHECKING:
@@ -112,6 +113,7 @@ class ZFSResourceService(Service):
         self.snapshot = ZFSResourceSnapshotService(middleware)
         self.encryption = ZFSResourceEncryptionService(middleware)
         self.pool = ZFSResourcePoolPrefetchService(middleware)
+        self.userspace = ZFSResourceUserspaceService(middleware)
 
     @api_method(
         ZFSResourceListArgs,

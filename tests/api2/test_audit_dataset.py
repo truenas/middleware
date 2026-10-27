@@ -1,3 +1,4 @@
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
@@ -29,3 +30,14 @@ def test_dataset_audit():
             'description': f'Pool dataset delete {DS_NAME}',
         }]):
             call('pool.dataset.delete', DS_NAME)
+
+
+def test_dataset_set_quota_audit():
+    with dataset('audit_dataset_set_quota') as ds:
+        quotas = [{'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': 1048576}]
+        with expect_audit_method_calls([{
+            'method': 'pool.dataset.set_quota',
+            'params': [ds, quotas],
+            'description': f'Pool dataset set quota {ds}',
+        }]):
+            call('pool.dataset.set_quota', ds, quotas)

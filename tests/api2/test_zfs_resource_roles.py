@@ -10,3 +10,26 @@ def test_read_role_cannot_set(unprivileged_user_fixture):
 
 def test_write_role_can_set(unprivileged_user_fixture):
     common_checks(unprivileged_user_fixture, "zfs.resource.set", "ZFS_RESOURCE_WRITE", True, method_args=SET_ARGS)
+
+
+USERSPACE_SET_ARGS = [{"path": f"{pool_name}/does_not_exist", "quotas": [{"type": "user", "xid": 4000, "quota": 1}]}]
+
+
+def test_read_role_cannot_set_userspace(unprivileged_user_fixture):
+    common_checks(
+        unprivileged_user_fixture,
+        "zfs.resource.userspace.set",
+        "ZFS_RESOURCE_READ",
+        False,
+        method_args=USERSPACE_SET_ARGS,
+    )
+
+
+def test_write_role_can_set_userspace(unprivileged_user_fixture):
+    common_checks(
+        unprivileged_user_fixture,
+        "zfs.resource.userspace.set",
+        "ZFS_RESOURCE_WRITE",
+        True,
+        method_args=USERSPACE_SET_ARGS,
+    )

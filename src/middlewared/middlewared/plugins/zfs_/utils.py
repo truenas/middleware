@@ -27,7 +27,7 @@ class TNUserProp(enum.Enum):
     REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critical'
     MANAGED_BY = f'{USERPROP_PREFIX}:managedby'
 
-    def default(self):
+    def default(self) -> int:
         # NOTE: DONT CHANGE THESE VALUES WITHOUT CHANGING
         # THE UX! The UX has hard-coded these values on
         # a form and so changing them here will cause
@@ -44,17 +44,9 @@ class TNUserProp(enum.Enum):
             case _:
                 raise ValueError(f'{self.value}: no default value is set')
 
-    def quotas():
-        return [(a.value, a.default()) for a in [
-            TNUserProp.QUOTA_WARN,
-            TNUserProp.QUOTA_CRIT,
-            TNUserProp.REFQUOTA_WARN,
-            TNUserProp.REFQUOTA_CRIT
-        ]]
-
     def audit_quotas():
-        # Same shape as quotas(), but the audit dataset defaults to its own
-        # warning/critical thresholds rather than the general-purpose values
+        # The audit dataset defaults to its own warning/critical
+        # thresholds rather than the general-purpose values
         # from default(). Only a default: the on-disk user properties (which
         # can be changed by the user) take precedence when present.
         return [

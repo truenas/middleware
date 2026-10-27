@@ -5,11 +5,12 @@ from dataclasses import dataclass
 import errno
 import os
 import pathlib
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import truenas_pylibzfs
 
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import CallError, ValidationError
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotProvidedException
@@ -20,10 +21,12 @@ if TYPE_CHECKING:
     from middlewared.service import ServiceContext
 
 __all__ = (
+    "ZFS_INVALID_INPUT_ERRORS",
     "ancestor_chain",
     "get_encryption_info",
     "group_paths_by_parents",
     "has_internal_path",
+    "libzfs_error",
     "open_resource",
     "pool_has_special_vdev",
     "pool_is_draid",
@@ -41,6 +44,50 @@ INTERNAL_PATHS = (
     ".system",
     ".truenas_containers",
 )
+
+
+ZFS_INVALID_INPUT_ERRORS = frozenset(
+    {
+        truenas_pylibzfs.ZFSError.EZFS_BADPROP,
+        truenas_pylibzfs.ZFSError.EZFS_BADTYPE,
+        truenas_pylibzfs.ZFSError.EZFS_BADVERSION,
+        truenas_pylibzfs.ZFSError.EZFS_INVALIDNAME,
+        truenas_pylibzfs.ZFSError.EZFS_NAMETOOLONG,
+        truenas_pylibzfs.ZFSError.EZFS_NOTSUP,
+        truenas_pylibzfs.ZFSError.EZFS_PROPNONINHERIT,
+        truenas_pylibzfs.ZFSError.EZFS_PROPREADONLY,
+        truenas_pylibzfs.ZFSError.EZFS_PROPSPACE,
+        truenas_pylibzfs.ZFSError.EZFS_PROPTYPE,
+        truenas_pylibzfs.ZFSError.EZFS_VOLTOOBIG,
+    }
+)
+"""ZFSException codes that mean the caller's input was the problem (bad property name/value/type, bad name) rather
+than an operational failure."""
+
+ZFS_ERRNO = MappingProxyType(
+    {
+        truenas_pylibzfs.ZFSError.EZFS_BUSY: errno.EBUSY,
+        truenas_pylibzfs.ZFSError.EZFS_IO: errno.EIO,
+        truenas_pylibzfs.ZFSError.EZFS_NOSPC: errno.ENOSPC,
+        truenas_pylibzfs.ZFSError.EZFS_PERM: errno.EPERM,
+    }
+)
+
+
+def libzfs_error(
+    path: str,
+    e: Any,
+    attribute: str,
+    *,
+    other_message: str,
+    invalid_message: str | None = None,
+    noent_message: str = "does not exist",
+) -> CallError | ValidationError:
+    if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+        return CallError(f"{path!r} {noent_message}.", errno.ENOENT)
+    if e.code in ZFS_INVALID_INPUT_ERRORS:
+        return ValidationError(attribute, e.err_str if invalid_message is None else invalid_message, errno.EINVAL)
+    return CallError(other_message, ZFS_ERRNO.get(e.code, errno.EFAULT))
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

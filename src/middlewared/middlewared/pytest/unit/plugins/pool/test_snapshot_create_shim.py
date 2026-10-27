@@ -1,6 +1,6 @@
 import errno
 
-from middlewared.plugins.pool_.snapshot import rekey_validation_error
+from middlewared.plugins.pool_.utils import rekey_validation_error
 from middlewared.service_exception import ValidationError
 
 

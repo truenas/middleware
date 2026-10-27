@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import pytest
 
 from middlewared.service_exception import ValidationError
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
 
@@ -116,3 +116,44 @@ def test_quotas(temp_ds, temp_user):
     for er, quota_type in verify_info:
         for result in filter(lambda x: x['id'] == er['id'], call('pool.dataset.get_quota', temp_ds, quota_type)):
             assert all((result[j] == er[j] for j in er)), result
+
+
+def get_dataset_quota(ds):
+    return call('pool.dataset.get_quota', ds, 'DATASET')[0]
+
+
+@pytest.mark.parametrize('cleared', [0, None])
+def test_dataset_quota_cleared(temp_ds, cleared):
+    call('pool.dataset.set_quota', temp_ds, [
+        {'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': QuotaConfig.dq_value},
+        {'quota_type': 'DATASET', 'id': 'REFQUOTA', 'quota_value': QuotaConfig.drq_value},
+    ])
+    call('pool.dataset.set_quota', temp_ds, [
+        {'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': cleared},
+        {'quota_type': 'DATASET', 'id': 'REFQUOTA', 'quota_value': cleared},
+    ])
+    result = get_dataset_quota(temp_ds)
+    assert (result['quota'], result['refquota']) == (0, 0)
+
+
+def test_rejected_user_quota_writes_nothing(temp_ds):
+    before = get_dataset_quota(temp_ds)['quota']
+    with pytest.raises(ValidationError) as ve:
+        call('pool.dataset.set_quota', temp_ds, [
+            {'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': before + 1048576},
+            {'quota_type': 'USER', 'id': '0', 'quota_value': 5242880},
+        ])
+    assert ve.value.attribute == 'quotas.1.id'
+    assert get_dataset_quota(temp_ds)['quota'] == before
+
+
+def test_rejected_dataset_quota_writes_no_user_quota():
+    with dataset('quota_below_used') as ds:
+        ssh(f'dd if=/dev/urandom of=/mnt/{ds}/f bs=1M count=8 status=none; sync')
+        with pytest.raises(ValidationError) as ve:
+            call('pool.dataset.set_quota', ds, [
+                {'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': 1048576},
+                {'quota_type': 'USER', 'id': '4000', 'quota_value': 5242880},
+            ])
+        assert ve.value.attribute == 'quotas.0.quota_value'
+        assert not any(q['id'] == 4000 for q in call('pool.dataset.get_quota', ds, 'USER'))

@@ -129,6 +129,7 @@ from .webui_main_dashboard import *
 from .zfs_resource_crud import *
 from .zfs_resource_encryption import *
 from .zfs_resource_snapshot import *
+from .zfs_resource_userspace import *
 from .zfs_tier import *
 from .zpool_query import *
 from .zpool_scrub import *

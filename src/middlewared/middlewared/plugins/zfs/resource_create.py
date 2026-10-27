@@ -14,7 +14,7 @@ from middlewared.api.current import (
 )
 from middlewared.service_exception import CallError, ValidationError
 
-from .create_impl import ZFS_INVALID_INPUT_ERRORS, create_ancestors, create_leaf
+from .create_impl import create_ancestors, create_leaf
 from .create_rules import (
     DEFAULT_VOLBLOCKSIZE,
     CreateContext,
@@ -54,7 +54,7 @@ from .rules_common import (
     reject_volsize_not_multiple,
 )
 from .share_presets import apply_share_acl, share_acl, share_mountpoint
-from .utils import ancestor_chain, has_internal_path, reject_protected_path
+from .utils import ZFS_INVALID_INPUT_ERRORS, ancestor_chain, has_internal_path, reject_protected_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
