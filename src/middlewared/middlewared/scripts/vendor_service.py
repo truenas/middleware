@@ -1,8 +1,10 @@
 import hashlib
+import shlex
 import subprocess
 import sys
 
 from middlewared.plugins.system_vendor.vendor import get_vendor
+from middlewared.utils.db import query_config_table
 from middlewared.utils.vendor import Vendors
 
 
@@ -22,6 +24,13 @@ def get_hostid() -> str | None:
     try:
         with open("/etc/hostid", "rb") as f:
             return hashlib.file_digest(f, "sha256").hexdigest()
+    except Exception:
+        pass
+
+
+def get_system_id() -> str | None:
+    try:
+        return query_config_table("system_globalid")["system_uuid"]
     except Exception:
         pass
 
@@ -59,6 +68,10 @@ def start_hexos_websocat():
     ip_address = ip_output.partition("src")[-1].split()[0]
 
     remote_server = f"{url}/server/{hostid_hash}/{ip_address}"
+    # Hostids collide across installs; system_id is a random UUID made on first boot.
+    # The hostid hash stays in the path so HexOS can match servers it already knows by it.
+    if system_id := get_system_id():
+        remote_server += f"?system_id={system_id}"
 
     # Start a transient service
     subprocess.run([
@@ -66,7 +79,7 @@ def start_hexos_websocat():
         *systemd_opts,
         "/bin/bash",
         "-c",
-        " ".join([wsocat_path, *wsocat_opts, local_server, remote_server])
+        " ".join([wsocat_path, *wsocat_opts, local_server, shlex.quote(remote_server)])
     ])
 
 
