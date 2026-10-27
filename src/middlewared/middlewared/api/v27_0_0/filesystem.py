@@ -127,7 +127,9 @@ FILESYSTEM_STATX_ATTRS = Literal[
     'AUTOMOUNT',
     'MOUNT_ROOT',
     'VERIFY',
-    'DAX'
+    'DAX',
+    'POSIXACL',
+    'NFSV4ACL'
 ]
 
 

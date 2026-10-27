@@ -201,8 +201,8 @@ class FilesystemService(Service):
     @private
     def path_get_acltype(self, path):
         """
-        Failure with ENODATA in case acltype is supported, but
-        acl absent. EOPNOTSUPP means that acltype is not supported.
+        The ACL type of the file system holding the path, from the
+        bits of stx_attributes the kernel reports.
 
         raises NotImplementedError for EXTERNAL paths
         """
