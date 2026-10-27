@@ -11,6 +11,7 @@ import websocket
 from truenas_api_client import ClientException, ValidationErrors
 from middlewared.test.integration.assets.account import (
     group as account_group,
+    unprivileged_user,
     user as account_user,
 )
 from middlewared.test.integration.assets.container import (
@@ -25,7 +26,7 @@ from middlewared.test.integration.assets.container import (
     resolve_image,
 )
 from middlewared.test.integration.assets.pool import another_pool, pool
-from middlewared.test.integration.utils import call, host, ssh, websocket_url
+from middlewared.test.integration.utils import call, client, host, ssh, websocket_url
 
 # Capabilities necessary to launch a basic LXC container from linuxcontainers.org
 BASIC_CAPABILITIES = {
@@ -287,15 +288,12 @@ def test_container_shell_alpine(alpine_image):
         assert "cap_chown" in caps, f"CAP_CHOWN unexpectedly missing: {decoded}"
 
 
-def test_container_shell(started_ubuntu_container):
-    mountpoint = get_mountpoint(started_ubuntu_container["dataset"])
-    ssh(f"touch {mountpoint}/mnt/canary")
-    token = call("auth.generate_token", 300, {}, False)
+def _container_shell_output(container_id, token, command):
     ws = websocket.create_connection(websocket_url() + "/websocket/shell")
     try:
         ws.send(json.dumps({
             "token": token,
-            "options": {"container_id": started_ubuntu_container["id"], "command": "ls /mnt"}
+            "options": {"container_id": container_id, "command": command}
         }))
         _, msg = ws.recv_data()
         assert json.loads(msg.decode())["msg"] == "connected", msg
@@ -311,9 +309,42 @@ def test_container_shell(started_ubuntu_container):
 
             data += msg.decode("ascii", "ignore")
 
-        assert data.replace("\x03", "").strip().split()[-1] == f"canary"
+        return data.replace("\x03", "")
     finally:
         ws.close()
+
+
+def test_container_shell(started_ubuntu_container):
+    mountpoint = get_mountpoint(started_ubuntu_container["dataset"])
+    ssh(f"touch {mountpoint}/mnt/canary")
+    token = call("auth.generate_token", 300, {}, False)
+    data = _container_shell_output(started_ubuntu_container["id"], token, "ls /mnt")
+    assert data.strip().split()[-1] == "canary"
+
+
+def test_container_shell_non_root_user(started_ubuntu_container):
+    # A root token already gets /root as its home, so only a non-root user shows whether the
+    # container shell leaks the caller's host home directory.
+    with unprivileged_user(
+        username="ctrshelluser",
+        group_name="ctrshellusers",
+        privilege_name="Container shell users",
+        web_shell=True,
+        roles=["CONTAINER_WRITE"],
+    ) as u:
+        try:
+            with client(auth=(u.username, u.password)) as c:
+                token = c.call("auth.generate_token", 300, {}, False)
+
+            data = _container_shell_output(
+                started_ubuntu_container["id"], token, 'echo "HOME=$HOME"; echo "CWD=$(pwd)"'
+            )
+            lines = data.split()
+            assert "HOME=/root" in lines, data
+            assert "CWD=/" in lines, data
+        finally:
+            # Give middleware time to kill the shell before the user's home dataset is destroyed.
+            time.sleep(5)
 
 
 @pytest.fixture(scope="module")

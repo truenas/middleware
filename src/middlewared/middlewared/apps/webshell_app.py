@@ -48,27 +48,35 @@ def _audit_target(shell_type, options):
     return None
 
 
+def _shell_home_and_cwd(shell_type: ShellAppType, user_home: str | None) -> tuple[str, str]:
+    # `login -p` keeps the inherited HOME and changes into it, so only the host shell takes the
+    # user's home. Every other child stays root on the host and must not start in a user-writable directory.
+    if shell_type is ShellAppType.HOST:
+        return user_home or DEFAULT_HOME_PATH, "/root"
+    return "/root", "/root"
+
+
 class ShellWorkerThread(threading.Thread):
     """
     Worker thread responsible for forking and running the shell
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, middleware, ws, input_queue, loop, username, options, homedir):
+    def __init__(self, middleware, ws, input_queue, loop, username, options, homedir, shell_type):
         self.middleware = middleware
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
         self.master_fd = None
-        self.command = self.get_command(username, options)
-        self.homedir = homedir
+        self.command = self.get_command(username, options, shell_type)
+        self.home, self.cwd = _shell_home_and_cwd(shell_type, homedir)
         self.username = username
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
-    def get_command(self, username, options):
-        if options.get("vm_id"):
+    def get_command(self, username, options, shell_type):
+        if shell_type is ShellAppType.VM:
             return [
                 "/usr/bin/virsh",
                 "-c",
@@ -76,7 +84,7 @@ class ShellWorkerThread(threading.Thread):
                 "console",
                 f'{options["vm_data"]["uuid"]}',
             ]
-        elif options.get("app_name"):
+        elif shell_type is ShellAppType.APP:
             return [
                 "/usr/bin/docker",
                 "exec",
@@ -84,13 +92,14 @@ class ShellWorkerThread(threading.Thread):
                 options["container_id"],
                 "/bin/sh", "-c", self._shell_script(options),
             ]
-        elif options.get("container_id"):
+        elif shell_type is ShellAppType.CONTAINER:
             # nsenter argv already terminates with `/bin/sh -c`; append the
             # script as the single trailing argument so it is what `sh -c`
             # actually executes (rather than being interpreted as $0/$1).
             return options["nsenter"] + [self._shell_script(options)]
-        else:
+        elif shell_type is ShellAppType.HOST:
             return ["/usr/bin/login", "-p", "-f", username]
+        raise ValueError(f"{shell_type}: unsupported shell type")
 
     def _shell_script(self, options):
         # Callers (currently only integration tests) may override the script
@@ -115,21 +124,18 @@ class ShellWorkerThread(threading.Thread):
         self.shell_pid, self.master_fd = os.forkpty()
         if self.shell_pid == 0:
             close_fds(3)
-            homedir = self.homedir or DEFAULT_HOME_PATH
             try:
-                os.chdir(homedir)
-            except FileNotFoundError:
-                os.chdir(DEFAULT_HOME_PATH)
+                os.chdir(self.cwd)
             except Exception:
                 self.middleware.logger.error(
-                    "%s: Failed to chdir into home directory for user [%s] in ShellWorkerThread.run",
-                    homedir, self.username,  exc_info=True
+                    "%s: failed to chdir for user [%s] in ShellWorkerThread.run",
+                    self.cwd, self.username, exc_info=True
                 )
                 os.chdir(DEFAULT_HOME_PATH)
 
             env = {
                 "TERM": "xterm",
-                "HOME": homedir,
+                "HOME": self.home,
                 "PATH": "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin",
                 "LC_ALL": "C.UTF-8",
             }
@@ -525,6 +531,7 @@ class ShellApplication:
                         username=token["username"],
                         homedir=user_obj["pw_dir"],
                         options=options,
+                        shell_type=shell_type,
                     )
                     conndata.t_worker.start()
 
