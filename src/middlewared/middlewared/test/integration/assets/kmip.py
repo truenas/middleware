@@ -23,8 +23,37 @@ _REMOTE_DIR = "/tmp/pykmip-test-{port}"
 # self-signed certificate validates against itself as its own chain, which keeps
 # the setup simple.
 _SERVER_LAUNCHER = """\
+import functools
 import sys
+
+import sqlalchemy
+from kmip.core import exceptions
 from kmip.services.server import KmipServer
+from kmip.services.server.session import KmipSession
+from sqlalchemy.pool import NullPool
+
+# PyKMIP's engine opens a SQLAlchemy session per request batch and never closes it.
+# SQLAlchemy 2.0 pools file-backed SQLite connections, so the pool (5 plus 10 overflow)
+# empties after a few requests. Every later request then blocks for the 30 second pool
+# timeout and fails, which looks like a hung KMIP server.
+sqlalchemy.create_engine = functools.partial(sqlalchemy.create_engine, poolclass=NullPool)
+
+# PyKMIP's session loop only stops on `ConnectionClosed`. Its own client drops the socket
+# without a TLS shutdown, which surfaces as `BrokenPipeError` instead, and the thread then
+# spins on the dead socket forever. A few such threads starve the server of CPU.
+_handle_message_loop = KmipSession._handle_message_loop
+
+
+def handle_message_loop(self):
+    try:
+        _handle_message_loop(self)
+    except exceptions.ConnectionClosed:
+        raise
+    except Exception as e:
+        raise exceptions.ConnectionClosed() from e
+
+
+KmipSession._handle_message_loop = handle_message_loop
 
 d = sys.argv[1]
 server = KmipServer(
