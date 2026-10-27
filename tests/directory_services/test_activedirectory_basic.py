@@ -12,7 +12,7 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from middlewared.test.integration.utils.system import reset_systemd_svcs, get_gssproxy_state
+from middlewared.test.integration.utils.system import get_gssproxy_state
 
 from auto_config import ha
 from protocols import smb_connection, smb_share
@@ -62,7 +62,6 @@ def enable_smb():
 
 
 def test_enable_leave_activedirectory():
-    reset_systemd_svcs('winbind')
     assert check_ad_started() is False
 
     if not ha:
@@ -145,7 +144,6 @@ def test_enable_leave_activedirectory():
 
 
 def test_activedirectory_smb_ops(enable_smb):
-    reset_systemd_svcs('winbind')
     with directoryservice('ACTIVEDIRECTORY') as ad:
         domain_info = ad['domain_info']
         short_name = domain_info['domain_controller']['pre-win2k_domain']
@@ -274,8 +272,6 @@ def test_activedirectory_smb_ops(enable_smb):
 
 
 def test_account_privilege_authentication(enable_ds_auth):
-    reset_systemd_svcs('winbind')
-
     with directoryservice('ACTIVEDIRECTORY') as ds:
         domain_name = ds['config']['configuration']['domain']
         domain_info = ds['domain_info']
@@ -347,7 +343,6 @@ def test_account_privilege_authentication(enable_ds_auth):
 def test_secrets_restore():
 
     with directoryservice('ACTIVEDIRECTORY', retrieve_user=False):
-        reset_systemd_svcs('winbind')
         assert check_ad_started() is True
 
         ssh('rm /var/lib/truenas-samba/private/secrets.tdb')
@@ -369,7 +364,6 @@ def test_secrets_restore():
 
 def test_secrets_in_sync_after_join():
     with directoryservice('ACTIVEDIRECTORY', retrieve_user=False):
-        reset_systemd_svcs('winbind')
         assert check_ad_started() is True
 
         # Regression: the stray ']' in the secrets.tdb key made last_password_change
@@ -385,7 +379,6 @@ def test_secrets_in_sync_after_join():
 def test_keytab_restore():
 
     with directoryservice('ACTIVEDIRECTORY', retrieve_user=False):
-        reset_systemd_svcs('winbind')
         assert check_ad_started() is True
 
         kt_id = call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})['id']
