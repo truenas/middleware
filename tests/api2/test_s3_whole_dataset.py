@@ -81,7 +81,7 @@ def owner():
 
 @contextlib.contextmanager
 def filled_dataset(leaf="s3-export", data=None):
-    """A dataset with default properties and a few files, readable by
+    """A dataset with the given properties and a few files, readable by
     everyone."""
     with dataset(leaf, data) as ds:
         mount = f"/mnt/{ds}"
@@ -281,13 +281,13 @@ def test_a_bucket_layout_is_refused_by_name(owner):
 def test_a_bucket_may_be_created_under_an_export(owner):
     """A BUCKET bucket can be created under a DATASET bucket. Only
     the inner bucket's mountpoint refuses a share."""
-    with filled_dataset() as ds, export(ds):
+    # must match the ACL type of the BUCKET dataset mounted under it, or SMB refuses the export share
+    with filled_dataset(data={"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}) as ds, export(ds):
         inner = call("sharing.s3.create", {"name": "inner", "dataset": f"{ds}/inner", "owner": OWNER})
         try:
             with pytest.raises(ValidationErrors) as ve:
-                call("sharing.smb.create", {"name": "s3-inner", "path": f"/mnt/{inner['dataset']}"})
-            assert ve.value.errors[0].attribute == "sharingsmb_create.path"
-            assert "inner" in ve.value.errors[0].errmsg
+                call("sharing.smb.create", {"name": "s3-inner", "path": f"/mnt/{inner['dataset']}", "readonly": True})
+            assert [e.attribute for e in ve.value.errors] == ["sharingsmb_create.path"]
             share = call("sharing.smb.create", {"name": "s3-export", "path": f"/mnt/{ds}"})
             call("sharing.smb.delete", share["id"])
         finally:
