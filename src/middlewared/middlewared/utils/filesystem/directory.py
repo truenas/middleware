@@ -65,7 +65,7 @@ def _etype(item: truenas_os.IterInstance) -> typing.Literal['DIRECTORY', 'FILE',
 
 def _statx_attr_names(stx_attributes: int) -> list[
     typing.Literal['COMPRESSED', 'APPEND', 'NODUMP', 'ENCRYPTED', 'IMMUTABLE', 'AUTOMOUNT', 'MOUNT_ROOT', 'VERIFY',
-    'DAX'
+    'DAX', 'POSIXACL', 'NFSV4ACL'
 ]]:
     return [
         a.name  # type: ignore[misc]
