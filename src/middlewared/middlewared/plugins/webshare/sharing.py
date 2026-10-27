@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import errno
-from typing import TYPE_CHECKING, Any, cast
-
-from truenas_pylicensed.features import LicenseFeature
+from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -17,42 +14,33 @@ from middlewared.api.current import (
     SharingWebshareUpdateArgs,
     SharingWebshareUpdateResult,
 )
-from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.service import SharingService, ValidationErrors, private
-import middlewared.sqlalchemy as sa
-from middlewared.utils.path import FSLocation
+from middlewared.service import GenericSharingService
 from middlewared.utils.types import AuditCallback
+
+from .sharing_crud import SharingWebsharePart
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class SharingWebshareModel(sa.Model):
-    __tablename__ = 'sharing_webshare_share'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(255))
-    path = sa.Column(sa.String(255))
-    dataset = sa.Column(sa.String(255), nullable=True)
-    relative_path = sa.Column(sa.String(255), nullable=True)
-    is_home_base = sa.Column(sa.Boolean())
-    enabled = sa.Column(sa.Boolean())
-    readonly = sa.Column(sa.Boolean())
+__all__ = ('SharingWebshareService',)
 
 
-class SharingWebshareService(SharingService[SharingWebshareEntry]):
+class SharingWebshareService(GenericSharingService[SharingWebshareEntry]):
+    _svc_part: SharingWebsharePart
 
-    include_tier_info = True
     share_task_type = 'Webshare'
-    allowed_path_types = [FSLocation.LOCAL]
 
     class Config:
         namespace = 'sharing.webshare'
-        datastore = 'sharing.webshare_share'
         cli_namespace = 'sharing.webshare'
         role_prefix = 'SHARING_WEBSHARE'
         generic = True
         entry = SharingWebshareEntry
+
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        self._svc_part = SharingWebsharePart(self.context)
 
     @api_method(
         SharingWebshareCreateArgs, SharingWebshareCreateResult,
@@ -67,19 +55,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         The shared ``path`` must reside under ``/mnt/`` within a ZFS pool. At most one share may set
         ``is_home_base`` to ``true`` to serve as the base path for user home directories.
         """
-        verrors = ValidationErrors()
-
-        await self.validate(data, 'sharing_webshare_create', verrors)
-
-        verrors.check()
-
-        id_ = await self.middleware.call('datastore.insert', self._config.datastore, self.compress(data))
-
-        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
-
-        await self.call2(self.s.truesearch.configure)
-
-        return await self.get_instance(id_)
+        return await self._svc_part.do_create(data)
 
     @api_method(
         SharingWebshareUpdateArgs, SharingWebshareUpdateResult,
@@ -98,24 +74,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
         Only one share may set ``is_home_base`` to ``true`` to serve as the base path for user home directories.
         """
-        old = await self.get_instance(id_)
-        audit_callback(old.name)
-
-        verrors = ValidationErrors()
-
-        new = old.updated(data)
-
-        await self.validate(new, 'sharing_webshare_update', verrors, old)
-
-        verrors.check()
-
-        await self.middleware.call('datastore.update', self._config.datastore, id_, self.compress(new))
-
-        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
-
-        await self.call2(self.s.truesearch.configure)
-
-        return await self.get_instance(id_)
+        return await self._svc_part.do_update(audit_callback, id_, data)
 
     @api_method(
         SharingWebshareDeleteArgs, SharingWebshareDeleteResult,
@@ -125,133 +84,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
     )
     async def do_delete(self, audit_callback: AuditCallback, id_: int) -> None:
         """
-        Delete SMB Share of ``id``. This will forcibly disconnect SMB clients
+        Delete the Webshare share identified by ``id``. This disconnects Webshare clients
         that are accessing the share.
         """
-        share = await self.get_instance(id_)
-        audit_callback(share.name)
-
-        await self.middleware.call('datastore.delete', self._config.datastore, id_)
-
-        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
-
-        await self.call2(self.s.truesearch.configure)
-
-    @private
-    async def validate_share_name(
-        self,
-        name: str,
-        schema_name: str,
-        verrors: ValidationErrors,
-        old: SharingWebshareEntry | None = None,
-    ) -> None:
-        filters: list[list[int | str]] = [['name', 'C=', name]]
-        if old:
-            filters.append(['id', '!=', old.id])
-
-        if await self.query(filters, {'select': ['name']}):
-            verrors.add(
-                f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
-            )
-
-    @private
-    async def validate_share_path(
-        self,
-        data: SharingWebshareEntry,
-        schema_name: str,
-        verrors: ValidationErrors,
-        old: SharingWebshareEntry | None = None,
-    ) -> None:
-        filters: list[list[int | str]] = [['enabled', '=', True]]
-        if old:
-            filters.append(['id', '!=', old.id])
-
-        others = cast(
-            list[SharingWebshareEntry], await self.query(filters, {'select': ['name', 'path']})
-        )
-
-        schema_path = f'{schema_name}.{self.path_field}'
-        for other in others:
-            if await self.middleware.call('filesystem.is_child', data.path, other.path):
-                verrors.add(
-                    schema_path,
-                    f'This path is already covered by the Webshare {other.name!r} at {other.path}.',
-                    errno.EEXIST,
-                )
-            elif await self.middleware.call('filesystem.is_child', other.path, data.path):
-                verrors.add(
-                    schema_path,
-                    f'This path contains the Webshare {other.name!r} at {other.path}.',
-                    errno.EEXIST,
-                )
-
-    @private
-    async def validate(
-        self,
-        data: SharingWebshareEntry,
-        schema_name: str,
-        verrors: ValidationErrors,
-        old: SharingWebshareEntry | None = None,
-    ) -> None:
-        # An update that leaves the share disabled is let through even without the entitlement,
-        # so a system that has lost it can still turn a share off instead of having to delete it.
-        # Everything else, creating a share included, stays gated.
-        if old is None or data.enabled:
-            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.WEBSHARE)
-            if not entitlement.entitled:
-                verrors.add(schema_name, entitlement.message)
-
-        await self.validate_share_name(data.name, schema_name, verrors, old)
-
-        await self.validate_path_field(data, schema_name, verrors, split_path=True)
-
-        if data.enabled:
-            await self.validate_share_path(data, schema_name, verrors, old)
-
-        if data.is_home_base:
-            filters = [['is_home_base', '=', True]]
-            if old:
-                filters.append(['id', '!=', old.id])
-
-            if await self.query(filters, {'select': ['id']}):
-                verrors.add(
-                    f'{schema_name}.is_home_base',
-                    'Only one share can be configured as home directory base.',
-                    errno.EEXIST
-                )
-
-            if data.readonly:
-                verrors.add(
-                    f'{schema_name}.readonly',
-                    'The home directory base share cannot be read-only, because Webshare creates home '
-                    'directories under it.',
-                )
-
-    @private
-    def compress(self, data: SharingWebshareEntry) -> dict[str, Any]:
-        compressed = data.model_dump()
-        # On the create model these are excluded fields, so `model_dump` drops what `validate_path_field` set.
-        compressed['dataset'] = data.dataset
-        compressed['relative_path'] = data.relative_path
-        compressed.pop(self.locked_field, None)
-        compressed.pop('tier', None)
-        return compressed
-
-
-class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingWebshareEntry]):
-    name = 'webshare'
-    title = 'Webshare Share'
-    service = 'webshare'
-    service_class = SharingWebshareService
-
-    async def restart_reload_services(self, attachments: list[SharingWebshareEntry]) -> None:
-        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
-
-        await self.call2(self.s.truesearch.configure)
-
-
-async def setup(middleware: Middleware) -> None:
-    await middleware.call2(
-        middleware.services.zfs.resource.register_attachment_delegate,
-        WebshareFSAttachmentDelegate(middleware),
-    )
+        await self._svc_part.do_delete(audit_callback, id_)

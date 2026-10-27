@@ -4,10 +4,16 @@ import os
 from typing import TYPE_CHECKING
 
 from middlewared.service import ServiceContext
+from middlewared.utils.service.call_mixin import CallMixin
 from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DATA_PATH
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+
+
+async def reload_webshare(context: CallMixin) -> None:
+    await (await context.call2(context.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
+    await context.call2(context.s.truesearch.configure)
 
 
 async def bindip_choices(context: ServiceContext) -> dict[str, str]:
