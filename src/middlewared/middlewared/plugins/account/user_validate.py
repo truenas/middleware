@@ -534,7 +534,7 @@ async def common_validation(
         home_create = supplied_flag(data, "home_create")
         if await context.to_thread(validate_homedir_path, context, verrors, schema, home, home_create, users):
             await check_path_resides_within_volume(verrors, context.middleware, schema, home)
-            await check_path_service_write_allowed(verrors, context.middleware, f"{schema}.home", home)
+            await check_path_service_write_allowed(verrors, context.middleware, f"{schema}.home", home, beneath=True)
         elif _effective(data, old, "ssh_password_enabled"):
             verrors.add(f"{schema}.home", "SSH password login requires a valid home path.")
 

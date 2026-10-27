@@ -34,8 +34,11 @@ DELEGATES: list[FSAttachmentDelegate[Any]] = []
 
 
 def register(delegate: FSAttachmentDelegate[Any]) -> None:
-    if inspect.iscoroutinefunction(delegate.validate_set) or inspect.iscoroutinefunction(delegate.after_set):
-        raise TypeError(f"{type(delegate).__name__}: validate_set and after_set must be synchronous")
+    if any(
+        inspect.iscoroutinefunction(hook)
+        for hook in (delegate.validate_set, delegate.after_set, delegate.validate_rename)
+    ):
+        raise TypeError(f"{type(delegate).__name__}: validate_set, after_set and validate_rename must be synchronous")
     DELEGATES.append(delegate)
 
 

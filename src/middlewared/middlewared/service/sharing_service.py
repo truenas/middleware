@@ -42,6 +42,8 @@ class SharingTaskService[E](CRUDService[E]):
     readonly_field: str | None = None
     """The flag that makes the share or task read-only for its local path, or None where nothing does: what
     `local_path_info` reads unless overridden."""
+    crosses_mounts: bool = True
+    """Whether a write through the local path reaches the datasets mounted beneath it."""
 
     def __init__(self, middleware: 'Middleware'):
         super().__init__(middleware)
@@ -180,7 +182,8 @@ class SharingTaskService[E](CRUDService[E]):
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
         resolves the path to its ZFS dataset components. A local path whose writes belong to another
-        service is refused unless `local_path_info` says this share or task only reads it."""
+        service is refused unless `local_path_info` says this share or task only reads it. A disabled entry is not
+        checked for buckets below its path; it is checked when enabled."""
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
@@ -210,8 +213,16 @@ class SharingTaskService[E](CRUDService[E]):
                 else:
                     data.dataset = ds
                     data.relative_path = rel_path
+            enabled = data[self.enabled_field] if isinstance(data, dict) else getattr(data, self.enabled_field)
             await validate_path_service_write(
-                self.middleware, verrors, schema, self.path_field, path, data, await self.local_path_info(data)
+                self.middleware,
+                verrors,
+                schema,
+                self.path_field,
+                path,
+                data,
+                await self.local_path_info(data),
+                beneath=self.crosses_mounts and bool(enabled),
             )
 
         else:

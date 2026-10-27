@@ -18,6 +18,7 @@ from .mount_unmount_impl import mount_impl, unmount_impl
 from .name_utils import last_component_space_padded
 from .rename_promote_clone_impl import promote_impl as _raw_promote
 from .rename_promote_clone_impl import rename_impl as _raw_rename
+from .resource_attachments import DELEGATES
 from .utils import reject_protected_path
 from .zvol_utils import get_zvol_attachments_impl, unlocked_zvols_fast_impl
 
@@ -131,4 +132,6 @@ def rename(context: ServiceContext, data: ZFSResourceRenameArgsData) -> None:
             "No safety checks are performed when renaming ZFS resources; this may break existing usages. "
             "If you understand the risks, please set force and proceed.",
         )
+    for delegate in DELEGATES:
+        delegate.validate_rename(data)
     context.call_sync2(context.s.zfs.resource.rename_impl, data)
