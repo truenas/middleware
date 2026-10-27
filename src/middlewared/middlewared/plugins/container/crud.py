@@ -31,7 +31,6 @@ from middlewared.service import CallError, CRUDServicePart, ValidationError, Val
 import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.utils import ACTIVE_STATES, retrieve_status, same_uuid
 
-from .bridge import container_bridge_name
 from .dataset import ensure_datasets
 from .info import license_active, pool_choices
 from .lifecycle import pylibvirt_container
@@ -111,7 +110,6 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
                 self.middleware.libvirt_domains_manager.containers_connection,
                 lambda container: pylibvirt_container(self, self.state_entry(container)),
             ) if retrieve_status(extra) else None,
-            'bridge_name': container_bridge_name(self),
         }
 
     def devices_by_container(self, rows: list[dict[str, Any]]) -> dict[int, list[Any]]:
@@ -139,12 +137,10 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         devices = context['devices'].get(data['id'], [])
-        has_nic = any(d.attributes.dtype == 'NIC' for d in devices)
 
         data.update({
             'status': None if context['states'] is None else get_pylibvirt_domain_state(context['states'], data),
             'devices': devices,
-            'default_network': None if has_nic else context['bridge_name'],
         })
 
         self.extend_container(data)
@@ -152,7 +148,6 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         return data
 
     async def compress(self, data: dict[str, Any]) -> dict[str, Any]:
-        data.pop('default_network', None)
         idmap = data.pop('idmap')
         if idmap is None:
             data['idmap_slice'] = None

@@ -113,14 +113,6 @@ class ContainerEntry(BaseModel):
         ),
     )
     capabilities_state: dict[str, bool] = Field(default={}, description="Enable or disable specific capabilities.")
-    default_network: str | None = Field(
-        default=None,
-        description=(
-            "The default network bridge this container will use when no NIC devices are explicitly attached. When the "
-            "container has explicitly configured NIC devices, this is `null` because the NIC configuration is visible "
-            "in the `devices` list."
-        ),
-    )
     status_or_null: ContainerStatus | None = Field(
         alias="status",
         description="Container state. `null` if `query-options.extra.retrieve_status` is `false`.",
@@ -141,7 +133,6 @@ class ContainerCreate(ContainerEntry):
     dataset: Excluded = excluded_field()
     status_or_null: Excluded = excluded_field()
     devices: Excluded = excluded_field()
-    default_network: Excluded = excluded_field()
     uuid: LibvirtUUID | None = Field(
         default=None,
         description=(

@@ -10,18 +10,22 @@ from truenas_pylibvirt import (
     ContainerDomainConfiguration,
     ContainerIdmapConfiguration,
     ContainerIdmapConfigurationItem,
-    NICDevice,
-    NICDeviceType,
     Time,
 )
 from truenas_pylibvirt import Error as PyLibvirtError
 
-from middlewared.api.current import ContainerEntry, ContainerStopOptions, QueryOptions, ZFSResourceQuery
+from middlewared.api.current import (
+    ContainerEntry,
+    ContainerNICDevice,
+    ContainerStopOptions,
+    QueryOptions,
+    ZFSResourceQuery,
+)
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
 
-from .bridge import configure_container_bridge, container_bridge_name
+from .bridge import BRIDGE_NAME, configure_container_bridge
 from .dataset import CONTAINER_DS_PARENT_DIR
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
@@ -118,7 +122,11 @@ def start(context: ServiceContext, id_: int) -> None:
     apply_idmapped_root_acl()
 
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
-    configure_container_bridge(context)
+    if any(
+        isinstance(device.attributes, ContainerNICDevice) and device.attributes.nic_attach == BRIDGE_NAME
+        for device in container.devices
+    ):
+        configure_container_bridge(context)
 
     pylibvirt_obj = pylibvirt_container(context, container, True)
 
@@ -158,7 +166,6 @@ def pylibvirt_container(
     data.pop("id", None)
     data.pop("status", None)
     data.pop("autostart", None)
-    data.pop("default_network", None)
 
     dataset = data.pop("dataset")
     pool = dataset.split("/")[0]
@@ -173,28 +180,7 @@ def pylibvirt_container(
 
     data["time"] = Time(data["time"])
     device_factory = context.middleware.services.container.device.device_factory
-    devices = []
-    has_nic_device = False
-    for device in data.get("devices", []):
-        if device["attributes"]["dtype"] == "NIC":
-            has_nic_device = True
-
-        devices.append(device_factory.get_device(device))
-
-    if not has_nic_device:
-        # Add one if one isn't added already
-        # TODO: See if this should be desired behaviour
-        devices.append(
-            NICDevice(
-                type_=NICDeviceType.BRIDGE,
-                source=container_bridge_name(context),
-                model=None,
-                mac=None,
-                trust_guest_rx_filters=False,
-            )
-        )
-
-    data["devices"] = devices
+    data["devices"] = [device_factory.get_device(device) for device in data.get("devices", [])]
 
     if data['idmap']:
         match data['idmap']['type']:

@@ -346,7 +346,9 @@ async def test_migrate_uses_one_scan_for_every_pool(monkeypatch):
     monkeypatch.setattr(migrate_module, "license_active", AsyncMock(return_value=True))
 
     context = make_context()
-    context.middleware.call = AsyncMock(return_value=[{"id": 1, "pool": "tank", "storage_pools": "dozer"}])
+    context.middleware.call = AsyncMock(
+        return_value=[{"id": 1, "pool": "tank", "storage_pools": "dozer", "bridge": None}]
+    )
     context.call2 = AsyncMock(return_value=[])
 
     passed = []
