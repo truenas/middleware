@@ -54,13 +54,7 @@ def kmip_server_pem():
 
 @pytest.fixture(scope="module")
 def kmip_certificate(kmip_server_pem):
-    """Run the fake KMIP server and import its certificate into the middleware store.
-
-    PyKMIP's server slows down markedly once it has been asked to operate on objects it
-    does not know about, which the error-path tests at the bottom of this module do
-    deliberately. Those tests are therefore kept last, so the ones that need a healthy
-    server run against a freshly started one.
-    """
+    """Run the fake KMIP server and import its certificate into the middleware store."""
     cert_pem, key_pem = kmip_server_pem
     # The certificate cannot be deleted while the KMIP service still references it, so
     # the configuration is reset both before and after, the former in case an earlier
@@ -424,11 +418,9 @@ def test_kmip_zfs_key_resynced_from_server(kmip_certificate, encrypted_dataset):
         assert call("kmip.retrieve_zfs_keys")[encrypted_dataset] == key
 
         # A dataset that carries both a database key and an existing KMIP UID has the old
-        # object revoked and destroyed before the key is registered again. The UID must be
-        # one the server actually knows (here the object registered by the initial push):
-        # asking PyKMIP about an unknown object degrades it for the rest of the module. The
-        # unresolvable-UID paths are covered by `test_kmip_zfs_key_pull_failures`, which runs
-        # against the deliberately-degraded server at the end of the module.
+        # object revoked and destroyed before the key is registered again. The UID is the
+        # object registered by the initial push, so the revoke and destroy really run;
+        # `test_kmip_zfs_key_pull_failures` covers the unresolvable-UID paths.
         set_encrypted_dataset(encrypted_dataset, {"encryption_key": key, "kmip_uid": uid})
         call("kmip.sync_zfs_keys", job=True)
         row = encrypted_dataset_row(encrypted_dataset)
@@ -690,9 +682,6 @@ def test_kmip_sync_keys_noop_when_disabled():
 
 
 def test_kmip_change_server_fails_when_old_server_unreachable(kmip_certificate, encrypted_dataset):
-    # This needs a healthy server (it pushes a key below and pulls it back at the end), so it
-    # must run before the pull-failure tests, which probe UIDs the server does not know and
-    # thereby degrade it for the rest of the module (see the `kmip_certificate` docstring).
     key = encrypted_dataset_row(encrypted_dataset)["encryption_key"]
 
     with kmip_enabled(kmip_certificate["id"], manage_zfs_keys=True):
