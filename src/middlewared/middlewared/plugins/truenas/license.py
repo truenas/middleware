@@ -2,6 +2,7 @@ import contextlib
 import os
 from typing import TYPE_CHECKING, Any
 
+from licenselib.license import License
 from pydantic import Secret
 from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import LicenseFeature
@@ -35,6 +36,14 @@ from middlewared.utils.license import (
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+
+
+def _is_legacy_license(text: str) -> bool:
+    try:
+        License.load(text)
+    except Exception:
+        return False
+    return True
 
 
 def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
@@ -87,7 +96,16 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
 
         # `check_annotations` hands the method the undumped model value, so the PEM arrives still
         # boxed in the Secret that keeps it off the audit trail.
-        with upload_license(license_.get_secret_value()) as lic:
+        text = license_.get_secret_value()
+        # The daemon only knows PEM and would reject a legacy blob with a parser error that tells the
+        # user nothing useful, so catch it before it is written over the installed license.
+        if _is_legacy_license(text):
+            raise ValidationError(
+                "license",
+                "This appears to be an unsupported legacy license. Please contact TrueNAS Support for assistance.",
+            )
+
+        with upload_license(text) as lic:
             if not lic.valid:
                 raise ValidationError("license", f"Invalid license: {lic.error}")
 
