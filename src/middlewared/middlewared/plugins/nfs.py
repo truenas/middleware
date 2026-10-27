@@ -492,6 +492,8 @@ class SharingNFSService(SharingService):
 
         verrors.check()
 
+        new_path = new["path"]
+
         await self.compress(new)
         await self.middleware.call(
             "datastore.update", self._config.datastore, id_, new,
@@ -499,6 +501,9 @@ class SharingNFSService(SharingService):
                 "prefix": self._config.datastore_prefix
             }
         )
+
+        if new_path != old["path"]:
+            await self.remove_share_alerts(old["path"])
 
         await self._service_change("nfs", "reload")
 
@@ -515,15 +520,14 @@ class SharingNFSService(SharingService):
         nfs_share = await self.get_instance(id_)
         audit_callback(nfs_share['path'])
         res = await self.middleware.call("datastore.delete", self._config.datastore, id_)
-        # Remove alerts that might be associated with this share
-        await self.middleware.call(
-            'alert.oneshot_delete', 'NFSNetworkListExcessive', {'sharePath': nfs_share['path']}
-        )
-        await self.middleware.call(
-            'alert.oneshot_delete', 'NFSHostListExcessive', {'sharePath': nfs_share['path']}
-        )
+        await self.remove_share_alerts(nfs_share['path'])
         await self._service_change("nfs", "reload")
         return res
+
+    @private
+    async def remove_share_alerts(self, path):
+        await self.middleware.call('alert.oneshot_delete', 'NFSNetworkListExcessive', {'sharePath': path})
+        await self.middleware.call('alert.oneshot_delete', 'NFSHostListExcessive', {'sharePath': path})
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
