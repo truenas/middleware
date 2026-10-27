@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import enum
-import errno
 import os
 from types import MappingProxyType
 from typing import Any
@@ -159,29 +158,20 @@ POSIX_SPECIAL_ENTRIES = frozenset([
 
 
 def path_get_acltype(path: str) -> FS_ACL_Type:
-    try:
-        # ACCESS ACL is sufficient to determine POSIX ACL support
-        os.getxattr(path, ACLXattr.POSIX_ACCESS)
+    """
+    The ACL type of the file system that holds `path`, which the TrueNAS
+    kernel reports in stx_attributes from the flags of the superblock.
+    ZFS keeps those current as acltype changes, with no remount, and a
+    file system that keeps no ACL sets neither bit.
+    """
+    st = truenas_os.statx(path, mask=truenas_os.STATX_BASIC_STATS)
+    if st.stx_attributes & truenas_os.STATX_ATTR_NFSV4ACL:
+        return FS_ACL_Type.NFS4
+
+    if st.stx_attributes & truenas_os.STATX_ATTR_POSIXACL:
         return FS_ACL_Type.POSIX1E
 
-    except OSError as e:
-        if e.errno == errno.ENODATA:
-            # No ACL set, but zfs acltype is set to POSIX
-            return FS_ACL_Type.POSIX1E
-
-        # EOPNOTSUPP means that ZFS acltype is not set to POSIX
-        if e.errno != errno.EOPNOTSUPP:
-            raise
-
-    try:
-        os.getxattr(path, ACLXattr.ZFS_NATIVE)
-        return FS_ACL_Type.NFS4
-    except OSError as e:
-        # ZFS acltype is not set to NFS4 which means it's disabled
-        if e.errno == errno.EOPNOTSUPP:
-            return FS_ACL_Type.DISABLED
-
-        raise
+    return FS_ACL_Type.DISABLED
 
 
 def normalize_acl_ids(setacl_data: dict[str, Any]) -> None:
