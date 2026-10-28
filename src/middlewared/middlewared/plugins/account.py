@@ -2132,7 +2132,7 @@ class UserService(CRUDService):
         await self.middleware.call('datastore.update', 'account.bsdusers', entry['id'], {
             'bsdusr_unixhash': entry['unixhash'],
             'bsdusr_smbhash': entry['smbhash'],
-            'bsdusr_password_history': ', '.join(history),
+            'bsdusr_password_history': ' '.join(history[-MAX_PASSWORD_HISTORY:]),
             'bsdusr_last_password_change': int(entry['last_password_change'].timestamp()),
         })
         await self.middleware.call('etc.generate', 'shadow')
