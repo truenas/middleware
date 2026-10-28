@@ -149,6 +149,24 @@ class AlertService(Service):
         """
         await oneshot.oneshot_create(self.context, self._state, instance)
 
+    @private
+    @job(
+        lock="process_alerts",
+        lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
+        transient=True,
+    )
+    async def oneshot_replace(self, job: Job, klasses: builtins.list[str], instance: OneShotAlertClass) -> None:
+        """
+        Deletes one-shot alerts of the given `klasses` and creates `instance` while holding the alerts lock.
+
+        A separate `oneshot_delete` and `oneshot_create` are two queued jobs, so another caller can run between
+        them. Mutually exclusive alerts (the state of one UPS, for example) must not leave such a window.
+
+        :param klasses: one-shot alert class names (without the `AlertClass` suffix) to delete.
+        :param instance: an instance of an `AlertClass` subclass that also inherits from `OneShotAlertClass`.
+        """
+        await oneshot.oneshot_replace(self.context, self._state, klasses, instance)
+
     @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True, check_annotations=True)
     @job(
         lock="process_alerts",

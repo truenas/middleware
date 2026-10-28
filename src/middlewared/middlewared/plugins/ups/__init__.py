@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 
+from middlewared.alert.base import OneShotAlertClass
 from middlewared.api import api_method
 from middlewared.api.current import (
     UPSDriverChoicesArgs,
@@ -17,7 +18,7 @@ from middlewared.service import SystemServiceService, private
 
 from .config import UPSServicePart
 from .upssched_event import handle_upssched_event
-from .utils import alerts_mapping, driver_choices, port_choices
+from .utils import alert_class_names, driver_choices, port_choices
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -65,8 +66,11 @@ class UPSService(SystemServiceService[UPSEntry]):
 
     @private
     async def dismiss_alerts(self) -> None:
-        alerts = [cls.config.name for cls in alerts_mapping().values()]
-        await self.call2(self.s.alert.oneshot_delete, alerts)
+        await self.call2(self.s.alert.oneshot_delete, alert_class_names())
+
+    @private
+    async def replace_alert(self, instance: OneShotAlertClass) -> None:
+        await self.call2(self.s.alert.oneshot_replace, alert_class_names(), instance)
 
     @private
     async def upssched_event(self, notify_type: str) -> None:

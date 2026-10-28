@@ -10,12 +10,15 @@ from auto_config import password, user
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, mock, ssh
-from middlewared.test.integration.utils.alert import get_alerts_by_class, wait_for_alerts_by_class
+from middlewared.test.integration.utils.alert import wait_for_alerts_by_class
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.legacy_functions import send_file
 
 DUMMY_FAKEDATA_DEV = '/tmp/fakedata.dev'
 SHUTDOWN_MARKER_FILE = '/tmp/is_shutdown'
+# `upsmon` reports lost communication as soon as it starts and arms a 10 second COMMBAD timer. Its
+# own poll frequency decides when the driver cancels that timer.
+UPSMON_POLLFREQ = 5
 
 first_ups_payload = {
     'rmonitor': True,
@@ -62,6 +65,25 @@ def did_shutdown():
     return ssh(f'cat {SHUTDOWN_MARKER_FILE}', check=False) == "done\n"
 
 
+def ups_alert_classes():
+    return sorted(alert['klass'] for alert in call('alert.list') if alert['klass'].startswith('UPS'))
+
+
+def clear_ups_alerts():
+    call('ups.dismiss_alerts')
+    for _ in range(30):
+        if not ups_alert_classes():
+            return
+        sleep(1)
+
+    raise AssertionError(f'UPS alerts were not dismissed: {ups_alert_classes()}')
+
+
+def upsc():
+    """The driver's view of the data, with the `upsc` errors kept for the assertion messages."""
+    return ssh(f'upsc {call("ups.config")["complete_identifier"]} 2>&1', check=False)
+
+
 def write_fake_data(data=None):
     data = data or {}
     all_data = default_dummy_data | data
@@ -70,8 +92,48 @@ def write_fake_data(data=None):
             f.write(f'{k}: {v}\n'.encode('utf-8'))
         f.flush()
         os.fchmod(f.fileno(), 0o644)
-        results = send_file(f.name, DUMMY_FAKEDATA_DEV, user, password, truenas_server.ip)
+        results = send_file(f.name, f'{DUMMY_FAKEDATA_DEV}.new', user, password, truenas_server.ip)
         assert results['result'], str(results['output'])
+
+    # `scp` truncates the destination and then writes it. The driver polls once a second, so it can
+    # read a half-written file. A rename is atomic, so the driver only ever sees a complete file.
+    ssh(f'mv {DUMMY_FAKEDATA_DEV}.new {DUMMY_FAKEDATA_DEV}')
+
+
+def publish_fake_data(data):
+    """Write `data` and wait for the dummy driver to serve it.
+
+    `dummy-ups` in dummy-once mode re-reads its file only when the whole second of the file mtime
+    differs from the one it read last. A write in that same second is invisible forever, so `touch`
+    the file until the new values appear.
+    """
+    write_fake_data(data)
+    expected = [f'{k}: {v}' for k, v in data.items()]
+    for _ in range(30):
+        served = upsc()
+        if all(line in served for line in expected):
+            return
+        ssh(f'touch {DUMMY_FAKEDATA_DEV}')
+        sleep(1)
+
+    raise AssertionError(f'The driver does not serve {expected}: {served}')
+
+
+def wait_for_dummy_driver():
+    """Wait for `upsd` to serve the driver, then clear what the start-up produced.
+
+    A driver that takes more than 10 seconds to connect leaves a `UPSCommbad` alert from the
+    COMMBAD timer, and `upsmon` also reports NOCOMM while `upsd` is not listening yet.
+    """
+    for _ in range(30):
+        if 'ups.status' in upsc():
+            break
+        sleep(1)
+    else:
+        raise AssertionError(f'The dummy driver did not start: {upsc()}')
+
+    sleep(UPSMON_POLLFREQ + 1)
+    clear_ups_alerts()
 
 
 @pytest.fixture(scope='module')
@@ -93,11 +155,16 @@ def dummy_ups_driver_configured():
     # trying to restart with the old (hardware-dependent) driver config.
     call('service.control', 'STOP', 'ups', job=True)
 
+    # Every field these tests depend on is set here, because the preceding tests in this module
+    # leave a different configuration behind. `shutdown` decides whether LOWBATT runs the shutdown
+    # command, and `upsmon` does not start at all without a password.
     payload = {
         'mode': 'MASTER',
         'driver': 'dummy-ups',
         'port': DUMMY_FAKEDATA_DEV,
         'description': 'dummy-ups in dummy-once mode',
+        'shutdown': 'LOWBATT',
+        'monpwd': 'dummypassword',
         'shutdowncmd': f'echo done > {SHUTDOWN_MARKER_FILE}'
     }
     with mock('ups.driver_choices', return_value={'dummy-ups': 'Driver for multi-purpose UPS emulation',
@@ -106,9 +173,12 @@ def dummy_ups_driver_configured():
         # Start fresh with the dummy-ups config
         call('service.control', 'START', 'ups', {'silent': False}, job=True)
         try:
+            wait_for_dummy_driver()
             yield
         finally:
             call('service.control', 'STOP', 'ups', job=True)
+            # These alerts are never deleted automatically, so they would stay for the whole run.
+            clear_ups_alerts()
             call('ups.update', old_config_dict)
             remove_file(SHUTDOWN_MARKER_FILE)
             remove_file(DUMMY_FAKEDATA_DEV)
@@ -183,43 +253,47 @@ def test__disable_and_stop_ups_service():
 def test__ups_online_to_online_lowbattery(ups_running, dummy_ups_driver_configured):
     results = get_service_state()
     assert results['state'] == 'RUNNING', results
-    sleep(2)
-    assert not get_alerts_by_class('UPSBatteryLow')
-    write_fake_data({'battery.charge': 20, 'ups.status': 'OL LB'})
+    clear_ups_alerts()
+    publish_fake_data({'battery.charge': 20, 'ups.status': 'OL LB'})
     alerts = wait_for_alerts_by_class('UPSBatteryLow')
     assert alerts
     assert 'battery.charge: 20' in alerts[0]['formatted'], alerts
+    assert ups_alert_classes() == ['UPSBatteryLow']
     assert not did_shutdown()
 
 
 def test__ups_online_to_onbatt(ups_running, dummy_ups_driver_configured):
-    assert not get_alerts_by_class('UPSOnBattery')
-    write_fake_data({'battery.charge': 40, 'ups.status': 'OB'})
+    clear_ups_alerts()
+    publish_fake_data({'battery.charge': 40, 'ups.status': 'OB'})
     alerts = wait_for_alerts_by_class('UPSOnBattery')
     assert alerts
     assert 'battery.charge: 40' in alerts[0]['formatted'], alerts
+    assert ups_alert_classes() == ['UPSOnBattery']
     assert not did_shutdown()
 
 
 def test__ups_onbatt_to_online(ups_running, dummy_ups_driver_configured):
-    assert not get_alerts_by_class('UPSOnline')
-    write_fake_data({'battery.charge': 100, 'ups.status': 'OL'})
+    clear_ups_alerts()
+    publish_fake_data({'battery.charge': 100, 'ups.status': 'OL'})
     alerts = wait_for_alerts_by_class('UPSOnline')
     assert alerts
     assert 'battery.charge: 100' in alerts[0]['formatted'], alerts
+    assert ups_alert_classes() == ['UPSOnline']
     assert not did_shutdown()
 
 
 def test__ups_online_to_onbatt_lowbattery(ups_running, dummy_ups_driver_configured):
-    assert not get_alerts_by_class('UPSOnBattery')
-    write_fake_data({'battery.charge': 90, 'ups.status': 'OB'})
+    clear_ups_alerts()
+    publish_fake_data({'battery.charge': 90, 'ups.status': 'OB'})
     alerts = wait_for_alerts_by_class('UPSOnBattery')
     assert alerts
     assert 'battery.charge: 90' in alerts[0]['formatted'], alerts
-    write_fake_data({'battery.charge': 10, 'ups.status': 'OB LB'})
+    publish_fake_data({'battery.charge': 10, 'ups.status': 'OB LB'})
     alerts = wait_for_alerts_by_class('UPSBatteryLow')
     assert alerts
     assert 'battery.charge: 10' in alerts[0]['formatted'], alerts
+    # The simultaneous SHUTDOWN event carries no alert of its own, so the low battery alert stays.
+    assert ups_alert_classes() == ['UPSBatteryLow']
     assert did_shutdown()
 
 

@@ -31,6 +31,10 @@ def alerts_mapping() -> dict[str, type[UPSBatteryLowAlert] | type[UPSCommbadAler
     }
 
 
+def alert_class_names() -> list[str]:
+    return [cls.config.name for cls in alerts_mapping().values()]
+
+
 def port_choices(serial_console: bool, serialport: str) -> list[str]:
     ports = [
         os.path.join('/dev', port['name'])

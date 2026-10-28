@@ -61,3 +61,10 @@ async def oneshot_delete(context: ServiceContext, state: AlertState, klass: str 
         await context.call2(context.s.alert.flush_alerts)
 
         await context.call2(context.s.alert.send_alerts)
+
+
+async def oneshot_replace(
+    context: ServiceContext, state: AlertState, klasses: list[str], instance: OneShotAlertClass
+) -> None:
+    await oneshot_delete(context, state, klasses)
+    await oneshot_create(context, state, instance)
