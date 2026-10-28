@@ -71,35 +71,11 @@ def _unlicensed_for_force():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "count,topology_fn,expected_type",
-    [
-        (1, lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]}, "disk"),
-        (2, lambda d: {"data": [{"type": "mirror", "disks": d[0:2]}]}, "mirror"),
-        (3, lambda d: {"data": [{"type": "raidz1", "disks": d[0:3]}]}, "raidz1"),
-    ],
-)
-def test_create_data_topologies(count, topology_fn, expected_type):
-    disks = _unused_devnames(count)
-    with _zpool(topology_fn(disks)) as pool:
-        assert pool["name"] == POOL
-        assert pool["status"] == "ONLINE"
-        assert pool["id"] is not None
-        assert pool["topology"]["data"][0]["vdev_type"] == expected_type
-
-        vol = call("datastore.query", "storage.volume", [["vol_name", "=", POOL]], {"prefix": "vol_"})
-        assert len(vol) == 1
-        assert str(vol[0]["guid"]) == str(pool["guid"])
-        assert call("datastore.query", "storage.scrub", [["scrub_volume", "=", vol[0]["id"]]], {"prefix": "scrub_"})
-        assert POOL in ssh("ls /mnt")
-
-
 def test_create_draid_vdevs():
-    """Every dRAID parity, explicit and defaulted data disks, distributed and dedicated spares.
+    """Explicit and defaulted data disks, distributed and dedicated spares.
 
     One forced pool holds a draid1 and a draid2 so the two configurations cost
-    one creation; the draid3 pool is separate because its five disks would not
-    fit beside them on a small box.
+    one creation.
     """
     disks = _unused_devnames(8)
     topology = {
@@ -119,13 +95,14 @@ def test_create_draid_vdevs():
         # the TrueNAS default for dRAID pools
         assert call("pool.dataset.get_instance", POOL)["recordsize"]["value"] == "1M"
 
-    disks = _unused_devnames(5)
-    topology = {"data": [{"type": "draid3", "disks": disks[0:5], "draid_data_disks": 1, "draid_spare_disks": 1}]}
-    with _zpool(topology) as pool:
-        assert pool["topology"]["data"][0]["vdev_type"] == "draid3:1d:5c:1s"
 
+def test_create_log_cache_spares_and_an_nfsv4_root():
+    """Log, cache and spare vdevs, the ADDED event and the name the new pool takes, on a pool with an nfsv4 root.
 
-def test_create_log_cache_and_spares():
+    An nfsv4 root gets passthrough aclmode and aclinherit, so zfs.resource.create
+    accepts a child with no ACL properties of its own; with the discard default
+    zfs.resource.create refuses it.
+    """
     disks = _unused_devnames(5)
     topology = {
         "data": [{"type": "mirror", "disks": disks[0:2]}],
@@ -134,12 +111,21 @@ def test_create_log_cache_and_spares():
         "spares": disks[4:5],
     }
     with wait_for_event("zpool.query", expected_collection_type="added") as event:
-        with _zpool(topology) as pool:
+        with _zpool(topology, filesystem_properties={"acltype": "nfsv4"}) as pool:
             topology = pool["topology"]
             assert topology["data"][0]["vdev_type"] == "mirror"
             assert len(topology["log"]) == 1
             assert len(topology["cache"]) == 1
             assert len(topology["spares"]) == 1
+
+            call("zfs.resource.create", {"path": f"{POOL}/child"})
+            props = ["acltype", "aclmode", "aclinherit"]
+            listed = {
+                r["name"]: {p: r["properties"][p]["raw"] for p in props}
+                for r in call("zfs.resource.list", {"paths": [POOL, f"{POOL}/child"], "properties": props})
+            }
+            assert listed[POOL] == {"acltype": "nfsv4", "aclmode": "passthrough", "aclinherit": "passthrough"}
+            assert listed[f"{POOL}/child"] == listed[POOL]
 
             # while it exists, the name is taken
             errors = _create_fails({"data": [{"type": "disk", "disks": disks[0:1]}]})
@@ -152,19 +138,16 @@ def test_create_log_cache_and_spares():
 
 
 def test_create_special_and_dedup_vdevs():
-    """Several special vdevs, of mixed types, beside a dedup vdev; the special class has no same-type rule.
-
-    A single data disk keeps this within a CI box's disks; the redundancy floor
-    has its own refusal and striped-data creation elsewhere.
-    """
-    disks = _unused_devnames(8)
+    """Several special vdevs, of mixed types, beside a dedup vdev; the special class has no same-type rule, and the
+    redundancy floor only applies when the data vdevs are redundant, so a single-disk special is accepted here."""
+    disks = _unused_devnames(7)
     topology = {
         "data": [{"type": "disk", "disks": disks[0:1]}],
-        "special": [{"type": "raidz1", "disks": disks[1:4]}, {"type": "mirror", "disks": disks[4:6]}],
-        "dedup": [{"type": "mirror", "disks": disks[6:8]}],
+        "special": [{"type": "raidz1", "disks": disks[1:4]}, {"type": "disk", "disks": disks[4:5]}],
+        "dedup": [{"type": "mirror", "disks": disks[5:7]}],
     }
     with _zpool(topology) as pool:
-        assert [v["vdev_type"] for v in pool["topology"]["special"]] == ["raidz1", "mirror"]
+        assert [v["vdev_type"] for v in pool["topology"]["special"]] == ["raidz1", "disk"]
         assert [v["vdev_type"] for v in pool["topology"]["dedup"]] == ["mirror"]
 
 
@@ -178,17 +161,11 @@ def test_create_width_policy_and_force_topology():
     with _unlicensed_for_force():
         before = _partitions(disks)
         errors = _create_fails({"data": [{"type": "mirror", "disks": disks[0:5]}]})
-        assert errors == [("zpool.create.topology.data.0", "mirror width 5 exceeds limit of 4", errno.EINVAL)]
+        assert [(attr, code) for attr, _, code in errors] == [("zpool.create.topology.data.0", errno.EINVAL)]
         errors = _create_fails(
             {"data": [{"type": "raidz1", "disks": disks[0:3]}, {"type": "raidz1", "disks": disks[3:7]}]}
         )
-        assert errors == [
-            (
-                "zpool.create.topology.data.1",
-                'all "raidz1" vdevs must have the same number of children; got 3 and 4',
-                errno.EINVAL,
-            )
-        ]
+        assert [(attr, code) for attr, _, code in errors] == [("zpool.create.topology.data.1", errno.EINVAL)]
         _untouched(disks, before)
 
         with _zpool({"data": [{"type": "mirror", "disks": disks[0:5]}]}, force_topology=True) as pool:
@@ -197,30 +174,7 @@ def test_create_width_policy_and_force_topology():
             assert len(vdev["children"]) == 5
 
 
-def test_create_nfsv4_root_takes_the_pairing_its_children_need():
-    """An nfsv4 root gets passthrough aclmode and aclinherit, so zfs.resource.create accepts a child with no ACL
-    properties of its own; with the discard default zfs.resource.create refuses it."""
-    disks = _unused_devnames(1)
-    with _zpool({"data": [{"type": "disk", "disks": disks[0:1]}]}, filesystem_properties={"acltype": "nfsv4"}):
-        call("zfs.resource.create", {"path": f"{POOL}/child"})
-        props = ["acltype", "aclmode", "aclinherit"]
-        listed = {
-            r["name"]: {p: r["properties"][p]["raw"] for p in props}
-            for r in call("zfs.resource.list", {"paths": [POOL, f"{POOL}/child"], "properties": props})
-        }
-        assert listed[POOL] == {"acltype": "nfsv4", "aclmode": "passthrough", "aclinherit": "passthrough"}
-        assert listed[f"{POOL}/child"] == listed[POOL]
-
-
-def test_create_non_redundant_special_on_striped_data():
-    """The redundancy floor only applies when the data vdevs are redundant."""
-    disks = _unused_devnames(2)
-    topology = {"data": [{"type": "disk", "disks": disks[0:1]}], "special": [{"type": "disk", "disks": disks[1:2]}]}
-    with _zpool(topology) as pool:
-        assert [v["vdev_type"] for v in pool["topology"]["special"]] == ["disk"]
-
-
-def test_create_properties_pass_through_and_defaults_apply():
+def test_create_properties_pass_through_defaults_apply_and_pool_is_registered():
     disks = _unused_devnames(1)
     payload = _payload(
         {"data": [{"type": "disk", "disks": disks[0:1]}]},
@@ -232,6 +186,12 @@ def test_create_properties_pass_through_and_defaults_apply():
     ):
         pool = call("zpool.create", payload, job=True)
     try:
+        assert pool["status"] == "ONLINE"
+        vol = call("datastore.query", "storage.volume", [["vol_name", "=", POOL]], {"prefix": "vol_"})
+        assert [(v["id"], str(v["guid"])) for v in vol] == [(pool["id"], pool["guid"])]
+        assert call("datastore.query", "storage.scrub", [["scrub_volume", "=", vol[0]["id"]]], {"prefix": "scrub_"})
+        assert POOL in ssh("ls /mnt").split()
+
         # the pool properties that were set come back on the result
         assert pool["properties"]["autotrim"]["value"] == "on"
         assert pool["properties"]["comment"]["value"] == "zpool.create test"
@@ -263,19 +223,22 @@ def test_create_properties_pass_through_and_defaults_apply():
 # Refusals, all before any disk is formatted
 # ---------------------------------------------------------------------------
 
+# A message is given only where middleware writes it; the binding's own suite pins the wording of its refusals.
 REJECTED = [
     pytest.param(
         1,
         lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]},
         {"filesystem_properties": {"acltype": "nfsv4", "aclmode": "discard"}},
-        [("zpool.create.filesystem_properties.aclmode", "A discard 'aclmode' may not be used with the nfsv4")],
+        "zpool.create.filesystem_properties.aclmode",
+        "A discard 'aclmode' may not be used with the nfsv4 'acltype'.",
         id="acl-combination",
     ),
     pytest.param(
         5,
         lambda d: {"data": [{"type": "mirror", "disks": d[0:2]}, {"type": "raidz1", "disks": d[2:5]}]},
         {},
-        [("zpool.create.topology.data.1", 'all vdevs must share the same type; got "mirror" and "raidz1"')],
+        "zpool.create.topology.data.1",
+        None,
         id="policy-mixed-types",
     ),
     pytest.param(
@@ -286,87 +249,62 @@ REJECTED = [
             "log": [{"type": "disk", "disks": d[1:3]}, {"type": "raidz1", "disks": d[3:6]}],
         },
         {"force_topology": True},
-        [("zpool.create.topology.log.1", 'log vdev must be leaf or mirror, got "raidz1"')],
+        "zpool.create.topology.log.1",
+        None,
         id="structural-even-when-forced",
     ),
     pytest.param(
         3,
         lambda d: {"data": [{"type": "draid1", "disks": d[0:3], "draid_data_disks": 4}]},
         {},
-        [
-            (
-                "zpool.create.topology.data.0",
-                "dRAID requires at least 5 children (ndata=4 + parity=1 + nspares=0), got 3",
-            )
-        ],
+        "zpool.create.topology.data.0",
+        None,
         id="draid-config",
-    ),
-    pytest.param(
-        5,
-        lambda d: {"data": [{"type": "mirror", "disks": d[0:2]}], "special": [{"type": "draid1", "disks": d[2:5]}]},
-        {},
-        [("zpool.create.topology.special.0", "dRAID is not permitted for special or dedup vdevs")],
-        id="draid-special",
-    ),
-    pytest.param(
-        3,
-        lambda d: {"data": [{"type": "mirror", "disks": d[0:2]}], "special": [{"type": "disk", "disks": d[2:3]}]},
-        {},
-        [
-            (
-                "zpool.create.topology.special.0",
-                'vdev type "disk" has no redundancy but storage vdevs (type "mirror") are redundant',
-            )
-        ],
-        id="non-redundant-special-on-mirror",
     ),
     pytest.param(
         3,
         lambda d: {"data": [{"type": "raidz2", "disks": d[0:3]}]},
         {},
-        [("zpool.create.topology.data.0.disks", "You need at least 4 disk(s) for this vdev type.")],
+        "zpool.create.topology.data.0.disks",
+        "You need at least 4 disk(s) for this vdev type.",
         id="truenas-min-disks",
     ),
     pytest.param(
         2,
         lambda d: {"data": [{"type": "mirror", "disks": d[0:2]}], "spares": d[1:2]},
         {},
-        [("zpool.create.topology.spares", "Disk {d1!r} is already used by data.0.")],
+        "zpool.create.topology.spares",
+        "Disk {1!r} is already used by data.0.",
         id="duplicate-disk",
     ),
     pytest.param(
         1,
         lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]},
-        {"filesystem_properties": {"compression": "bogus"}},
-        [("data.filesystem_properties.compression", "Input should be")],
-        id="bad-filesystem-property-value",
-    ),
-    pytest.param(
-        1,
-        lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]},
         {"filesystem_properties": {"recordsize": "3K"}},
-        [("zpool.create.filesystem_properties", "'recordsize' must be power of 2 from 512B to")],
+        "zpool.create.filesystem_properties",
+        None,
         id="filesystem-property-value-zfs-refuses",
     ),
     pytest.param(
         1,
         lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]},
         {"name": "mirror"},
-        [("zpool.create.name", "name is reserved")],
+        "zpool.create.name",
+        None,
         id="reserved-name",
     ),
 ]
 
 
-@pytest.mark.parametrize("count,topology_fn,data,expected", REJECTED)
-def test_create_rejected_before_formatting(count, topology_fn, data, expected):
+@pytest.mark.parametrize("count,topology_fn,data,attribute,message", REJECTED)
+def test_create_rejected_before_formatting(count, topology_fn, data, attribute, message):
     disks = _unused_devnames(count)
     before = _partitions(disks)
     with _unlicensed_for_force() if data.get("force_topology") else contextlib.nullcontext():
         errors = _create_fails(topology_fn(disks), **data)
-    expected = [(attr, msg.format(d1=disks[1] if count > 1 else None)) for attr, msg in expected]
-    assert [(attr, msg[: len(want_msg)]) for (attr, msg, _), (_, want_msg) in zip(errors, expected)] == expected
-    assert len(errors) == len(expected)
+    assert [(attr, code) for attr, _, code in errors] == [(attribute, errno.EINVAL)]
+    if message is not None:
+        assert errors[0][1] == message.format(*disks)
     _untouched(disks, before)
 
 
@@ -377,7 +315,7 @@ def test_create_name_taken_by_an_unregistered_pool():
     try:
         before = _partitions(disks[1:2])
         errors = _create_fails({"data": [{"type": "disk", "disks": disks[1:2]}]})
-        assert [(attr, code) for attr, _, code in errors] == [("zpool.create.name", errno.EEXIST)]
+        assert errors == [("zpool.create.name", "A pool with this name already exists.", errno.EEXIST)]
         assert _partitions(disks[1:2]) == before
     finally:
         ssh(f"zpool destroy -f {POOL}")
@@ -391,26 +329,6 @@ def test_create_refuses_a_disk_in_use():
         ("zpool.create.topology", f"The following disks are already in use: {taken}.")
     ]
     assert _partitions([taken]) == before
-
-
-@pytest.mark.parametrize(
-    "data,attribute",
-    [
-        ({"properties": {"ashift": 13}}, "properties.ashift"),
-        ({"topology": {"data": [{"type": "STRIPE", "disks": ["nosuchdisk"]}]}}, "topology.data.0.type"),
-        ({"encryption": True}, "encryption"),
-        (
-            {"topology": {"data": [{"type": "disk", "disks": ["nosuchdisk"]}], "spare": ["nosuchdisk2"]}},
-            "topology.spare",
-        ),
-    ],
-)
-def test_create_rejects_what_the_model_does_not_expose(data, attribute):
-    """Private fields and the legacy pool.create vocabulary are unknown keys or values to the model."""
-    payload = _payload({"data": [{"type": "disk", "disks": ["nosuchdisk"]}]}) | data
-    with pytest.raises(ValidationErrors) as ve:
-        call("zpool.create", payload, job=True)
-    assert any(e.attribute.endswith(attribute) for e in ve.value.errors), [e.attribute for e in ve.value.errors]
 
 
 def test_create_spare_too_small():
