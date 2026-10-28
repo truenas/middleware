@@ -1052,6 +1052,49 @@ class AlertService(Service):
         :param args: `args` that will be passed to `klass.create` method.
         """
 
+        await self.__oneshot_create(klass, args)
+
+    @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True)
+    @job(
+        lock="process_alerts",
+        lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
+        transient=True,
+    )
+    async def oneshot_delete(self, job, klass, query):
+        """
+        Deletes one-shot alerts of specified `klass` or klasses, passing `query`
+        to `klass.delete` method.
+
+        It's not an error if no alerts matching delete `query` exist.
+
+        :param klass: either one-shot alert class name (without the `AlertClass` suffix), or list thereof.
+        :param query: `query` that will be passed to `klass.delete` method.
+        """
+
+        await self.__oneshot_delete(klass, query)
+
+    @private
+    @job(
+        lock="process_alerts",
+        lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
+        transient=True,
+    )
+    async def oneshot_replace(self, job, klasses, klass, args):
+        """
+        Deletes one-shot alerts of the given `klasses` and creates an alert of `klass` while holding the alerts lock.
+
+        A separate `oneshot_delete` and `oneshot_create` are two queued jobs, so another caller can run between
+        them. Mutually exclusive alerts (the state of one UPS, for example) must not leave such a window.
+
+        :param klasses: one-shot alert class names (without the `AlertClass` suffix) to delete.
+        :param klass: one-shot alert class name (without the `AlertClass` suffix) to create.
+        :param args: `args` that will be passed to `klass.create` method.
+        """
+
+        await self.__oneshot_delete(klasses, None)
+        await self.__oneshot_create(klass, args)
+
+    async def __oneshot_create(self, klass, args):
         try:
             klass = AlertClass.class_by_name[klass]
         except KeyError:
@@ -1075,23 +1118,7 @@ class AlertService(Service):
 
         await self.middleware.call("alert.send_alerts")
 
-    @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True)
-    @job(
-        lock="process_alerts",
-        lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
-        transient=True,
-    )
-    async def oneshot_delete(self, job, klass, query):
-        """
-        Deletes one-shot alerts of specified `klass` or klasses, passing `query`
-        to `klass.delete` method.
-
-        It's not an error if no alerts matching delete `query` exist.
-
-        :param klass: either one-shot alert class name (without the `AlertClass` suffix), or list thereof.
-        :param query: `query` that will be passed to `klass.delete` method.
-        """
-
+    async def __oneshot_delete(self, klass, query):
         if isinstance(klass, list):
             klasses = klass
         else:
