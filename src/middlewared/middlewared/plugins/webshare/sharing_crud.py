@@ -30,6 +30,18 @@ class SharingWebshareModel(sa.Model):
 
 class SharingWebsharePart(SharingServicePart[SharingWebshareEntry]):
     _datastore = "sharing.webshare_share"
+    _datastore_sql_filters = frozenset(
+        (
+            "id",
+            "name",
+            "path",
+            "dataset",
+            "relative_path",
+            "is_home_base",
+            "enabled",
+            "readonly",
+        )
+    )
     _entry = SharingWebshareEntry
 
     include_tier_info = True
