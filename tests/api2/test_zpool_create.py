@@ -197,6 +197,21 @@ def test_create_width_policy_and_force_topology():
             assert len(vdev["children"]) == 5
 
 
+def test_create_nfsv4_root_takes_the_pairing_its_children_need():
+    """An nfsv4 root gets passthrough aclmode and aclinherit, so zfs.resource.create accepts a child with no ACL
+    properties of its own; with the discard default zfs.resource.create refuses it."""
+    disks = _unused_devnames(1)
+    with _zpool({"data": [{"type": "disk", "disks": disks[0:1]}]}, filesystem_properties={"acltype": "nfsv4"}):
+        call("zfs.resource.create", {"path": f"{POOL}/child"})
+        props = ["acltype", "aclmode", "aclinherit"]
+        listed = {
+            r["name"]: {p: r["properties"][p]["raw"] for p in props}
+            for r in call("zfs.resource.list", {"paths": [POOL, f"{POOL}/child"], "properties": props})
+        }
+        assert listed[POOL] == {"acltype": "nfsv4", "aclmode": "passthrough", "aclinherit": "passthrough"}
+        assert listed[f"{POOL}/child"] == listed[POOL]
+
+
 def test_create_non_redundant_special_on_striped_data():
     """The redundancy floor only applies when the data vdevs are redundant."""
     disks = _unused_devnames(2)
@@ -249,6 +264,13 @@ def test_create_properties_pass_through_and_defaults_apply():
 # ---------------------------------------------------------------------------
 
 REJECTED = [
+    pytest.param(
+        1,
+        lambda d: {"data": [{"type": "disk", "disks": d[0:1]}]},
+        {"filesystem_properties": {"acltype": "nfsv4", "aclmode": "discard"}},
+        [("zpool.create.filesystem_properties.aclmode", "A discard 'aclmode' may not be used with the nfsv4")],
+        id="acl-combination",
+    ),
     pytest.param(
         5,
         lambda d: {"data": [{"type": "mirror", "disks": d[0:2]}, {"type": "raidz1", "disks": d[2:5]}]},

@@ -17,6 +17,7 @@ import errno
 import typing
 
 from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
+from middlewared.plugins.zfs.rules_common import reject_bad_acl_combination
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.utils.size import format_size
 
@@ -33,6 +34,7 @@ if typing.TYPE_CHECKING:
 __all__ = (
     "SCHEMA",
     "CreateContext",
+    "check_acl_combination",
     "check_dedup_entitlement",
     "check_disks_unique",
     "check_force_entitlement",
@@ -131,10 +133,19 @@ def resolve_create_request(data: ZpoolCreate) -> tuple[ZpoolCreateProperties, Zp
         fs.atime = "off"
     if fs.acltype is None:
         fs.acltype = "posix"
-    if fs.aclinherit is None:
-        fs.aclinherit = "discard"
-    if fs.aclmode is None:
-        fs.aclmode = "discard"
+    # the pairing pool.import_pool gives every root: a root has no parent to
+    # inherit from, and zfs.resource.create refuses children of an nfsv4
+    # root whose aclmode is discard
+    if fs.acltype == "nfsv4":
+        if fs.aclinherit is None:
+            fs.aclinherit = "passthrough"
+        if fs.aclmode is None:
+            fs.aclmode = "passthrough"
+    else:
+        if fs.aclinherit is None:
+            fs.aclinherit = "discard"
+        if fs.aclmode is None:
+            fs.aclmode = "discard"
     if fs.compression is None:
         fs.compression = "lz4"
     if fs.xattr is None:
@@ -148,6 +159,13 @@ def resolve_create_request(data: ZpoolCreate) -> tuple[ZpoolCreateProperties, Zp
         # small blocks perform poorly on dRAID vdevs
         fs.recordsize = 1024 * 1024
     return properties, fs
+
+
+def check_acl_combination(data: ZpoolCreate, ctx: CreateContext) -> None:
+    """An explicit aclmode must suit the effective acltype, as :method:`zfs.resource.create` requires; a root
+    inherits nothing, so the defaults never produce a bad pair."""
+    fs = ctx.filesystem_properties
+    reject_bad_acl_combination(f"{SCHEMA}.filesystem_properties.aclmode", fs.acltype, fs.aclmode)
 
 
 def check_pool_absent(data: ZpoolCreate, ctx: CreateContext) -> None:

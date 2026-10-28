@@ -15,6 +15,7 @@ from .create_impl import convert_topology_to_vdevs, properties_to_zfs
 from .create_rules import (
     SCHEMA,
     CreateContext,
+    check_acl_combination,
     check_dedup_entitlement,
     check_disks_unique,
     check_force_entitlement,
@@ -155,6 +156,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     verrors = ValidationErrors()
     collect(verrors, check_disks_unique, data, ctx)
     collect(verrors, check_min_disks, data, ctx)
+    collect(verrors, check_acl_combination, data, ctx)
     verrors.check()
 
     # The entitlements are settled before any disk is looked at so an

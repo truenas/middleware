@@ -19,6 +19,7 @@ from middlewared.plugins.zpool.create_impl import (
 )
 from middlewared.plugins.zpool.create_rules import (
     CreateContext,
+    check_acl_combination,
     check_dedup_entitlement,
     check_disks_unique,
     check_force_entitlement,
@@ -150,6 +151,53 @@ def test_defaults_fill_only_unset_fields():
         "xattr": "sa",
         "mountpoint": "/tank",
     }
+
+
+@pytest.mark.parametrize(
+    "sent,expected",
+    [
+        ({"acltype": "nfsv4"}, {"acltype": "nfsv4", "aclmode": "passthrough", "aclinherit": "passthrough"}),
+        ({"acltype": "off"}, {"acltype": "off", "aclmode": "discard", "aclinherit": "discard"}),
+        (
+            {"acltype": "nfsv4", "aclmode": "restricted"},
+            {"acltype": "nfsv4", "aclmode": "restricted", "aclinherit": "passthrough"},
+        ),
+        (
+            {"acltype": "nfsv4", "aclinherit": "restricted"},
+            {"acltype": "nfsv4", "aclmode": "passthrough", "aclinherit": "restricted"},
+        ),
+    ],
+)
+def test_acl_defaults_follow_acltype(sent, expected):
+    """A root inherits nothing, so it gets the pairing pool.import_pool gives every root."""
+    _, fs = resolve_create_request(request(filesystem_properties=sent))
+    zfs = properties_to_zfs(fs)
+    assert {k: zfs[k] for k in expected} == expected
+
+
+@pytest.mark.parametrize(
+    "sent,errors",
+    [
+        ({"acltype": "nfsv4"}, []),
+        ({"aclmode": "passthrough", "acltype": "nfsv4"}, []),
+        (
+            {"acltype": "nfsv4", "aclmode": "discard"},
+            [("filesystem_properties.aclmode", "A discard 'aclmode' may not be used with the nfsv4 'acltype'.")],
+        ),
+        (
+            {"aclmode": "passthrough"},
+            [
+                (
+                    "filesystem_properties.aclmode",
+                    "'aclmode' must be discard when the effective 'acltype' is posix or off.",
+                )
+            ],
+        ),
+    ],
+)
+def test_check_acl_combination(sent, errors):
+    data = request(filesystem_properties=sent)
+    assert run(check_acl_combination, data, context(data)) == errors
 
 
 def test_zero_quota_and_refquota_are_not_sent():

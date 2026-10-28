@@ -322,8 +322,10 @@ class ZpoolCreateFilesystemProperties(ZFSResourceCreateProperties):
     can only be set at creation and on the root would become a permanent default for every dataset created beneath \
     it. Values take the types :method:`zfs.resource.create` accepts, sizes become byte counts, and ZFS \
     judges the result before any disk is formatted. A field left as null is not sent, so the TrueNAS \
-    defaults apply (`atime=off`, `acltype=posix`, `aclmode=discard`, `aclinherit=discard`, `compression=lz4`, \
-    `xattr=sa`, and `recordsize=1M` on dRAID pools)."""
+    defaults apply (`atime=off`, `acltype=posix`, `compression=lz4`, `xattr=sa`, and `recordsize=1M` on dRAID \
+    pools). `aclmode` and `aclinherit` follow the effective `acltype` the way :method:`pool.import_pool` sets them \
+    on every root: `discard` for `posix` or `off`, `passthrough` for `nfsv4`. An explicit `aclmode` that does not \
+    suit the `acltype` is refused, as :method:`zfs.resource.create` refuses it."""
 
     casesensitivity: Excluded = excluded_field()
     encryption: Excluded = excluded_field()
