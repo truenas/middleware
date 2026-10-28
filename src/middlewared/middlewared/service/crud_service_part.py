@@ -93,6 +93,8 @@ class CRUDServicePart[E, PK = int](ServicePart):
             filters = []
         if options is None:
             options = QueryOptions()
+
+        caller_forced_sql_filters = options.force_sql_filters
         if filters and filters_are_sql_only(filters, self._datastore_sql_filters):
             options = options.model_copy(update={'force_sql_filters': True})
 
@@ -105,8 +107,7 @@ class CRUDServicePart[E, PK = int](ServicePart):
         rows = await self._query_rows(filters, options, extra)
 
         post_filters = filters
-        if options.force_sql_filters:
-            # `_query_rows` already handed them to the datastore.
+        if caller_forced_sql_filters:
             post_filters = []
 
         result: Any = filter_list(rows, post_filters, opts)
