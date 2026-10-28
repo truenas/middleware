@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, cast, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
-from middlewared.utils.filter_list import filter_list, select_with_query_fields
+from middlewared.utils.filter_list import filter_getattrs_and_ops, filter_list, select_with_query_fields
 
 from .part import ServicePart
 
@@ -24,25 +24,12 @@ SQL_ONLY_FILTER_OPERATORS = frozenset(('=', 'in', 'nin'))
 
 
 def filters_are_sql_only(filters: Sequence[Any], fields: frozenset[str]) -> bool:
-    for f in filters:
-        if not isinstance(f, (list, tuple)):
-            return False
+    try:
+        attrs, ops = filter_getattrs_and_ops(filters)
+    except ValueError:
+        return False
 
-        if len(f) == 2:
-            if f[0] != 'OR' or not isinstance(f[1], (list, tuple)) or not f[1]:
-                return False
-            if not filters_are_sql_only(f[1], fields):
-                return False
-            continue
-
-        if len(f) != 3:
-            return False
-
-        field, op, _ = f
-        if op not in SQL_ONLY_FILTER_OPERATORS or field not in fields:
-            return False
-
-    return True
+    return attrs <= fields and ops <= SQL_ONLY_FILTER_OPERATORS
 
 
 class CRUDServicePart[E, PK = int](ServicePart):
