@@ -72,9 +72,11 @@ def mount_share(setup_smb_tests):
 
 
 def compare_acls(local_path, share_path):
-    local_acl = call('filesystem.getacl', local_path)
+    # The SMB client serves system.nfs4_acl_xdr but reports no ACL type in statx,
+    # so filesystem.getacl takes the mount as ACL-less. Read both ACLs directly.
+    local_acl = call('filesystem.getacl_nfs4', local_path, True, False)
     local_acl.pop('path')
-    smb_acl = call('filesystem.getacl', share_path)
+    smb_acl = call('filesystem.getacl_nfs4', share_path, True, False)
     smb_acl.pop('path')
     assert local_acl == smb_acl
 
