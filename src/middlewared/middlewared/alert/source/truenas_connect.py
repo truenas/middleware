@@ -19,8 +19,12 @@ class TNCDisabledAutoUnconfiguredAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.ERROR
     category = AlertCategory.TRUENAS_CONNECT
-    title = 'TrueNAS Connect Disabled - Service Unconfigured'
-    text = 'TrueNAS Connect has been disabled from TrueNAS Connect. The system has automatically unconfigured itself.'
+    title = 'TrueNAS Connect Unconfigured'
+    text = (
+        'TrueNAS Connect no longer recognizes this system, so TrueNAS Connect has been automatically'
+        ' disabled and unconfigured on this system. Re-register the system with TrueNAS Connect to'
+        ' restore access.'
+    )
 
     async def create(self, args):
         return Alert(TNCDisabledAutoUnconfiguredAlertClass, args)
