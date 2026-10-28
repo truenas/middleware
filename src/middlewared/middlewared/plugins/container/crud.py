@@ -101,7 +101,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
     _datastore = 'container.container'
     _datastore_sql_filters = frozenset((
         'id', 'uuid', 'name', 'description', 'autostart', 'time', 'cpuset', 'shutdown_timeout', 'dataset', 'init',
-        'initdir', 'inituser', 'initgroup', 'idmap_slice', 'capabilities_policy',
+        'initdir', 'inituser', 'initgroup', 'capabilities_policy',
     ))
     _entry = ContainerEntry
 
