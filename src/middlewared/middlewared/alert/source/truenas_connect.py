@@ -16,10 +16,11 @@ class TNCDisabledAutoUnconfiguredAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.TRUENAS_CONNECT,
         level=AlertLevel.ERROR,
-        title='TrueNAS Connect Disabled - Service Unconfigured',
+        title='TrueNAS Connect Unconfigured',
         text=(
-            'TrueNAS Connect has been disabled from TrueNAS Connect.'
-            ' The system has automatically unconfigured itself.'
+            'TrueNAS Connect no longer recognizes this system, so TrueNAS Connect has been automatically'
+            ' disabled and unconfigured on this system. Re-register the system with TrueNAS Connect to'
+            ' restore access.'
         ),
         deleted_automatically=False,
         keys=[],
