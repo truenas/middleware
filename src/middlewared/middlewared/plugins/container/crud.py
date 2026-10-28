@@ -99,6 +99,10 @@ class ContainerModel(sa.Model):
 
 class ContainerServicePart(CRUDServicePart[ContainerEntry]):
     _datastore = 'container.container'
+    _datastore_sql_filters = frozenset((
+        'id', 'uuid', 'name', 'description', 'autostart', 'time', 'cpuset', 'shutdown_timeout', 'dataset', 'init',
+        'initdir', 'inituser', 'initgroup', 'capabilities_policy',
+    ))
     _entry = ContainerEntry
 
     def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:

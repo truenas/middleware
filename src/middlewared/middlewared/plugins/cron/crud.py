@@ -31,6 +31,7 @@ class CronJobModel(sa.Model):
 class CronJobServicePart(CRUDServicePart[CronJobEntry]):
     _datastore = 'tasks.cronjob'
     _datastore_prefix = 'cron_'
+    _datastore_sql_filters = frozenset(('id', 'user', 'command', 'description', 'enabled', 'stdout', 'stderr'))
     _entry = CronJobEntry
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

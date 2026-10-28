@@ -57,6 +57,7 @@ class APIKeyModel(sa.Model):
 
 class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
     _datastore = "account.api_key"
+    _datastore_sql_filters = frozenset(("id", "name", "iterations"))
     _entry = ApiKeyEntry
 
     async def extend_context(

@@ -24,6 +24,7 @@ class InitShutdownScriptModel(sa.Model):
 class InitShutdownScriptServicePart(CRUDServicePart[InitShutdownScriptEntry]):
     _datastore = 'tasks.initshutdown'
     _datastore_prefix = 'ini_'
+    _datastore_sql_filters = frozenset(('id', 'command', 'script', 'enabled', 'timeout', 'comment'))
     _entry = InitShutdownScriptEntry
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

@@ -1,6 +1,6 @@
 import time
 
-from middlewared.api.current import ContainersMetricsEventSourceArgs, ContainersMetricsEventSourceEvent, QueryOptions
+from middlewared.api.current import ContainersMetricsEventSourceArgs, ContainersMetricsEventSourceEvent
 from middlewared.event import TypedEventSource
 from middlewared.plugins.reporting.realtime_reporting.cgroup import get_cgroup_stats
 from middlewared.service import Service
@@ -21,9 +21,8 @@ class ContainersMetricsEventSource(TypedEventSource[ContainersMetricsEventSource
                 try:
                     netdata_metrics = self.middleware.call_sync('netdata.get_all_metrics')
                     containers_mapping = {
-                        f'lxc/{inst.uuid.replace("-", "")}': inst.id for inst in self.middleware.call_sync2(
-                            self.middleware.services.container.query, [], QueryOptions(force_sql_filters=True)
-                        )
+                        f'lxc/{inst.uuid.replace("-", "")}': inst.id
+                        for inst in self.middleware.call_sync2(self.middleware.services.container.query)
                     }
                 except Exception:
                     retries -= 1

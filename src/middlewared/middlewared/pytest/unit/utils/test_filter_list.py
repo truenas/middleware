@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from middlewared.utils.filter_list import filter_list
+from middlewared.utils.filter_list import filter_getattrs, filter_getattrs_and_ops, filter_list
 
 DATA = [
     {
@@ -597,3 +597,54 @@ def test__filter_list_invalid_key():
 
 def test__filter_list_regex_null():
     assert len(filter_list(DATA_WITH_NULL, [['foo', '~', '(?i)Foo1']])) == 1
+
+
+@pytest.mark.parametrize('filters,attrs,ops', [
+    ([], set(), set()),
+    ([['foo', '=', 'foo1']], {'foo'}, {'='}),
+    ([['foo', '^', 'foo'], ['number', '>=', 2]], {'foo', 'number'}, {'^', '>='}),
+    (
+        [['OR', [['foo', '=', 'foo1'], ['number', 'in', [1, 2]]]]],
+        {'foo', 'number'}, {'=', 'in'},
+    ),
+    (
+        [['OR', [['OR', [['foo', '=', 'foo1']]], ['number', '=', 2]]]],
+        {'foo', 'number'}, {'='},
+    ),
+    (
+        [['OR', [[['foo', '=', 'foo1'], ['number', '=', 1]], ['number', '=', 2]]]],
+        {'foo', 'number'}, {'AND', '='},
+    ),
+    (
+        [('OR', [(('foo', '=', 'foo1'), ('number', '=', 1), ('list', 'rin', 1)), ('number', '=', 2)])],
+        {'foo', 'number', 'list'}, {'AND', '=', 'rin'},
+    ),
+])
+def test__filter_getattrs_and_ops(filters, attrs, ops):
+    assert filter_getattrs_and_ops(filters) == (attrs, ops)
+
+
+@pytest.mark.parametrize('filters', [
+    [1],
+    ['foo'],
+    [['foo']],
+    [['foo', '=', 'foo1', 'extra']],
+    [['OR', []]],
+    [['OR', 'foo']],
+    [['AND', [['foo', '=', 'foo1']]]],
+    [['OR', [['foo', '=', 'foo1'], ['number']]]],
+])
+def test__filter_getattrs_and_ops_invalid(filters):
+    with pytest.raises(ValueError, match='Invalid filter.'):
+        filter_getattrs_and_ops(filters)
+
+
+@pytest.mark.parametrize('filters,attrs', [
+    ([], set()),
+    ([['foo', '=', 'foo1']], {'foo'}),
+    # Every branch of an OR counts, not just the last one.
+    ([['OR', [['foo', '=', 'foo1'], ['number', '=', 1], ['list', 'rin', 1]]]], {'foo', 'number', 'list'}),
+    ([['OR', [[['foo', '=', 'foo1'], ['number', '=', 1]], ['list', 'rin', 1]]]], {'foo', 'number', 'list'}),
+])
+def test__filter_getattrs(filters, attrs):
+    assert filter_getattrs(filters) == attrs

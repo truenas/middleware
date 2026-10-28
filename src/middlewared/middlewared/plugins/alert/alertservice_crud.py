@@ -42,6 +42,7 @@ class AlertServiceModel(sa.Model):
 
 class AlertServiceServicePart(CRUDServicePart[AlertServiceEntry]):
     _datastore = "system.alertservice"
+    _datastore_sql_filters = frozenset(("id", "name", "enabled", "level"))
     _entry = AlertServiceEntry
 
     def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

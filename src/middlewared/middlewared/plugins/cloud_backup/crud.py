@@ -48,6 +48,10 @@ class CloudBackupTaskFailedAlert(OneShotAlertClass):
 
 class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackupCreate, CloudBackupUpdate]):
     _datastore = "tasks.cloud_backup"
+    _datastore_sql_filters = frozenset((
+        "id", "description", "path", "dataset", "relative_path", "pre_script", "post_script", "snapshot", "args",
+        "enabled", "keep_last", "transfer_setting", "absolute_paths", "cache_path", "rate_limit",
+    ))
     _entry = CloudBackupEntry
     schema_prefix = "cloud_backup"
 
