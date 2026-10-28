@@ -12,7 +12,6 @@ from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
 from truenas_pylibvirt.utils import kvm_supported
 
 from middlewared.api.current import (
-    QueryOptions,
     VMCreate,
     VMDeleteOptions,
     VMDeviceDeleteOptions,
@@ -124,7 +123,6 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         for device in self.call_sync2(
             self.s.vm.device.query,
             [['vm', 'in', [row['id'] for row in rows]]],
-            QueryOptions(force_sql_filters=True),
         ):
             devices_by_vm.setdefault(device.vm, []).append(device)
 

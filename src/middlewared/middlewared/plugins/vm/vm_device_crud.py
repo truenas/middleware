@@ -40,7 +40,7 @@ class VMDeviceModel(sa.Model):
 
 class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
     _datastore = 'vm.device'
-    _datastore_sql_filters = frozenset(('id',))
+    _datastore_sql_filters = frozenset(('id', 'vm'))
     _entry = VMDeviceEntry
 
     def __init__(self, context: ServiceContext, device_factory: DeviceFactory) -> None:

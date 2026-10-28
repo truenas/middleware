@@ -124,7 +124,6 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         for device in self.call_sync2(
             self.s.container.device.query,
             [['container', 'in', [row['id'] for row in rows]]],
-            QueryOptions(force_sql_filters=True),
         ):
             devices_by_container.setdefault(device.container, []).append(device)
 

@@ -28,7 +28,7 @@ class ContainerDeviceModel(sa.Model):
 
 class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
     _datastore = 'container.device'
-    _datastore_sql_filters = frozenset(('id',))
+    _datastore_sql_filters = frozenset(('id', 'container'))
     _entry = ContainerDeviceEntry
 
     def __init__(self, context: ServiceContext, device_factory: DeviceFactory) -> None:
