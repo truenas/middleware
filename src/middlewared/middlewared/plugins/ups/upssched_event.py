@@ -61,8 +61,6 @@ async def handle_upssched_event(context: ServiceContext, notify_type: str) -> No
         # We would like to send alerts for the following events
         alert_mapping = alerts_mapping()
 
-        await context.call2(context.s.ups.dismiss_alerts)
-
         if notify_type in alert_mapping:
             # Send user with the notification event and details
             # We send the email in the following format ( inclusive line breaks )
@@ -112,8 +110,8 @@ async def handle_upssched_event(context: ServiceContext, notify_type: str) -> No
             else:
                 body += 'Statistics could not be recovered<br>'
 
-            await context.middleware.call(
-                'alert.oneshot_create', alert_mapping[notify_type], {'ups': config.identifier, 'body': body}
+            await context.call2(
+                context.s.ups.replace_alert, alert_mapping[notify_type], {'ups': config.identifier, 'body': body}
             )
     else:
         context.logger.debug(f'Unrecognized UPS notification event: {notify_type}')

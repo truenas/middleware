@@ -23,6 +23,10 @@ def alerts_mapping() -> dict[str, str]:
     }
 
 
+def alert_class_names() -> list[str]:
+    return list(alerts_mapping().values())
+
+
 def port_choices(serial_console: bool, serialport: str) -> list[str]:
     ports = [
         os.path.join('/dev', port['name'])

@@ -12,7 +12,7 @@ from middlewared.service import private, SystemServiceService
 
 from .config import UPSServicePart
 from .upssched_event import handle_upssched_event
-from .utils import alerts_mapping, driver_choices, port_choices
+from .utils import alert_class_names, driver_choices, port_choices
 
 
 if typing.TYPE_CHECKING:
@@ -71,8 +71,11 @@ class UPSService(SystemServiceService[UPSEntry]):
 
     @private
     async def dismiss_alerts(self) -> None:
-        alerts = list(alerts_mapping().values())
-        await self.middleware.call('alert.oneshot_delete', alerts)
+        await self.middleware.call('alert.oneshot_delete', alert_class_names())
+
+    @private
+    async def replace_alert(self, klass: str, args: dict[str, typing.Any]) -> None:
+        await self.middleware.call('alert.oneshot_replace', alert_class_names(), klass, args)
 
     @private
     async def upssched_event(self, notify_type: str) -> None:
