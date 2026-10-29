@@ -23,10 +23,9 @@ async def validate_webshare(
 
     `old` is the share being updated, which must not be compared against itself.
     """
-    # An update that leaves the share disabled is let through even without the entitlement,
-    # so a system that has lost it can still turn a share off instead of having to delete it.
-    # Everything else, creating a share included, stays gated.
-    if old is None or data.enabled:
+    # Creating a share or enabling a disabled one needs the entitlement; any other edit, including
+    # disabling, is allowed so a system that lost it keeps its shares manageable.
+    if old is None or (data.enabled and not old.enabled):
         entitlement = await part.call2(part.s.truenas.entitlements.check, LicenseFeature.WEBSHARE)
         if not entitlement.entitled:
             verrors.add(schema_name, entitlement.message)

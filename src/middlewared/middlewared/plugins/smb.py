@@ -657,7 +657,9 @@ class SMBService(ConfigService):
                 )
 
         if SearchProtocol.SPOTLIGHT in new['search_protocols']:
-            if reasons := await self.call2(self.s.truesearch.unavailable_reasons):
+            if reasons := await self.call2(
+                self.s.truesearch.unavailable_reasons, SearchProtocol.SPOTLIGHT not in old['search_protocols']
+            ):
                 verrors.add(
                     'smb_update.search_protocols',
                     'Share indexing service is not available. ' + ' '.join(reasons)

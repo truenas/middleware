@@ -1,3 +1,7 @@
+from truenas_pylicensed.features import LicenseFeature
+
+from middlewared.service_exception import CallError
+
 from .base import SimpleService
 
 
@@ -16,6 +20,10 @@ class WebShareService(SimpleService):
         "truenas-webshare-link-caddy",
         "truenas-webshare-mcp",
     )
+
+    async def before_start(self) -> None:
+        if not await self.call2(self.s.truenas.entitlements.serving, LicenseFeature.WEBSHARE):
+            raise CallError('System is not licensed to use WebShare')
 
     async def after_start(self) -> None:
         await self.call2(self.s.truesearch.configure)
