@@ -1,4 +1,4 @@
-"""KMIP's entitlement gate: the enable transition, and nothing else.
+"""KMIP's entitlement gate: turning KMIP on or extending what it manages, and nothing else.
 
 `do_update` runs its whole validation half before `verrors.check()` and only mutates anything
 after it. That is what makes this testable without standing up the collaborators the mutation
@@ -26,7 +26,7 @@ ENABLED_ATTRIBUTE = "kmip_update.enabled"
 GATE_COLUMNS = [("HW+K", True), ("CE+L", False)]
 
 
-def _entry(enabled):
+def _entry(enabled, manage_zfs_keys=False):
     return KMIPEntry(
         id=1,
         enabled=enabled,
@@ -35,12 +35,12 @@ def _entry(enabled):
         certificate=1,
         certificate_authority=2,
         manage_sed_disks=False,
-        manage_zfs_keys=False,
+        manage_zfs_keys=manage_zfs_keys,
         ssl_version="PROTOCOL_TLSv1_2",
     )
 
 
-def _svc_part(monkeypatch, middleware, *, enabled):
+def _svc_part(monkeypatch, middleware, *, enabled, manage_zfs_keys=False):
     async def poisoned_validate_port(*args, **kwargs):
         verrors = ValidationErrors()
         verrors.add(PORT_ATTRIBUTE, "Refusing to reach the mutation half of do_update.")
@@ -58,7 +58,7 @@ def _svc_part(monkeypatch, middleware, *, enabled):
     svc_part = KMIPConfigServicePart(ServiceContext(middleware, logging.getLogger("test")))
 
     async def config():
-        return _entry(enabled)
+        return _entry(enabled, manage_zfs_keys)
 
     svc_part.config = config
     return svc_part
@@ -89,9 +89,6 @@ async def test_kmip_enable_transition_is_gated(monkeypatch, column, entitled):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("enabled", [True, False])
 async def test_kmip_does_not_consult_the_entitlement_unless_enabling(monkeypatch, enabled):
-    # Disabling KMIP is how escrowed ZFS and SED keys are pulled back to the local database.
-    # A system that lost the entitlement has to keep that route, or its keys are stranded, so
-    # the check must not be reached at all when KMIP is already on.
     m = Middleware()
     checked = install_entitlements_for_column(m, LicenseFeature.KMIP, "CE")
     svc_part = _svc_part(monkeypatch, m, enabled=True)
@@ -101,3 +98,16 @@ async def test_kmip_does_not_consult_the_entitlement_unless_enabling(monkeypatch
     assert checked == []
     assert PORT_ATTRIBUTE in attributes
     assert ENABLED_ATTRIBUTE not in attributes
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("old_manage_zfs_keys,refused", [(False, True), (True, False)])
+async def test_kmip_manage_flag_turn_on_is_gated_while_enabled(monkeypatch, old_manage_zfs_keys, refused):
+    m = Middleware()
+    install_entitlements_for_column(m, LicenseFeature.KMIP, "CE+L")
+    svc_part = _svc_part(monkeypatch, m, enabled=True, manage_zfs_keys=old_manage_zfs_keys)
+
+    attributes = await _attributes(svc_part, enabled=True, server="kmip.example.com", manage_zfs_keys=True)
+
+    assert PORT_ATTRIBUTE in attributes
+    assert ("kmip_update.manage_zfs_keys" in attributes) is refused
