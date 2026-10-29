@@ -37,7 +37,7 @@ from .docker_network import DockerNetworkService
 from .events import setup_docker_events
 from .fs_manage import umount_docker_ds
 from .restore_backup import restore_backup
-from .service_utils import license_active, restart_docker_service
+from .service_utils import restart_docker_service
 from .state_management import (
     after_start_check,
     before_start_check,
@@ -199,10 +199,6 @@ class DockerService(GenericConfigService[DockerEntry]):
         return await initialize_state(self.context)
 
     @private
-    async def license_active(self) -> bool:
-        return await license_active(self.context)
-
-    @private
     async def restart_service(self) -> None:
         await restart_docker_service(self.context)
 
@@ -252,16 +248,9 @@ async def _event_system_ready(middleware: Middleware, event_type: str, args: typ
         await middleware.call2(middleware.services.docker.set_status, Status.UNCONFIGURED.value)
 
 
-async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
-    if not await middleware.call('docker.license_active'):
-        # We would like to stop docker in this case
-        await middleware.call2(middleware.services.service.control, 'STOP', 'docker')
-
-
 async def setup(middleware: Middleware) -> None:
     middleware.event_subscribe('system.ready', _event_system_ready)
     await middleware.call2(middleware.services.docker.initialize_state)
-    middleware.register_hook('system.post_license_update', handle_license_update)
     middleware.register_hook('update.post_run', post_system_update_hook, sync=True)
     # We are going to check in setup docker events if setting up events is relevant or not
     middleware.create_task(middleware.call2(middleware.services.docker.setup_docker_events))

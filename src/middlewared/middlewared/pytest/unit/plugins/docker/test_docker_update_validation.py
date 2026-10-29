@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import DockerEntry
+from middlewared.api.current import DockerAddressPool, DockerEntry
 from middlewared.plugins.docker.config import DockerConfigServicePart
 from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.middleware import Middleware
@@ -313,3 +313,27 @@ async def test_docker_update_validation(system_state, new_config, old_config, mi
                 await svc_part.validate(old_config, new_config, migrate_apps)
             for i in range(len(error_msgs)):
                 assert ve.value.errors[i].errmsg == error_msgs[i]
+
+
+@pytest.mark.parametrize('new_pool,address_pools,errors', [
+    ('tank', [DockerAddressPool(base='172.17.0.0/12', size=24)], []),
+    ('other', [], [('docker_update.pool', 'System is not licensed to use Applications')]),
+])
+@pytest.mark.asyncio
+async def test_pool_change_requires_license_but_unrelated_edit_does_not(new_pool, address_pools, errors):
+    m = Middleware()
+    m['interface.ip_in_use'] = lambda *arg: []
+    install_entitlements_for_column(m, LicenseFeature.APPS, 'CE+L')
+    svc_part = make_svc_part(m)
+    old_config = DockerEntry.model_construct(**DEFAULTS, pool='tank', dataset='tank/ix-apps', address_pools=[])
+    new_config = DockerEntry.model_construct(
+        **DEFAULTS, pool=new_pool, dataset=f'{new_pool}/ix-apps', address_pools=address_pools,
+    )
+    with patch('middlewared.plugins.docker.config.query_imported_fast_impl') as run:
+        run.return_value = SYSTEM_STATE['import_query_pool']
+        if not errors:
+            assert await svc_part.validate(old_config, new_config, False) is None
+        else:
+            with pytest.raises(ValidationErrors) as ve:
+                await svc_part.validate(old_config, new_config, False)
+            assert [(e.attribute, e.errmsg) for e in ve.value.errors] == errors
