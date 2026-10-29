@@ -30,6 +30,7 @@ from middlewared.alert.source import (  # noqa: F401
     kdump,
     kmip,
     legacy_mini_bmc,
+    license_features,
     license_status,
     memory_errors,
     mseries_nvdimm_and_bios,

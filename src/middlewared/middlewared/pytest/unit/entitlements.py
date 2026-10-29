@@ -68,7 +68,7 @@ def facts_for_column(feature: str, column: str) -> EntitlementFacts:
 
 
 def install_entitlements(middleware, facts) -> list[str]:
-    """Point truenas.entitlements.check at the live engine over `facts`.
+    """Point truenas.entitlements.check and serving at the live engine over `facts`.
 
     Returns the keys asked about, in call order, so a test can still assert which feature a
     gate names -- and that a gate it should not reach was not consulted.
@@ -90,6 +90,12 @@ def install_entitlements(middleware, facts) -> list[str]:
         )
 
     middleware.services.truenas.entitlements.check = check
+
+    def serving(feature):
+        return check(feature).entitled
+
+    middleware.services.truenas.entitlements.serving = serving
+    middleware['truenas.entitlements.serving'] = serving
     return checked
 
 

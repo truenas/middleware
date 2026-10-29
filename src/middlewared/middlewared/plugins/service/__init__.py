@@ -40,7 +40,7 @@ from middlewared.utils.os import terminate_pid
 from .services.all import all_services
 from .services.base_interface import IdentifiableServiceInterface
 from .services.dbus_router import ServiceActionError
-from .utils import app_has_write_privilege_for_service
+from .utils import app_has_write_privilege_for_service, app_is_user_session
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
@@ -360,6 +360,8 @@ class ServiceService(CRUDService[ServiceEntry]):
             raise CallError(f'{service}: authenticated session lacks privilege to stop service', errno.EPERM)
 
         service_object = await self.object(service)
+        if app_is_user_session(app):
+            await self.call2(self.s.truenas.entitlements.cut_service, service)
 
         try:
             async with asyncio.timeout(options.timeout):
@@ -409,6 +411,8 @@ class ServiceService(CRUDService[ServiceEntry]):
             raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
 
         service_object = await self.object(service)
+        if app_is_user_session(app):
+            await self.call2(self.s.truenas.entitlements.cut_service, service)
 
         try:
             async with asyncio.timeout(options.timeout):
@@ -514,6 +518,12 @@ class ServiceService(CRUDService[ServiceEntry]):
             raise CallError(f'{service}: authenticated session lacks privilege to reload service', errno.EPERM)
 
         service_object = await self.object(service)
+        if (
+            not service_object.reloadable
+            and app_is_user_session(app)
+            and (await service_object.get_state()).running
+        ):
+            await self.call2(self.s.truenas.entitlements.cut_service, service)
 
         try:
             async with asyncio.timeout(options.timeout):
