@@ -313,7 +313,7 @@ class NVMetPortService(CRUDService):
                         verrors.add(f'{schema_name}.{key}',
                                     f'Cannot change {key} on an active port.  Disable first to allow change.')
 
-        if data.get('addr_trtype') == 'RDMA':
+        if data.get('addr_trtype') == 'RDMA' and (old is None or old['addr_trtype'] != 'RDMA'):
             if not await self.middleware.call('nvmet.global.rdma_capable'):
                 verrors.add(f'{schema_name}.addr_trtype',
                             "This platform cannot support NVMe-oF(RDMA) or is missing an RDMA capable NIC.")

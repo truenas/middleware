@@ -45,12 +45,11 @@ class NFSServicePart(SystemServicePart[NFSEntry]):
     _service_verb = "restart"
 
     async def rdma_capable(self) -> bool:
-        """Whether NFS over RDMA is available on this system, ignoring whether it is currently enabled.
-
-        Deliberately does not read the NFS config: this is called from `extend`, so consulting the
-        config here would recurse.
-        """
+        """Whether NFS over RDMA is available on this system, ignoring whether it is currently enabled."""
         return RDMAprotocols.NFS.value in await self.middleware.call("rdma.capable_protocols")
+
+    async def rdma_serving(self) -> bool:
+        return (await self.config()).rdma and bool(await self.middleware.call('rdma.serving'))
 
     async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
@@ -63,9 +62,6 @@ class NFSServicePart(SystemServicePart[NFSEntry]):
         if data["managed_nfsd"]:
             cpu_info = await self.middleware.call("system.cpu_info")
             data["servers"] = min(max(cpu_info["core_count"], 1), MAX_MANAGED_NFSD)
-
-        # Repair inconsistencies
-        data["rdma"] = data["rdma"] and await self.rdma_capable()
 
         return data
 
@@ -81,7 +77,7 @@ class NFSServicePart(SystemServicePart[NFSEntry]):
                 "nfs_update.protocols", 'Must specify at least one value ("NFSV3", "NFSV4") in the "protocols" list.'
             )
 
-        new = await self._validate(new)
+        new = await self._validate(new, old)
 
         update = new.model_dump()
         for field in ("id", "managed_nfsd", "v4_krb_enabled", "keytab_has_nfs_spn"):
@@ -95,7 +91,7 @@ class NFSServicePart(SystemServicePart[NFSEntry]):
 
         return await self.config()
 
-    async def _validate(self, new: NFSEntry) -> NFSEntry:
+    async def _validate(self, new: NFSEntry, old: NFSEntry) -> NFSEntry:
         verrors = ValidationErrors()
 
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
@@ -134,7 +130,7 @@ class NFSServicePart(SystemServicePart[NFSEntry]):
         if NFSProtocol.NFSv4 not in new.protocols and new.v4_domain:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
-        if new.rdma and not await self.rdma_capable():
+        if new.rdma and not old.rdma and not await self.rdma_capable():
             verrors.add(
                 "nfs_update.rdma", "This platform cannot support NFS over RDMA or is missing an RDMA capable NIC."
             )

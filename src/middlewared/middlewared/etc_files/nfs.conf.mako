@@ -65,7 +65,7 @@ vers4 = n
 % if config.bindip:
 host = ${','.join(config.bindip)}
 % endif
-% if config.rdma:
+% if render_ctx["nfs.rdma_serving"]:
 rdma = y
 rdma-port = 20049
 % endif

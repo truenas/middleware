@@ -90,7 +90,6 @@ async def _rdma(context: ServiceContext) -> bool:
     if await context.middleware.call("nvmet.port.query", [["addr_trtype", "=", "RDMA"]], {"count": True}):
         return True
 
-    # `nfs.config` masks the stored flag with `rdma.capable_protocols`, which is an entitlement check.
     nfs = await context.middleware.call("datastore.query", "services.nfs", [], {"get": True, "prefix": "nfs_srv_"})
     return bool(nfs["rdma"])
 

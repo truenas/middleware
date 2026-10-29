@@ -317,7 +317,7 @@ class ISCSIGlobalService(SystemServiceService):
         Returns whether iSER is enabled or not.
         """
         if (await self.middleware.call('iscsi.global.config'))['iser']:
-            return await self.iser_capable()
+            return await self.middleware.call('rdma.serving')
 
         return False
 
