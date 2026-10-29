@@ -274,7 +274,7 @@ class FCHostService(CRUDService):
         Need to handle the case where the other controller is currently
         down and is therefore unable to give its current config.
         """
-        if not await self.middleware.call('fc.capable'):
+        if not await self.middleware.call('fc.fc_host_capable'):
             return False
         if await self.middleware.call('failover.licensed'):
             # HA
@@ -457,7 +457,7 @@ class FCHostService(CRUDService):
         except KeyError:
             pass
 
-        if await self.middleware.call('fc.capable'):
+        if await self.middleware.call('fc.fc_host_capable'):
             current_wwpns = set(await self.middleware.call('fc.fc_host_nport_wwpn_choices'))
             if await self.middleware.call('failover.node') in ['MANUAL', 'A']:
                 key = 'wwpn'
@@ -475,7 +475,7 @@ class FCHostService(CRUDService):
 
     @private
     async def handle_hardware_changes(self):
-        if not await self.middleware.call('fc.capable'):
+        if not await self.middleware.call('fc.fc_host_capable'):
             # No FC support.  We're done.
             return True
 
