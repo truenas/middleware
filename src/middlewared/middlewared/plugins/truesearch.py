@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import ZFSResourceQuery
+from middlewared.api.current import ServiceOptions, ZFSResourceQuery
+from middlewared.common.license_delegate import LicenseDelegate
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.service import Service
 from middlewared.utils.path import EXTERNAL_PATH
@@ -27,7 +28,7 @@ class TrueSearchService(Service):
         self.mounted_paths: set[str] = set()
         self.mount_check_timer: asyncio.TimerHandle | None = None
 
-    async def unavailable_reasons(self) -> list[str]:
+    async def unavailable_reasons(self, include_license: bool = True) -> list[str]:
         """
         Returns a list of reasons why the truesearch service cannot be used.
         """
@@ -37,23 +38,22 @@ class TrueSearchService(Service):
         if await self.middleware.call('systemdataset.is_boot_pool'):
             reasons.append('The system dataset must not reside on the boot pool.')
 
-        entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.TRUESEARCH)
-        if not entitlement.entitled:
-            reasons.append(entitlement.message)
+        if include_license:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.TRUESEARCH)
+            if not entitlement.entitled:
+                reasons.append(entitlement.message)
 
         return reasons
-
-    async def available(self) -> bool:
-        """
-        Whether the truesearch service can be used.
-        """
-        return not bool(await self.call2(self.s.truesearch.unavailable_reasons))
 
     async def enabled(self) -> bool:
         """
         Whether the truesearch service should be started.
         """
-        return await self.available() and bool(await self.directories())
+        return (
+            not await self.unavailable_reasons(False)
+            and await self.call2(self.s.truenas.entitlements.serving, LicenseFeature.TRUESEARCH)
+            and bool(await self.directories())
+        )
 
     async def directories(self) -> list[str]:
         """
@@ -262,8 +262,30 @@ class TrueSearchService(Service):
                 await (await self.call2(self.s.service.control, 'START', 'truesearch')).wait(raise_error=True)
 
 
-async def post_license_update(middleware: Middleware, *args: tuple[Any], **kwargs: dict[str, Any]) -> None:
-    await middleware.call2(middleware.services.truesearch.configure)
+class TruesearchLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.TRUESEARCH
+    services = frozenset({'truesearch'})
+
+    async def alert_lines(self, in_grace: bool) -> list[str]:
+        if in_grace:
+            return [
+                'TrueSearch: the indexer keeps running until the next reboot or an administrator restart of '
+                'TrueSearch. After that SMB clients fall back to ordinary search.'
+            ]
+        if await self.call2(self.s.truesearch.raw_directories):
+            return [
+                'TrueSearch: share indexing is configured but not started because the system is not licensed for '
+                'TrueSearch.'
+            ]
+        return []
+
+    async def on_grant(self) -> None:
+        if await self.call2(self.s.truesearch.enabled) and not await self.call2(self.s.service.started, 'truesearch'):
+            await (
+                await self.call2(
+                    self.s.service.control, 'START', 'truesearch', ServiceOptions(ha_propagate=False)
+                )
+            ).wait(raise_error=True)
 
 
 async def on_dataset_mounted(middleware: Middleware, data: dict[str, Any]) -> None:
@@ -278,6 +300,8 @@ async def on_system_ready(middleware: Middleware, event_type: str, args: Any) ->
 
 
 async def setup(middleware: Middleware) -> None:
-    middleware.register_hook("system.post_license_update", post_license_update, sync=False)
     middleware.register_hook("zfs.dataset.mounted", on_dataset_mounted)
     middleware.event_subscribe("system.ready", on_system_ready)
+    await middleware.call2(
+        middleware.services.truenas.entitlements.register_license_delegate, TruesearchLicenseDelegate(middleware)
+    )
