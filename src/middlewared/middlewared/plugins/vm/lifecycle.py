@@ -6,6 +6,7 @@ import typing
 
 from truenas_pylibvirt import Error as PyLibvirtError
 from truenas_pylibvirt import Time, VmBootloader, VmCpuMode, VmVideoModel
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import VMEntry, VMStartOptions, VMStopOptions
 from middlewared.service import CallError, ServiceContext
@@ -22,8 +23,6 @@ async def lifecycle_action_check(context: ServiceContext) -> None:
 
 
 def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None:
-    context.run_coroutine(lifecycle_action_check(context))
-
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     if vm.status.state in ACTIVE_STATES:
         raise CallError(f'VM {vm.name!r} is already running')
@@ -95,6 +94,7 @@ def resume_vm(context: ServiceContext, id_: int) -> None:
 
 
 def restart_vm(context: ServiceContext, id_: int) -> None:
+    context.run_coroutine(lifecycle_action_check(context))
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     stop_job = context.call_sync2(context.s.vm.stop, id_, VMStopOptions(force_after_timeout=True))
     stop_job.wait_sync()
@@ -159,7 +159,12 @@ def suspend_vms(context: ServiceContext, vm_ids: list[int]) -> None:
 
 
 async def start_on_boot(context: ServiceContext) -> None:
+    if not await context.call2(context.s.truenas.entitlements.serving, LicenseFeature.VMS):
+        context.logger.warning('VMs: autostart skipped, the system is not licensed to use VMs')
+        return
     for vm in await context.call2(context.s.vm.query, [('autostart', '=', True)]):
+        if vm.status.state in ACTIVE_STATES:
+            continue
         try:
             await context.to_thread(start_vm, context, vm.id, VMStartOptions())
         except Exception as e:

@@ -3,6 +3,8 @@ from __future__ import annotations
 import os.path
 from typing import TYPE_CHECKING, Any, Iterable
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import (
     VMCDROMDevice,
     VMDeviceEntry,
@@ -129,6 +131,8 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
     async def start_autostart_on_paths(self, paths: set[str]) -> None:
         # (Re)start the autostart VMs whose disks live on `paths`, now that those paths have become
         # available again.
+        if not (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.VMS)).entitled:
+            return
         vms = await self.call2(self.s.vm.query, [('autostart', '=', True)])
         for vm in vms:
             if not await self.vm_on_paths(vm, paths):
