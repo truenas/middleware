@@ -27,6 +27,7 @@ from truenas_zfstierd_common import (
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ServiceOptions,
     ZFSResourceQuery,
     ZFSResourceSetArgsData,
     ZFSResourceSetProperties,
@@ -52,7 +53,7 @@ from middlewared.api.current import (
     ZfsTierUpdateArgs,
     ZfsTierUpdateResult,
 )
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import LicenseDelegate
 from middlewared.event import TypedEventSource
 from middlewared.plugins.tunable.utils import set_zfs_parameter, zfs_parameter_value
 from middlewared.service import CallError, ConfigServicePart, GenericConfigService, ValidationError, private
@@ -362,14 +363,13 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         metadata. Applying the new configuration regenerates the ``truenas_zfstierd`` daemon configuration and
         reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
 
-        ZFS tiering requires a license carrying the ZFSTIER feature. The call fails when the system is not
-        entitled to this feature.
+        Enabling tiering requires a license carrying the ZFSTIER feature; disabling it or changing other
+        settings is always allowed.
         """
-        ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
-        if not ent.entitled:
-            raise CallError(ent.message)
-
         old = await self.config()
+        if data.get('enabled', old.enabled) and not old.enabled:
+            await self._require_zfstier()
+
         new = await self._svc_part.do_update(data)
         await self.middleware.call("etc.generate", "truenas_zfstierd")
         if new.special_class_metadata_reserve_pct != old.special_class_metadata_reserve_pct:
@@ -386,6 +386,11 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         await self.call2(self.s.service.control, verb, "truenas_zfstierd")
         return new
 
+    async def _require_zfstier(self) -> None:
+        ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
+        if not ent.entitled:
+            raise CallError(ent.message)
+
     @api_method(
         ZfsTierRewriteJobCreateArgs,
         ZfsTierRewriteJobCreateResult,
@@ -401,6 +406,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         config = await self.config()
         if not config.enabled:
             raise ValidationError(field, "ZFS tiering is globally disabled", errno.EINVAL)
+        await self._require_zfstier()
 
         tier_map = await self.call2(self.bulk_tier_info_with_sentinel, [dataset_name])
         current_info = tier_map.get(dataset_name)
@@ -519,6 +525,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     )
     async def rewrite_job_recover(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Recover a rewrite job in ERROR state by reissuing failed rewrites."""
+        await self._require_zfstier()
         dataset_name, job_uuid = _parse_tier_job_id(data["tier_job_id"])
         await self._validate_dataset_writable(dataset_name, "zfs_tier_rewrite_job_recover.tier_job_id")
         async with RewriteClient() as client:
@@ -619,6 +626,8 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         config = await self.config()
         if not config.enabled:
             raise ValidationError("zfs_tier_dataset_set_tier", "ZFS tiering is globally disabled", errno.EINVAL)
+        if tier_type == "PERFORMANCE" or move_existing_data:
+            await self._require_zfstier()
 
         tier_map = await self.call2(self.bulk_tier_info_with_sentinel, [dataset_name])
         current_info = tier_map.get(dataset_name)
@@ -759,22 +768,29 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         return {ds: (None if v is _DATASET_NOT_FOUND else v) for ds, v in raw.items()}
 
 
-class ZfsTierLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = "zfs_tier"
-    etc_groups = ("truenas_zfstierd",)
-    service = "truenas_zfstierd"
-    # RELOAD, not RENDER: the SIGHUP is the point, since the daemon has to be told to drop
-    # active jobs when the entitlement goes away. service.control renders the service's own
-    # select_etc() on the way into the verb -- including when the unit is stopped, which is
-    # what converges an HA standby.
-    action = LicenseReconcileAction.RELOAD
-    order = 40
+class ZfsTierLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.ZFSTIER
+
+    async def alert_lines(self, in_grace: bool) -> list[str]:
+        if not (await self.call2(self.s.zfs.tier.config)).enabled:
+            return []
+        return [
+            "ZFS tiering: tiering is enabled but no new data movement is scheduled because the system is not "
+            "licensed for ZFS tiering. A job in progress finishes or pauses safely."
+        ]
+
+    async def on_grant(self) -> None:
+        if (await self.call2(self.s.zfs.tier.config)).enabled:
+            await (
+                await self.call2(
+                    self.s.service.control, "RELOAD", "truenas_zfstierd", ServiceOptions(ha_propagate=False)
+                )
+            ).wait(raise_error=True)
 
 
 async def setup(middleware: Middleware) -> None:
     await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        ZfsTierLicenseReconcileDelegate(),
+        middleware.services.truenas.entitlements.register_license_delegate, ZfsTierLicenseDelegate(middleware)
     )
     config = await middleware.call("zfs.tier.config")
     await middleware.run_in_thread(_apply_metadata_reserve_pct, middleware, config.special_class_metadata_reserve_pct)
