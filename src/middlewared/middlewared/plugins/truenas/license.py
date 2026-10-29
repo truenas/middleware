@@ -24,7 +24,6 @@ from middlewared.api.current import (
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.plugins.truenas.entitlements_grace import entitled_now, grace_compute
-from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import Service, ValidationError, private
 from middlewared.utils.license import (
@@ -82,7 +81,7 @@ def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
     )
 
 
-class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
+class TrueNASLicenseService(Service):
     class Config:
         namespace = "truenas.license"
         cli_private = True

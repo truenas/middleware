@@ -42,7 +42,6 @@ from middlewared.api.current import (
     UserUpdateArgs,
     UserUpdateResult,
 )
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.types import AuditCallback
@@ -370,14 +369,6 @@ class UserService(GenericCRUDService[UserEntry]):
         return do_home_copy(self.context, job, home_old, home_new, username, new_mode, uid)
 
 
-class UserLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = "user"
-    etc_groups = ("user",)
-    service = "user"
-    action = LicenseReconcileAction.RELOAD
-    order = 20
-
-
 async def setup(middleware: Middleware) -> None:
     try:
         # ensure that our default home path is always immutable. If it's not immutable then
@@ -389,11 +380,6 @@ async def setup(middleware: Middleware) -> None:
         )
     except Exception:
         middleware.logger.error("Failed to set immutable property on %r", DEFAULT_HOME_PATH, exc_info=True)
-
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        UserLicenseReconcileDelegate(),
-    )
 
     if await middleware.call2(middleware.services.keyvalue.get, "run_migration", False):
         await middleware.call2(middleware.services.user.sync_builtin)
