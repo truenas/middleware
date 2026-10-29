@@ -1,5 +1,6 @@
 import pytest
 
+from middlewared.test.integration.assets.docker import wait_for_catalog_sync
 from middlewared.test.integration.assets.roles import common_checks
 
 
@@ -30,3 +31,6 @@ from middlewared.test.integration.assets.roles import common_checks
 ))
 def test_apps_roles(unprivileged_user_fixture, method, role, valid_role, valid_role_exception):
     common_checks(unprivileged_user_fixture, method, role, valid_role, valid_role_exception=valid_role_exception)
+    if method == 'catalog.sync':
+        # This test checks the role, not the catalog, so it only has to stop the job leaking into the next test
+        wait_for_catalog_sync(ignore_network_failure=True)
