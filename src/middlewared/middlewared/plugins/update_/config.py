@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import typing
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import UpdateConfigSafeEntry, UpdateEntry, UpdateUpdate
+from middlewared.common.license_delegate import LicenseDelegate
 from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 
@@ -55,11 +58,12 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
         new = old.updated(data)
 
         verrors = ValidationErrors()
-        profiles = await self.call2(self.s.update.profile_choices)
-        if (profile := profiles.get(new.profile)) is None:
-            verrors.add('update.profile', 'Invalid profile.')
-        elif not profile.available:
-            verrors.add('update.profile', 'This profile is unavailable.')
+        if new.profile != old.profile:
+            profiles = await self.call2(self.s.update.profile_choices)
+            if (profile := profiles.get(new.profile)) is None:
+                verrors.add('update.profile', 'Invalid profile.')
+            elif not profile.available:
+                verrors.add('update.profile', 'This profile is unavailable.')
 
         verrors.check()
 
@@ -97,5 +101,20 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
         )
 
 
+class MissionCriticalLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.MISSION_CRITICAL
+
+    async def alert_lines(self, in_grace: bool) -> list[str]:
+        if (await self.call2(self.s.update.config_safe)).profile != 'MISSION_CRITICAL':
+            return []
+        return [
+            'Updates: the Mission Critical update profile is selected without a license. It keeps limiting which '
+            'updates are offered.'
+        ]
+
+
 async def setup(middleware: Middleware) -> None:
     await middleware.call('network.general.register_activity', 'update', 'Update')
+    await middleware.call2(
+        middleware.services.truenas.entitlements.register_license_delegate, MissionCriticalLicenseDelegate(middleware)
+    )

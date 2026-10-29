@@ -16,6 +16,7 @@ from .info import SystemSecurityInfoService
 from .sessions import SystemSecuritySessionsService
 from .stig import configure_fips as configure_fips_impl
 from .stig import configure_stig as configure_stig_impl
+from .validate import StigLicenseDelegate
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -70,5 +71,8 @@ async def on_config_upload(middleware: Middleware, path: str) -> None:
 
 async def setup(middleware: Middleware) -> None:
     middleware.register_hook('config.on_upload', on_config_upload, sync=True)
+    await middleware.call2(
+        middleware.services.truenas.entitlements.register_license_delegate, StigLicenseDelegate(middleware)
+    )
 
     await middleware.call2(middleware.services.system.security.configure_stig)
