@@ -352,7 +352,9 @@ def test_query_privilege_ds_groups_sid_conversion_failure():
             raise Exception("winbind is unavailable")
     """):
         with raw_privilege({"name": "Test sid failure", "ds_groups": [UNMAPPED_SID]}) as id_:
-            assert call("privilege.get_instance", id_)["ds_groups"] == []
+            assert call("privilege.get_instance", id_)["ds_groups"] == [
+                {"gid": None, "sid": UNMAPPED_SID, "group": None},
+            ]
 
 
 # ---------------------------------------------------------------------------
