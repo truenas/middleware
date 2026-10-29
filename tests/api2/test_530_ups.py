@@ -19,6 +19,9 @@ SHUTDOWN_MARKER_FILE = '/tmp/is_shutdown'
 # `upsmon` reports lost communication as soon as it starts and arms a 10 second COMMBAD timer. Its
 # own poll frequency decides when the driver cancels that timer.
 UPSMON_POLLFREQ = 5
+# `doshutdown` sleeps this long before it runs `SHUTDOWNCMD`. The generated `upsmon.conf` leaves
+# `FINALDELAY` at the NUT default.
+UPSMON_FINALDELAY = 5
 
 first_ups_payload = {
     'rmonitor': True,
@@ -109,9 +112,28 @@ def served_variables(served):
 
 def assert_no_forced_shutdown():
     """`upsd` records the forced shutdown as soon as `upsmon` declares it. `SHUTDOWNCMD` only runs
-    after the `HOSTSYNC` wait, so the flag is the early half of the same event."""
+    seconds later, so the flag is the early and reliable half of the same event."""
     assert 'FSD' not in served_variables(upsc()).get('ups.status', frozenset())
     assert not did_shutdown()
+
+
+def wait_for_shutdown():
+    """Wait for `SHUTDOWNCMD` to run.
+
+    `upsmon` declares the forced shutdown at once, then waits up to `HOSTSYNC` seconds for
+    secondaries to log out and sleeps `FINALDELAY` more. So the marker file lags the low battery
+    alert by several seconds.
+    """
+    timeout = call('ups.config')['hostsync'] + UPSMON_FINALDELAY + 10
+    for _ in range(timeout):
+        if did_shutdown():
+            return
+        sleep(1)
+
+    raise AssertionError(
+        f'`upsmon` did not run the shutdown command in {timeout} seconds. A missing `FSD` flag '
+        f'means it never declared the shutdown: {upsc()}'
+    )
 
 
 def write_fake_data(data=None):
@@ -340,7 +362,7 @@ def test__ups_online_to_onbatt_lowbattery(ups_running, dummy_ups_driver_configur
     assert 'battery.charge: 10' in alerts[0]['formatted'], alerts
     # The simultaneous SHUTDOWN event carries no alert of its own, so the low battery alert stays.
     assert ups_alert_classes() == ['UPSBatteryLow']
-    assert did_shutdown()
+    wait_for_shutdown()
 
 
 def test__pass_through_fields_may_only_be_changed_by_a_full_admin():
