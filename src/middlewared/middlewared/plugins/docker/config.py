@@ -3,6 +3,8 @@ from __future__ import annotations
 import typing
 from typing import Any
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import (
     DockerAddressPool,
     DockerEntry,
@@ -79,6 +81,10 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             or str(new_config.cidr_v6) != str(old_config.cidr_v6)
         )
         registry_mirrors_changed = new_config.registry_mirrors != old_config.registry_mirrors
+        # a refused START would fail the save; the settings apply when Docker next starts
+        apply_docker_settings = (address_pools_changed or registry_mirrors_changed) and await self.call2(
+            self.s.truenas.entitlements.serving, LicenseFeature.APPS
+        )
         db_changed = (
             pool_changed or address_pools_changed or registry_mirrors_changed
             or new_config.enable_image_updates != old_config.enable_image_updates
@@ -95,7 +101,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                         'core.bulk', 'app.stop', [[app.name] for app in apps[i:i + batch_size]]
                     )).wait()
 
-            if pool_changed or address_pools_changed or registry_mirrors_changed:
+            if pool_changed or apply_docker_settings:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await (await self.call2(self.s.service.control, 'STOP', 'docker')).wait(raise_error=True)
@@ -136,7 +142,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 await docker_status_change(self)
                 if new_config.pool:
                     await self.call2(self.s.app.metadata_generate)
-            elif new_config.pool and (address_pools_changed or registry_mirrors_changed):
+            elif new_config.pool and apply_docker_settings:
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await mount_docker_ds(self)
                 if catalog_sync_job:
@@ -165,7 +171,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
     ) -> None:
         verrors = ValidationErrors()
 
-        if new_config.pool and not await license_active(self):
+        if new_config.pool and new_config.pool != old_config.pool and not await license_active(self):
             verrors.add(f'{schema}.pool', 'System is not licensed to use Applications')
 
         if new_config.pool and not await self.to_thread(query_imported_fast_impl, [new_config.pool]):

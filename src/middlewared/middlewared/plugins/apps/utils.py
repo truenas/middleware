@@ -8,6 +8,8 @@ import threading
 import time
 from typing import IO, TYPE_CHECKING, Any, Callable, TypeVar, cast
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.base import BaseModel
 from middlewared.api.current import AppEntry, AppUpgradeSummary
 from middlewared.job import JobCancelledException
@@ -24,6 +26,7 @@ from .ix_apps.utils import UNUSABLE_STATES
 
 if TYPE_CHECKING:
     from middlewared.job import Job
+    from middlewared.service import ServiceContext
     from middlewared.utils.types import JobProgressCallback
 
 logger = logging.getLogger('app_lifecycle')
@@ -53,6 +56,11 @@ def assert_app_usable(app: AppEntry) -> None:
             f'{app.id!r} app cannot be managed because its metadata is unusable ({app.error_reason}). '
             'The app can only be deleted.'
         )
+
+
+def assert_apps_licensed(context: ServiceContext) -> None:
+    if not context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.APPS).entitled:
+        raise CallError('System is not licensed to use Applications')
 
 
 def app_version(app: AppEntry) -> str:

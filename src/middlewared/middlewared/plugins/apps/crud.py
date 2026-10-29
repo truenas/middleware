@@ -29,7 +29,7 @@ from .ix_apps.query import error_app_data, get_default_workload_values, list_app
 from .ix_apps.setup import setup_install_app_dir
 from .resources import delete_internal_resources, get_app_volume_ds, remove_failed_resources
 from .schema_normalization import normalize_and_validate_values
-from .utils import app_version, assert_app_usable, band_progress
+from .utils import app_version, assert_app_usable, assert_apps_licensed, band_progress
 from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
@@ -229,6 +229,7 @@ def get_app_config(context: ServiceContext, app_name: str) -> dict[str, Any]:
 
 def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
     context.call_sync2(context.s.docker.validate_state)
+    assert_apps_licensed(context)
 
     if query_apps(context, [['id', '=', data.app_name]], QueryOptions()) or os.path.exists(
         get_installed_app_path(data.app_name)

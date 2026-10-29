@@ -168,6 +168,7 @@ def install(collective_metadata):
         patch("middlewared.plugins.apps.crud.os.path.exists", return_value=False),
         patch("middlewared.plugins.apps.crud.get_collective_metadata", return_value=collective_metadata),
         patch("middlewared.plugins.apps.crud.create_internal") as create_internal,
+        patch("middlewared.plugins.apps.crud.assert_apps_licensed"),
     ):
         create_app(
             context,
@@ -210,6 +211,7 @@ def create(app_name):
         patch("middlewared.plugins.apps.crud.query_apps", return_value=[]),
         patch("middlewared.plugins.apps.crud.get_collective_metadata", return_value={}),
         patch("middlewared.plugins.apps.crud.create_internal") as create_internal,
+        patch("middlewared.plugins.apps.crud.assert_apps_licensed"),
     ):
         create_app(
             context,

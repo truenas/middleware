@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from middlewared.api.current import AppRegistryCreate, AppRegistryEntry, AppRegistryUpdate
-from middlewared.service import CRUDServicePart, ValidationErrors
+from middlewared.plugins.docker.service_utils import license_active
+from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 
 from .validate_registry import validate_registry_credentials
@@ -27,6 +28,8 @@ class AppRegistryServicePart(CRUDServicePart[AppRegistryEntry]):
 
     async def do_create(self, data: AppRegistryCreate) -> AppRegistryEntry:
         await self.middleware.call('docker.validate_state')
+        if not await license_active(self):
+            raise CallError('System is not licensed to use Applications')
         data = await self.validate(data, 'app_registry_create')
         entry = await self._create(data.model_dump(expose_secrets=True))
         await self.middleware.call('etc.generate', 'app_registry')
