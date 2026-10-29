@@ -21,6 +21,7 @@ async def validate_nfs_share(
     schema_name: str,
     verrors: ValidationErrors,
     exclude_id: int | None = None,
+    old: SharingNFSEntry | None = None,
 ) -> None:
     """
     Perform advanced validation that does not get trapped by the schema checks
@@ -84,7 +85,7 @@ async def validate_nfs_share(
 
     await validate_security(part, data, schema_name, verrors)
 
-    await validate_expose_snapshots(part, data, schema_name, verrors)
+    await validate_expose_snapshots(part, data, schema_name, verrors, old)
 
 
 async def resolve_share_path(
@@ -216,14 +217,15 @@ async def validate_expose_snapshots(
     data: SharingNFSEntry,
     schema_name: str,
     verrors: ValidationErrors,
+    old: SharingNFSEntry | None,
 ) -> None:
     if not data.expose_snapshots:
         return
 
-    entitlement = await part.call2(part.s.truenas.entitlements.check, LicenseFeature.NFS_SNAPSHOT)
-    if not entitlement.entitled:
-        verrors.add(f"{schema_name}.expose_snapshots", entitlement.message)
-        return
+    if old is None or not old.expose_snapshots:
+        entitlement = await part.call2(part.s.truenas.entitlements.check, LicenseFeature.NFS_SNAPSHOT)
+        if not entitlement.entitled:
+            verrors.add(f"{schema_name}.expose_snapshots", entitlement.message)
 
     try:
         # We're using statfs output because in future it should expose whether snapdir is enabled

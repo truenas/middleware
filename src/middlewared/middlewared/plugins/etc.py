@@ -350,6 +350,11 @@ class EtcService(Service):
             ctx=(
                 CtxMethod(method='sharing.nfs.query', args=[[('enabled', '=', True)]]),
                 CtxMethod(method='nfs.config'),
+                CtxMethod(
+                    method='truenas.entitlements.serving',
+                    args=[LicenseFeature.NFS_SNAPSHOT],
+                    ctx_prefix='nfs_snapshot',
+                ),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='nfs.conf'),

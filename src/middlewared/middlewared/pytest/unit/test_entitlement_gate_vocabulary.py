@@ -39,6 +39,7 @@ GATES = [
     ("plugins/docker/config.py", "LicenseFeature.APPS"),
     ("plugins/docker/service_utils.py", "LicenseFeature.APPS"),
     ("plugins/docker/state_management.py", "LicenseFeature.APPS"),
+    ("plugins/etc.py", "LicenseFeature.NFS_SNAPSHOT"),
     ("plugins/etc.py", "LicenseFeature.SUPPORT"),
     ("plugins/fc/fc.py", "LicenseFeature.FIBRECHANNEL"),
     ("plugins/iscsi_/targets.py", "LicenseFeature.FIBRECHANNEL"),

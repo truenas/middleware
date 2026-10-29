@@ -76,7 +76,7 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
         audit_callback(old.path)
 
         new = old.updated(data)
-        entry = await self._update(id_, await self._validated_row("sharingnfs_update", new, exclude_id=id_))
+        entry = await self._update(id_, await self._validated_row("sharingnfs_update", new, exclude_id=id_, old=old))
 
         await sync_share_alerts(self.middleware, entry)
         await self._service_change("nfs", "reload")
@@ -88,9 +88,10 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
         schema_name: str,
         data: SharingNFSEntry,
         exclude_id: int | None = None,
+        old: SharingNFSEntry | None = None,
     ) -> dict[str, Any]:
         verrors = ValidationErrors()
-        await validate_nfs_share(self, data, schema_name, verrors, exclude_id)
+        await validate_nfs_share(self, data, schema_name, verrors, exclude_id, old)
         verrors.check()
 
         row = data.model_dump()
