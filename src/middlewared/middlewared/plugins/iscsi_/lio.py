@@ -290,25 +290,30 @@ class iSCSILIOService(Service):
         """
         node = self.middleware.call_sync('failover.node')
         group_name = ALUA_GROUP_A if node == 'A' else ALUA_GROUP_B
-        for backstore in (IBLOCK_DIR, FILEIO_DIR):
-            if not backstore.exists():
-                continue
-            for so_dir in backstore.iterdir():
-                if not so_dir.is_dir():
-                    continue
-                state_path = so_dir / 'alua' / group_name / 'alua_access_state'
-                if state_path.exists():
-                    state_path.write_text(f'{state}\n')
+        self._write_alua_groups(((group_name, state),))
 
     @private
     def set_alua_transitioning(self):
         """Set the local node's ALUA target port group to TRANSITIONING.
 
-        Called on the ACTIVE node before pool import (vrrp_master) and on the
-        STANDBY node immediately after iscsitarget starts (vrrp_backup) to
-        signal to initiators that path states are in flux.
+        Called on the STANDBY node immediately after iscsitarget starts
+        (vrrp_backup) to signal to initiators that path states are in flux.
+        vrrp_master uses set_alua_takeover_transitioning instead.
         """
         self._set_local_alua_state(ALUA_STATE.TRANSITIONING)
+
+    @private
+    def set_alua_takeover_transitioning(self):
+        """Set both controller groups to TRANSITIONING.
+
+        Called on the node becoming ACTIVE before pool import (vrrp_master).
+        This node was STANDBY, so its peer group still holds ACTIVE_OPTIMIZED;
+        writing only the local group would have REPORT TARGET PORT GROUPS
+        advertise the departing peer as the optimized path until
+        set_alua_active runs.  vrrp_backup keeps set_alua_transitioning, which
+        must leave the ACTIVE peer's group alone.
+        """
+        self._set_alua_states(ALUA_STATE.TRANSITIONING, ALUA_STATE.TRANSITIONING)
 
     @private
     def set_alua_active(self):
@@ -347,6 +352,10 @@ class iSCSILIOService(Service):
 
         Reads failover.node, failover.status, and ha_state live so the result
         is always consistent with current system state.
+
+        Returns the state written to the remote group, as an int, so that a
+        caller on the peer can tell whether this node already saw the link
+        as synced.
         """
         failover_status = self.middleware.call_sync('failover.status')
         ha_state = self.ha_state()
@@ -361,6 +370,7 @@ class iSCSILIOService(Service):
             remote_state = ALUA_STATE.OPTIMIZED
 
         self._set_alua_states(local_state, remote_state)
+        return int(remote_state)
 
     @staticmethod
     def _master_remote_alua_state(ha_state: str) -> ALUA_STATE:
@@ -383,19 +393,36 @@ class iSCSILIOService(Service):
         else:
             local_group, remote_group = ALUA_GROUP_B, ALUA_GROUP_A
 
+        self._write_alua_groups(((local_group, local_state), (remote_group, remote_state)))
+
+    @private
+    def _write_alua_groups(self, group_states):
+        """Write each (group_name, state) pair in `group_states` to every
+        storage object's alua/{group_name}/alua_access_state.
+
+        A failed write is logged and skipped so that one storage object (for
+        example an extent removed by a concurrent reload, or a group the kernel
+        refuses mid-transition) does not leave the remaining groups in their
+        old state.
+        """
         for backstore in (IBLOCK_DIR, FILEIO_DIR):
             if not backstore.exists():
                 continue
-            for so_dir in backstore.iterdir():
-                if not so_dir.is_dir():
-                    continue
-                for group_name, state in (
-                    (local_group, local_state),
-                    (remote_group, remote_state),
-                ):
+            try:
+                so_dirs = list(backstore.iterdir())
+            except OSError:
+                self.logger.warning('Failed to list %s', backstore, exc_info=True)
+                continue
+            for so_dir in so_dirs:
+                for group_name, state in group_states:
                     state_path = so_dir / 'alua' / group_name / 'alua_access_state'
-                    if state_path.exists():
-                        state_path.write_text(f'{state}\n')
+                    try:
+                        if state_path.exists():
+                            state_path.write_text(f'{state}\n')
+                    except OSError:
+                        self.logger.warning(
+                            'Failed to set ALUA state %s on %s', state, state_path, exc_info=True
+                        )
 
     @private
     def sessions(self, global_info):
