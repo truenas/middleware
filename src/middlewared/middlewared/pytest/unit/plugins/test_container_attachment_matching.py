@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import pytest
 
 from middlewared.api.current import (
@@ -306,3 +308,10 @@ async def test_destroy_skips_etc_generate_when_nothing_was_removed():
     driver = DestroyDriver([container("other/.truenas_containers/containers/c")])
     await driver.run()
     assert driver.etc_generated == []
+
+
+@pytest.mark.asyncio
+async def test_unlock_does_not_bounce_running_container_when_not_entitled():
+    driver = StartOnUnlockDriver("RUNNING")
+    driver.middleware.services.truenas.entitlements.check = lambda feature: Mock(entitled=False)
+    assert await driver.run() == []
