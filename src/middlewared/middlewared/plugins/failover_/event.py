@@ -601,7 +601,10 @@ class FailoverEventsService(Service):
             logger.info('Done checking if ALUA is enabled')
             if handle_alua:
                 if lio_mode:
-                    self.run_call('iscsi.lio.set_alua_transitioning')
+                    try:
+                        self.run_call('iscsi.lio.set_alua_takeover_transitioning')
+                    except Exception:
+                        logger.exception('Failed to set ALUA states to transitioning')
                 else:
                     self.run_call('iscsi.scst.suspend_logins')
                     self.run_call('iscsi.scst.set_alua_transitioning')
@@ -836,7 +839,10 @@ class FailoverEventsService(Service):
 
         if handle_alua:
             if lio_mode:
-                self.run_call('iscsi.lio.set_alua_active')
+                try:
+                    self.run_call('iscsi.lio.set_alua_active')
+                except Exception:
+                    logger.exception('Failed to set ALUA states to active')
             else:
                 try:
                     # Deferred: tear down the HA iSCSI session now that all LUN mappings

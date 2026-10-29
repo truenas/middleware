@@ -6,7 +6,7 @@ from middlewared.plugins.fc.utils import wwn_as_colon_hex
 from middlewared.service import Service, job, private
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
-from middlewared.utils.iscsi.constants import ISCSIMODE
+from middlewared.utils.iscsi.constants import ALUA_STATE, ISCSIMODE
 
 from middlewared.utils.lio.config import LIO_HA_DIR
 
@@ -20,6 +20,8 @@ GET_UNIT_STATE_SECONDS = 2
 RELOAD_REMOTE_QUICK_RETRIES = 10
 STANDBY_ENABLE_DEVICES_RETRIES = 10
 REMOTE_RELOAD_LONG_DELAY_SECS = 300
+LIO_REFRESH_ATTEMPTS = 15
+LIO_REFRESH_INTERVAL = 2
 
 
 class iSCSITargetAluaService(Service):
@@ -294,6 +296,38 @@ class iSCSITargetAluaService(Service):
             self.logger.debug('ALUA state inconsistent on STANDBY restart; running standby_after_start')
             await self.middleware.call('iscsi.alua.standby_after_start')
 
+    async def _lio_refresh_active_alua(self):
+        """Ask the ACTIVE node to re-evaluate ALUA states now that this node is
+        synced, retrying until the ACTIVE gives our group NONOPTIMIZED.
+
+        The ACTIVE reads its own lio_ha ha_state, which can lag ours or be
+        caught by a link blip.  A single attempt that misses would leave our
+        group UNAVAILABLE or TRANSITIONING until the next iscsitarget reload.
+        """
+        for attempt in range(LIO_REFRESH_ATTEMPTS):
+            if attempt:
+                await asyncio.sleep(LIO_REFRESH_INTERVAL)
+            if not self.standby_starting:
+                return
+            if await self.middleware.call('iscsi.lio.ha_state') != 'synced':
+                self.logger.warning('lio_ha no longer synced; not refreshing ALUA states on ACTIVE node')
+                return
+            try:
+                remote_state = await self.middleware.call(
+                    'failover.call_remote', 'iscsi.lio.refresh_alua_states',
+                    [], {'timeout': 10},
+                )
+            except Exception:
+                self.logger.warning(
+                    'Failed to refresh ALUA states on ACTIVE node', exc_info=True
+                )
+                continue
+            if remote_state == ALUA_STATE.NONOPTIMIZED:
+                return
+            self.logger.debug('ACTIVE node set our ALUA group to %s; retrying', remote_state)
+
+        self.logger.warning('ACTIVE node did not set our ALUA group to NONOPTIMIZED')
+
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
         if await self.middleware.call('iscsi.global.lio_enabled'):
@@ -313,15 +347,7 @@ class iSCSITargetAluaService(Service):
                 return
 
             await self.middleware.call('iscsi.lio.set_alua_nonoptimized')
-            try:
-                await self.middleware.call(
-                    'failover.call_remote', 'iscsi.lio.refresh_alua_states',
-                    [], {'timeout': 10},
-                )
-            except Exception:
-                self.logger.warning(
-                    'Failed to refresh ALUA states on ACTIVE node', exc_info=True
-                )
+            await self._lio_refresh_active_alua()
             self.standby_alua_ready = True
             job.set_progress(100, 'lio_ha synced')
             self.logger.debug('ALUA started on STANDBY (LIO)')
