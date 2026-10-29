@@ -1,6 +1,9 @@
 from typing import Any
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import SystemSecurityEntry
+from middlewared.common.license_delegate import LicenseDelegate
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.service import ServiceContext, ValidationError
 from middlewared.utils.security import (
@@ -14,14 +17,28 @@ from middlewared.utils.security import (
 )
 
 
+def _tightened(key: str, old: Any, new: Any) -> bool:
+    if key in ("enable_fips", "enable_gpos_stig"):
+        return bool(new and not old)
+    if key in ("min_password_length", "password_history_length", "min_password_age"):
+        return bool((new or 0) > (old or 0))
+    if key == "max_password_age":
+        return bool(new is not None and (old is None or new < old))
+    return bool(set(new or ()) - set(old or ()))
+
+
 async def validate_security(
-    context: ServiceContext, is_ha: bool, new: SystemSecurityEntry, ha_disabled_reasons: list[str]
+    context: ServiceContext,
+    is_ha: bool,
+    old: SystemSecurityEntry,
+    new: SystemSecurityEntry,
+    ha_disabled_reasons: list[str],
 ) -> None:
     schema = "system_security_update.enable_fips"
 
     if not await context.call2(context.s.system.security.info.fips_available):
         for key in ENTERPRISE_OPTIONS:
-            if not getattr(new, key):
+            if not _tightened(key, getattr(old, key), getattr(new, key)):
                 continue
 
             raise ValidationError(
@@ -247,3 +264,13 @@ def validate_password_security(old: SystemSecurityEntry, new: SystemSecurityEntr
         )
 
     return True
+
+
+class StigLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.STIG
+
+    async def alert_lines(self, in_grace: bool) -> list[str]:
+        config = await self.call2(self.s.system.security.config)
+        if not (config.enable_fips or config.enable_gpos_stig):
+            return []
+        return ["Security: FIPS or STIG mode is enabled without a license. Security settings are not changed."]
