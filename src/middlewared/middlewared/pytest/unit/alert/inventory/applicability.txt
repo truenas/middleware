@@ -191,6 +191,8 @@ KdumpNotReady                               class   Y   Y   Y   Y   Y   Y   Y
 KdumpNotReady                               listed  Y   Y   Y   Y   Y   Y   Y
 License                                     class   .   .   Y   Y   Y   Y   Y
 License                                     listed  .   .   Y   Y   Y   Y   Y
+LicenseFeatures                             class   Y   Y   Y   Y   Y   Y   Y
+LicenseFeatures                             listed  Y   Y   Y   Y   Y   Y   Y
 LicenseHasExpired                           class   .   .   Y   Y   Y   Y   Y
 LicenseHasExpired                           listed  .   .   Y   Y   Y   Y   Y
 LicenseIsExpiring                           class   .   .   Y   Y   Y   Y   Y

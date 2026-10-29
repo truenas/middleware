@@ -47,6 +47,7 @@ from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.system.reboot import RebootReason
+from middlewared.plugins.truenas.entitlements_grace import GRACE_KEY
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
@@ -1027,6 +1028,14 @@ class FailoverService(ConfigService):
                 )
             else:
                 await self.call2(self.s.alert.oneshot_delete, 'FailoverKMIPKeysSyncFailed', None)
+            try:
+                try:
+                    grace = await self.middleware.call('cache.get', GRACE_KEY)
+                except KeyError:
+                    grace = []
+                await self.middleware.call('failover.call_remote', 'cache.put', [GRACE_KEY, grace])
+            except Exception:
+                self.logger.error('Failed to sync license grace record with standby controller', exc_info=True)
 
 
 async def ha_permission(middleware, app):

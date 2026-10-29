@@ -908,6 +908,7 @@ class FailoverEventsService(Service):
         self.start_vms()
         self.start_containers()
         self.start_apps()
+        self.call_sync2(self.s.truenas.entitlements.refresh_alert, background=True)
 
         logger.info('Migrating interface information (if required)')
         # We run this in the background because there's a high chance that the remote node is not available yet,

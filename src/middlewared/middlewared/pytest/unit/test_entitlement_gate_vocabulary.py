@@ -18,7 +18,7 @@ import pprint
 from middlewared.utils.entitlements import POLICY, DerivedEntitlement, LicenseFeature
 from middlewared.utils.python import get_middlewared_dir
 
-ENDPOINT = "truenas.entitlements.check"
+ENDPOINTS = ("truenas.entitlements.check", "truenas.entitlements.serving")
 
 VOCABULARIES = {"LicenseFeature": LicenseFeature, "DerivedEntitlement": DerivedEntitlement}
 
@@ -51,6 +51,7 @@ GATES = [
     ("plugins/system/product.py", None),
     ("plugins/system/product.py", "LicenseFeature.SED"),
     ("plugins/system_general/update.py", "LicenseFeature.DIRECTORY_SERVICES_AUTH"),
+    ("plugins/truenas/entitlements_grace.py", None),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_VERSIONING"),
@@ -89,11 +90,11 @@ def _dotted(node):
 def _names_the_endpoint(call):
     """Whether `call` hands the endpoint to something, by bound method or by name.
 
-    A gate reaches it as `<something>.truenas.entitlements.check` passed to `call2`, and
+    A gate reaches it as `<something>.truenas.entitlements.check` or `serving` passed to `call2`, and
     `plugins/etc.py` reaches it as a `method=` string on a `CtxMethod`.
     """
     for value in [*call.args, *(keyword.value for keyword in call.keywords)]:
-        if _literal(value) == ENDPOINT or (_dotted(value) or "").endswith(ENDPOINT):
+        if _literal(value) in ENDPOINTS or (_dotted(value) or "").endswith(ENDPOINTS):
             return True
     return False
 

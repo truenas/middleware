@@ -1,4 +1,7 @@
-from typing import Any
+from __future__ import annotations
+
+import asyncio
+from typing import TYPE_CHECKING, Any
 
 from truenas_pylicensed import verify
 
@@ -14,6 +17,7 @@ from middlewared.api.current import (
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
+from middlewared.plugins.truenas import entitlements_grace as grace
 from middlewared.plugins.truenas.entitlement_usage import PROBES
 from middlewared.service import CallError, Service, private
 from middlewared.utils.entitlements import (
@@ -26,6 +30,10 @@ from middlewared.utils.entitlements import (
 )
 from middlewared.utils.hardware import get_hardware_info
 from middlewared.utils.license import LicenseOrigin, describe_legacy_license
+
+if TYPE_CHECKING:
+    from middlewared.common.license_delegate import LicenseDelegate
+    from middlewared.main import Middleware
 
 
 def _entry(entitlement: Entitlement) -> EntitlementEntry:
@@ -50,6 +58,11 @@ class TrueNASEntitlementsService(Service):
     class Config:
         namespace = "truenas.entitlements"
         cli_private = True
+
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        self._delegates: dict[str, LicenseDelegate] = {}
+        self._grace_lock = asyncio.Lock()
 
     @api_method(
         TrueNASEntitlementsCheckArgs,
@@ -178,6 +191,26 @@ class TrueNASEntitlementsService(Service):
             info["legacy"] = {"error": f"{type(e).__name__}: {e}"}
 
         return info
+
+    @private
+    async def register_license_delegate(self, delegate: LicenseDelegate) -> None:
+        grace.register(self._delegates, delegate)
+
+    @private
+    def serving(self, feature: str) -> bool:
+        return grace.serving(self.context, feature)
+
+    @private
+    async def license_changed(self, before: frozenset[str], after: frozenset[str], compute: bool) -> None:
+        await grace.license_changed(self.context, self._delegates, self._grace_lock, before, after, compute)
+
+    @private
+    async def cut_service(self, service: str) -> None:
+        await grace.cut_service(self.context, self._delegates, self._grace_lock, service)
+
+    @private
+    async def refresh_alert(self) -> None:
+        await grace.refresh_alert(self.context, self._delegates, self._grace_lock, None)
 
     @private
     async def usage(self) -> dict[str, Any]:
