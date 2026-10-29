@@ -730,6 +730,11 @@ def test_user_query_local_filter_variants(filters):
     assert isinstance(result, list)
 
 
+def test_user_query_force_sql_filters_excludes_container_root():
+    users = call("user.query", [["username", "=", "root"]], {"force_sql_filters": True, "select": ["username"]})
+    assert users == [{"username": "root"}]
+
+
 # ---------------------------------------------------------------------------
 # do_create - primary group selection branches
 # ---------------------------------------------------------------------------

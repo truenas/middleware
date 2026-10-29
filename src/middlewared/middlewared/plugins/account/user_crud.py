@@ -25,6 +25,7 @@ from middlewared.service_exception import InstanceNotFound, MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.lang import undefined
 from middlewared.utils.reserved_ids import ReservedXid
 from middlewared.utils.security import PASSWORD_PROMPT_AGE
@@ -295,7 +296,7 @@ class UserServicePart(CRUDServicePart[UserEntry]):
         # NOTE: we deliberately don't include a userns_idmap value here because it is
         # implicit when we set up subuid for container
         container_root.update({"builtin": True, "local": True, "locked": True, "smb": False})
-        rows.append(container_root)
+        rows += filter_list([container_root], filters)
 
         return rows
 
