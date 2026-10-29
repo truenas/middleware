@@ -42,6 +42,8 @@ GATES = [
     ("plugins/etc.py", "LicenseFeature.NFS_SNAPSHOT"),
     ("plugins/etc.py", "LicenseFeature.SUPPORT"),
     ("plugins/fc/fc.py", "LicenseFeature.FIBRECHANNEL"),
+    ("plugins/fc/fc.py", "LicenseFeature.FIBRECHANNEL"),
+    ("plugins/iscsi_/iscsi_global.py", None),
     ("plugins/iscsi_/targets.py", "LicenseFeature.FIBRECHANNEL"),
     ("plugins/kmip/config.py", "LicenseFeature.KMIP"),
     ("plugins/network.py", "LicenseFeature.NETWORK_FEC"),

@@ -21,7 +21,7 @@ class FakeJob:
 
 def fake_service_control(middleware, result=None):
     """
-    Make `service.control` return a `FakeJob`, and return the list that records every
+    Make `service.control` (by name and through `call2`) return a `FakeJob`, and return the list that records every
     `(verb, service, options)` it was called with.
     """
     calls = []
@@ -31,6 +31,7 @@ def fake_service_control(middleware, result=None):
         return FakeJob(result)
 
     middleware['service.control'] = control
+    middleware.services.service.control = control
     return calls
 
 

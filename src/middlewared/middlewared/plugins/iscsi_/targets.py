@@ -214,6 +214,7 @@ class iSCSITargetService(CRUDService):
 
         if (
             data['mode'] != 'ISCSI' and
+            (old is None or old['mode'] == 'ISCSI') and
             not (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.FIBRECHANNEL)).entitled
         ):
             verrors.add(f'{schema_name}.mode', 'Fibre Channel not enabled')

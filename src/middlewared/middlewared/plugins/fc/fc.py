@@ -8,6 +8,7 @@ from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import FCCapableArgs, FCCapableResult
+from middlewared.plugins.iscsi_.targets import MODE_FC_CAPABLE
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import filter_list
@@ -33,15 +34,22 @@ class FCService(Service):
     )
     async def capable(self):
         """
-        Returns ``true`` if the system is licensed for FIBRECHANNEL and contains
-        one or more Fibre Channel cards. ``false`` otherwise.
+        HBA present and Fibre Channel usable now, including license grace.
         """
         # Presence of an HBA is a physical fact the entitlement does not model, so it stays here. It is
         # checked last because it shells out to lspci.
-        if (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.FIBRECHANNEL)).entitled:
+        if await self.call2(self.s.truenas.entitlements.serving, LicenseFeature.FIBRECHANNEL):
             if await self.middleware.call('fc.hba_present'):
                 return True
         return False
+
+    @private
+    async def fc_host_capable(self):
+        if not await self.middleware.call('fc.hba_present'):
+            return False
+        if (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.FIBRECHANNEL)).entitled:
+            return True
+        return await self.middleware.call('iscsi.target.query', [['mode', 'in', MODE_FC_CAPABLE]], {'count': True}) > 0
 
     @private
     @cache
@@ -69,7 +77,7 @@ class FCService(Service):
     @filterable_api_method(private=True)
     def fc_hosts(self, filters, options):
         result = []
-        if self.middleware.call_sync('fc.capable'):
+        if self.middleware.call_sync('fc.fc_host_capable'):
             if not self.middleware.call_sync('iscsi.global.lio_enabled'):
                 self.__load_kernel_module()
             slots = self.middleware.call_sync('fc.slot_info')

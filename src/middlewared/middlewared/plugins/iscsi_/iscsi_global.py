@@ -3,6 +3,8 @@ import ipaddress
 import re
 import socket
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     ISCSIGlobalAluaEnabledArgs,
@@ -15,7 +17,7 @@ from middlewared.api.current import (
     ServiceOptions,
 )
 from middlewared.async_validators import validate_port
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import touches
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
@@ -350,40 +352,17 @@ class ISCSIGlobalService(SystemServiceService):
         return False
 
 
-class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'iscsi'
-    etc_groups = ('scst', 'lio', 'scst_targets')
-    service = 'iscsitarget'
-    action = LicenseReconcileAction.RENDER
-    order = 30
-
-    async def resolve_groups(self, middleware):
-        """
-        Ask the service which of the mutually exclusive iSCSI groups is live on this system.
-
-        `etc_groups` lists `scst`, `lio` and `scst_targets` because it is the ownership
-        declaration -- what uniqueness checking is written against -- and it has to be knowable
-        without making a call. Only a subset of it is ever rendered, and which one depends on the
-        configured mode, so the actual choice needs a call.
-
-        Deferring to the service's own `select_etc()` keeps the license path and the service path
-        from choosing different groups.
-        """
-        return await (await middleware.call2(middleware.services.service.object, 'iscsitarget')).select_etc()
-
-    async def should_run(self, middleware):
-        """
-        Only converge a target that is actually running.
-
-        With the service stopped there is no live state to bring in line, and starting it later
-        regenerates config from scratch anyway. With the service running this is the only thing
-        that converges it after a license change.
-        """
-        return await middleware.call2(middleware.services.service.started, 'iscsitarget')
+async def hook_license_update_iscsi(middleware, *args, changed=None, **kwargs):
+    relevant = touches(changed, LicenseFeature.HA)
+    for feature in (LicenseFeature.FIBRECHANNEL, LicenseFeature.RDMA):
+        if not relevant and touches(changed, feature):
+            relevant = (
+                await middleware.call2(middleware.services.truenas.entitlements.check, feature)
+            ).entitled
+    if relevant and await middleware.call2(middleware.services.service.started, 'iscsitarget'):
+        for group in await (await middleware.call2(middleware.services.service.object, 'iscsitarget')).select_etc():
+            await middleware.call('etc.generate', group)
 
 
 async def setup(middleware):
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        ISCSILicenseReconcileDelegate(),
-    )
+    middleware.register_hook('system.post_license_update', hook_license_update_iscsi)

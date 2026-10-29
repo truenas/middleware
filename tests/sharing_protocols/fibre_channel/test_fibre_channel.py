@@ -572,10 +572,11 @@ class AbstractFibreChannel:
         # Make sure iSCSI service is not running.  Would go boom
         assert call('service.query', [['service', '=', 'iscsitarget']], {'get': True})['state'] == 'STOPPED'
         with mock('fc.capable', return_value=True):
-            with entitled("FIBRECHANNEL"):
-                call('fc.fc_host.reset_wired', True)
-                with mock_ports(self.NODE_A_PORTS, self.NODE_B_PORTS):
-                    yield
+            with mock('fc.fc_host_capable', return_value=True):
+                with entitled("FIBRECHANNEL"):
+                    call('fc.fc_host.reset_wired', True)
+                    with mock_ports(self.NODE_A_PORTS, self.NODE_B_PORTS):
+                        yield
 
     @pytest.fixture(scope='class')
     def fibre_channel_wired(self, fibre_channel_hardware):
