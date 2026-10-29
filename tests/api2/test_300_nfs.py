@@ -94,12 +94,6 @@ class NFS_CONFIG:
     }
 
 
-def has_static_ip():
-    """Used to skip tests that require an interface with a static IP"""
-    static_if = call('interface.query', [["type", "=", "PHYSICAL"], ["aliases", "!=", []]])
-    return static_if != []
-
-
 def parse_exports():
     exp = ssh("cat /etc/exports").splitlines()
     rv = []
@@ -171,31 +165,6 @@ def parse_db():
     dict_db = {item.split('=')[0]: item.split('=')[1] for item in cols}
 
     return dict_db
-
-
-def parse_rpcbind_config():
-    '''
-    In Debian 12 (Bookwork) rpcbind uses /etc/default/rpcbind.
-    Look for /etc/rpcbind.conf in future releases.
-    '''
-    conf = ssh("cat /etc/default/rpcbind").splitlines()
-    rv = {}
-
-    # With bindip the line of intrest looks like: OPTIONS=-w -h 192.168.40.156
-    for line in conf:
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("OPTIONS"):
-            opts = line.split('=')[1].split()
-            # '-w' is hard-wired, lets confirm that
-            assert len(opts) > 0
-            assert '-w' == opts[0]
-            rv['-w'] = ''
-            # If there are more opts they must the bindip settings
-            if len(opts) == 3:
-                rv[opts[1]] = opts[2]
-
-    return rv
 
 
 def get_nfs_service_state():
@@ -607,9 +576,6 @@ def nfs_running():
             # This will report a failure if we cannot start
             sleep(1)
             set_nfs_service_state('start')
-
-
-static_ip_available = has_static_ip()
 
 
 # =====================================================================
@@ -1566,66 +1532,6 @@ class TestNFSops:
             call('nfs.set_debug', disabled)
             res = call('nfs.get_debug')
             assert res == disabled
-
-    @pytest.mark.skipif(static_ip_available is False, reason="Test requires a static IP interface")
-    @pytest.mark.parametrize("param,errmsg", [
-        pp([""], None, id="basic settings"),
-        pp(["1.2.3.4"], "Cannot use", id="Not in choices"),
-        pp(["a.b.c.d"], "not appear to be", id="Not a valid IP"),
-        pp(["", "8.8.8.8"], "Cannot use", id="2nd entry not in choices"),
-        pp(["", "ixsystems.com"], "not appear to be", id="2nd entry not valid IP"),
-        pp(["", None], "Input should be", id="2nd entry is None"),
-        pp(["", "a.b.c.d", "ixsystems.com"], "not appear to be", id="Two invalid entries")
-    ])
-    def test_config_bindip(self, start_nfs, param, errmsg):
-        '''
-        Test the bindip setting in nfs config
-        This test requires a static IP address
-        * Success testing:
-            - Test the actual bindip config setting
-                o Confirm setting in conf files
-                o Confirm service on IP address
-        * Failure testing:
-            - Valid IP, but does not match choices
-            - Invalid IP
-            - Two entries, one valid the other not
-        '''
-        assert start_nfs is True
-
-        if errmsg is None:
-            choices = call("nfs.bindip_choices")
-            assert truenas_server.ip in choices
-
-            # TODO: check with 'nmap -sT <IP>' from the runner.
-            with nfs_config() as db_conf:
-
-                # Should have no bindip setting
-                nfs_conf = parse_server_config()
-                rpc_conf = parse_rpcbind_config()
-                assert db_conf['bindip'] == []
-                assert nfs_conf['nfsd'].get('host') is None
-                assert rpc_conf.get('-h') is None
-
-                # Set bindip
-                call("nfs.update", {"bindip": [truenas_server.ip]})
-
-                # Confirm we see it in the nfs and rpc conf files
-                nfs_conf = parse_server_config()
-                rpc_conf = parse_rpcbind_config()
-                assert truenas_server.ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
-                assert truenas_server.ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
-        else:
-            # None of these should make it to the config
-            if param[0] == "":
-                param[0] = truenas_server.ip
-
-            # Test the config and the standalone private
-            with pytest.raises((ValueError, ValidationErrors)) as ve:
-                call("nfs.update", {"bindip": param})
-            if ve.typename == "ValueError":
-                assert errmsg in str(ve.value)
-            else:
-                assert errmsg in str(ve.value.errors[0])
 
     @pytest.mark.parametrize("param,errmsg", [
         pp([""], None, id="basic settings"),
