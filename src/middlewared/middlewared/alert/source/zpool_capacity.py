@@ -74,14 +74,14 @@ class ZpoolCapacityAlertSource(AlertSource):
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         alerts: list[Alert[Any]] = []
-        # query_impl with pool_names=None skips boot pools, so we query
+        # list_impl with pool_names=None skips boot pools, so we query
         # the boot pool explicitly to ensure capacity alerts still fire.
         pools = await self.middleware.call2(
-            self.middleware.services.zpool.query_impl, ZpoolQuery(properties=["capacity"])
+            self.middleware.services.zpool.list_impl, ZpoolQuery(properties=["capacity"])
         )
         boot_pool = await self.middleware.call2(self.middleware.services.boot.pool_name)
         pools.extend(await self.middleware.call2(
-            self.middleware.services.zpool.query_impl, ZpoolQuery(pool_names=[boot_pool], properties=["capacity"])
+            self.middleware.services.zpool.list_impl, ZpoolQuery(pool_names=[boot_pool], properties=["capacity"])
         ))
         for pool in pools:
             try:

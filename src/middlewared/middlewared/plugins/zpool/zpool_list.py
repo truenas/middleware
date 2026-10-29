@@ -4,15 +4,15 @@ from typing import TYPE_CHECKING, Any, Iterable
 
 from middlewared.api.current import ZpoolEntry, ZpoolQuery
 
-from .query_impl import query_impl as _raw_query
+from .list_impl import list_impl as _raw_list
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
     from middlewared.utils.types import EventType
 
-__all__ = ("EVENT_PROPERTIES", "offline_entries", "query", "query_impl", "send_change_event")
+__all__ = ("EVENT_PROPERTIES", "list_impl", "list_pools", "offline_entries", "send_change_event")
 
-# Properties baked into every emitted `zpool.query` event so that subscribers
+# Properties baked into every emitted `zpool.list` event so that subscribers
 # receive a Pool-shaped payload without having to round-trip another call.
 EVENT_PROPERTIES = (
     "class_normal_used",
@@ -27,8 +27,8 @@ EVENT_PROPERTIES = (
 )
 
 
-def query_impl(tls: Any, data: ZpoolQuery) -> list[dict[str, Any]]:
-    return _raw_query(tls.lzh, data.model_dump())
+def list_impl(tls: Any, data: ZpoolQuery) -> list[dict[str, Any]]:
+    return _raw_list(tls.lzh, data.model_dump())
 
 
 def offline_entries(
@@ -90,7 +90,7 @@ def offline_entries(
     return entries
 
 
-def query(context: ServiceContext, data: ZpoolQuery) -> list[ZpoolEntry]:
+def list_pools(context: ServiceContext, data: ZpoolQuery) -> list[ZpoolEntry]:
     boot_pool_name = context.call_sync2(context.s.boot.pool_name)
     requested_names = data.pool_names
 
@@ -105,7 +105,7 @@ def query(context: ServiceContext, data: ZpoolQuery) -> list[ZpoolEntry]:
     if requested_names is not None and boot_pool_name in requested_names:
         pool_names.append(boot_pool_name)
 
-    results = context.call_sync2(context.s.zpool.query_impl, data.model_copy(update={"pool_names": pool_names}))
+    results = context.call_sync2(context.s.zpool.list_impl, data.model_copy(update={"pool_names": pool_names}))
     for entry in results:
         entry.update({"id": None, "all_sed": None})
         db_entry = db_pools.get(entry["name"])
@@ -125,9 +125,9 @@ def send_change_event(
     event_type: EventType = "CHANGED",
     properties: Iterable[str] = (),
 ) -> ZpoolEntry | None:
-    """Emit a ``zpool.query`` event with a Pool-shaped payload and return that payload.
+    """Emit a ``zpool.list`` event with a Pool-shaped payload and return that payload.
 
-    Re-queries ``zpool.query`` with topology, scan, and the standard
+    Reads ``zpool.list`` again with topology, scan, and the standard
     property set (plus any ``properties`` the caller wants in the same
     read) so subscribers receive the same fields they would from a
     direct call. Returns None without emitting when the pool is not in
@@ -135,7 +135,7 @@ def send_change_event(
     the trigger and the emit).
     """
     pools = context.call_sync2(
-        context.s.zpool.query,
+        context.s.zpool.list,
         ZpoolQuery(
             pool_names=[pool_name],
             topology=True,
@@ -148,5 +148,5 @@ def send_change_event(
     pool = pools[0].model_dump()
     if pool["id"] is None:
         return None
-    context.middleware.send_event("zpool.query", event_type, id=pool["id"], fields=pool)
+    context.middleware.send_event("zpool.list", event_type, id=pool["id"], fields=pool)
     return pools[0]

@@ -146,7 +146,7 @@ class PoolService(CRUDService):
             },
         }
 
-        if info := await self.call2(self.s.zpool.query_impl, ZpoolQuery(
+        if info := await self.call2(self.s.zpool.list_impl, ZpoolQuery(
             pool_names=[pool_name],
             properties=[
                 'size', 'allocated', 'free', 'freeing', 'fragmentation',
@@ -728,7 +728,7 @@ class PoolService(CRUDService):
             properties['dedup_table_quota'] = {'value': dedup_table_quota_value}
 
         zfs_pool = await self.call2(
-            self.s.zpool.query_impl, ZpoolQuery(pool_names=[pool['name']], properties=['ashift'])
+            self.s.zpool.list_impl, ZpoolQuery(pool_names=[pool['name']], properties=['ashift'])
         )
         if zfs_pool and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
             # https://ixsystems.atlassian.net/browse/NAS-112093
@@ -760,7 +760,7 @@ class PoolService(CRUDService):
 
     @private
     async def is_draid_pool(self, pool_name):
-        if pool := await self.call2(self.s.zpool.query_impl, ZpoolQuery(pool_names=[pool_name], topology=True)):
+        if pool := await self.call2(self.s.zpool.list_impl, ZpoolQuery(pool_names=[pool_name], topology=True)):
             if any(
                 group['vdev_type'].startswith('draid')
                 for group in pool[0]['topology']['data'] + pool[0]['topology'].get('special', [])

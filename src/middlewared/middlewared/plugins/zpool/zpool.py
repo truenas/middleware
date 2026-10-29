@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 from typing import TYPE_CHECKING, Any, Iterable
 
 from middlewared.api import Event, api_method
@@ -8,18 +9,20 @@ from middlewared.api.current import (
     ZpoolCreateArgs,
     ZpoolCreateResult,
     ZpoolEntry,
+    ZpoolListAddedEvent,
+    ZpoolListArgs,
+    ZpoolListChangedEvent,
+    ZpoolListRemovedEvent,
+    ZpoolListResult,
     ZpoolQuery,
-    ZpoolQueryAddedEvent,
     ZpoolQueryArgs,
-    ZpoolQueryChangedEvent,
-    ZpoolQueryRemovedEvent,
     ZpoolQueryResult,
 )
 from middlewared.service import Service, job, private
 from middlewared.service.decorators import pass_thread_local_storage
 
 from . import zpool_create as _create
-from . import zpool_query as _query
+from . import zpool_list as _list
 from .create_impl import ConvertedVdev, DiskToFormat, create_impl, destroy_impl, validate_impl
 from .get_zpool_disks_impl import get_zpool_disks_impl
 from .get_zpool_features_impl import get_zpool_features_impl
@@ -43,13 +46,13 @@ class ZpoolService(Service):
         entry = ZpoolEntry
         events = [
             Event(
-                name="zpool.query",
+                name="zpool.list",
                 description="Sent on zpool changes.",
                 roles=["POOL_READ"],
                 models={
-                    "ADDED": ZpoolQueryAddedEvent,
-                    "CHANGED": ZpoolQueryChangedEvent,
-                    "REMOVED": ZpoolQueryRemovedEvent,
+                    "ADDED": ZpoolListAddedEvent,
+                    "CHANGED": ZpoolListChangedEvent,
+                    "REMOVED": ZpoolListRemovedEvent,
                 },
             )
         ]
@@ -60,13 +63,13 @@ class ZpoolService(Service):
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls: Any, data: ZpoolQuery) -> list[dict[str, Any]]:
-        return _query.query_impl(tls, data)
+    def list_impl(self, tls: Any, data: ZpoolQuery) -> builtins.list[dict[str, Any]]:
+        return _list.list_impl(tls, data)
 
-    @api_method(ZpoolQueryArgs, ZpoolQueryResult, roles=["POOL_READ"], check_annotations=True)
-    def query(self, data: ZpoolQuery) -> list[ZpoolEntry]:
+    @api_method(ZpoolListArgs, ZpoolListResult, roles=["POOL_READ"], check_annotations=True)
+    def list(self, data: ZpoolQuery) -> builtins.list[ZpoolEntry]:
         """
-        Query ZFS pools with flexible options for properties, topology, scan, and features.
+        List ZFS pools with flexible options for properties, topology, scan, and features.
 
         Returns information about both imported and non-imported pools. By default,
         only minimal data is returned (name, guid, status, health); additional
@@ -75,29 +78,29 @@ class ZpoolService(Service):
         currently imported are returned with an OFFLINE status.
 
         The boot pool can be queried by explicitly passing its name in ``pool_names``.
-        It is excluded from results when ``pool_names`` is null (query-all mode).
+        It is excluded from results when ``pool_names`` is null (list-all mode).
 
         Examples:
 
-        Query all pools (minimal info: name, guid, status, health):
+        List all pools (minimal info: name, guid, status, health):
 
         .. code:: json
 
             {}
 
-        Query specific pools with properties:
+        List specific pools with properties:
 
         .. code:: json
 
             {"pool_names": ["tank", "boot-pool"], "properties": ["size", "capacity"]}
 
-        Query with full topology and scan information:
+        List with full topology and scan information:
 
         .. code:: json
 
             {"pool_names": ["tank"], "topology": true, "scan": true}
 
-        Query everything:
+        List everything:
 
         .. code:: json
 
@@ -109,18 +112,32 @@ class ZpoolService(Service):
                 "properties": ["size", "capacity", "health"]
             }
         """
-        return _query.query(self.context, data)
+        return _list.list_pools(self.context, data)
+
+    @api_method(
+        ZpoolQueryArgs,
+        ZpoolQueryResult,
+        roles=["POOL_READ"],
+        check_annotations=True,
+        removed_in="v28",
+    )
+    def query(self, data: ZpoolQuery) -> builtins.list[ZpoolEntry]:
+        """
+        List ZFS pools with flexible options for properties, topology, scan, and features; superseded by
+        :method:`zpool.list`.
+        """
+        return _list.list_pools(self.context, data)
 
     @private
     def send_change_event(
         self, pool_name: str, event_type: EventType = "CHANGED", properties: Iterable[str] = ()
     ) -> ZpoolEntry | None:
-        return _query.send_change_event(self.context, pool_name, event_type, properties)
+        return _list.send_change_event(self.context, pool_name, event_type, properties)
 
     @private
     def send_removed_event(self, pool_id: int) -> None:
-        """Emit a ``zpool.query`` REMOVED event for the given database id."""
-        self.middleware.send_event("zpool.query", "REMOVED", id=pool_id)
+        """Emit a ``zpool.list`` REMOVED event for the given database id."""
+        self.middleware.send_event("zpool.list", "REMOVED", id=pool_id)
 
     @private
     @pass_thread_local_storage
@@ -128,7 +145,7 @@ class ZpoolService(Service):
         self,
         tls: Any,
         name: str,
-        vdevs: list[ConvertedVdev],
+        vdevs: builtins.list[ConvertedVdev],
         properties: dict[str, str],
         filesystem_properties: dict[str, str],
         force: bool,
@@ -146,7 +163,7 @@ class ZpoolService(Service):
         self,
         tls: Any,
         name: str,
-        vdevs: list[ConvertedVdev],
+        vdevs: builtins.list[ConvertedVdev],
         properties: dict[str, str],
         filesystem_properties: dict[str, str],
         force: bool,
@@ -166,11 +183,11 @@ class ZpoolService(Service):
         """
         Create a ZFS pool, as ``zpool create`` does.
 
-        ``topology`` is the vdev grammar of ``zpool create`` keyed the way :method:`zpool.query` reports it,
+        ``topology`` is the vdev grammar of ``zpool create`` keyed the way :method:`zpool.list` reports it,
         ``properties`` are ``-o`` pool properties and ``filesystem_properties`` are ``-O`` root filesystem
         properties, all given by native name; root filesystem properties take the value types
         :method:`zfs.resource.create` accepts. Fields left null take the TrueNAS defaults. The pool is created
-        through ``truenas_pylibzfs`` and returned as :method:`zpool.query` reports it, so the entry reflects
+        through ``truenas_pylibzfs`` and returned as :method:`zpool.list` reports it, so the entry reflects
         the values as canonicalized by ZFS, not the input.
 
         Every disk referenced by the topology is formatted first, so a disk that is currently in use fails
@@ -205,7 +222,7 @@ class ZpoolService(Service):
         self,
         job: Job,
         disks: dict[str, DiskToFormat],
-        log_disks: list[str],
+        log_disks: builtins.list[str],
         all_sed: bool,
         schema: str,
         base_percentage: int = 0,
@@ -281,7 +298,7 @@ class ZpoolService(Service):
 
     @private
     @pass_thread_local_storage
-    def get_disks(self, tls: Any, pool_name: str) -> list[str]:
+    def get_disks(self, tls: Any, pool_name: str) -> builtins.list[str]:
         """Whole-disk device names (e.g. sda, nvme0n1) backing every vdev of an imported pool."""
         return get_zpool_disks_impl(tls.lzh, pool_name)
 

@@ -69,7 +69,7 @@ def apply_acl_defaults(properties: ZFSResourceCreateProperties, leave: Collectio
 def pool_has_special_vdev_sync(context: ServiceContext, pool_name: str) -> bool:
     """Return whether the pool has a SPECIAL allocation class vdev."""
     if pool := context.call_sync2(
-        context.s.zpool.query_impl, ZpoolQuery(pool_names=[pool_name], properties=["class_special_size"])
+        context.s.zpool.list_impl, ZpoolQuery(pool_names=[pool_name], properties=["class_special_size"])
     ):
         size = ((pool[0].get("properties") or {}).get("class_special_size") or {}).get("value")
         return isinstance(size, int) and size > 0

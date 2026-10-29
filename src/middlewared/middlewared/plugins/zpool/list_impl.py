@@ -8,7 +8,7 @@ from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from .get_zpool_features_impl import get_zpool_features_impl
 from .is_upgraded_impl import is_upgraded_impl
 
-__all__ = ("query_impl",)
+__all__ = ("list_impl",)
 
 
 def _convert_vdev_state(vdev: dict[str, typing.Any]) -> None:
@@ -274,8 +274,8 @@ def _get_zpools_cb(pool: libzfs_types.ZFSPool, state: list[str]) -> bool:
     return True
 
 
-def query_impl(lzh: libzfs_types.ZFS, data: dict[str, typing.Any]) -> list[dict[str, typing.Any]]:
-    """Query zpools status.
+def list_impl(lzh: libzfs_types.ZFS, data: dict[str, typing.Any]) -> list[dict[str, typing.Any]]:
+    """List zpools with their status.
 
     Args:
         lzh: pylibzfs handle (from tls.lzh or truenas_pylibzfs.open_handle()).

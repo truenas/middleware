@@ -6,7 +6,7 @@ from middlewared.test.integration.utils import call, client, pool
 @pytest.fixture(scope="module")
 def zpool_minimal():
     """Query the test pool with default (minimal) options."""
-    results = call("zpool.query", {"pool_names": [pool]})
+    results = call("zpool.list", {"pool_names": [pool]})
     assert len(results) == 1
     return results[0]
 
@@ -14,7 +14,7 @@ def zpool_minimal():
 @pytest.fixture(scope="module")
 def zpool_full():
     """Query the test pool with all optional sections enabled."""
-    results = call("zpool.query", {
+    results = call("zpool.list", {
         "pool_names": [pool],
         "properties": ["size", "capacity", "health"],
         "topology": True,
@@ -116,13 +116,13 @@ class TestZpoolQueryAll:
     """Test query-all mode (pool_names=None)."""
 
     def test_returns_all_pools(self):
-        results = call("zpool.query")
+        results = call("zpool.list")
         names = [p["name"] for p in results]
         assert pool in names
 
     def test_excludes_boot_pool(self):
         boot_pool_name = call("boot.pool_name")
-        results = call("zpool.query")
+        results = call("zpool.list")
         names = [p["name"] for p in results]
         assert boot_pool_name not in names
 
@@ -132,14 +132,14 @@ class TestZpoolQueryBootPool:
 
     def test_boot_pool_by_name(self):
         boot_pool_name = call("boot.pool_name")
-        results = call("zpool.query", {"pool_names": [boot_pool_name]})
+        results = call("zpool.list", {"pool_names": [boot_pool_name]})
         assert len(results) == 1
         assert results[0]["name"] == boot_pool_name
         assert results[0]["status"] in ("ONLINE", "DEGRADED", "OFFLINE")
 
     def test_boot_pool_guid(self):
         boot_pool_name = call("boot.pool_name")
-        results = call("zpool.query", {"pool_names": [boot_pool_name]})
+        results = call("zpool.list", {"pool_names": [boot_pool_name]})
         assert isinstance(results[0]["guid"], str)
         assert int(results[0]["guid"]) != 0
 
@@ -148,7 +148,7 @@ class TestZpoolQueryNonexistent:
     """Test querying pools that don't exist."""
 
     def test_nonexistent_pool_returns_empty(self):
-        results = call("zpool.query", {"pool_names": ["nonexistent_pool_xyz"]})
+        results = call("zpool.list", {"pool_names": ["nonexistent_pool_xyz"]})
         assert results == []
 
 

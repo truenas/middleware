@@ -40,7 +40,7 @@ def recordsize_choices(context: ServiceContext, pool_name: str | None) -> list[s
 
 
 def recommended_zvol_blocksize(context: ServiceContext, pool: str) -> str:
-    entries = context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[pool], topology=True))
+    entries = context.call_sync2(context.s.zpool.list_impl, ZpoolQuery(pool_names=[pool], topology=True))
     if not entries:
         raise ValidationError("zfs.resource.recommended_zvol_blocksize.pool", f"{pool!r} does not exist", errno.ENOENT)
     return _recommended_zvol_blocksize(entries[0]["topology"]["data"])

@@ -694,7 +694,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         pool_name = dataset_name.split("/")[0]
         try:
             pools = await self.call2(
-                self.s.zpool.query_impl,
+                self.s.zpool.list_impl,
                 ZpoolQuery(
                     pool_names=[pool_name],
                     properties=[

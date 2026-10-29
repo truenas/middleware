@@ -37,7 +37,7 @@ def _untouched(disks, partitions):
     """The disks were never formatted: their partition tables are as they were, and no pool took them."""
     assert _partitions(disks) == partitions
     assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
-    assert not call("zpool.query", {"pool_names": [POOL]})
+    assert not call("zpool.list", {"pool_names": [POOL]})
 
 
 def _unlicensed_for_force():
@@ -89,7 +89,7 @@ def test_create_log_cache_spares_and_an_nfsv4_root():
         "cache": disks[3:4],
         "spares": disks[4:5],
     }
-    with wait_for_event("zpool.query", expected_collection_type="added") as event:
+    with wait_for_event("zpool.list", expected_collection_type="added") as event:
         with _zpool(topology, filesystem_properties={"acltype": "nfsv4", "aclmode": "restricted"}) as pool:
             topology = pool["topology"]
             assert topology["data"][0]["vdev_type"] == "mirror"

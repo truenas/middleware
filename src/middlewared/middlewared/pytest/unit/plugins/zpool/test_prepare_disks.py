@@ -25,7 +25,7 @@ def test_sed_provisioning_precedes_fencing_and_fencing_precedes_any_write(monkey
     record("disk.setup_sed_disks_for_pool")
     record("failover.fenced.start", 0)
     record("disk.resize", Mock())
-    record("pool.format_disks")
+    monkeypatch.setattr(zpool_create, "format_disks", lambda *args: calls.append("format_disks"))
     middleware.services.system.advanced.config = lambda: SimpleNamespace(overprovision=16)
     monkeypatch.setattr(zpool_create, "os", SimpleNamespace(path=os.path, makedirs=Mock()))
 
@@ -42,5 +42,5 @@ def test_sed_provisioning_precedes_fencing_and_fencing_precedes_any_write(monkey
         "disk.setup_sed_disks_for_pool",
         "failover.fenced.start",
         "disk.resize",
-        "pool.format_disks",
+        "format_disks",
     ]

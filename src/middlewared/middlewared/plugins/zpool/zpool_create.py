@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import concurrent.futures
 import errno
+import fcntl
+import glob
 import os
+import time
 from typing import TYPE_CHECKING, Any, Iterable
 
 from fenced.fence import ExitCode as FencedExitCodes
@@ -33,7 +37,7 @@ if TYPE_CHECKING:
     from middlewared.job import Job
     from middlewared.service import ServiceContext
 
-__all__ = ("create", "finish", "prepare_disks", "register", "rollback")
+__all__ = ("create", "finish", "format_disks", "prepare_disks", "register", "rollback")
 
 
 def _start_fenced(context: ServiceContext) -> None:
@@ -51,6 +55,97 @@ def _start_fenced(context: ServiceContext) -> None:
     for i in filter(lambda x: x.value[0] == rc, FencedExitCodes):
         err = i.value[1]
     raise CallError(err)
+
+
+def _dif_formatted(disk: str) -> bool:
+    """Whether a SCSI disk is formatted with T10 Protection Information, which ZFS cannot use."""
+    for path in glob.glob(f"/sys/class/block/{disk}/device/scsi_disk/*/protection_type"):
+        with open(path) as f:
+            return f.read().strip() != "0"
+    return False
+
+
+def _reread_partition_table(disk: str) -> None:
+    """Have the kernel read the disk's partition table again; EBUSY means something holds the disk open."""
+    BLKRRPART = 0x125F
+    try:
+        fd = os.open(f"/dev/{disk}", os.O_RDONLY)
+        try:
+            fcntl.ioctl(fd, BLKRRPART)
+        finally:
+            os.close(fd)
+    except OSError as e:
+        if e.errno != errno.EBUSY:
+            raise CallError(f"Failed to read the partition table of {disk!r} again: {e}") from e
+
+
+def _kernel_sees_partition(disk: str) -> bool:
+    suffix = "p1" if disk[-1].isdigit() else "1"
+    return os.path.exists(f"/sys/class/block/{disk}/{disk}{suffix}")
+
+
+def format_disks(
+    context: ServiceContext,
+    job: Job,
+    disks: dict[str, DiskToFormat],
+    base_percentage: int,
+    upper_percentage: int,
+) -> None:
+    """Partition every disk for ZFS and add each partition's path to the device list of the vdev it joins.
+
+    The partition table is written from Python. The wipe job, ``sgdisk`` run and udev wait that
+    ``pool.format_disks`` spends on each disk added up to tens of minutes on systems with hundreds of disks.
+    """
+    entries = {entry.name: entry for entry in context.middleware.call_sync("disk.get_disks", list(disks))}
+    for disk in disks:
+        if disk not in entries:
+            raise CallError(f"Unable to retrieve disk details for {disk!r}")
+        if _dif_formatted(disk):
+            raise CallError(f"Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).")
+
+    def format_disk(disk: str) -> str:
+        if context.middleware.call_sync("disk.sed_unlock_impl", disk, True) is False:
+            raise CallError(f"Failed to unlock {disk!r}. Check /var/log/middlewared.log")
+        entry = entries[disk]
+        # The format only wipes a disk that has a partition table. Whole-disk ZFS labels or other
+        # signatures would otherwise survive outside the new table and show up as a phantom pool.
+        entry.wipe_quick()
+        partition = entry.format()
+        _reread_partition_table(disk)
+        return f"/dev/disk/by-partuuid/{partition}"
+
+    partitions: dict[str, str] = {}
+    step = (upper_percentage - base_percentage) / len(disks)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+        futures = {executor.submit(format_disk, disk): disk for disk in disks}
+        for done, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+            disk = futures[future]
+            try:
+                partitions[disk] = future.result()
+            except Exception as e:
+                executor.shutdown(cancel_futures=True)
+                if isinstance(e, CallError):
+                    raise
+                raise CallError(f"Failed formatting disk {disk!r}: {e}") from e
+            job.set_progress(base_percentage + step * done, f"Formatting disks ({done}/{len(disks)})")
+
+    # The by-partuuid link appears once udev has handled the kernel's partition events. Reading the
+    # table again while udev is merely behind would remove and re-add the very link being waited for.
+    context.middleware.call_sync("device.settle_udev_events")
+    for disk, path in partitions.items():
+        for _ in range(20):
+            if os.path.exists(path):
+                break
+            time.sleep(0.5)
+            if not _kernel_sees_partition(disk):
+                _reread_partition_table(disk)
+            context.middleware.call_sync("device.settle_udev_events")
+        else:
+            raise CallError(f"Partition {path} of {disk!r} did not appear after formatting")
+
+    context.middleware.call_sync("disk.sync_all").wait_sync(raise_error=True)
+    for disk, config in disks.items():
+        config["vdev"].append(partitions[disk])
 
 
 def prepare_disks(
@@ -83,7 +178,7 @@ def prepare_disks(
         # will log errors if there are any so it won't crash here (this matches CORE behavior)
         context.middleware.call_sync("disk.resize", {disk: osize for disk in log_disks}, True).wait_sync()
 
-    context.middleware.call_sync("pool.format_disks", job, disks, base_percentage, upper_percentage)
+    format_disks(context, job, disks, base_percentage, upper_percentage)
     os.makedirs(os.path.dirname(ZPOOL_CACHE_FILE), exist_ok=True)
 
 
@@ -94,7 +189,7 @@ def register(context: ServiceContext, name: str, all_sed: bool) -> int:
     "local"), mounts the root, and adds the ``storage.volume`` and default
     ``storage.scrub`` rows. Shared by ``pool.create`` and ``zpool.create``.
     """
-    guid = context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))[0]["guid"]
+    guid = context.call_sync2(context.s.zpool.list_impl, ZpoolQuery(pool_names=[name]))[0]["guid"]
     context.call_sync2(
         context.s.zfs.resource.set_impl,
         ZFSResourceSetArgsData(path=name, inherit=["mountpoint"], bypass=True),
@@ -128,7 +223,7 @@ def finish(
 ) -> tuple[dict[str, Any], ZpoolEntry | None]:
     """Run the post-creation hooks and events.
 
-    Returns the ``pool.query`` entry and the ``zpool.query`` entry the ADDED
+    Returns the ``pool.query`` entry and the ``zpool.list`` entry the ADDED
     event carried, read with ``properties`` included so a caller that wants
     them does not open the pool again.
     """
@@ -192,7 +287,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     # an imported pool of that name, registered or not, or a registered but
     # exported one both take the name
     ctx.pool_exists = bool(
-        context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))
+        context.call_sync2(context.s.zpool.list_impl, ZpoolQuery(pool_names=[name]))
         or context.middleware.call_sync("datastore.query", "storage.volume", [["name", "=", name]], {"prefix": "vol_"})
     )
     collect(verrors, check_pool_absent, data, ctx)

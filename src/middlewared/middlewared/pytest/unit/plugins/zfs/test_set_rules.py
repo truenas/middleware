@@ -165,15 +165,15 @@ class RecordingContext:
         self.calls = []
         self.s = SimpleNamespace(
             zfs=SimpleNamespace(resource=SimpleNamespace(list_impl="zfs.resource.list_impl")),
-            zpool=SimpleNamespace(query_impl="zpool.query_impl"),
+            zpool=SimpleNamespace(list_impl="zpool.list_impl"),
         )
 
     def call_sync2(self, method, query):
-        if method == "zpool.query_impl" and query.topology:
+        if method == "zpool.list_impl" and query.topology:
             self.calls.append("topology")
             vdev_type = "draid1:1d:3c:0s" if self.draid else "mirror"
             return [{"topology": {"data": [{"vdev_type": vdev_type}], "special": []}}]
-        if method == "zpool.query_impl":
+        if method == "zpool.list_impl":
             self.calls.append("class_special_size")
             return [{"properties": {"class_special_size": {"value": GiB if self.special_vdev else 0}}}]
         self.calls.append(method)

@@ -16,11 +16,13 @@ __all__ = (
     "ZpoolFeature",
     "ZpoolEntry",
     "ZpoolQuery",
+    "ZpoolListArgs",
+    "ZpoolListResult",
     "ZpoolQueryArgs",
     "ZpoolQueryResult",
-    "ZpoolQueryAddedEvent",
-    "ZpoolQueryChangedEvent",
-    "ZpoolQueryRemovedEvent",
+    "ZpoolListAddedEvent",
+    "ZpoolListChangedEvent",
+    "ZpoolListRemovedEvent",
     "ZpoolCreateVdev",
     "ZpoolCreateTopology",
     "ZpoolCreateProperties",
@@ -101,7 +103,7 @@ class ZpoolVdev(BaseModel):
         default=None,
         description=(
             "Extended vdev statistics: raw queue depths and latency and request size histograms. Always `null` in "
-            "`zpool.query` results."
+            "`zpool.list` results."
         ),
     )
 
@@ -217,25 +219,33 @@ class ZpoolQuery(BaseModel):
     full_path: Private[bool] = Field(default=True, description="Report full device paths in the topology.")
 
 
-class ZpoolQueryArgs(BaseModel):
+class ZpoolListArgs(BaseModel):
     data: ZpoolQuery = Field(default=ZpoolQuery(), description="Query parameters.")
 
 
-class ZpoolQueryResult(BaseModel):
+class ZpoolListResult(BaseModel):
     result: list[ZpoolEntry]
 
 
-class ZpoolQueryAddedEvent(BaseModel):
+class ZpoolQueryArgs(ZpoolListArgs):
+    pass
+
+
+class ZpoolQueryResult(ZpoolListResult):
+    pass
+
+
+class ZpoolListAddedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
     fields: ZpoolEntry = Field(description="Event fields.")
 
 
-class ZpoolQueryChangedEvent(BaseModel):
+class ZpoolListChangedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
     fields: ZpoolEntry = Field(description="Event fields.")
 
 
-class ZpoolQueryRemovedEvent(BaseModel):
+class ZpoolListRemovedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
 
 
@@ -258,7 +268,7 @@ class ZpoolCreateVdev(BaseModel):
 
 
 class ZpoolCreateTopology(BaseModel):
-    """The vdev grammar of `zpool create`, keyed the way :method:`zpool.query` reports `topology`."""
+    """The vdev grammar of `zpool create`, keyed the way :method:`zpool.list` reports `topology`."""
 
     data: list[ZpoolCreateVdev] = Field(
         min_length=1,
@@ -384,7 +394,7 @@ class ZpoolCreateArgs(BaseModel):
 class ZpoolCreateResult(BaseModel):
     result: ZpoolEntry = Field(
         description=(
-            "The new pool as :method:`zpool.query` reports it, read once for both the `zpool.query` ADDED event "
+            "The new pool as :method:`zpool.list` reports it, read once for both the `zpool.list` ADDED event "
             "and this result: with its topology, scan state, the pool properties that were set, and the usage "
             "properties the event carries."
         ),

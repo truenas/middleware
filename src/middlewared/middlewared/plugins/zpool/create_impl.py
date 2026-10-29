@@ -63,7 +63,7 @@ LEAF_ROOTS: tuple[VdevRoot, ...] = ("cache", "spares")
 
 class ConvertedVdev(TypedDict):
     """A vdev of the request, as ``build_vdev_spec`` builds it: ``disks`` holds the disk names as requested, and
-    ``devices`` the formatted partition paths once ``pool.format_disks`` has filled it in. A ``disk`` vdev
+    ``devices`` the formatted partition paths once the format step has filled it in. A ``disk`` vdev
     becomes one spec per disk."""
 
     root: VdevRoot
@@ -75,7 +75,7 @@ class ConvertedVdev(TypedDict):
 
 
 class DiskToFormat(TypedDict):
-    """What ``pool.format_disks`` takes per disk: the device list of the vdev the formatted partition joins."""
+    """What the format step takes per disk: the device list of the vdev the formatted partition joins."""
 
     vdev: list[str]
 
@@ -116,7 +116,7 @@ def convert_topology_to_vdevs(topology: ZpoolCreateTopology) -> tuple[dict[str, 
     """Flatten an API topology into the disks to format and the vdevs to build.
 
     Each vdev's ``devices`` list starts empty and is the very list its disks
-    point at, so ``pool.format_disks`` fills it in place. ``cache`` and
+    point at, so the format step fills it in place. ``cache`` and
     ``spares`` are plain disk lists in the API and become one ``disk`` vdev
     each here.
     """

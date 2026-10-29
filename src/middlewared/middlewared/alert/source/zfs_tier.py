@@ -234,7 +234,7 @@ class TierJobAlertSource(ThreadedAlertSource):
 
     def _check_special_vdev_usage(self, warning_pct: int, critical_pct: int) -> list[Alert[Any]]:
         pools = self.middleware.call_sync2(
-            self.middleware.services.zpool.query_impl,
+            self.middleware.services.zpool.list_impl,
             ZpoolQuery(properties=["class_special_usable", "class_special_used"]),
         )
 
