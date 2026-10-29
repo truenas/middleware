@@ -23,10 +23,13 @@ class ContainersLicenseDelegate(LicenseDelegate):
             names = [c.name for c in containers if c.status.state in ACTIVE_STATES or c.autostart]
             if not names:
                 return []
-            return [
+            line = (
                 f"Containers: {', '.join(sorted(names))} keep running. Once stopped they cannot be started until "
-                "the system is licensed for containers. A failover starts the containers that have autostart enabled."
-            ]
+                "the system is licensed for containers."
+            )
+            if await self.middleware.call("failover.licensed"):
+                line += " A failover starts the containers that have autostart enabled."
+            return [line]
         names = [c.name for c in containers if c.autostart and c.status.state not in ACTIVE_STATES]
         if not names:
             return []

@@ -153,7 +153,7 @@ async def refresh_alert(
 
 async def _on_system_ready(middleware: Middleware, event_type: str, args: Any) -> None:
     if await middleware.call("failover.licensed"):
-        return  # on HA the failover event rewrites the alert
+        return  # on HA a takeover clears one-shot alerts, and a standby keeps none of its own
     await middleware.call2(middleware.services.truenas.entitlements.refresh_alert)
 
 

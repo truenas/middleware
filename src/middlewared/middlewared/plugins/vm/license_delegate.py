@@ -23,10 +23,13 @@ class VMsLicenseDelegate(LicenseDelegate):
             names = [vm.name for vm in vms if vm.status.state in ACTIVE_STATES or vm.autostart]
             if not names:
                 return []
-            return [
+            line = (
                 f"Virtual machines: {', '.join(sorted(names))} keep running. Once stopped they cannot be started "
-                "until the system is licensed for VMs. A failover starts the VMs that have autostart enabled."
-            ]
+                "until the system is licensed for VMs."
+            )
+            if await self.middleware.call("failover.licensed"):
+                line += " A failover starts the VMs that have autostart enabled."
+            return [line]
         names = [vm.name for vm in vms if vm.autostart and vm.status.state not in ACTIVE_STATES]
         if not names:
             return []

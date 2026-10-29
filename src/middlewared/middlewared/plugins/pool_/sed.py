@@ -92,10 +92,7 @@ class PoolService(Service):
 
 async def zfs_events_hook(middleware, event: ZfsEvent):
     if isinstance(event, ZfsConfigSyncEvent):
-        if (
-            await middleware.call('system.sed_enabled')
-            or await middleware.call('system.sed_credentials_exist')
-        ) and (
+        if await middleware.call('system.sed_enabled') and (
             pool := await middleware.call("pool.query", [["name", "=", event.pool]], {'force_sql_filters': True})
         ):
             if pool[0]["healthy"]:
