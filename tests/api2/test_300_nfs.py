@@ -1823,9 +1823,8 @@ class TestNFSops:
             )
         ]
 
-        # rdma.capable_protocols is the single entitlement chokepoint for RDMA: it gates both the
-        # nfs.update validator and the mask nfs.config applies on read, so mocking it is enough.
-        with mock("rdma.capable_protocols", return_value=['NFS']):
+        # rdma.capable_protocols gates turning rdma on; rdma.serving decides whether nfs.conf enables it.
+        with mock("rdma.capable_protocols", return_value=['NFS']), mock("rdma.serving", return_value=True):
             with nfs_config():
                 call("nfs.update", {"rdma": True})
 
@@ -1865,10 +1864,10 @@ class TestNFSops:
             res = ssh("ls /etc/nfs.conf.d/rogue.conf", check=False, complete_response=True)
             assert "No such file or directory" in res['stderr']
 
-        # Report no RDMA capable protocols so NFS over RDMA is unavailable. That makes nfs_extend
-        # mask the rdma bit, so one smuggled in via the shell or the DB is scrubbed on the next
-        # config read regardless of what the runner is licensed for.
-        with mock("rdma.capable_protocols", return_value=[]):
+        # rdma.serving is false on a VM without an RDMA NIC, so nfs.conf never enables rdma and the DB-path
+        # case stays clean even with the stored flag set. Both are mocked so the test does not depend on the
+        # runner's hardware or license.
+        with mock("rdma.capable_protocols", return_value=[]), mock("rdma.serving", return_value=False):
             with nfs_config():
                 with nfs_dataset("deleteme") as ds:
                     for monkey_business in [modnfsconf, rogueconf]:

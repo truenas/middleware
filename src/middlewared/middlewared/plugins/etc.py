@@ -355,6 +355,7 @@ class EtcService(Service):
                     args=[LicenseFeature.NFS_SNAPSHOT],
                     ctx_prefix='nfs_snapshot',
                 ),
+                CtxMethod(method='nfs.rdma_serving'),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='nfs.conf'),
