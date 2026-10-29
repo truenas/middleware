@@ -32,6 +32,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
 
 from .accesskey_crud import S3AccesskeyService
+from .bucket_crud import audit_actions
 from .grants import grant_label, grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import MISSING_ALERT, render_and_apply
 
@@ -270,7 +271,9 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 )
             )
 
-        if new.default_audit or new.default_audit_overflow != "DROP":
+        if audit_actions(new.default_audit) - audit_actions(old.default_audit) or (
+            new.default_audit_overflow != 'DROP' and old.default_audit_overflow == 'DROP'
+        ):
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)
             if not entitlement.entitled:
                 verrors.add("s3_update.default_audit", entitlement.message)
