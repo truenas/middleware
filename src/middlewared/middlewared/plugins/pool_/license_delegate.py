@@ -16,7 +16,11 @@ class SedLicenseDelegate(LicenseDelegate):
     async def alert_lines(self, in_grace: bool) -> list[str]:
         if not await self.middleware.call("system.sed_credentials_exist"):
             return []
-        return ["Self-encrypting drives: drives are in use without a license. Unlock and repair continue to work."]
+        return [
+            "Self-encrypting drives: drives are in use without a license. Drives already set up as SED keep being "
+            "unlocked. New drives are not detected as SED until the system is licensed, "
+            "so disks cannot be added to or replaced in an all-SED pool."
+        ]
 
 
 async def setup(middleware: Middleware) -> None:
