@@ -6,7 +6,7 @@ Nothing here touches middleware or the libzfs handle except ``validate_impl``,
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 
 from truenas_pylibzfs import (
     VDevType,
@@ -27,6 +27,11 @@ if TYPE_CHECKING:
 
 __all__ = (
     "MIN_DISKS_PER_VDEV",
+    "LEAF_ROOTS",
+    "VDEV_ROOTS",
+    "ConvertedVdev",
+    "DiskToFormat",
+    "VdevRoot",
     "assemble_create_pool_vdev_kwargs",
     "binding_location",
     "build_vdev_spec",
@@ -51,8 +56,32 @@ MIN_DISKS_PER_VDEV = {
     "raidz3": 5,
 }
 
+VdevRoot = Literal["data", "log", "special", "dedup", "cache", "spares"]
+VDEV_ROOTS: tuple[VdevRoot, ...] = ("data", "log", "special", "dedup")
+LEAF_ROOTS: tuple[VdevRoot, ...] = ("cache", "spares")
+
+
+class ConvertedVdev(TypedDict):
+    """A vdev of the request, as ``build_vdev_spec`` builds it: ``disks`` holds the disk names as requested, and
+    ``devices`` the formatted partition paths once ``pool.format_disks`` has filled it in. A ``disk`` vdev
+    becomes one spec per disk."""
+
+    root: VdevRoot
+    type: str
+    disks: list[str]
+    devices: list[str]
+    draid_data_disks: NotRequired[int | None]
+    draid_spare_disks: NotRequired[int]
+
+
+class DiskToFormat(TypedDict):
+    """What ``pool.format_disks`` takes per disk: the device list of the vdev the formatted partition joins."""
+
+    vdev: list[str]
+
+
 # Maps a converted-topology root to the matching create_pool() keyword argument.
-ROOT_TO_KWARG = {
+ROOT_TO_KWARG: dict[VdevRoot, str] = {
     "data": "storage_vdevs",
     "cache": "cache_vdevs",
     "log": "log_vdevs",
@@ -83,23 +112,20 @@ def binding_location(argument: str, index: int | None, origins: dict[str, list[i
     return None
 
 
-def convert_topology_to_vdevs(topology: ZpoolCreateTopology) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    """Flatten an API topology into a disk map and a vdev list.
+def convert_topology_to_vdevs(topology: ZpoolCreateTopology) -> tuple[dict[str, DiskToFormat], list[ConvertedVdev]]:
+    """Flatten an API topology into the disks to format and the vdevs to build.
 
-    Returns ``(disks, vdevs)`` where ``disks`` maps each disk name to ``{'vdev':
-    <devices list>}`` and ``vdevs`` is a list of ``{'root', 'type', 'disks',
-    'devices'}`` entries (plus dRAID parameters where relevant). ``disks`` holds
-    the disk names as requested; the ``devices`` list of each vdev starts empty
-    and is shared with ``disks`` so that ``pool.format_disks`` can populate it
-    in place with the formatted ``/dev/<gptid>`` paths. ``cache`` and ``spares``
-    are plain disk lists in the API and become one ``disk`` vdev each here.
+    Each vdev's ``devices`` list starts empty and is the very list its disks
+    point at, so ``pool.format_disks`` fills it in place. ``cache`` and
+    ``spares`` are plain disk lists in the API and become one ``disk`` vdev
+    each here.
     """
-    disks: dict[str, Any] = {}
-    vdevs: list[dict[str, Any]] = []
-    for root in ("data", "log", "special", "dedup"):
+    disks: dict[str, DiskToFormat] = {}
+    vdevs: list[ConvertedVdev] = []
+    for root in VDEV_ROOTS:
         for t_vdev in getattr(topology, root):
             devices: list[str] = []
-            vdev: dict[str, Any] = {"root": root, "type": t_vdev.type, "disks": list(t_vdev.disks), "devices": devices}
+            vdev: ConvertedVdev = {"root": root, "type": t_vdev.type, "disks": list(t_vdev.disks), "devices": devices}
             if t_vdev.type.startswith("draid"):
                 vdev["draid_data_disks"] = t_vdev.draid_data_disks
                 vdev["draid_spare_disks"] = t_vdev.draid_spare_disks
@@ -107,7 +133,7 @@ def convert_topology_to_vdevs(topology: ZpoolCreateTopology) -> tuple[dict[str, 
             for disk in t_vdev.disks:
                 disks[disk] = {"vdev": devices}
 
-    for root in ("cache", "spares"):
+    for root in LEAF_ROOTS:
         if leaves := getattr(topology, root):
             devices = []
             vdevs.append({"root": root, "type": "disk", "disks": list(leaves), "devices": devices})
@@ -117,14 +143,14 @@ def convert_topology_to_vdevs(topology: ZpoolCreateTopology) -> tuple[dict[str, 
     return disks, vdevs
 
 
-def build_vdev_spec(vdev: dict[str, Any], names: str = "devices") -> Any:
+def build_vdev_spec(vdev: ConvertedVdev, names: Literal["devices", "disks"] = "devices") -> Any:
     """Translate a single converted-topology vdev into ``struct_vdev_create_spec``.
 
-    ``names`` picks the list that supplies the leaf names: ``devices`` (the
-    formatted partition paths, for creation) or ``disks`` (the disk names, for
-    a dry run, which never opens them). ``disk`` vdevs expand to a flat ``list``
-    of leaf specs (no parent vdev); every other type returns a single parent
-    spec wrapping its leaf children. dRAID encodes its config in the spec name
+    ``names`` picks the list that supplies the leaf names: the formatted
+    partition paths for creation, or the disk names for a dry run, which never
+    opens them. ``disk`` vdevs expand to a flat ``list`` of leaf specs (no
+    parent vdev); every other type returns a single parent spec wrapping its
+    leaf children. dRAID encodes its config in the spec name
     as ``"<ndata>d:<nspares>s"``, or ``"<nspares>s"`` when the data disks per
     group are left to the ``zpool create`` default; the binding validates it as
     the spec is built.
@@ -142,7 +168,7 @@ def build_vdev_spec(vdev: dict[str, Any], names: str = "devices") -> Any:
 
 
 def assemble_create_pool_vdev_kwargs(
-    vdevs: list[dict[str, Any]], names: str = "devices"
+    vdevs: list[ConvertedVdev], names: Literal["devices", "disks"] = "devices"
 ) -> tuple[dict[str, list[Any]], dict[str, list[int]]]:
     """Group converted-topology vdevs into the six create_pool() vdev keyword args.
 
@@ -211,7 +237,7 @@ def _create_pool(
 def validate_impl(
     lzh: libzfs_types.ZFS,
     name: str,
-    vdevs: list[dict[str, Any]],
+    vdevs: list[ConvertedVdev],
     properties: dict[str, str],
     filesystem_properties: dict[str, str],
     force: bool,
@@ -235,16 +261,15 @@ def validate_impl(
 def create_impl(
     lzh: libzfs_types.ZFS,
     name: str,
-    vdevs: list[dict[str, Any]],
+    vdevs: list[ConvertedVdev],
     properties: dict[str, str],
     filesystem_properties: dict[str, str],
     force: bool,
 ) -> None:
     """Create the pool through ``truenas_pylibzfs``.
 
-    ``vdevs`` is the converted topology whose device lists ``pool.format_disks``
-    has populated with ``/dev/<gptid>`` paths; the property dicts are keyed by
-    native name; ``force`` skips the binding's topology policy.
+    The property dicts are keyed by native name; ``force`` skips the binding's
+    topology policy.
     """
     specs, _ = assemble_create_pool_vdev_kwargs(vdevs)
     try:

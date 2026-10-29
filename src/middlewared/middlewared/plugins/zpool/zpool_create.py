@@ -11,7 +11,7 @@ from middlewared.api.current import ZFSResourceSetArgsData, ZpoolCreate, ZpoolEn
 from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
 from middlewared.service_exception import CallError, ValidationErrors
 
-from .create_impl import convert_topology_to_vdevs, properties_to_zfs
+from .create_impl import DiskToFormat, convert_topology_to_vdevs, properties_to_zfs
 from .create_rules import (
     SCHEMA,
     CreateContext,
@@ -56,7 +56,7 @@ def _start_fenced(context: ServiceContext) -> None:
 def prepare_disks(
     context: ServiceContext,
     job: Job,
-    disks: dict[str, Any],
+    disks: dict[str, DiskToFormat],
     log_disks: list[str],
     all_sed: bool,
     schema: str,
@@ -65,9 +65,7 @@ def prepare_disks(
 ) -> None:
     """Take the disks a new pool will be built on, in the only safe order.
 
-    ``disks`` is the map ``convert_topology_to_vdevs`` produced; ``pool.format_disks``
-    fills each vdev's device list in place with the formatted ``/dev/<gptid>``
-    paths. Shared by ``pool.create`` and ``zpool.create``.
+    Shared by ``pool.create`` and ``zpool.create``.
     """
     if all_sed:
         context.middleware.call_sync("disk.setup_sed_disks_for_pool", list(disks), f"{schema}.topology", True)

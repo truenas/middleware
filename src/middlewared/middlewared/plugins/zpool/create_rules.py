@@ -21,7 +21,7 @@ from middlewared.plugins.zfs.rules_common import reject_bad_acl_combination
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.utils.size import format_size
 
-from .create_impl import MIN_DISKS_PER_VDEV
+from .create_impl import LEAF_ROOTS, MIN_DISKS_PER_VDEV, VDEV_ROOTS
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import (
@@ -177,11 +177,11 @@ def check_pool_absent(data: ZpoolCreate, ctx: CreateContext) -> None:
 def topology_disks(data: ZpoolCreate) -> list[tuple[str, str]]:
     """Every disk the topology names, as ``(disk, location)`` pairs in request order."""
     found = []
-    for root in ("data", "log", "special", "dedup"):
+    for root in VDEV_ROOTS:
         for i, vdev in enumerate(getattr(data.topology, root)):
             for disk in vdev.disks:
                 found.append((disk, f"{root}.{i}"))
-    for root in ("cache", "spares"):
+    for root in LEAF_ROOTS:
         for disk in getattr(data.topology, root):
             found.append((disk, root))
     return found
@@ -219,7 +219,7 @@ def check_min_disks(data: ZpoolCreate, ctx: CreateContext) -> None:
     caller sees is the binding's own.
     """
     verrors = ValidationErrors()
-    for root in ("data", "log", "special", "dedup"):
+    for root in VDEV_ROOTS:
         for i, vdev in enumerate(getattr(data.topology, root)):
             mindisks = MIN_DISKS_PER_VDEV[vdev.type]
             if len(vdev.disks) < mindisks:

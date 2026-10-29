@@ -1,12 +1,11 @@
 """zpool.create tests that need the real truenas_pylibzfs binding, which the fake
-environment of middlewared/pytest replaces. The pure tests live in
-middlewared/pytest/unit/plugins/zpool/test_create_rules.py."""
+environment of middlewared/pytest replaces."""
 
 import pytest
 from truenas_pylibzfs import constants
 
 from middlewared.api.current import ZpoolCreateTopology
-from middlewared.plugins.zpool.create_impl import assemble_create_pool_vdev_kwargs, build_vdev_spec
+from middlewared.plugins.zpool.create_impl import assemble_create_pool_vdev_kwargs, binding_location, build_vdev_spec
 from middlewared.plugins.zpool.exceptions import ZpoolCreateRejected
 
 
@@ -74,3 +73,21 @@ def test_assemble_locates_a_draid_config_the_binding_refuses():
     with pytest.raises(ZpoolCreateRejected) as e:
         assemble_create_pool_vdev_kwargs(vdevs, "disks")
     assert e.value.location == "topology.data.1"
+
+
+@pytest.mark.parametrize(
+    "argument,index,expected",
+    [
+        # a two-disk "disk" entry became specs 0 and 1, so spec 2 is request vdev 1
+        ("storage_vdevs", 2, "topology.data.1"),
+        ("storage_vdevs", None, "topology.data"),
+        ("spare_vdevs", 1, "topology.spares.1"),
+        ("name", None, "name"),
+        ("filesystem_properties", None, "filesystem_properties"),
+        # an argument the request does not expose lands on the request itself
+        ("feature_properties", None, None),
+    ],
+)
+def test_binding_location(argument, index, expected):
+    origins = {"storage_vdevs": [0, 0, 1], "spare_vdevs": [0, 1]}
+    assert binding_location(argument, index, origins) == expected

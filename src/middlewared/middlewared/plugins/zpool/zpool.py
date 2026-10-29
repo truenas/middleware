@@ -20,7 +20,7 @@ from middlewared.service.decorators import pass_thread_local_storage
 
 from . import zpool_create as _create
 from . import zpool_query as _query
-from .create_impl import create_impl, destroy_impl, validate_impl
+from .create_impl import ConvertedVdev, DiskToFormat, create_impl, destroy_impl, validate_impl
 from .get_zpool_disks_impl import get_zpool_disks_impl
 from .get_zpool_features_impl import get_zpool_features_impl
 from .is_upgraded_impl import is_upgraded_impl
@@ -128,7 +128,7 @@ class ZpoolService(Service):
         self,
         tls: Any,
         name: str,
-        vdevs: list[dict[str, Any]],
+        vdevs: list[ConvertedVdev],
         properties: dict[str, str],
         filesystem_properties: dict[str, str],
         force: bool,
@@ -146,7 +146,7 @@ class ZpoolService(Service):
         self,
         tls: Any,
         name: str,
-        vdevs: list[dict[str, Any]],
+        vdevs: list[ConvertedVdev],
         properties: dict[str, str],
         filesystem_properties: dict[str, str],
         force: bool,
@@ -204,7 +204,7 @@ class ZpoolService(Service):
     def prepare_disks(
         self,
         job: Job,
-        disks: dict[str, Any],
+        disks: dict[str, DiskToFormat],
         log_disks: list[str],
         all_sed: bool,
         schema: str,
