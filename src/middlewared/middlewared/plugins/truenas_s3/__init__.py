@@ -3,16 +3,15 @@ from __future__ import annotations
 import ipaddress
 from typing import TYPE_CHECKING, Any
 
-from middlewared.api.current import S3Entry, ServiceEntry
+from middlewared.api.current import S3Entry
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import ConfigServiceListenDelegate, SystemServiceListenDelegateMixin
 from middlewared.common.ports import ServicePortDelegate
 
 from .accesskey_crud import S3AccesskeyService
 from .bucket_crud import SharingS3Service
 from .config import S3Service
-from .lifecycle import ETC_GROUP, SERVICE, start_or_restart
+from .lifecycle import SERVICE, start_or_restart
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -63,23 +62,6 @@ class S3ListenDelegate(
 
     async def reset_listens(self, state: list[dict[str, Any]]) -> None:
         await self.set_listen_state(_wildcard_listeners(state))
-
-
-class S3LicenseReconcileDelegate(LicenseReconcileDelegate):
-    """Restart the S3 service on a license change. The daemon reads the
-    license once at start, so a reload does not pick up a new one. Runs only
-    while the service is up."""
-
-    name = "s3"
-    etc_groups = (ETC_GROUP,)
-    service = SERVICE
-    action = LicenseReconcileAction.RESTART
-    # after `user`: the credentials file resolves every account through NSS
-    order = 30
-
-    async def should_run(self, middleware: Middleware) -> bool:
-        svc: ServiceEntry = await middleware.call("service.query", [["service", "=", SERVICE]], {"get": True})
-        return svc.state.lower() == "running"
 
 
 class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
@@ -149,10 +131,6 @@ async def setup(middleware: Middleware) -> None:
     await middleware.call(
         "interface.register_listen_delegate",
         S3ListenDelegate(middleware, "s3", "listeners"),
-    )
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        S3LicenseReconcileDelegate(),
     )
     # access key, account and network changes all move what the credentials file or base_hosts render
     for hook in (

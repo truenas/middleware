@@ -15,6 +15,7 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.api import api_method
 from middlewared.api.current import (
     S3AuditAction,
+    S3AuditMask,
     S3Entry,
     SharingS3AuditChoicesArgs,
     SharingS3AuditChoicesResult,
@@ -72,6 +73,11 @@ if TYPE_CHECKING:
 __all__ = ("SharingS3Service", "S3FSAttachmentDelegate")
 
 AUDIT_ACTIONS: tuple[str, ...] = typing.get_args(S3AuditAction)
+
+
+def audit_actions(mask: S3AuditMask) -> frozenset[str]:
+    return frozenset(AUDIT_ACTIONS) if mask == 'ALL' else frozenset(mask)
+
 
 BUCKET_LOCK = asyncio.Lock()
 """Serializes bucket registry mutations. Taken before lifecycle's render lock."""
@@ -330,7 +336,13 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             if data.object_lock_default_days is None:
                 verrors.add(f"{schema}.object_lock_default_days", "A default retention rule needs a period.")
 
-        if data.audit is not None or data.audit_overflow is not None:
+        default = (await self.call2(self.s.s3.config)).default_audit
+        new_actions = audit_actions(data.audit if data.audit is not None else default)
+        old_actions = audit_actions(default if old is None or old.audit is None else old.audit)
+        widened = new_actions - old_actions or (
+            data.audit_overflow is not None and (old is None or old.audit_overflow is None)
+        )
+        if widened:
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)
             if not entitlement.entitled:
                 verrors.add(f"{schema}.audit", entitlement.message)
