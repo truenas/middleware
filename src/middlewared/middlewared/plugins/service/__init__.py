@@ -32,7 +32,7 @@ from middlewared.api.current import (
     ServiceUpdateArgs,
     ServiceUpdateResult,
 )
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import touches
 from middlewared.service import CallError, CRUDService, filterable_api_method, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
@@ -669,12 +669,11 @@ class ServiceService(CRUDService[ServiceEntry]):
         return []
 
 
-class RcLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'rc'
-    etc_groups = ('rc',)
-    service = None
-    action = LicenseReconcileAction.RENDER
-    order = -50
+async def hook_license_update_rc(
+    middleware: Middleware, *args: Any, changed: frozenset[str] | None = None, **kwargs: Any
+) -> None:
+    if touches(changed, LicenseFeature.HA, LicenseFeature.WEBSHARE):
+        await middleware.call('etc.generate', 'rc')
 
 
 async def __event_service_ready(middleware: Middleware, event_type: Any, args: Any) -> None:
@@ -685,9 +684,6 @@ async def setup(middleware: Middleware) -> None:
     for klass in all_services:
         await middleware.call2(middleware.services.service.register_object, klass(middleware))
 
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        RcLicenseReconcileDelegate(),
-    )
+    middleware.register_hook('system.post_license_update', hook_license_update_rc)
 
     middleware.event_subscribe('system.ready', __event_service_ready)

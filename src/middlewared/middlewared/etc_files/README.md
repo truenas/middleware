@@ -99,15 +99,7 @@ def render(service, middleware, render_ctx):
 
 ## License-Derived Config
 
-If what your file renders depends on the license -- `failover.licensed`, `failover.status`, an
-entitlement check, or any ctx method that consults one of those internally -- the owning group
-needs a `LicenseReconcileDelegate`. Nothing regenerates a group when a license is uploaded,
-replaced or expires unless a delegate claims it, so the file keeps whatever it was rendered with
-until some unrelated event happens to regenerate the group or the system reboots.
-
-Delegates live in the plugin that owns the subsystem and are registered from its `setup()`; see
-`middlewared/common/license_reconcile/` for the base class and
-`middlewared/plugins/failover.py::CtdbLicenseReconcileDelegate` for a worked example.
+A group whose render reads a license key is re-rendered by its owner's system.post_license_update hook, which receives changed (the features whose entitlement changed) and acts only when its key is in it; see common/license_delegate.touches.
 
 ## File Registration
 

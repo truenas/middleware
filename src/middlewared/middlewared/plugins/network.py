@@ -59,10 +59,10 @@ from middlewared.api.current import (
     InterfaceXmitHashPolicyChoicesArgs,
     InterfaceXmitHashPolicyChoicesResult,
     QueryOptions,
+    ServiceOptions,
     VMNICDevice,
 )
-from middlewared.common.license_delegate import LicenseDelegate
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import LicenseDelegate, touches
 from middlewared.plugins.interface.dhcp import dhcp_reload, dhcp_start
 from middlewared.service import CallError, CRUDService, ServiceContext, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
@@ -2025,12 +2025,11 @@ class NetworkFecLicenseDelegate(LicenseDelegate):
         ]
 
 
-class DiscoveryLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'discovery'
-    etc_groups = ('discovery',)
-    service = 'discovery'
-    action = LicenseReconcileAction.RELOAD
-    order = 20
+async def hook_license_update_discovery(middleware, *args, changed=None, **kwargs):
+    if touches(changed, LicenseFeature.HA):
+        await (await middleware.call2(
+            middleware.services.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False),
+        )).wait(raise_error=True)
 
 
 async def setup(middleware):
@@ -2042,10 +2041,7 @@ async def setup(middleware):
     middleware.event_subscribe('system.ready', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
 
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        DiscoveryLicenseReconcileDelegate(),
-    )
+    middleware.register_hook('system.post_license_update', hook_license_update_discovery)
     await middleware.call2(
         middleware.services.truenas.entitlements.register_license_delegate, NetworkFecLicenseDelegate(middleware)
     )

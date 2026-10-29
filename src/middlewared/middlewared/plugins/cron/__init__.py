@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -17,7 +19,7 @@ from middlewared.api.current import (
     CronJobUpdateArgs,
     CronJobUpdateResult,
 )
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import touches
 from middlewared.service import GenericCRUDService, job, private
 
 from .crud import CronJobServicePart
@@ -87,16 +89,12 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
         return _construct_cron_command(schedule, user, command, stdout, stderr)
 
 
-class CronLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'cron'
-    etc_groups = ('cron',)
-    service = None
-    action = LicenseReconcileAction.RENDER
-    order = 20
+async def hook_license_update_cron(
+    middleware: Middleware, *args: Any, changed: frozenset[str] | None = None, **kwargs: Any
+) -> None:
+    if touches(changed, LicenseFeature.HA):
+        await middleware.call('etc.generate', 'cron')
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        CronLicenseReconcileDelegate(),
-    )
+    middleware.register_hook('system.post_license_update', hook_license_update_cron)
