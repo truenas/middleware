@@ -45,7 +45,10 @@ class DiskService(Service, ServiceChangeMixin):
 
         self._map_device_disk_to_db(disk, disks[name])
 
-        if await self.middleware.call('system.sed_enabled') and (new or disk.get('disk_sed') is None):
+        if (new or disk.get('disk_sed') is None) and (
+            await self.middleware.call('system.sed_enabled')
+            or await self.middleware.call('system.sed_credentials_exist')
+        ):
             # If system is enterprise, we would like to make sure SED status is correctly reflected
             disk['disk_sed'] = await self.middleware.call('disk.is_sed', name)
 
@@ -116,7 +119,9 @@ class DiskService(Service, ServiceChangeMixin):
         opts.setdefault('zfs_guid', False)
 
         job.set_progress(10, 'Enumerating system disks')
-        sed_enabled_system = self.middleware.call_sync('system.sed_enabled')
+        sed_enabled_system = self.middleware.call_sync('system.sed_enabled') or self.middleware.call_sync(
+            'system.sed_credentials_exist'
+        )
         sys_disks = self.middleware.call_sync('device.get_disks', True)
         number_of_disks = self.log_disk_info(sys_disks)
 

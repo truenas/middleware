@@ -198,7 +198,7 @@ class DiskService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        if new['passwd'] and old['passwd'] != new['passwd']:
+        if new['passwd'] and not old['passwd'] and not old['kmip_uid']:
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
             if not entitlement.entitled:
                 raise ValidationError('disk_update.passwd', entitlement.message)

@@ -73,23 +73,20 @@ class ZPoolService(Service):
 
             if pool_info.get("all_sed"):
                 if not sed_cache:
-                    sed_enabled = self.middleware.call_sync("system.sed_enabled")
                     locked_sed_disks = set()
-                    if sed_enabled:
-                        for disk in self.middleware.call_sync(
-                            "disk.query",
-                            [["sed_status", "=", "LOCKED"]],
-                            {"extra": {"sed_status": True}},
-                        ):
-                            locked_sed_disks.add(disk["name"])
+                    for disk in self.middleware.call_sync(
+                        "disk.query",
+                        [["sed_status", "=", "LOCKED"]],
+                        {"extra": {"sed_status": True}},
+                    ):
+                        locked_sed_disks.add(disk["name"])
                     sed_cache.update(
                         {
-                            "sed_enabled": sed_enabled,
                             "locked_sed_disks": locked_sed_disks,
                         }
                     )
 
-                if sed_cache["sed_enabled"] and sed_cache["locked_sed_disks"]:
+                if sed_cache["locked_sed_disks"]:
                     status_code = "LOCKED_SED_DISKS"
                     status_detail = (
                         "Pool might have failed to import because of "
