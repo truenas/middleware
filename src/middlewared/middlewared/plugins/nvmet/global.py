@@ -10,7 +10,7 @@ from middlewared.api.current import (
     NVMetGlobalUpdateResult,
     QueryOptions,
 )
-from middlewared.common.license_delegate import touches
+from middlewared.common.license_delegate import LicenseDelegate, touches
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
@@ -376,8 +376,23 @@ async def hook_license_update_nvmet(middleware, *args, changed=None, **kwargs):
         await middleware.call('etc.generate', 'nvmet')
 
 
+class NvmeofSpdkLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.NVMEOF_SPDK
+
+    async def alert_lines(self, in_grace):
+        if (await self.middleware.call('nvmet.global.config'))['kernel'] is not False:
+            return []
+        return [
+            'NVMe-oF: the SPDK backend is in use without a license and keeps running. To switch to the kernel '
+            'backend, in a maintenance window stop the NVMe-oF target, switch the backend, then start it.'
+        ]
+
+
 async def setup(middleware):
     middleware.register_hook('system.post_license_update', hook_license_update_nvmet)
+    await middleware.call2(
+        middleware.services.truenas.entitlements.register_license_delegate, NvmeofSpdkLicenseDelegate(middleware)
+    )
     middleware.register_hook("pool.post_import", pool_post_import, sync=True)
     if await middleware.call('system.ready'):
         await middleware.call('iscsi.auth.load_upgrade_alerts')

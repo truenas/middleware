@@ -14,6 +14,7 @@ from middlewared.api.current import (
     SystemGeneralUpdateResult,
 )
 from middlewared.async_validators import validate_port
+from middlewared.common.license_delegate import LicenseDelegate
 from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -403,3 +404,21 @@ class SystemGeneralService(ConfigService):
         # Reset the _changed_https_port flag. It will be set again if the port is updated in do_update again.
         self._changed_https_port = False, -1
         return ret
+
+
+class DsAuthLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.DIRECTORY_SERVICES_AUTH
+
+    async def alert_lines(self, in_grace):
+        if not (await self.middleware.call('system.general.config'))['ds_auth']:
+            return []
+        return [
+            'Directory services: domain login is in use without a license and still works. To turn it off, first '
+            'confirm a local administrator can log in, then turn it off.'
+        ]
+
+
+async def setup(middleware):
+    await middleware.call2(
+        middleware.services.truenas.entitlements.register_license_delegate, DsAuthLicenseDelegate(middleware)
+    )

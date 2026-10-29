@@ -12,6 +12,7 @@ from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import KMIPEntry, KMIPUpdate
 from middlewared.async_validators import validate_port
+from middlewared.common.license_delegate import LicenseDelegate
 from middlewared.service import CallError, ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 
@@ -72,13 +73,22 @@ class KMIPConfigServicePart(ConfigServicePart[KMIPEntry]):
 
         verrors.extend(await validate_port(self.middleware, 'kmip_update.port', new['port'], 'kmip'))
 
-        # Only the enable transition is gated. Disabling is how escrowed ZFS and SED keys are pulled
-        # back to the local database, so a system that loses the entitlement must still be able to
-        # turn KMIP off and recover its keys.
+        # Only turning KMIP on, or extending it to manage dataset keys or drive passwords, is gated.
+        # Disabling is how escrowed ZFS and SED keys are pulled back to the local database, so a
+        # system that loses the entitlement must still be able to turn KMIP off and recover its keys.
         if new['enabled'] and not old.enabled:
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.KMIP)
             if not entitlement.entitled:
                 verrors.add('kmip_update.enabled', entitlement.message)
+        extending = [
+            key for key in ('manage_zfs_keys', 'manage_sed_disks')
+            if new['enabled'] and new[key] and not getattr(old, key)
+        ]
+        if extending:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.KMIP)
+            if not entitlement.entitled:
+                for key in extending:
+                    verrors.add(f'kmip_update.{key}', entitlement.message)
 
         ca_list = await self.call2(
             self.s.certificate.query,
@@ -175,3 +185,15 @@ class KMIPConfigServicePart(ConfigServicePart[KMIPEntry]):
             await self.call2(self.s.kmip.sync_keys)
 
         return await self.config()
+
+
+class KmipLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.KMIP
+
+    async def alert_lines(self, in_grace: bool) -> list[str]:
+        if not (await self.call2(self.s.kmip.config)).enabled:
+            return []
+        return [
+            'KMIP: KMIP is in use without a license and still serves keys. To stop using it, disable KMIP while the '
+            'KMIP server is reachable, which brings the keys back locally.'
+        ]
