@@ -13,11 +13,13 @@ from truenas_pylibvirt import (
     Time,
 )
 from truenas_pylibvirt import Error as PyLibvirtError
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import ContainerEntry, ContainerNICDevice, ContainerStopOptions, ZFSResourceQuery
 from middlewared.plugins.account.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .bridge import BRIDGE_NAME, configure_container_bridge
 from .dataset import CONTAINER_DS_PARENT_DIR
@@ -87,7 +89,12 @@ def start_on_boot(context: ServiceContext) -> None:
     except Exception:
         context.logger.error('Failed to reconcile container runtime state', exc_info=True)
 
+    if not context.call_sync2(context.s.truenas.entitlements.serving, LicenseFeature.CONTAINERS):
+        context.logger.warning('Containers: autostart skipped, the system is not licensed to use containers')
+        return
     for container in context.call_sync2(context.s.container.query, [("autostart", "=", True)]):
+        if container.status.state in ACTIVE_STATES:
+            continue
         try:
             start(context, container.id)
         except Exception as e:
