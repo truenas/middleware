@@ -230,24 +230,18 @@ class PoolService(CRUDService):
             # Reason for having this explicit dict cache workflow is so that in pool extend context, we
             # avoid querying SED disks at all and this code path only gets triggered if there is actually
             # a zpool which failed to import and locked SED disks might be to blame
-            #
-            # We only want to initialize sed cache here if system is licensed for it and the pool in qeustion
-            # is actually an all sed based pool
             if all_sed_pool and not sed_cache:
-                sed_enabled = await self.middleware.call('system.sed_enabled')
                 locked_sed_disks = {disk['name'] for disk in await self.middleware.call('disk.query', [
                     ['sed_status', '=', 'LOCKED']
-                ], {'extra': {'sed_status': True}})} if sed_enabled else set()
+                ], {'extra': {'sed_status': True}})}
                 sed_cache.update({
-                    'sed_enabled': sed_enabled,
                     'locked_sed_disks': locked_sed_disks,
                 })
 
-            if all_sed_pool and sed_cache['sed_enabled']:
-                if sed_cache['locked_sed_disks']:
-                    rv['status_code'] = 'LOCKED_SED_DISKS'
-                    rv['status_detail'] = ('Pool might have failed to import because of '
-                                           f'{", ".join(sed_cache["locked_sed_disks"])!r} SED disk(s) being locked')
+            if all_sed_pool and sed_cache['locked_sed_disks']:
+                rv['status_code'] = 'LOCKED_SED_DISKS'
+                rv['status_detail'] = ('Pool might have failed to import because of '
+                                       f'{", ".join(sed_cache["locked_sed_disks"])!r} SED disk(s) being locked')
 
         return rv
 
@@ -769,8 +763,6 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
         dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors, 'pool_update')
-        if 'topology' in data and pool['all_sed']:
-            await validate_sed_license(self.middleware, verrors, 'pool_update.topology')
         verrors.check()
 
         disks = vdevs = None

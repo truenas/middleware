@@ -118,7 +118,7 @@ class DiskService(Service):
         """
         # TODO: See if we should have validation or force flag in place to see if a disk
         #  is part of a zfs pool and to safely then allow resetting it
-        disk, verrors = await self.common_sed_validation('disk_reset_sed', options)
+        disk, verrors = await self.common_sed_validation('disk_reset_sed', options, check_license=False)
         entry = DiskEntry(name=disk['real_name'], devpath=f'/dev/{disk["real_name"]}')
         success, message = await asyncio.to_thread(entry.sed_factory_reset, options['psid'])
         if not success:
@@ -131,11 +131,12 @@ class DiskService(Service):
         return True
 
     @private
-    async def common_sed_validation(self, schema, options, status_to_check=None):
+    async def common_sed_validation(self, schema, options, status_to_check=None, check_license=True):
         verrors = ValidationErrors()
-        if not await self.middleware.call('system.sed_enabled'):
-            verrors.add(f'{schema}.name', 'System is not licensed for SED functionality.')
-        verrors.check()
+        if check_license:
+            if not await self.middleware.call('system.sed_enabled'):
+                verrors.add(f'{schema}.name', 'System is not licensed for SED functionality.')
+            verrors.check()
 
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
             'extra': {'sed_status': True, 'passwords': True, 'real_names': True},
@@ -194,7 +195,7 @@ class DiskService(Service):
         """
         Unlock specified ``options.name`` SED disk.
         """
-        disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, 'LOCKED')
+        disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, 'LOCKED', check_license=False)
         global_sed_password = (await self.call2(self.s.system.advanced.sed_global_password)).get_secret_value()
         password = options.get('password') or disk['passwd'] or global_sed_password
         if not password:

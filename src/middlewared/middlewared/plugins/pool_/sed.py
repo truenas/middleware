@@ -16,9 +16,6 @@ class PoolService(Service):
     async def ha_update_all_sed_attr(self):
         if await self.middleware.call('system.sed_enabled'):
             await self.update_all_sed_attr()
-        else:
-            for pool in await self.middleware.call('datastore.query', 'storage.volume', [['vol_all_sed', '=', None]]):
-                await self.middleware.call('datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False})
 
     @private
     async def update_all_sed_attr(self, skip_all_sed_check=False, filter_pool=None):
@@ -95,7 +92,10 @@ class PoolService(Service):
 
 async def zfs_events_hook(middleware, event: ZfsEvent):
     if isinstance(event, ZfsConfigSyncEvent):
-        if await middleware.call('system.sed_enabled') and (
+        if (
+            await middleware.call('system.sed_enabled')
+            or await middleware.call('system.sed_credentials_exist')
+        ) and (
             pool := await middleware.call("pool.query", [["name", "=", event.pool]], {'force_sql_filters': True})
         ):
             if pool[0]["healthy"]:

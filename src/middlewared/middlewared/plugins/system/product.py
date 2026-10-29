@@ -55,6 +55,21 @@ class SystemService(Service):
     def sed_enabled(self):
         return self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SED).entitled
 
+    @private
+    async def sed_credentials_exist(self):
+        if await self.call2(self.s.system.advanced.sed_global_password_is_set):
+            return True
+        if (await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'}))['kmip_uid']:
+            return True
+        if await self.middleware.call(
+            'disk.query', [['OR', [['passwd', '!=', ''], ['kmip_uid', '!=', None]]]],
+            {'count': True, 'extra': {'passwords': True}},
+        ):
+            return True
+        return bool(await self.middleware.call(
+            'datastore.query', 'storage.volume', [['vol_all_sed', '=', True]], {'count': True},
+        ))
+
     @api_method(
         SystemVersionShortArgs,
         SystemVersionShortResult,
