@@ -1,12 +1,12 @@
 import pytest
 
-from middlewared.test.integration.utils import call, pool
+from middlewared.test.integration.utils import call, client, pool
 
 
 @pytest.fixture(scope="module")
 def zpool_minimal():
     """Query the test pool with default (minimal) options."""
-    results = call("zpool.query", {"pool_names": [pool]})
+    results = call("zpool.list", {"pool_names": [pool]})
     assert len(results) == 1
     return results[0]
 
@@ -14,7 +14,7 @@ def zpool_minimal():
 @pytest.fixture(scope="module")
 def zpool_full():
     """Query the test pool with all optional sections enabled."""
-    results = call("zpool.query", {
+    results = call("zpool.list", {
         "pool_names": [pool],
         "properties": ["size", "capacity", "health"],
         "topology": True,
@@ -33,8 +33,9 @@ class TestZpoolQueryMinimal:
         assert zpool_minimal["name"] == pool
 
     def test_guid(self, zpool_minimal):
-        assert isinstance(zpool_minimal["guid"], int)
-        assert zpool_minimal["guid"] != 0
+        # 64-bit guids travel as decimal strings so JSON consumers do not round them
+        assert isinstance(zpool_minimal["guid"], str)
+        assert int(zpool_minimal["guid"]) != 0
 
     def test_status(self, zpool_minimal):
         assert zpool_minimal["status"] == "ONLINE"
@@ -86,7 +87,8 @@ class TestZpoolQueryFull:
         vdev = vdevs[0]
         assert "name" in vdev
         assert "vdev_type" in vdev
-        assert "guid" in vdev
+        assert isinstance(vdev["guid"], str)
+        assert int(vdev["guid"]) != 0
         assert "state" in vdev
         assert "stats" in vdev
         assert "children" in vdev
@@ -114,13 +116,13 @@ class TestZpoolQueryAll:
     """Test query-all mode (pool_names=None)."""
 
     def test_returns_all_pools(self):
-        results = call("zpool.query")
+        results = call("zpool.list")
         names = [p["name"] for p in results]
         assert pool in names
 
     def test_excludes_boot_pool(self):
         boot_pool_name = call("boot.pool_name")
-        results = call("zpool.query")
+        results = call("zpool.list")
         names = [p["name"] for p in results]
         assert boot_pool_name not in names
 
@@ -130,20 +132,39 @@ class TestZpoolQueryBootPool:
 
     def test_boot_pool_by_name(self):
         boot_pool_name = call("boot.pool_name")
-        results = call("zpool.query", {"pool_names": [boot_pool_name]})
+        results = call("zpool.list", {"pool_names": [boot_pool_name]})
         assert len(results) == 1
         assert results[0]["name"] == boot_pool_name
         assert results[0]["status"] in ("ONLINE", "DEGRADED", "OFFLINE")
 
     def test_boot_pool_guid(self):
         boot_pool_name = call("boot.pool_name")
-        results = call("zpool.query", {"pool_names": [boot_pool_name]})
-        assert isinstance(results[0]["guid"], int)
+        results = call("zpool.list", {"pool_names": [boot_pool_name]})
+        assert isinstance(results[0]["guid"], str)
+        assert int(results[0]["guid"]) != 0
 
 
 class TestZpoolQueryNonexistent:
     """Test querying pools that don't exist."""
 
     def test_nonexistent_pool_returns_empty(self):
-        results = call("zpool.query", {"pool_names": ["nonexistent_pool_xyz"]})
+        results = call("zpool.list", {"pool_names": ["nonexistent_pool_xyz"]})
         assert results == []
+
+
+def _guids(vdevs):
+    for vdev in vdevs:
+        yield vdev["guid"]
+        if vdev["top_guid"] is not None:
+            yield vdev["top_guid"]
+        yield from _guids(vdev["children"])
+
+
+def test_guids_are_integers_on_the_previous_api_version(zpool_full):
+    """Clients on 27.0 still get the integers that 28.0 turned into strings."""
+    with client(version="v27.0.0") as c:
+        [entry] = c.call("zpool.query", {"pool_names": [pool], "topology": True})
+    current = [zpool_full["guid"], *_guids(zpool_full["topology"]["data"])]
+    previous = [entry["guid"], *_guids(entry["topology"]["data"])]
+    assert all(isinstance(guid, int) for guid in previous)
+    assert previous == [int(guid) for guid in current]

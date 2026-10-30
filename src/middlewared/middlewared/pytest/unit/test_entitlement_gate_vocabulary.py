@@ -65,6 +65,9 @@ GATES = [
     ("plugins/zfs/resource_set.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/snapshot_ops.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/tier.py", "LicenseFeature.ZFSTIER"),
+    ("plugins/zpool/zpool_create.py", "LicenseFeature.DEDUP"),
+    ("plugins/zpool/zpool_create.py", "LicenseFeature.SED"),
+    ("plugins/zpool/zpool_create.py", "LicenseFeature.SUPPORT"),
     ("test/integration/assets/entitlements.py", None),
     ("utils/service/entitlement.py", "LicenseFeature.SED"),
 ]

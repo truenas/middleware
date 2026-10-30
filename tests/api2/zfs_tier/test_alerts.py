@@ -88,7 +88,7 @@ def _complete_job(ds_name, wait_for_job_status, files=5):
 
 def _special_vdev_pct(pool_name):
     for pool in call(
-        "zpool.query_impl",
+        "zpool.list",
         {"properties": ["class_special_usable", "class_special_used"]},
     ):
         if pool["name"] == pool_name:

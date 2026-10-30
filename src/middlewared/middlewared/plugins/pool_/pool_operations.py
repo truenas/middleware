@@ -11,7 +11,6 @@ from middlewared.api.current import (
     PoolUpgradeArgs,
     PoolUpgradeResult,
 )
-from middlewared.plugins.zpool import upgrade_zpool_impl
 from middlewared.service import Service, job, private
 from middlewared.service_exception import ValidationError
 
@@ -113,13 +112,8 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         return await job.wrap(await self.middleware.call('pool.scrub.scrub', pool['name'], action))
 
-    @api_method(
-        PoolUpgradeArgs,
-        PoolUpgradeResult,
-        pass_thread_local_storage=True,
-        roles=['POOL_WRITE']
-    )
-    def upgrade(self, tls, oid):
+    @api_method(PoolUpgradeArgs, PoolUpgradeResult, roles=['POOL_WRITE'])
+    def upgrade(self, oid):
         """
         Upgrade pool of ``id`` to latest version with all feature flags.
 
@@ -144,7 +138,7 @@ class PoolService(Service):
 
         pname = pool[0]['vol_name']
         try:
-            upgrade_zpool_impl(tls.lzh, pname)
+            self.call_sync2(self.s.zpool.upgrade, pname)
         except ZFSException as e:
             if e.code == ZFSError.EZFS_NOENT:
                 raise ValidationError(
@@ -155,5 +149,5 @@ class PoolService(Service):
             raise
         else:
             self.call_sync2(self.s.alert.oneshot_delete, 'PoolUpgraded', pname)
-            self.middleware.call_sync('zpool.send_change_event', pname, 'CHANGED')
+            self.call_sync2(self.s.zpool.send_change_event, pname, 'CHANGED')
             return True

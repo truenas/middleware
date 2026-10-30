@@ -58,7 +58,7 @@ def _fill_pool(pool_name, size_mib=_ACTION_FILL_MIB):
 
 def _get_scan(pool_name):
     """Return the scan dict for a pool."""
-    return call("zpool.query", {
+    return call("zpool.list", {
         "pool_names": [pool_name], "scan": True,
     })[0]["scan"]
 

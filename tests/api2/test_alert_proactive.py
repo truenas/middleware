@@ -15,7 +15,7 @@ from middlewared.test.integration.utils.alert import (
 pytestmark = pytest.mark.skipif(not ha, reason="Proactive Support is only available on Enterprise HA systems")
 
 # `ZpoolCapacityNoticeAlert` opts into proactive support and is the cheapest alert to provoke: its
-# source only reads the pool capacity, so a single mocked `zpool.query_impl` raises and clears it.
+# source only reads the pool capacity, so a single mocked `zpool.list_impl` raises and clears it.
 ALERT_SOURCE = "ZpoolCapacity"
 ALERT_CLASS = "ZpoolCapacityNotice"
 ALERT_TEXT = f"Space usage for pool '{pool_name}' is 85%."
@@ -78,7 +78,7 @@ def proactive_support(*, enabled):
 
 
 def almost_full_pool():
-    """A `zpool.query_impl` result for a pool that is full enough to raise a capacity alert."""
+    """A `zpool.list_impl` result for a pool that is full enough to raise a capacity alert."""
     return {
         "name": pool_name,
         "guid": 0,
@@ -127,7 +127,7 @@ def almost_full_pool_on_standby():
     """Make the standby controller report a real `ZpoolCapacityNotice` alert."""
     assert capacity_alerts() == [], f"A {ALERT_CLASS} alert for {pool_name} is already present"
 
-    with mock("zpool.query_impl", return_value=[almost_full_pool()], remote=True):
+    with mock("zpool.list_impl", return_value=[almost_full_pool()], remote=True):
         alerts = wait_for_capacity_alerts(True)
         assert alerts[0]["node"] == standby_node_name()
         yield

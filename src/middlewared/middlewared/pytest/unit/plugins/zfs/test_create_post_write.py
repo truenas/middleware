@@ -30,7 +30,7 @@ class Stand:
         self.zpool_reads = []
         self.created = []
         middleware = Middleware()
-        middleware["zpool.query_impl"] = self.zpool_query_impl
+        middleware.services.zpool.list_impl = self.zpool_list_impl
         middleware.services.zfs.tier.config = lambda: SimpleNamespace(enabled=False)
         middleware.services.zfs.resource.list_impl = self.list_impl
         middleware.call_hook_sync = Mock()
@@ -41,7 +41,7 @@ class Stand:
         monkeypatch.setattr(resource_create, "create_leaf", self.create_leaf)
         monkeypatch.setattr(resource_create, "mount_impl", self.mount)
 
-    def zpool_query_impl(self, args):
+    def zpool_list_impl(self, args):
         self.zpool_reads.append(args)
         return []
 
