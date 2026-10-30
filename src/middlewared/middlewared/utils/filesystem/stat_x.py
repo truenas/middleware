@@ -43,6 +43,7 @@ STATX_ATTRIBUTE = Literal['COMPRESSED', 'IMMUTABLE', 'APPEND', 'NODUMP', 'ENCRYP
                           'VERIFY', 'DAX', 'POSIXACL', 'NFSV4ACL']
 STATX_DEFAULT_MASK = (
     truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE | truenas_os.STATX_ZFSFLAGS
+    | truenas_os.STATX_ACL
 )
 
 
