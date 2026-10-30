@@ -5,7 +5,7 @@ import os
 import truenas_os
 from truenas_pylibvirt import (
     ContainerCapabilitiesPolicy, ContainerDomain, ContainerDomainConfiguration, ContainerIdmapConfiguration,
-    ContainerIdmapConfigurationItem, Error as PyLibvirtError, NICDevice, NICDeviceType, Time,
+    ContainerIdmapConfigurationItem, Error as PyLibvirtError, Time,
 )
 
 from middlewared.api import api_method
@@ -18,7 +18,7 @@ from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COU
 from middlewared.service import CallError, job, private, Service
 from middlewared.utils.filesystem.perms import enforce_dir_perms
 
-from .bridge import container_bridge_name, configure_container_bridge
+from .bridge import BRIDGE_NAME, configure_container_bridge
 from .dataset import CONTAINER_DS_PARENT_DIR
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
@@ -160,7 +160,11 @@ class ContainerService(Service):
         apply_idmapped_root_acl()
 
         container = self.middleware.call_sync("container.get_instance", id_)
-        configure_container_bridge(self)
+        if any(
+            device["attributes"]["dtype"] == "NIC" and device["attributes"]["nic_attach"] == BRIDGE_NAME
+            for device in container["devices"]
+        ):
+            configure_container_bridge(self)
 
         pylibvirt_obj = self.pylibvirt_container(container, True)
 
@@ -200,7 +204,6 @@ class ContainerService(Service):
         container.pop("id", None)
         container.pop("status", None)
         container.pop('autostart', None)
-        container.pop('default_network', None)
 
         dataset = container.pop("dataset")
         pool = dataset.split("/")[0]
@@ -214,28 +217,10 @@ class ContainerService(Service):
                 raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
 
         container["time"] = Time(container["time"])
-        devices = []
-        has_nic_device = False
-        for device in container.get("devices", []):
-            if device["attributes"]["dtype"] == "NIC":
-                has_nic_device = True
-
-            devices.append(self.middleware.call_sync("container.device.get_pylibvirt_device", device))
-
-        if not has_nic_device:
-            # Add one if one isn't added already
-            # TODO: See if this should be desired behaviour
-            devices.append(
-                NICDevice(
-                    type_=NICDeviceType.BRIDGE,
-                    source=container_bridge_name(self),
-                    model=None,
-                    mac=None,
-                    trust_guest_rx_filters=False,
-                )
-            )
-
-        container["devices"] = devices
+        container["devices"] = [
+            self.middleware.call_sync("container.device.get_pylibvirt_device", device)
+            for device in container.get("devices", [])
+        ]
 
         if container["idmap"]:
             match container["idmap"]["type"]:

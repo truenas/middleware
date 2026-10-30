@@ -337,7 +337,9 @@ async def test_migrate_uses_one_scan_for_every_pool(monkeypatch):
     monkeypatch.setattr(migrate_module, "get_all_usb_devices", counting_scan)
 
     service, middleware = make_service()
-    middleware["datastore.query"] = AsyncMock(return_value=[{"id": 1, "pool": "tank", "storage_pools": "dozer"}])
+    middleware["datastore.query"] = AsyncMock(
+        return_value=[{"id": 1, "pool": "tank", "storage_pools": "dozer", "bridge": None}]
+    )
     middleware["container.license_active"] = AsyncMock(return_value=True)
     middleware["container.query"] = AsyncMock(return_value=[])
     middleware["container.migrate_specific_pool"] = AsyncMock()

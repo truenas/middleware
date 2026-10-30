@@ -15,7 +15,7 @@ from middlewared.service import CRUDService, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
 
-from .bridge import container_bridge_name
+from .bridge import BRIDGE_NAME
 
 
 class ContainerDeviceModel(sa.Model):
@@ -95,8 +95,7 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         """
         Available choices for NIC Attach attribute.
         """
-        container_bridge = container_bridge_name(self)
-        nic_choices = {'BRIDGE': [container_bridge], 'MACVLAN': []}
+        nic_choices = {'BRIDGE': [BRIDGE_NAME], 'MACVLAN': []}
         for inf in self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']}):
             if inf.startswith('br'):
                 nic_choices['BRIDGE'].append(inf)

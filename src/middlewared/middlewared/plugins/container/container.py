@@ -30,7 +30,6 @@ from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.libvirt.utils import same_uuid
 from middlewared.utils.zfs import query_imported_fast_impl
 
-from .bridge import container_bridge_name
 from .nsenter import CAPABILITIES
 from .utils import container_dataset
 
@@ -108,7 +107,6 @@ class ContainerService(CRUDService):
                     'container.pylibvirt_container', self.extend_container(container),
                 ),
             ),
-            'bridge_name': container_bridge_name(self),
         }
 
     @private
@@ -118,12 +116,10 @@ class ContainerService(CRUDService):
             [('container', '=', container['id'])],
             {'force_sql_filters': True},
         )
-        has_nic = any(d['attributes']['dtype'] == 'NIC' for d in devices)
 
         container.update({
             'status': get_pylibvirt_domain_state(context['states'], container),
             'devices': devices,
-            'default_network': None if has_nic else context['bridge_name'],
         })
 
         self.extend_container(container)
@@ -147,7 +143,6 @@ class ContainerService(CRUDService):
 
     @private
     def compress(self, container):
-        container.pop('default_network', None)
         idmap = container.pop('idmap')
         if idmap is None:
             container['idmap_slice'] = None

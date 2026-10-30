@@ -19,6 +19,7 @@ from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.utils.libvirt.nic import normalize_mac, random_mac
 
+from .bridge import BRIDGE_NAME
 from .utils import container_dataset
 
 
@@ -181,6 +182,7 @@ class ContainerService(Service):
         # run: two containers configured for the same dongle is valid, only one of them can be
         # running at a time, whereas one container holding two rows for it never starts at all.
         claimed_usb: set[str | tuple[str, str]] = set()
+        nic_migrated = False
         for device_name, device_data in devices.items():
             dtype = None
             try:
@@ -289,6 +291,10 @@ class ContainerService(Service):
                             f"Unable to create container device for {device_name!r} {dtype} incus "
                             f"device: {e!r}.\n".encode()
                         )
+                    else:
+                        nic_migrated = nic_migrated or device_payload["dtype"] == "NIC"
+
+        return nic_migrated
 
     @private
     async def maybe_migrate_legacy(self):
@@ -401,6 +407,7 @@ class ContainerService(Service):
             raise CallError("System is not licensed to use containers.")
 
         storage_pools = legacy_configuration_pools(legacy_configuration[0])
+        default_bridge = legacy_configuration[0]["bridge"] or BRIDGE_NAME
         existing_containers = {
             container["name"]: container for container in await self.middleware.call("container.query")
         }
@@ -411,7 +418,8 @@ class ContainerService(Service):
             # One unusable pool must not stop the pools that come after it.
             try:
                 await self.middleware.call(
-                    "container.migrate_specific_pool", job, storage_pool, existing_containers, connected_usb
+                    "container.migrate_specific_pool", job, storage_pool, existing_containers, default_bridge,
+                    connected_usb,
                 )
             except Exception as e:
                 self.logger.error("Unable to migrate containers on pool %r", storage_pool, exc_info=True)
@@ -420,7 +428,7 @@ class ContainerService(Service):
                 )
 
     @private
-    def migrate_specific_pool(self, job, pool, existing_containers, connected_usb):
+    def migrate_specific_pool(self, job, pool, existing_containers, default_bridge, connected_usb):
         processed_parents_mountpoints = False
         datasets = self.call_sync2(
             self.s.zfs.resource.query_impl,
@@ -540,9 +548,24 @@ class ContainerService(Service):
                     },
                 )
                 existing_containers[name] = container_instance
-                self.middleware.call_sync(
+                if not self.middleware.call_sync(
                     "container.migrate_devices", job, manifest["container"], container_instance, connected_usb
-                )
+                ):
+                    try:
+                        self.middleware.call_sync("datastore.insert", "container.device", {
+                            "attributes": {
+                                "dtype": "NIC",
+                                "nic_attach": default_bridge,
+                                "type": "VIRTIO",
+                                "trust_guest_rx_filters": False,
+                                "mac": normalize_mac(config.get("volatile.eth0.hwaddr")) or random_mac(),
+                            },
+                            "container_id": container_instance["id"],
+                        })
+                    except Exception as e:
+                        job.logs_fd.write(
+                            f"Unable to create container device for default NIC of {name!r}: {e!r}.\n".encode()
+                        )
             except Exception as e:
                 if renamed and container_instance is None:
                     # The dataset was moved but no container row was created. Left there it

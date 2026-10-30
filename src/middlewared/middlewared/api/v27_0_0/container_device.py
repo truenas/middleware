@@ -50,7 +50,12 @@ class ContainerNICDevice(BaseModel):
     )
     nic_attach: str | None = Field(
         default=None,
-        description="Host network interface or bridge to attach to. `null` for no attachment.",
+        description=(
+            "Host network interface or bridge to attach to. `null` when creating a NIC, or when clearing the "
+            "attachment of an attached one, selects `lxc.config` `bridge` (or `truenasbr0` when that is `null`), and "
+            "that name is stored. A NIC already stored as `null` attaches as a macvlan to the interface that carries "
+            "the default route."
+        ),
     )
     mac: MACAddress | None = Field(
         default=None,

@@ -23,7 +23,6 @@ DNSMASQ_CONF_FILE = f"{FS_PATH}/test.dnsmasq.raw"
 DOMAIN_NAME = "tn-container"
 
 __all__ = (
-    "container_bridge_name",
     "configure_container_bridge",
 )
 
@@ -206,8 +205,6 @@ def _configure_nft(ipv4_masquerade: str, ipv6_masquerade: str) -> None:
 
 def configure_container_bridge(ctx: ServiceContext):
     config = ctx.middleware.call_sync("lxc.config")
-    if config["bridge"] is not None:
-        return
 
     # FIXME: what user and group whould we use to run dnsmasq?
     os.makedirs(FS_PATH, exist_ok=True)
@@ -255,8 +252,3 @@ def configure_container_bridge(ctx: ServiceContext):
 
     _configure_nft(ipv4_masquerade, ipv6_masquerade)
     _start_dnsmasq(ctx, dnsmasq_args)
-
-
-def container_bridge_name(ctx: ServiceContext):
-    config = ctx.middleware.call_sync("lxc.config")
-    return config["bridge"] or BRIDGE_NAME

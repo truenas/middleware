@@ -107,9 +107,8 @@ class ContainerEntry(BaseModel):
     default_network: str | None = Field(
         default=None,
         description=(
-            "The default network bridge this container will use when no NIC devices are explicitly attached. When the "
-            "container has explicitly configured NIC devices, this is `null` because the NIC configuration is visible "
-            "in the `devices` list."
+            "Deprecated and always `null`. A container no longer gets a NIC implicitly, so its network is only what "
+            "its NIC devices in the `devices` list configure."
         ),
     )
     status: ContainerStatus = Field(description="Container state.")
