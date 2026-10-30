@@ -609,22 +609,26 @@ def check_s21(sc):
 
 def check_s22(sc):
     """S22: an ALL_TG_PT registrant that reserved through another port than it
-    registered through still holds the reservation through that port: READ
-    FULL STATUS flags the registration through the original STANDBY node's
-    port, the I_T nexus through that port can write, and the one through the
-    original ACTIVE node's port is a registered non-holder (SPC-5 6.17.3,
-    table 66). A failover that put the reservation back on the port the
-    registrant registered through would swap the two."""
+    registered through still holds the reservation through that port: the I_T
+    nexus through the original STANDBY node's port can write, and the one
+    through the original ACTIVE node's port is a registered non-holder (SPC-5
+    6.17.3, table 66). A failover that put the reservation back on the port the
+    registrant registered through would swap the two.
+
+    READ FULL STATUS cannot show which port holds it: for an ALL_TG_PT
+    registration the RELATIVE TARGET PORT IDENTIFIER is not defined (SPC-5
+    6.16.4), and LIO reports 0. It must still flag exactly one of the
+    registrant's registrations as the holder."""
     t = sc.s22
-    rtpi_a, rtpi_b = t.rtpis
-    stby_rtpi = rtpi_b if sc.orig_node == "A" else rtpi_a
     with (
         client(sc.act_ip, t, N1, Q1) as via_act,
         client(sc.stby_ip, t, N1, Q1) as via_stby,
         client(sc.act_ip, t, N3, Q3) as observer,
     ):
         regs = pr_registrations(observer)
-        assert {r.rtpi for r in regs if r.holder} == {stby_rtpi}, regs
+        assert {(r.key, r.initiator, r.isid) for r in regs} == {(K1, CLIENT_IQN, isid_en_hex(Q1))}, regs
+        assert all(r.all_tg_pt for r in regs), regs
+        assert sum(r.holder for r in regs) == 1, regs
         pr_check_reservation(observer, {"reservation_key": K1, "type": WE, "scope": LU_SCOPE})
         assert io_access(via_stby) == expected_access(WE, "holder")
         assert io_access(via_act) == expected_access(WE, "registered")
