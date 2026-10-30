@@ -1,5 +1,4 @@
 from .cifs import CIFSService
-from .ctdb import CTDBService
 from .discovery import DiscoveryService
 from .docker import DockerService
 from .ftp import FTPService
@@ -39,6 +38,7 @@ from .snmp import SNMPService
 from .ssh import SSHService
 from .sssd import SSSDService
 from .truecommand import TruecommandService
+from .truenas_smbhad import TruenasSmbhadService
 from .truenas_zfstierd import TruenasZfstierdService
 from .truesearch import TruesearchService
 from .ups import UPSService
@@ -47,7 +47,6 @@ from .zettarepl import ZettareplService
 
 all_services = [
     CIFSService,
-    CTDBService,
     DiscoveryService,
     DockerService,
     FTPService,
@@ -86,6 +85,7 @@ all_services = [
     TimeservicesService,
     TruecommandService,
     TruesearchService,
+    TruenasSmbhadService,
     TruenasZfstierdService,
     UserService,
     TrueNASS3Service,

@@ -1249,12 +1249,7 @@ async def service_remote(middleware, service, verb, options):
         # to not replicate to the remote controller
         return
 
-    to_skip = set(BACKUP_STOP_SERVICES)
-
-    if (await middleware.call('smb.config'))['stateful_failover']:
-        to_skip.remove('cifs')
-
-    if service in to_skip:
+    if service in BACKUP_STOP_SERVICES:
         # service should not run on standby controller
         return
 
@@ -1338,14 +1333,19 @@ def mismatch_nics(
     return missing_local, missing_remote
 
 
-class CtdbLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'ctdb'
-    etc_groups = ('ctdb',)
-    service = 'ctdb'
-    # RESTART, not RELOAD: the reload path regenerates config but returns without starting a unit
-    # that is not running, and ctdb is stopped on a node that has only just become licensed.
-    action = LicenseReconcileAction.RESTART
+class TruenasSmbhadLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'truenas_smbhad'
+    etc_groups = ('truenas_smbhad',)
+    service = 'truenas_smbhad'
+    action = LicenseReconcileAction.RELOAD
     order = 0
+
+    async def should_run(self, middleware):
+        """
+        Reload only if the license changed the config file. A reload makes the primary resync
+        the standby.
+        """
+        return bool(await middleware.call('etc.generate', 'truenas_smbhad'))
 
 
 async def setup(middleware):
@@ -1378,7 +1378,7 @@ async def setup(middleware):
 
     await middleware.call2(
         middleware.services.truenas.license.register_reconcile_delegate,
-        CtdbLicenseReconcileDelegate(),
+        TruenasSmbhadLicenseReconcileDelegate(),
     )
 
     # Register callbacks to properly refresh HA status and send events on changes

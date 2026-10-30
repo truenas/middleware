@@ -865,8 +865,7 @@ class DirectoryServices(ConfigService):
         Each step is idempotent so a follow-up call from _ad_cleanup / _ipa_cleanup
         is harmless. Synchronous because every step is either a quick datastore call
         or a quick TDB op -- middleware.call() runs us in the io thread pool. """
-        smb_config = self.middleware.call_sync('smb.config')
-        workgroup = smb_config['workgroup']
+        workgroup = self.middleware.call_sync('smb.config')['workgroup']
 
         realm = None
         if old_kerberos_realm_id is not None:
@@ -880,9 +879,7 @@ class DirectoryServices(ConfigService):
         # workgroup + realm, leaving local-only keys (SAM/SID, SECRETS/GUID,
         # SECRETS/LOCAL_SCHANNEL_KEY, etc.) intact. Mirrors what samba's
         # `secrets_delete_machine_password_ex` does on `net ads leave`.
-        delete_machine_account_secrets(
-            workgroup, realm, smb_config['stateful_failover']
-        )
+        delete_machine_account_secrets(workgroup, realm)
 
         # DB-stored backup of secrets.tdb. Cleared by setting cifs.secrets to NULL.
         # The cifs row id is hardcoded as 1 (single-row table) consistent with the

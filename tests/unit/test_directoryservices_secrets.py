@@ -27,15 +27,14 @@ from middlewared.utils.tdb import TDBDataType, get_tdb_handle, keys_are_null_ter
 @pytest.fixture
 def secrets_tdb(secrets_service, tmp_path, monkeypatch):
     """
-    Point the secrets service at a real, empty secrets.tdb in a temp dir and run in
-    non-clustered mode. The tdb is opened O_RDWR without O_CREAT, so it must exist first.
+    Point the secrets service at a real, empty secrets.tdb in a temp dir. The tdb is
+    opened O_RDWR without O_CREAT, so it must exist first.
     """
     tdb_path = str(tmp_path / 'secrets.tdb')
     tdb.Tdb(tdb_path, 0, tdb.DEFAULT, os.O_CREAT | os.O_RDWR, 0o600).close()
     monkeypatch.setattr(
         secrets_mod, 'SECRETS_TDB_CONFIG', (tdb_path, secrets_mod.SECRETS_TDB_OPTIONS)
     )
-    secrets_service.middleware.call_sync = MagicMock(return_value={'stateful_failover': False})
     return secrets_service
 
 
@@ -222,8 +221,6 @@ def test__last_password_change_real_tdb_roundtrip(secrets_service, tmp_path, mon
     with get_tdb_handle(tdb_path, secrets_mod.SECRETS_TDB_OPTIONS) as hdl:
         hdl.store(key, b64encode(struct.pack('<L', 1718800000)).decode())
 
-    secrets_service.middleware.call_sync = MagicMock(return_value={'stateful_failover': False})
-
     assert secrets_service.last_password_change('msc') == 1718800000
 
 
@@ -326,8 +323,8 @@ def test__ipa_cred_version_absent_reads_as_zero(secrets_tdb):
 ])
 def test__keys_are_null_terminated_conventions(name, data_type, expected):
     """
-    Lock the per-database key convention that both TDB access paths share. A regression
-    that flips secrets.tdb back to null-terminated re-breaks winbindd on stateful failover.
+    Lock the per-database key convention. A regression that null-terminates secrets.tdb
+    keys makes samba's secrets_fetch() miss them and breaks winbindd.
     """
     assert keys_are_null_terminated(name, data_type) is expected
 

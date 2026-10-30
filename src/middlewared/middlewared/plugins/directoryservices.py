@@ -123,31 +123,23 @@ class DirectoryServices(Service):
         return {"dbconfig": stored_ts, "secrets": passwd_ts}
 
     @private
-    def restart_dependent_services(self, reload_services=None):
+    def restart_dependent_services(self):
         # System services that should be started
         for svc in PREREQUISITE_SERVICES:
             self.call_sync2(self.s.service.control, 'START', svc).wait_sync(raise_error=True)
-
-        to_reload = reload_services or []
 
         # Dependent protocols
         for svc in self.call_sync2(self.s.service.query, [['OR', [
             ['enable', '=', True],
             ['state', '=', 'RUNNING']
         ]], ['service', 'in', DEPENDENT_SERVICES]]):
-
-            if svc.state == 'RUNNING' and svc.service in to_reload:
-                verb = 'RELOAD'
-            else:
-                verb = 'RESTART'
-
             self.call_sync2(
-                self.s.service.control, verb, svc.service, ServiceOptions(**DEF_SVC_OPTS)
+                self.s.service.control, 'RESTART', svc.service, ServiceOptions(**DEF_SVC_OPTS)
             ).wait_sync(raise_error=True)
 
     @private
     @job(lock='ds_init', lock_queue_size=1)
-    def setup(self, job, init=False):
+    def setup(self, job):
         """
         Set up directory services and NSS for the server. This handles NFS and SMB startup as well
         on the active storage controller
@@ -176,18 +168,14 @@ class DirectoryServices(Service):
                 cache_refresh.wait_sync()
 
             job.set_progress(75, 'Restarting dependent services')
-            reload_services = []
-            if not init:
-                if self.middleware.call_sync('smb.config')['stateful_failover']:
-                    reload_services.append('cifs')
-
-            self.restart_dependent_services(reload_services)
+            # Restart, not reload: smbd restores SMB durable handles only at startup
+            self.restart_dependent_services()
 
         job.set_progress(100, 'Setup complete')
 
 
 async def __init_directory_services(middleware, event_type, args):
-    await middleware.call('directoryservices.setup', True)
+    await middleware.call('directoryservices.setup')
 
 
 async def setup(middleware):

@@ -20,9 +20,7 @@ from middlewared.utils.tdb import (
 
 SECRETS_FILE = os.path.join(SMBPath.PRIVATEDIR.path, 'secrets.tdb')
 SECRETS_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
-SECRETS_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
 SECRETS_TDB_CONFIG = (SECRETS_FILE, SECRETS_TDB_OPTIONS)
-SECRETS_CTDB_CONFIG = ('secrets.tdb', SECRETS_CTDB_OPTIONS)
 
 # TrueNAS-private secrets.tdb key (namespaced away from samba's SECRETS/* keys) recording
 # the version of the IPA SMB machine-account credential last written for a domain.
@@ -53,26 +51,22 @@ class Secrets(enum.Enum):
     AUTH_PASSWORD = 'SECRETS/AUTH_PASSWORD'
 
 
-def _secrets_config(cluster: bool) -> tuple[str, TDBOptions]:
-    return SECRETS_CTDB_CONFIG if cluster else SECRETS_TDB_CONFIG
-
-
-def fetch_secrets_entry(key: str, cluster: bool) -> str:
-    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
+def fetch_secrets_entry(key: str) -> str:
+    with get_tdb_handle(*SECRETS_TDB_CONFIG) as hdl:
         return hdl.get(key)
 
 
-def store_secrets_entry(key: str, val: str, cluster: bool) -> str:
-    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
+def store_secrets_entry(key: str, val: str) -> str:
+    with get_tdb_handle(*SECRETS_TDB_CONFIG) as hdl:
         return hdl.store(key, val)
 
 
-def query_secrets_entries(filters: list, options: dict, cluster: bool) -> list:
-    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
+def query_secrets_entries(filters: list, options: dict) -> list:
+    with get_tdb_handle(*SECRETS_TDB_CONFIG) as hdl:
         return filter_list(hdl.entries(), filters, options)
 
 
-def delete_machine_account_secrets(workgroup: str, realm: str | None, cluster: bool) -> None:
+def delete_machine_account_secrets(workgroup: str, realm: str | None) -> None:
     """ Surgical delete of the AD/IPA bind keys for ``workgroup`` (and ``realm`` if
     provided). Mirrors samba's ``secrets_delete_machine_password_ex``: removes the
     machine-account password / sec channel / domain SID / domain GUID / DES salt
@@ -95,18 +89,13 @@ def delete_machine_account_secrets(workgroup: str, realm: str | None, cluster: b
     if realm:
         keys.append(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
 
-    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
+    with get_tdb_handle(*SECRETS_TDB_CONFIG) as hdl:
         for key in keys:
             try:
                 hdl.delete(key)
             except (MatchNotFound, RuntimeError):
                 # Idempotent: keys we never set or that samba already cleaned up are fine
                 pass
-
-
-def sync_with_tdb_secrets() -> None:
-    with get_tdb_handle(*_secrets_config(True)) as hdl:
-        hdl.sync_with_tdb(SECRETS_FILE)
 
 
 class DomainSecrets(Service):
@@ -120,9 +109,8 @@ class DomainSecrets(Service):
         """
         Check whether running version of secrets.tdb has our machine account password
         """
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         try:
-            fetch_secrets_entry(f"{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}", cluster)
+            fetch_secrets_entry(f"{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}")
         except MatchNotFound:
             return False
 
@@ -133,9 +121,8 @@ class DomainSecrets(Service):
         Retrieve the SID for the specified domain from secrets.tdb
         and return it as a SID string (e.g. 'S-1-5-21-x-y-z').
         """
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         encoded_sid = fetch_secrets_entry(
-            f"{Secrets.DOMAIN_SID.value}/{domain.upper()}", cluster
+            f"{Secrets.DOMAIN_SID.value}/{domain.upper()}"
         )
         return raw_sid_to_str(b64decode(encoded_sid))
 
@@ -144,9 +131,8 @@ class DomainSecrets(Service):
         Retrieve the last password change timestamp for the specified domain.
         Raises MatchNotFound if entry is not present in secrets.tdb
         """
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         encoded_change_ts = fetch_secrets_entry(
-            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", cluster
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}"
         )
         try:
             bytes_passwd_chng = b64decode(encoded_change_ts)
@@ -163,14 +149,13 @@ class DomainSecrets(Service):
         # in-sync. `secret` is the raw machine-account password bytes (the same value used
         # to derive the SMB keytab); it is piped verbatim to `net changesecretpw` and must
         # not be base64- or otherwise encoded, or SMB machine authentication will fail.
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
-            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00").decode(), cluster
+            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00").decode()
         )
 
         # Password changed field must be initialized (but otherwise is not required)
         store_secrets_entry(
-            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00").decode(), cluster
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00").decode()
         )
 
         setsecret = subprocess.run(
@@ -184,7 +169,7 @@ class DomainSecrets(Service):
         # this secret incorrectly can be detected and healed after an upgrade.
         store_secrets_entry(
             f'{IPA_SMB_CRED_VERSION_KEY}/{domain.upper()}',
-            b64encode(str(IPA_SMB_CRED_VERSION).encode()).decode(), cluster
+            b64encode(str(IPA_SMB_CRED_VERSION).encode()).decode()
         )
 
     def ipa_cred_version(self, domain):
@@ -194,9 +179,8 @@ class DomainSecrets(Service):
         credential was written by a build predating version tracking and should be
         regenerated).
         """
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         try:
-            encoded = fetch_secrets_entry(f'{IPA_SMB_CRED_VERSION_KEY}/{domain.upper()}', cluster)
+            encoded = fetch_secrets_entry(f'{IPA_SMB_CRED_VERSION_KEY}/{domain.upper()}')
         except MatchNotFound:
             return 0
 
@@ -210,48 +194,29 @@ class DomainSecrets(Service):
         Some idmap backends (ldap and rfc2307) store credentials in secrets.tdb.
         This method is used by idmap plugin to write the password.
         """
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
             f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}',
-            b64encode(secret.encode() + b'\x00').decode(), cluster
+            b64encode(secret.encode() + b'\x00').decode()
         )
 
     def get_ldap_idmap_secret(self, domain, user_dn):
         """
         Retrieve idmap secret for the specifed domain and user dn.
         """
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
-        return fetch_secrets_entry(f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}', cluster)
+        return fetch_secrets_entry(f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}')
 
     def get_machine_secret(self, domain):
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
-        return fetch_secrets_entry(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', cluster)
+        return fetch_secrets_entry(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}')
 
     def get_salting_principal(self, realm):
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
-        return fetch_secrets_entry(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}', cluster)
+        return fetch_secrets_entry(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
 
     def dump(self):
         """
         Dump contents of secrets.tdb. Values are base64-encoded
         """
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
-        entries = query_secrets_entries([], {}, cluster)
+        entries = query_secrets_entries([], {})
         return {entry['key']: entry['value'] for entry in entries}
-
-    def sync_to_ctdb(self):
-        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
-        if not cluster:
-            raise CallError("Stateful failover is not enabled")
-
-        if not self.middleware.call_sync('failover.is_single_master_node'):
-            raise CallError("This may only be called by active controller")
-
-        try:
-            sync_with_tdb_secrets()
-        except FileNotFoundError:
-            self.logger.info("Local secrets file not found. Falling back to restore from database.")
-            self.middleware.call_sync("directoryservices.secrets.restore")
 
     async def get_db_secrets(self):
         """
@@ -334,9 +299,8 @@ class DomainSecrets(Service):
                                 netbios_name)
             return False
 
-        cluster = (await self.middleware.call('smb.config'))['stateful_failover']
         self.logger.debug('Restoring secrets.tdb for %s', netbios_name)
         for key, value in server_secrets.items():
-            await self.middleware.run_in_thread(store_secrets_entry, key, value, cluster)
+            await self.middleware.run_in_thread(store_secrets_entry, key, value)
 
         return True
