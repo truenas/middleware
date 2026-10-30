@@ -31,12 +31,17 @@ def acl_is_present(xat_list: list[str]) -> bool:
     return bool(set(xat_list) & ACL_XATTRS)
 
 
-def zfs_acl_is_trivial(st: truenas_os.StatxResult) -> bool:
+def statx_acl_is_trivial(st: truenas_os.StatxResult) -> bool:
     """
-    True if ZFS reported a trivial NFSv4 ACL via statx, in which case there is
-    no ACL to find and listxattr can be skipped. False is not conclusive: ZFS
-    only reports this on NFSv4 ACL datasets.
+    True if statx says the file has no ACL beyond its mode, in which case there
+    is no ACL to find and listxattr can be skipped. On a POSIX ACL dataset the
+    TrueNAS kernel answers STATX_ACL from the ACLs the inode caches, with a bit
+    for an access ACL and one for a default ACL. On an NFSv4 ACL dataset ZFS
+    reports a trivial ACL in stx_zfsflags. False is not conclusive.
     """
+    if st.stx_mask & truenas_os.STATX_ACL:
+        return not st.stx_attributes & (truenas_os.STATX_ATTR_ACL_ACCESS | truenas_os.STATX_ATTR_ACL_DEFAULT)
+
     return bool(st.stx_mask & truenas_os.STATX_ZFSFLAGS and st.stx_zfsflags & truenas_os.ZFSFlags.ACL_TRIVIAL)
 
 

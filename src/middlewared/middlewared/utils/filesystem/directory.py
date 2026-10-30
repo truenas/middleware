@@ -17,7 +17,7 @@ from collections import namedtuple
 from collections.abc import Callable
 from typing import Any, Generic, Literal, TypeVar, overload
 from truenas_os import AT_EMPTY_PATH, AT_FDCWD, openat2, RESOLVE_NO_SYMLINKS, STATX_ZFSFLAGS, statx, StatxResult
-from .acl import acl_is_present, zfs_acl_is_trivial
+from .acl import acl_is_present, statx_acl_is_trivial
 from .attrs import zfs_attributes_dump
 from .constants import FileType
 from .stat_x import statx_entry_impl, StatxEntryResult, STATX_DEFAULT_MASK
@@ -311,7 +311,7 @@ class DirectoryIterator(Generic[T_DirEntry]):
 
             if self.__request_mask & int(DirectoryRequestMask.ACL):
                 # try to avoid listing xattrs twice
-                acl = not zfs_acl_is_trivial(st['st']) and acl_is_present(
+                acl = not statx_acl_is_trivial(st['st']) and acl_is_present(
                     os.listxattr(fd) if xattrs is None else xattrs
                 )
             else:
