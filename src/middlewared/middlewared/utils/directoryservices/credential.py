@@ -123,7 +123,24 @@ def kinit_with_cred(
     return gss_dump_cred(cred)
 
 
-def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationErrors, revert: list):
+def get_time_advice(middleware) -> str:
+    """Advice for a clock that disagrees with the domain controller's, which depends on our NTP servers."""
+    try:
+        return middleware.call_sync('system.ntpserver.domain_clock_advice')
+    except Exception:
+        # Only advice: never let it fail what reports the clock skew
+        middleware.logger.warning('ntp: failed to determine advice for clock skew', exc_info=True)
+        return ''
+
+
+def with_time_advice(message: str, time_advice: str) -> str:
+    """Append advice on fixing a clock that disagrees with the domain controller's, if there is any."""
+    return f'{message} {time_advice}' if time_advice else message
+
+
+def write_temporary_kerberos_config(
+    schema: str, new: dict, verrors: ValidationErrors, revert: list, time_advice: str = ''
+):
     """
     This method generates a kerberos configuration file that is written in such a way as to
     force TrueNAS to only use a single KDC and to avoid DNS lookups. This is to stabilize
@@ -152,7 +169,9 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
             if abs(domain_info['server_time_offset']) > MAX_TIME_OFFSET:
                 verrors.add(
                     f'{schema}.configuration.domain',
-                    'Time offset from the domain controller exceeds the maximum permitted value.'
+                    with_time_advice(
+                        'Time offset from the domain controller exceeds the maximum permitted value.', time_advice
+                    )
                 )
                 return False
 
@@ -233,13 +252,15 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
     return True
 
 
-def __validate_kerberos_credential(schema: str, new: dict, verrors: ValidationErrors, revert: list):
+def __validate_kerberos_credential(
+    schema: str, new: dict, verrors: ValidationErrors, revert: list, time_advice: str = ''
+):
     cred = new['credential']
     krb_cred = cred['credential_type']
 
     # Write out a temporary kerberos config that gives the best chance of
     # success in finding a domain controller
-    if not write_temporary_kerberos_config(schema, new, verrors, revert):
+    if not write_temporary_kerberos_config(schema, new, verrors, revert, time_advice):
         # Failed to write our kerberos config so we'll bail. ValidationErrors are set by called method.
         return
 
@@ -288,9 +309,10 @@ def __validate_kerberos_credential(schema: str, new: dict, verrors: ValidationEr
                 )
             case KRB5ErrCode.KRB5KRB_AP_ERR_SKEW:
                 # This may be more restrictive than our hard-coded 3 minute default
-                msg = (
+                msg = with_time_advice(
                     'The time difference from the domain controller is more than the maximum value allowed by the '
-                    'domain controller.'
+                    'domain controller.',
+                    time_advice,
                 )
             case KRB5ErrCode.KRB5KDC_ERR_PREAUTH_FAILED:
                 if krb_cred == DSCredType.KERBEROS_PRINCIPAL:
@@ -422,11 +444,13 @@ def validate_ldap_credential(schema, new, verrors, revert):
             )
 
 
-def validate_credential(schema: str, new: dict, verrors: ValidationErrors, revert: list):
+def validate_credential(schema: str, new: dict, verrors: ValidationErrors, revert: list, time_advice: str = ''):
     """
     Validate credentials provided in `new`. This is primarily called from
     within directoryservices.update. Errors detected will be inserted into
     `verrors` and steps to revert will be appended to the `revert` list.
+    `time_advice` is appended to errors about the clock disagreeing with the
+    domain controller's.
     """
 
     if new['credential'] is None:
@@ -437,7 +461,7 @@ def validate_credential(schema: str, new: dict, verrors: ValidationErrors, rever
 
     match cred:
         case DSCredType.KERBEROS_USER | DSCredType.KERBEROS_PRINCIPAL:
-            __validate_kerberos_credential(schema, new, verrors, revert)
+            __validate_kerberos_credential(schema, new, verrors, revert, time_advice)
         case DSCredType.LDAP_PLAIN | DSCredType.LDAP_ANONYMOUS | DSCredType.LDAP_MTLS:
             validate_ldap_credential(schema, new, verrors, revert)
         case _:
