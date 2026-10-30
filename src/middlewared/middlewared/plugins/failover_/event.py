@@ -1118,7 +1118,14 @@ class FailoverEventsService(Service):
                     else:
                         self.run_call('service.control', 'START', 'iscsitarget', self.HA_PROPAGATE, job=True)
                 else:
-                    self.run_call('service.control', 'START', 'iscsitarget', self.HA_PROPAGATE, job=True)
+                    # A node demoted without a reboot still has lio_ha loaded
+                    # from when it was ACTIVE, with forwarding cleared.
+                    # Restarting reloads it as STANDBY; START would leave it.
+                    if self.run_call('iscsi.lio.forwarding_cleared'):
+                        logger.info('Restarting iSCSI to reload lio_ha as STANDBY')
+                        self.run_call('service.control', 'RESTART', 'iscsitarget', self.HA_PROPAGATE, job=True)
+                    else:
+                        self.run_call('service.control', 'START', 'iscsitarget', self.HA_PROPAGATE, job=True)
                     self.run_call('iscsi.lio.set_alua_transitioning')
 
         if self.run_call('nvmet.global.ana_active') and self.run_call('service.started_or_enabled', 'nvmet'):
