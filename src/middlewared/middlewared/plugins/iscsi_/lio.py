@@ -234,6 +234,20 @@ class iSCSILIOService(Service):
             return 'disconnected'
 
     @private
+    def forwarding_cleared(self) -> bool:
+        """True if lio_ha is loaded with forward_active 0.
+
+        On a node that is to be STANDBY this means lio_ha is left over from
+        when the node was ACTIVE: it does not forward, and the kernel refuses
+        to set forward_active again, so lio_ha must be reloaded (by
+        restarting iscsitarget) to load it with default_forward_active=1.
+        """
+        try:
+            return (LIO_HA_DIR / 'forward_active').read_text().strip() == '0'
+        except OSError:
+            return False
+
+    @private
     def become_active(self):
         """Write forward_active=0 to trigger LIO HA failover on this node.
 
