@@ -473,9 +473,10 @@ def test_app_with_unusable_metadata_is_reported_and_deletable(docker_pool, corru
         assert used_ports, app_info
         assert used_ports[0]["host_ports"][0]["host_port"] in call("app.used_ports")
 
-        # One broken app must not take the rest of the apps subsystem down with it
+        # One broken app must not take the rest of the apps subsystem down with it. Count rather than
+        # filter by name, since `app.available` omits non-preferred trains (e.g. community on HA).
+        assert call("app.available", [], {"count": True}) != 0
         assert call("app.query")
-        assert call("app.available", [["name", "=", app_name]])
 
         for method, args, is_job in (
             ("app.start", [app_name], True),
