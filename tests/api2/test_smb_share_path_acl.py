@@ -30,10 +30,9 @@ def fs_tree():
                         call('service.control', 'STOP', 'cifs', job=True)
 
 
-def test__verror_share_create_acltype(fs_tree):
-    with pytest.raises(Exception, match='ACL type mismatch with child mountpoint'):
-        with smb_share(fs_tree['mountpoint1'], 'test_share_path'):
-            pass
+def test__share_create_mixed_acltype_allowed(fs_tree):
+    with smb_share(fs_tree['mountpoint1'], 'test_share_path'):
+        pass
 
 
 def test__share_create_subdir_allowed(fs_tree):
@@ -46,7 +45,6 @@ def test__share_create_child_allowed(fs_tree):
         pass
 
 
-def test__verror_share_update_acltype(fs_tree):
+def test__share_update_mixed_acltype_allowed(fs_tree):
     with smb_share(fs_tree['subdir'], 'test_share_path') as share:
-        with pytest.raises(Exception, match='ACL type mismatch with child mountpoint'):
-            call('sharing.smb.update', share['id'], {'path': fs_tree['mountpoint1']})
+        call('sharing.smb.update', share['id'], {'path': fs_tree['mountpoint1']})

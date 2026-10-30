@@ -127,10 +127,8 @@ def __parse_share_fs_acl(share_path: str, vfs_objects: set) -> None:
         return
 
     match (acltype := path_get_acltype(share_path)):
-        case FS_ACL_Type.POSIX1E:
-            # We're relying on default samba POSIX ACL processing to handle ACLs.
-            pass
-        case FS_ACL_Type.NFS4:
+        case FS_ACL_Type.POSIX1E | FS_ACL_Type.NFS4:
+            # ixnas passes files with POSIX ACLs to the default samba handling.
             vfs_objects.add(TrueNASVfsObjects.IXNAS)
         case FS_ACL_Type.DISABLED:
             raise NotImplementedError

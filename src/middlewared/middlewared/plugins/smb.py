@@ -1297,14 +1297,6 @@ class SharingSMBService(SharingService):
             if '@' in mnt['mount_source']:
                 return
 
-            child_acltype = get_acl_type(mnt['super_opts'])
-            if child_acltype != current_acltype:
-                verrors.add(
-                    schema,
-                    f'ACL type mismatch with child mountpoint at {mnt["mountpoint"]}: '
-                    f'{this_mnt["mount_source"]} - {current_acltype}, {mnt["mount_source"]} - {child_acltype}'
-                )
-
             if mnt['fs_type'] != 'zfs':
                 verrors.add(
                     schema, f'{mnt["mountpoint"]}: child mount is not a ZFS dataset.'
@@ -1314,15 +1306,6 @@ class SharingSMBService(SharingService):
                 verrors.add(
                     schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
                 )
-
-        def get_acl_type(sb_info):
-            if 'NFS4ACL' in sb_info:
-                return 'NFSV4'
-
-            if 'POSIXACL' in sb_info:
-                return 'POSIX'
-
-            return 'OFF'
 
         st = self.middleware.call_sync('filesystem.stat', path)
         if st.type == 'SYMLINK':
@@ -1343,8 +1326,6 @@ class SharingSMBService(SharingService):
 
         if 'XATTR' not in this_mnt['super_opts']:
             verrors.add(schema, 'Extended attribute support is required for SMB shares')
-
-        current_acltype = get_acl_type(this_mnt['super_opts'])
 
         for child in iter_mountinfo(target_mnt_id=this_mnt['mount_id']):
             # The child filesystem may or may not be mounted under the SMB share. Two relevant
