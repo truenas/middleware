@@ -40,7 +40,7 @@ from middlewared.api.current import (
     UserGetUserObj,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import LicenseDelegate, touches
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_GROUP_PREFIX, SID_LOCAL_USER_PREFIX
 from middlewared.plugins.smb_.constants import (
@@ -657,7 +657,9 @@ class SMBService(ConfigService):
                 )
 
         if SearchProtocol.SPOTLIGHT in new['search_protocols']:
-            if reasons := await self.call2(self.s.truesearch.unavailable_reasons):
+            if reasons := await self.call2(
+                self.s.truesearch.unavailable_reasons, SearchProtocol.SPOTLIGHT not in old['search_protocols']
+            ):
                 verrors.add(
                     'smb_update.search_protocols',
                     'Share indexing service is not available. ' + ' '.join(reasons)
@@ -996,7 +998,7 @@ class SharingSMBService(SharingService):
         old_aux = old[share_field.OPTS].get(share_field.AUX)
         new_aux = new[share_field.OPTS].get(share_field.AUX)
 
-        await self.validate(new, 'sharingsmb_update', verrors)
+        await self.validate(new, 'sharingsmb_update', verrors, old)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
 
@@ -1408,12 +1410,15 @@ class SharingSMBService(SharingService):
                     )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
-                entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SMB_BLOCK_CLONING)
-                if not entitlement.entitled:
-                    verrors.add(
-                        f'{schema_name}.{share_field.PURPOSE}',
-                        entitlement.message
+                if old is None or old[share_field.PURPOSE] != SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+                    entitlement = await self.call2(
+                        self.s.truenas.entitlements.check, LicenseFeature.SMB_BLOCK_CLONING
                     )
+                    if not entitlement.entitled:
+                        verrors.add(
+                            f'{schema_name}.{share_field.PURPOSE}',
+                            entitlement.message
+                        )
                 bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH])).blocksize
                 if bsize != VEEAM_REPO_BLOCKSIZE:
                     verrors.add(
@@ -2007,12 +2012,28 @@ def create_samba_directories(middleware):
                 os.chown(p.path, 0, 0)
 
 
-class SMBLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'smb'
-    etc_groups = ('smb',)
-    service = 'cifs'
-    action = LicenseReconcileAction.RELOAD
-    order = 20
+async def hook_license_update_cifs(middleware, *args, changed=None, **kwargs):
+    if touches(changed, LicenseFeature.HA):
+        await (await middleware.call2(
+            middleware.services.service.control, 'RELOAD', 'cifs', ServiceOptions(ha_propagate=False),
+        )).wait(raise_error=True)
+
+
+class SmbBlockCloningLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.SMB_BLOCK_CLONING
+
+    async def alert_lines(self, in_grace):
+        shares = await self.middleware.call(
+            'sharing.smb.query', [['purpose', '=', 'VEEAM_REPOSITORY_SHARE']]
+        )
+        if not shares:
+            return []
+        names = ', '.join(sorted(share['name'] for share in shares))
+        return [
+            f'SMB: block cloning on Veeam repository shares {names} stops at the next SMB settings write because '
+            'the system is not licensed for SMB block cloning. Veeam synthetic full backups will then take full '
+            'space and time.'
+        ]
 
 
 async def setup(middleware):
@@ -2026,7 +2047,7 @@ async def setup(middleware):
         middleware.services.zfs.resource.register_attachment_delegate, SMBFSAttachmentDelegate(middleware)
     )
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    middleware.register_hook('system.post_license_update', hook_license_update_cifs)
     await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        SMBLicenseReconcileDelegate(),
+        middleware.services.truenas.entitlements.register_license_delegate, SmbBlockCloningLicenseDelegate(middleware)
     )

@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import pytest
 
 from middlewared.api.current import (
@@ -209,3 +211,10 @@ async def test_start_on_import_starts_autostart_vm():
 async def test_start_on_import_skips_non_autostart_vm():
     # A pool being re-imported must not boot VMs the user never asked to autostart
     assert await StartOnUnlockDriver("STOPPED", autostart=False).run_import() == []
+
+
+@pytest.mark.asyncio
+async def test_unlock_does_not_bounce_running_vm_when_not_entitled():
+    driver = StartOnUnlockDriver("RUNNING")
+    driver.middleware.services.truenas.entitlements.check = lambda feature: Mock(entitled=False)
+    assert await driver.run() == []

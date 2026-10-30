@@ -1,4 +1,7 @@
-from typing import Any
+from __future__ import annotations
+
+import asyncio
+from typing import TYPE_CHECKING, Any
 
 from truenas_pylicensed import verify
 
@@ -14,7 +17,7 @@ from middlewared.api.current import (
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
-from middlewared.plugins.truenas.entitlement_usage import PROBES
+from middlewared.plugins.truenas import entitlements_grace as grace
 from middlewared.service import CallError, Service, private
 from middlewared.utils.entitlements import (
     POLICY,
@@ -26,6 +29,10 @@ from middlewared.utils.entitlements import (
 )
 from middlewared.utils.hardware import get_hardware_info
 from middlewared.utils.license import LicenseOrigin, describe_legacy_license
+
+if TYPE_CHECKING:
+    from middlewared.common.license_delegate import LicenseDelegate
+    from middlewared.main import Middleware
 
 
 def _entry(entitlement: Entitlement) -> EntitlementEntry:
@@ -50,6 +57,11 @@ class TrueNASEntitlementsService(Service):
     class Config:
         namespace = "truenas.entitlements"
         cli_private = True
+
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
+        self._delegates: dict[str, LicenseDelegate] = {}
+        self._grace_lock = asyncio.Lock()
 
     @api_method(
         TrueNASEntitlementsCheckArgs,
@@ -180,42 +192,21 @@ class TrueNASEntitlementsService(Service):
         return info
 
     @private
-    async def usage(self) -> dict[str, Any]:
-        """Report every gated feature's entitlement alongside whether this system is configured to
-        use it. `in_use` mirrors `entitled` for `SUPPORT`, which leaves no configuration behind to
-        observe, and for any feature whose probe failed, which also carries an `error`.
-        `CATALOG_ENTERPRISE_TRAIN` and `MISSION_CRITICAL` are set by the licensing hooks themselves, so
-        they read as in use on almost every licensed system."""
-        daemon_error: str | None = None
-        try:
-            features = (await self.call2(self.s.truenas.entitlements.info)).features
-        except Exception as e:
-            daemon_error = f"{type(e).__name__}: {e}"
-            features = {
-                str(key): EntitlementEntry(entitled=False, reason=Reason.NO_LICENSE.value, message="")
-                for key in POLICY
-            }
+    async def register_license_delegate(self, delegate: LicenseDelegate) -> None:
+        grace.register(self._delegates, delegate)
 
-        usage: dict[str, Any] = {}
-        for key, entitlement in features.items():
-            in_use, error = await self._in_use(key, entitlement.entitled)
-            usage[key] = {
-                "entitled": entitlement.entitled,
-                "reason": entitlement.reason,
-                "message": entitlement.message,
-                "in_use": in_use,
-                "error": error or daemon_error,
-            }
+    @private
+    def serving(self, feature: str) -> bool:
+        return grace.serving(self.context, feature)
 
-        return usage
+    @private
+    async def license_changed(self, before: frozenset[str], after: frozenset[str], compute: bool) -> None:
+        await grace.license_changed(self.context, self._delegates, self._grace_lock, before, after, compute)
 
-    async def _in_use(self, key: str, entitled: bool) -> tuple[bool, str | None]:
-        probe = PROBES.get(key)
-        if probe is None:
-            return entitled, None
+    @private
+    async def cut_service(self, service: str) -> None:
+        await grace.cut_service(self.context, self._delegates, self._grace_lock, service)
 
-        try:
-            return await probe(self.context), None
-        except Exception as e:
-            self.logger.warning("%s: unable to determine whether feature is in use", key, exc_info=True)
-            return entitled, f"{type(e).__name__}: {e}"
+    @private
+    async def refresh_alert(self) -> None:
+        await grace.refresh_alert(self.context, self._delegates, self._grace_lock, None)

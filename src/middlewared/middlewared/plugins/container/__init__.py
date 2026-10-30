@@ -3,6 +3,8 @@ from __future__ import annotations
 import functools
 from typing import TYPE_CHECKING, Any
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerCreate,
@@ -27,7 +29,7 @@ from middlewared.api.current import (
     ContainerUpdateResult,
     ZFSResourceQuery,
 )
-from middlewared.service import GenericCRUDService, job, private
+from middlewared.service import CallError, GenericCRUDService, job, private
 from middlewared.utils.types import AuditCallback
 
 from .container_device import ContainerDeviceService
@@ -123,6 +125,8 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     @api_method(ContainerStartArgs, ContainerStartResult, roles=['CONTAINER_WRITE'], check_annotations=True)
     def start(self, id_: int) -> None:
         """Start container."""
+        if not self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.CONTAINERS).entitled:
+            raise CallError('System is not licensed to use containers.')
         return start_container(self.context, id_)
 
     @api_method(ContainerStopArgs, ContainerStopResult, roles=['CONTAINER_WRITE'], check_annotations=True)

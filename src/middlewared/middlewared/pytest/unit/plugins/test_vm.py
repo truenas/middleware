@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import VMCreate, VMFlags
+from middlewared.api.current import VMCreate, VMEntry, VMFlags
 from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
@@ -59,6 +59,22 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(column, is_licens
     assert [e.errmsg for e in verrors.errors] == (
         [] if is_licensed else ['System is not licensed to use VMs']
     )
+
+
+@pytest.mark.asyncio
+async def test_vm_update_passes_unlicensed():
+    m = Middleware()
+    vm_svc = VMService(m)
+
+    install_entitlements_for_column(m, LicenseFeature.VMS, 'CE+L')
+    m['datastore.query'] = lambda *args, **kwargs: []
+
+    with patch('middlewared.plugins.vm.crud.vm_flags', new=MagicMock(return_value=VM_FLAGS)):
+        verrors = ValidationErrors()
+        data = VMCreate(**VM_PAYLOAD)
+        await vm_svc._svc_part.validate(verrors, 'vm_update', data, old=VMEntry.model_construct(**VM_PAYLOAD, id=1))
+
+    assert [e.errmsg for e in verrors.errors] == []
 
 
 @pytest.mark.parametrize('enable_secure_boot,bootloader_ovmf,expected_error', [

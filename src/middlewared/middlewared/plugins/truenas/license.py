@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 import os
 from typing import TYPE_CHECKING, Any
@@ -20,7 +22,8 @@ from middlewared.api.current import (
     TrueNASLicenseUploadOptions,
     TrueNASLicenseUploadResult,
 )
-from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService
+from middlewared.auth import TruenasNodeSessionManagerCredentials
+from middlewared.plugins.truenas.entitlements_grace import entitled_now, grace_compute
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import Service, ValidationError, private
 from middlewared.utils.license import (
@@ -35,6 +38,7 @@ from middlewared.utils.license import (
 )
 
 if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
     from middlewared.main import Middleware
 
 
@@ -77,7 +81,7 @@ def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
     )
 
 
-class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
+class TrueNASLicenseService(Service):
     class Config:
         namespace = "truenas.license"
         cli_private = True
@@ -88,11 +92,16 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         audit="License upload",
         roles=["FULL_ADMIN"],
         check_annotations=True,
+        pass_app=True,
     )
-    def upload(self, license_: Secret[LongNonEmptyString], options: TrueNASLicenseUploadOptions) -> None:
+    def upload(self, app: App, license_: Secret[LongNonEmptyString], options: TrueNASLicenseUploadOptions) -> None:
         """Upload a PEM-wrapped license file."""
         current = self.info_private()
         had_license = current is not None and current.origin is LicenseOrigin.ISSUED
+        before = entitled_now()
+        role = self.middleware.call_sync('failover.status')
+        from_peer = app is not None and isinstance(app.authenticated_credentials, TruenasNodeSessionManagerCredentials)
+        compute = grace_compute(role, from_peer)
 
         # `check_annotations` hands the method the undumped model value, so the PEM arrives still
         # boxed in the Secret that keeps it off the audit trail.
@@ -117,6 +126,8 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
             os.remove(LEGACY_LICENSE_FILE)
 
         get_legacy_license_info.cache_clear()
+        after = entitled_now()
+        self.call_sync2(self.s.truenas.entitlements.license_changed, before, after, compute)
 
         self.call_sync2(self.s.alert.alert_source_clear_run, "LicenseStatus")
 
@@ -129,7 +140,8 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
                     os.fchmod(f.fileno(), 0o600)
 
         self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update', had_license=had_license), wait=False,
+            self.middleware.call_hook('system.post_license_update', had_license=had_license, changed=before ^ after),
+            wait=False,
         )
 
     def _configure_ha_license(self) -> None:

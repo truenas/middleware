@@ -17,7 +17,7 @@ from middlewared.api.current import (
     QueryOptions,
 )
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.service import SystemServiceService, filterable_api_method
+from middlewared.service import SystemServiceService, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
 
 from . import debug, directories, status
@@ -70,6 +70,10 @@ class NFSService(SystemServiceService[NFSEntry]):
 
     async def config(self) -> NFSEntry:
         return await self._service_part.config()
+
+    @private
+    async def rdma_serving(self) -> bool:
+        return await self._service_part.rdma_serving()
 
     @api_method(NFSBindipChoicesArgs, NFSBindipChoicesResult, check_annotations=True)
     async def bindip_choices(self) -> dict[str, str]:

@@ -180,17 +180,18 @@ def test_create_requires_entitlement(base):
         assert "not licensed to use" in str(ve.value)
 
 
-def test_update_requires_entitlement_unless_share_is_disabled(base):
+def test_update_requires_entitlement_only_to_enable(base):
     with entitled("WEBSHARE"):
         share = call("sharing.webshare.create", {"name": "dept", "path": base})
 
     try:
         with entitled("WEBSHARE", False):
+            assert call("sharing.webshare.update", share["id"], {"name": "department"})["name"] == "department"
+            assert call("sharing.webshare.update", share["id"], {"enabled": False})["enabled"] is False
+
             with pytest.raises(ValidationErrors) as ve:
-                call("sharing.webshare.update", share["id"], {"name": "department"})
+                call("sharing.webshare.update", share["id"], {"enabled": True})
 
             assert "not licensed to use" in str(ve.value)
-
-            assert call("sharing.webshare.update", share["id"], {"enabled": False})["enabled"] is False
     finally:
         call("sharing.webshare.delete", share["id"])

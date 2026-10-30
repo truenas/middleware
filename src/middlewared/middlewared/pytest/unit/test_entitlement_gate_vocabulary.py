@@ -18,31 +18,47 @@ import pprint
 from middlewared.utils.entitlements import POLICY, DerivedEntitlement, LicenseFeature
 from middlewared.utils.python import get_middlewared_dir
 
-ENDPOINT = "truenas.entitlements.check"
+ENDPOINTS = ("truenas.entitlements.check", "truenas.entitlements.serving")
 
 VOCABULARIES = {"LicenseFeature": LicenseFeature, "DerivedEntitlement": DerivedEntitlement}
 
 # Every gate, as (path relative to the middlewared package, the vocabulary member it names).
 # `None` is a site that reaches the endpoint without naming one: a `method=` string or a mock.
 GATES = [
+    ("etc_files/systemd.py", "LicenseFeature.WEBSHARE"),
     ("etc_files/truenas_zfstierd.py", "LicenseFeature.ZFSTIER"),
     ("plugins/alert/runtime.py", "LicenseFeature.SUPPORT"),
+    ("plugins/apps/utils.py", "LicenseFeature.APPS"),
     ("plugins/catalog/config.py", "LicenseFeature.CATALOG_ENTERPRISE_TRAIN"),
     ("plugins/catalog/config.py", "LicenseFeature.CATALOG_ENTERPRISE_TRAIN"),
+    ("plugins/container/__init__.py", "LicenseFeature.CONTAINERS"),
+    ("plugins/container/attachments.py", "LicenseFeature.CONTAINERS"),
     ("plugins/container/info.py", "LicenseFeature.CONTAINERS"),
+    ("plugins/container/lifecycle.py", "LicenseFeature.CONTAINERS"),
     ("plugins/disk.py", "LicenseFeature.SED"),
+    ("plugins/docker/config.py", "LicenseFeature.APPS"),
     ("plugins/docker/service_utils.py", "LicenseFeature.APPS"),
+    ("plugins/docker/state_management.py", "LicenseFeature.APPS"),
+    ("plugins/etc.py", "LicenseFeature.NFS_SNAPSHOT"),
     ("plugins/etc.py", "LicenseFeature.SUPPORT"),
     ("plugins/fc/fc.py", "LicenseFeature.FIBRECHANNEL"),
+    ("plugins/fc/fc.py", "LicenseFeature.FIBRECHANNEL"),
+    ("plugins/iscsi_/iscsi_global.py", None),
     ("plugins/iscsi_/targets.py", "LicenseFeature.FIBRECHANNEL"),
+    ("plugins/kmip/config.py", "LicenseFeature.KMIP"),
     ("plugins/kmip/config.py", "LicenseFeature.KMIP"),
     ("plugins/network.py", "LicenseFeature.NETWORK_FEC"),
     ("plugins/nfs_/share_validate.py", "LicenseFeature.NFS_SNAPSHOT"),
     ("plugins/nvmet/global.py", "LicenseFeature.NVMEOF_SPDK"),
+    ("plugins/nvmet/global.py", "LicenseFeature.RDMA"),
     ("plugins/pool_/pool.py", "LicenseFeature.SUPPORT"),
     ("plugins/pool_/utils.py", "LicenseFeature.DEDUP"),
     ("plugins/rdma/rdma.py", "LicenseFeature.RDMA"),
+    ("plugins/rdma/rdma.py", "LicenseFeature.RDMA"),
     ("plugins/security/info.py", "LicenseFeature.STIG"),
+    ("plugins/service/__init__.py", "LicenseFeature.WEBSHARE"),
+    ("plugins/service/services/truesearch.py", "LicenseFeature.TRUESEARCH"),
+    ("plugins/service/services/webshare.py", "LicenseFeature.WEBSHARE"),
     ("plugins/smb.py", "LicenseFeature.SMB_BLOCK_CLONING"),
     ("plugins/smb.py", "LicenseFeature.SMB_BLOCK_CLONING"),
     ("plugins/support/__init__.py", "DerivedEntitlement.PROACTIVE_SUPPORT"),
@@ -51,15 +67,19 @@ GATES = [
     ("plugins/system/product.py", None),
     ("plugins/system/product.py", "LicenseFeature.SED"),
     ("plugins/system_general/update.py", "LicenseFeature.DIRECTORY_SERVICES_AUTH"),
+    ("plugins/truenas/entitlements_grace.py", None),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_VERSIONING"),
     ("plugins/truenas_s3/config.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/config.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truesearch.py", "LicenseFeature.TRUESEARCH"),
+    ("plugins/truesearch.py", "LicenseFeature.TRUESEARCH"),
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
+    ("plugins/vm/attachments.py", "LicenseFeature.VMS"),
     ("plugins/vm/info.py", "LicenseFeature.VMS"),
+    ("plugins/vm/lifecycle.py", "LicenseFeature.VMS"),
     ("plugins/webshare/sharing_validate.py", "LicenseFeature.WEBSHARE"),
     ("plugins/zfs/resource_create.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/resource_set.py", "LicenseFeature.DEDUP"),
@@ -89,11 +109,11 @@ def _dotted(node):
 def _names_the_endpoint(call):
     """Whether `call` hands the endpoint to something, by bound method or by name.
 
-    A gate reaches it as `<something>.truenas.entitlements.check` passed to `call2`, and
+    A gate reaches it as `<something>.truenas.entitlements.check` or `serving` passed to `call2`, and
     `plugins/etc.py` reaches it as a `method=` string on a `CtxMethod`.
     """
     for value in [*call.args, *(keyword.value for keyword in call.keywords)]:
-        if _literal(value) == ENDPOINT or (_dotted(value) or "").endswith(ENDPOINT):
+        if _literal(value) in ENDPOINTS or (_dotted(value) or "").endswith(ENDPOINTS):
             return True
     return False
 

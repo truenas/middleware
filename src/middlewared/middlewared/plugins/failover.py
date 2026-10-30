@@ -10,6 +10,8 @@ import shutil
 import stat
 import time
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
 from middlewared.api import Event, api_method
 from middlewared.api.base.handler.accept import validate_model
@@ -34,10 +36,11 @@ from middlewared.api.current import (
     FailoverUpdateResult,
     FailoverUpgradeArgs,
     FailoverUpgradeResult,
+    ServiceOptions,
     ZFSResourceEncryptionUnlockArgsData,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import touches
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
@@ -47,6 +50,7 @@ from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.system.reboot import RebootReason
+from middlewared.plugins.truenas.entitlements_grace import GRACE_KEY
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
@@ -1027,6 +1031,14 @@ class FailoverService(ConfigService):
                 )
             else:
                 await self.call2(self.s.alert.oneshot_delete, 'FailoverKMIPKeysSyncFailed', None)
+            try:
+                try:
+                    grace = await self.middleware.call('cache.get', GRACE_KEY)
+                except KeyError:
+                    grace = []
+                await self.middleware.call('failover.call_remote', 'cache.put', [GRACE_KEY, grace])
+            except Exception:
+                self.logger.error('Failed to sync license grace record with standby controller', exc_info=True)
 
 
 async def ha_permission(middleware, app):
@@ -1045,7 +1057,7 @@ async def hook_license_update_invalidate_status(middleware, *args, **kwargs):
 
     `status_refresh` rather than a bare cache drop because it also re-emits the status and
     disabled-reasons events. It can take seconds when the local node falls back to remote probes,
-    and it runs here so that cost lands outside any reconcile delegate's timeout.
+    and it runs here so that cost lands before the owner hooks run.
     """
     await middleware.call('failover.status_refresh')
 
@@ -1338,14 +1350,16 @@ def mismatch_nics(
     return missing_local, missing_remote
 
 
-class CtdbLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'ctdb'
-    etc_groups = ('ctdb',)
-    service = 'ctdb'
-    # RESTART, not RELOAD: the reload path regenerates config but returns without starting a unit
-    # that is not running, and ctdb is stopped on a node that has only just become licensed.
-    action = LicenseReconcileAction.RESTART
-    order = 0
+async def hook_license_update_ctdb(middleware, *args, changed=None, **kwargs):
+    if not touches(changed, LicenseFeature.HA):
+        return
+    await middleware.call('etc.generate', 'ctdb')
+    if await middleware.call('failover.licensed') and not await middleware.call2(
+        middleware.services.service.started, 'ctdb'
+    ):
+        await (await middleware.call2(
+            middleware.services.service.control, 'START', 'ctdb', ServiceOptions(ha_propagate=False),
+        )).wait(raise_error=True)
 
 
 async def setup(middleware):
@@ -1368,18 +1382,14 @@ async def setup(middleware):
     )
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
-    # This must stay ahead of the license reconcile pass, which runs at order=0. License sensitive
-    # etc groups read `failover.status` while rendering, so if this ordering is ever changed they
-    # will silently reconcile against the status cached under the old license.
+    # Must run before the default-order owner hooks: license-sensitive etc groups read failover.status
+    # while rendering, so they would render against the status cached under the old license.
     middleware.register_hook(
         'system.post_license_update', hook_license_update_invalidate_status, order=-100, sync=True
     )
     middleware.register_hook('service.pre_action', service_remote, sync=False)
 
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        CtdbLicenseReconcileDelegate(),
-    )
+    middleware.register_hook('system.post_license_update', hook_license_update_ctdb)
 
     # Register callbacks to properly refresh HA status and send events on changes
     await middleware.call('failover.remote_subscribe', 'system.ready', remote_status_event)

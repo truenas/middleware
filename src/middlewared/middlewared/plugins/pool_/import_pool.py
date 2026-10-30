@@ -220,7 +220,7 @@ class PoolService(Service):
         pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
             'vol_name': pool_name,
             'vol_guid': guid,
-            'vol_all_sed': None if sed_enabled_system else False,
+            'vol_all_sed': None,
         })
         if sed_enabled_system:
             self.middleware.create_task(self.middleware.call('pool.update_all_sed_attr'))

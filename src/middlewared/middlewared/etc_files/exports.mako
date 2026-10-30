@@ -118,6 +118,7 @@
 
     config = render_ctx["nfs.config"]
     shares = render_ctx["sharing.nfs.query"]
+    snapdir_served = render_ctx["nfs_snapshot.truenas.entitlements.serving"]
 
     has_nfs_principal = middleware.call_sync('kerberos.keytab.has_nfs_principal')
     global_sec = middleware.call_sync2(middleware.services.nfs.sec, config, has_nfs_principal) or ["sys"]
@@ -145,7 +146,7 @@
         options = []
         params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
 
-        if share.expose_snapshots:
+        if share.expose_snapshots and snapdir_served:
             params += ",zfs_snapdir"
 
         for host in share.hosts:

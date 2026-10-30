@@ -3,6 +3,8 @@ from __future__ import annotations
 import os.path
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Iterable
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import (
     ContainerEntry,
     ContainerFilesystemDevice,
@@ -236,6 +238,8 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
     async def start_autostart_on_paths(self, paths: list[str]) -> None:
         # (Re)start the autostart containers whose storage lives on `paths`, now that those paths
         # have become available again.
+        if not (await self.middleware.call2(self.s.truenas.entitlements.check, LicenseFeature.CONTAINERS)).entitled:
+            return
         containers = await self.middleware.call2(self.s.container.query, [('autostart', '=', True)])
         assert isinstance(containers, list)
         async for container in self.containers_on_paths(containers, paths):

@@ -16,9 +16,6 @@ class PoolService(Service):
     async def ha_update_all_sed_attr(self):
         if await self.middleware.call('system.sed_enabled'):
             await self.update_all_sed_attr()
-        else:
-            for pool in await self.middleware.call('datastore.query', 'storage.volume', [['vol_all_sed', '=', None]]):
-                await self.middleware.call('datastore.update', 'storage.volume', pool['id'], {'vol_all_sed': False})
 
     @private
     async def update_all_sed_attr(self, skip_all_sed_check=False, filter_pool=None):

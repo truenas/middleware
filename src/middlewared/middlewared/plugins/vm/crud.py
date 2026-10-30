@@ -346,7 +346,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
             ):
                 verrors.add(f'{schema_name}.uuid', 'A VM with this UUID already exists.', errno.EEXIST)
 
-        if not await license_active(self):
+        if old is None and not await license_active(self):
             verrors.add(f'{schema_name}.name', 'System is not licensed to use VMs')
 
         if data.min_memory and data.min_memory > data.memory:

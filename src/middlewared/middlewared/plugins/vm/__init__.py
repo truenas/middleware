@@ -126,6 +126,7 @@ from .info import (
 )
 from .lifecycle import (
     handle_shutdown,
+    lifecycle_action_check,
     poweroff_vm,
     reset_vm,
     restart_vm,
@@ -476,6 +477,7 @@ class VMService(GenericCRUDService[VMEntry]):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
+        self.context.run_coroutine(lifecycle_action_check(self.context))
         start_vm(self.context, id_, options)
 
     @api_method(VMStatusArgs, VMStatusResult, roles=['VM_READ'], check_annotations=True)

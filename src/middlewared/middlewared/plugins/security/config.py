@@ -40,7 +40,7 @@ class SystemSecurityConfigServicePart(ConfigServicePart[SystemSecurityEntry]):
         if new == old_config:
             return old_config
 
-        await validate_security(self, is_ha, new, reasons)
+        await validate_security(self, is_ha, old_config, new, reasons)
 
         must_update_account_policy = validate_password_security(old_config, new)
 

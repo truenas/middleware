@@ -26,7 +26,7 @@ from middlewared.service.decorators import pass_thread_local_storage
 from . import sed_keys as sed_mod
 from . import sync as sync_mod
 from . import zfs_keys as zfs_mod
-from .config import KMIPConfigServicePart
+from .config import KMIPConfigServicePart, KmipLicenseDelegate
 from .keystore import KMIPKeyStore
 
 if TYPE_CHECKING:
@@ -149,6 +149,9 @@ async def __event_system_ready(middleware: Middleware, event_type: str, args: An
 
 async def setup(middleware: Middleware) -> None:
     await middleware.call('network.general.register_activity', 'kmip', 'KMIP')
+    await middleware.call2(
+        middleware.services.truenas.entitlements.register_license_delegate, KmipLicenseDelegate(middleware)
+    )
     middleware.event_subscribe('system.ready', __event_system_ready)
     if await middleware.call('system.ready'):
         await initialize_kmip_keys(middleware)

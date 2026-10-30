@@ -41,3 +41,11 @@ def app_has_write_privilege_for_service(app: App | None, service: str) -> bool:
         return False
 
     return app.authenticated_credentials.has_role(required_role.value)
+
+
+def app_is_user_session(app: App | None) -> bool:
+    return (
+        app is not None
+        and app.authenticated_credentials is not None
+        and app.authenticated_credentials.is_user_session
+    )

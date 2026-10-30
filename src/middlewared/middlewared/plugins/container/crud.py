@@ -360,7 +360,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
     async def validate(
         self, verrors: ValidationErrors, schema_name: str, data: ContainerDataT, old: ContainerEntry | None = None,
     ) -> ContainerDataT:
-        if not await license_active(self):
+        if old is None and not await license_active(self):
             verrors.add(
                 f'{schema_name}.name',
                 'System is not licensed to use containers.'

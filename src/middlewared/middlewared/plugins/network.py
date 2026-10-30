@@ -59,9 +59,10 @@ from middlewared.api.current import (
     InterfaceXmitHashPolicyChoicesArgs,
     InterfaceXmitHashPolicyChoicesResult,
     QueryOptions,
+    ServiceOptions,
     VMNICDevice,
 )
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import LicenseDelegate, touches
 from middlewared.plugins.interface.dhcp import dhcp_reload, dhcp_start
 from middlewared.service import CallError, CRUDService, ServiceContext, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
@@ -1308,23 +1309,23 @@ class InterfaceService(CRUDService):
 
         # Validate fec_mode field
         if 'fec_mode' in data:
-            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NETWORK_FEC)
-            if entitlement.entitled:
-                if new['type'] == 'PHYSICAL':
-                    if available := self.available_fec_modes(oid):
-                        if data['fec_mode'] not in available:
-                            verrors.add(
-                                'interface_update.fec_mode',
-                                f'Unsupported FEC mode. Available: {", ".join(available)}'
-                            )
-                    else:
+            if data['fec_mode'] not in ('AUTO', 'OFF') and data['fec_mode'] != iface.get('fec_mode'):
+                entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NETWORK_FEC)
+                if not entitlement.entitled:
+                    verrors.add('interface_update.fec_mode', entitlement.message)
+            if new['type'] == 'PHYSICAL':
+                if available := self.available_fec_modes(oid):
+                    if data['fec_mode'] not in available:
                         verrors.add(
-                            'interface_update.fec_mode', 'This interface does not support FEC mode configuration.'
+                            'interface_update.fec_mode',
+                            f'Unsupported FEC mode. Available: {", ".join(available)}'
                         )
                 else:
-                    verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
+                    verrors.add(
+                        'interface_update.fec_mode', 'This interface does not support FEC mode configuration.'
+                    )
             else:
-                verrors.add('interface_update.fec_mode', entitlement.message)
+                verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
 
         verrors.check()
 
@@ -2008,12 +2009,27 @@ async def __activate_service_announcements(middleware, event_type, args):
     await middleware.call("network.configuration.toggle_announcement", srv)
 
 
-class DiscoveryLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'discovery'
-    etc_groups = ('discovery',)
-    service = 'discovery'
-    action = LicenseReconcileAction.RELOAD
-    order = 20
+class NetworkFecLicenseDelegate(LicenseDelegate):
+    feature = LicenseFeature.NETWORK_FEC
+
+    async def alert_lines(self, in_grace):
+        names = [
+            i['name'] for i in await self.middleware.call('interface.query', [['type', '=', 'PHYSICAL']])
+            if i.get('fec_mode') not in (None, 'AUTO', 'OFF')
+        ]
+        if not names:
+            return []
+        return [
+            f'Network: interfaces {", ".join(sorted(names))} use a forward error correction mode without a license. '
+            'The configured mode keeps being applied.'
+        ]
+
+
+async def hook_license_update_discovery(middleware, *args, changed=None, **kwargs):
+    if touches(changed, LicenseFeature.HA):
+        await (await middleware.call2(
+            middleware.services.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False),
+        )).wait(raise_error=True)
 
 
 async def setup(middleware):
@@ -2025,9 +2041,9 @@ async def setup(middleware):
     middleware.event_subscribe('system.ready', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
 
+    middleware.register_hook('system.post_license_update', hook_license_update_discovery)
     await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        DiscoveryLicenseReconcileDelegate(),
+        middleware.services.truenas.entitlements.register_license_delegate, NetworkFecLicenseDelegate(middleware)
     )
 
     # Only run DNS sync in the first run. This avoids calling the routine again

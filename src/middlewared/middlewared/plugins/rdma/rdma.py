@@ -155,3 +155,10 @@ class RDMAService(Service):
             if await self.middleware.call('rdma.get_link_choices', True):
                 result.extend([RDMAprotocols.NFS.value, RDMAprotocols.ISER.value, RDMAprotocols.NVMET.value])
         return result
+
+    @private
+    async def serving(self):
+        return (
+            await self.call2(self.s.truenas.entitlements.serving, LicenseFeature.RDMA)
+            and bool(await self.middleware.call('rdma.get_link_choices', True))
+        )

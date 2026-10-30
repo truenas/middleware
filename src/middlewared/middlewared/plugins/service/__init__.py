@@ -5,6 +5,8 @@ import errno
 import os
 from typing import TYPE_CHECKING, Any, Literal, overload
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.alert.source.deprecated_service import DeprecatedServiceAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -30,7 +32,7 @@ from middlewared.api.current import (
     ServiceUpdateArgs,
     ServiceUpdateResult,
 )
-from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.common.license_delegate import touches
 from middlewared.service import CallError, CRUDService, filterable_api_method, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
@@ -40,7 +42,7 @@ from middlewared.utils.os import terminate_pid
 from .services.all import all_services
 from .services.base_interface import IdentifiableServiceInterface
 from .services.dbus_router import ServiceActionError
-from .utils import app_has_write_privilege_for_service
+from .utils import app_has_write_privilege_for_service, app_is_user_session
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
@@ -207,6 +209,11 @@ class ServiceService(CRUDService[ServiceEntry]):
         if not app_has_write_privilege_for_service(app, svc['service']):
             raise CallError(f'{svc["service"]}: authenticated session lacks privilege to update service', errno.EPERM)
 
+        if svc['service'] == 'webshare' and data.enable and not svc['enable']:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.WEBSHARE)
+            if not entitlement.entitled:
+                raise ValidationError('service_update.enable', entitlement.message)
+
         rv = await self.middleware.call(
             'datastore.update', 'services.services', svc['id'], {'srv_enable': data.enable}
         )
@@ -360,6 +367,8 @@ class ServiceService(CRUDService[ServiceEntry]):
             raise CallError(f'{service}: authenticated session lacks privilege to stop service', errno.EPERM)
 
         service_object = await self.object(service)
+        if app_is_user_session(app):
+            await self.call2(self.s.truenas.entitlements.cut_service, service)
 
         try:
             async with asyncio.timeout(options.timeout):
@@ -409,6 +418,8 @@ class ServiceService(CRUDService[ServiceEntry]):
             raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
 
         service_object = await self.object(service)
+        if app_is_user_session(app):
+            await self.call2(self.s.truenas.entitlements.cut_service, service)
 
         try:
             async with asyncio.timeout(options.timeout):
@@ -514,6 +525,12 @@ class ServiceService(CRUDService[ServiceEntry]):
             raise CallError(f'{service}: authenticated session lacks privilege to reload service', errno.EPERM)
 
         service_object = await self.object(service)
+        if (
+            not service_object.reloadable
+            and app_is_user_session(app)
+            and (await service_object.get_state()).running
+        ):
+            await self.call2(self.s.truenas.entitlements.cut_service, service)
 
         try:
             async with asyncio.timeout(options.timeout):
@@ -652,12 +669,11 @@ class ServiceService(CRUDService[ServiceEntry]):
         return []
 
 
-class RcLicenseReconcileDelegate(LicenseReconcileDelegate):
-    name = 'rc'
-    etc_groups = ('rc',)
-    service = None
-    action = LicenseReconcileAction.RENDER
-    order = -50
+async def hook_license_update_rc(
+    middleware: Middleware, *args: Any, changed: frozenset[str] | None = None, **kwargs: Any
+) -> None:
+    if touches(changed, LicenseFeature.HA, LicenseFeature.WEBSHARE):
+        await middleware.call('etc.generate', 'rc')
 
 
 async def __event_service_ready(middleware: Middleware, event_type: Any, args: Any) -> None:
@@ -668,9 +684,6 @@ async def setup(middleware: Middleware) -> None:
     for klass in all_services:
         await middleware.call2(middleware.services.service.register_object, klass(middleware))
 
-    await middleware.call2(
-        middleware.services.truenas.license.register_reconcile_delegate,
-        RcLicenseReconcileDelegate(),
-    )
+    middleware.register_hook('system.post_license_update', hook_license_update_rc)
 
     middleware.event_subscribe('system.ready', __event_service_ready)
