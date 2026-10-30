@@ -1,6 +1,6 @@
 import os
 
-from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
+from middlewared.plugins.account.constants import NO_LOGIN_SHELL
 
 
 def is_valid_shell(shell):

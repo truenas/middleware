@@ -7,7 +7,7 @@ import os
 import truenas_pyfilter as _tf
 
 from middlewared.api.current import SystemSecurityEntry
-from middlewared.plugins.account import DEFAULT_HOME_PATH
+from middlewared.plugins.account.constants import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE, SMBEncryption, SMBPath
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST

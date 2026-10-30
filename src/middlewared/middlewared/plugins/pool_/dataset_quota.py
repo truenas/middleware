@@ -10,6 +10,7 @@ from middlewared.api.current import (
     PoolDatasetGetQuotaResult,
     PoolDatasetSetQuotaArgs,
     PoolDatasetSetQuotaResult,
+    UserGetUserObj,
     ZFSResourceQuery,
     ZFSResourceSetArgsData,
     ZFSResourceUserspaceQuery,
@@ -212,7 +213,9 @@ class PoolDatasetService(Service):
             else:
                 try:
                     if id_type == 'user':
-                        xid = self.middleware.call_sync('user.get_user_obj', {'username': q['id']})['pw_uid']
+                        xid = self.call_sync2(
+                            self.s.user.get_user_obj, UserGetUserObj(username=q['id']),
+                        ).pw_uid
                     else:
                         xid = self.call_sync2(
                             self.s.group.get_group_obj, GroupGetGroupObj(groupname=q['id']),

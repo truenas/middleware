@@ -3,7 +3,7 @@ from __future__ import annotations
 import errno
 from typing import Any
 
-from middlewared.api.current import GroupEntry, PrivilegeCreate, PrivilegeEntry, PrivilegeUpdate
+from middlewared.api.current import GroupEntry, PrivilegeCreate, PrivilegeEntry, PrivilegeUpdate, UserEntry
 from middlewared.service import CallError, CRUDServicePart, ServiceContext, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.privilege import BuiltinPrivileges
@@ -130,23 +130,23 @@ class PrivilegeServicePart(CRUDServicePart[PrivilegeEntry]):
 
     async def always_has_root_password_enabled(
         self,
-        users: list[dict[str, Any]] | None = None,
+        users: list[UserEntry] | None = None,
         groups: list[GroupEntry] | None = None,
     ) -> bool:
         if users is None:
-            users = await self.middleware.call("user.query", [["local", "=", True]])
+            users = await self.call2(self.s.user.query, [["local", "=", True]])
         if groups is None:
             groups = await self.call2(self.s.group.query, [["local", "=", True]])
 
-        root_user = next(u for u in users if u["username"] == "root")
-        administrators = await local_administrators(self, [root_user["id"]], users, groups)
+        root_user = next(u for u in users if u.username == "root")
+        administrators = await local_administrators(self, [root_user.id], users, groups)
         if not administrators:
             value = True
         else:
             value = False
 
             if self.previous_always_has_root_password_enabled:
-                usernames = [user["username"] for user in administrators]
+                usernames = [user.username for user in administrators]
                 self.middleware.send_event(
                     "user.web_ui_login_disabled",
                     "ADDED",

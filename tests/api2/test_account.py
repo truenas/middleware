@@ -661,6 +661,14 @@ def test_set_password_disabled_user():
         assert "password authentication disabled" in str(ve.value), ve.value
 
 
+def test_set_password_synthetic_container_root():
+    """ The synthetic container root account has no stored password hash or history. """
+    with pytest.raises(ValidationErrors) as ve:
+        call("user.set_password", {"username": CONTAINER_ROOT_NAME, "new_password": "NewCovPass1!"})
+
+    assert "user account is locked" in str(ve.value), ve.value
+
+
 def test_set_password_other_user_forbidden():
     with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         with pytest.raises(CallError) as ve:
@@ -720,6 +728,11 @@ def test_user_query_local_filter_variants(filters):
     # We only care that the filter is accepted and the code path runs.
     result = call("user.query", filters)
     assert isinstance(result, list)
+
+
+def test_user_query_force_sql_filters_excludes_container_root():
+    users = call("user.query", [["username", "=", "root"]], {"force_sql_filters": True, "select": ["username"]})
+    assert users == [{"username": "root"}]
 
 
 # ---------------------------------------------------------------------------
@@ -890,7 +903,9 @@ def _password_security(**settings):
     # available for the duration of the test.
     from middlewared.test.integration.assets.product import set_fips_available
 
-    fields = ["password_complexity_ruleset", "min_password_length", "password_history_length"]
+    fields = [
+        "password_complexity_ruleset", "min_password_length", "password_history_length", "min_password_age",
+    ]
     with set_fips_available(True):
         old = call("system.security.config")
         restore = {k: old[k] for k in fields}
@@ -1126,3 +1141,74 @@ def test_get_builtin_user_id_nonexistent():
 
     assert ve.value.errno == errno.ENOENT
     assert ve.value.errmsg == "'cov_nonexistent_builtin' user not found"
+
+
+def test_create_user_password_complexity_unmet():
+    # The rejection names each absent character class, so the assertion proves
+    # the configured ruleset actually reached `check_password_complexity`.
+    # `password_complexity_ruleset` is a set, which crosses JSON-RPC as `{"$set": [...]}`.
+    with _password_security(password_complexity_ruleset={"$set": ["UPPER", "NUMBER", "SPECIAL"]}):
+        with pytest.raises(ValidationErrors) as ve:
+            call("user.create", _vuser(username="covweakpw", password="lowercaseonly"))
+
+        message = str(ve.value)
+        assert "does not meet minimum complexity requirements" in message, message
+        for absent in ("UPPER", "NUMBER", "SPECIAL"):
+            assert absent in message, message
+
+
+def test_create_user_password_complexity_met():
+    with _password_security(password_complexity_ruleset={"$set": ["UPPER", "NUMBER", "SPECIAL"]}):
+        with user(_vuser(username="covstrongpw", password="Str0ng!Pass")) as u:
+            assert call("user.get_instance", u["id"])["username"] == "covstrongpw"
+
+
+# ---------------------------------------------------------------------------
+# minimum password age (only enforced for non-FULL_ADMIN self-service resets)
+# ---------------------------------------------------------------------------
+def test_set_password_min_age_rejected():
+    # root is FULL_ADMIN and therefore exempt, so the account has to reset its
+    # own password over its own session for the age check to apply.
+    with unprivileged_user_client() as c:
+        username = c.username
+        c.call("user.set_password", {
+            "username": username,
+            "old_password": "test1234",
+            "new_password": "CovMinAge1!",
+        })
+
+        with _password_security(min_password_age=1):
+            with pytest.raises(ValidationErrors) as ve:
+                c.call("user.set_password", {
+                    "username": username,
+                    "old_password": "CovMinAge1!",
+                    "new_password": "CovMinAge2!",
+                })
+
+        assert "password changed too recently" in str(ve.value), ve.value
+
+
+def test_set_password_min_age_skipped_for_full_admin():
+    # The same reset performed by a FULL_ADMIN credential bypasses the age check.
+    with user(_vuser(username="covminagefa", password="CovFa1!")) as u:
+        with _password_security(min_password_age=1):
+            call("user.set_password", {"username": "covminagefa", "new_password": "CovFa2!"})
+
+        assert call("user.get_instance", u["id"])["password_age"] == 0
+
+
+# ---------------------------------------------------------------------------
+# user.update over a credential that is not a user session (API key)
+# ---------------------------------------------------------------------------
+def test_update_user_over_api_key_session():
+    # An API key credential has no `user` payload, so `do_update` must not try to
+    # compare the target against a logged-in username.
+    ba_id = call("group.query", [["group", "=", "builtin_administrators"]], {"get": True})["id"]
+    with user(_vuser(username="covakupd", groups=[ba_id])) as u:
+        with api_key(username="covakupd") as key:
+            with client(auth=None) as c:
+                c.login_with_api_key("covakupd", key)
+                assert "API_KEY" in c.call("auth.me")["account_attributes"]
+
+                updated = c.call("user.update", u["id"], {"full_name": "cov api key update"})
+                assert updated["full_name"] == "cov api key update"

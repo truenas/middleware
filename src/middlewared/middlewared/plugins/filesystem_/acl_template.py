@@ -89,8 +89,8 @@ class ACLTemplateService(CRUDService):
 
             match ace['tag']:
                 case 'USER':
-                    users = await self.middleware.call('user.query', [['username', '=', ace['who']]])
-                    xids = [user['uid'] for user in users]
+                    users = await self.call2(self.s.user.query, [['username', '=', ace['who']]])
+                    xids = [user.uid for user in users]
                 case 'GROUP':
                     groups = await self.call2(self.s.group.query, [['group', '=', ace['who']]])
                     xids = [group.gid for group in groups]

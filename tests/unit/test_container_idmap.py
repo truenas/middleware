@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
+from middlewared.plugins.account.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.plugins.container.lifecycle import _build_idmap_items, _resolve_target
 from middlewared.service_exception import CallError
 

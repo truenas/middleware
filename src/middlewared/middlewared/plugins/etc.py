@@ -9,7 +9,7 @@ from mako import exceptions
 from mako.template import Template
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
+from middlewared.plugins.account.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, Service
 from middlewared.utils.io import FileChanges, write_if_changed
 from middlewared.utils.mako import get_template
@@ -652,7 +652,11 @@ class EtcService(Service):
         return rv
 
     def get_perms_and_ownership(self, entry: EtcEntry) -> dict:
-        uid = self.middleware.call_sync('user.get_builtin_user_id', entry.owner) if entry.owner else DEFAULT_ETC_XID
+        if entry.owner:
+            uid = self.call_sync2(self.s.user.get_builtin_user_id, entry.owner)
+        else:
+            uid = DEFAULT_ETC_XID
+
         if entry.group:
             gid = self.call_sync2(self.s.group.get_builtin_group_id, entry.group)
         else:

@@ -1,14 +1,14 @@
 <%
     users_map = {
-        i['id']: i
+        i.id: i
         for i in render_ctx['user.query']
     }
 
     def get_usernames(group):
         return ','.join([
-            users_map[i]['username']
+            users_map[i].username
             for i in group.users
-            if i in users_map and users_map[i]['group']['id'] != group.id
+            if i in users_map and users_map[i].group['id'] != group.id
         ])
 
     def order_groups():

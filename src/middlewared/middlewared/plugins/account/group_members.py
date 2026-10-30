@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import GroupEntry
-from middlewared.plugins.account import unixhash_is_valid
+
+from .password import unixhash_is_valid
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext

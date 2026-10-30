@@ -264,9 +264,9 @@ class FilesystemService(Service):
         options = data['options']
 
         if data['user']:
-            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+            user = self.call_sync2(self.s.user.query, [['username', '=', data['user']]])
             if user:
-                uid = user[0]['uid']
+                uid = user[0].uid
             else:
                 verrors.add('filesystem.chown.user', f'{data["user"]}: user does not exist')
 
@@ -327,9 +327,9 @@ class FilesystemService(Service):
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
         if data['user']:
-            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+            user = self.call_sync2(self.s.user.query, [['username', '=', data['user']]])
             if user:
-                uid = user[0]['uid']
+                uid = user[0].uid
             else:
                 verrors.add('filesystem.setperm.user', f'{data["user"]}: user does not exist')
 
@@ -471,8 +471,8 @@ class FilesystemService(Service):
         ret.update({'user': None, 'group': None})
 
         if resolve_ids:
-            if user := self.middleware.call_sync('user.query', [['uid', '=', ret['uid']]]):
-                ret['user'] = user[0]['username']
+            if user := self.call_sync2(self.s.user.query, [['uid', '=', ret['uid']]]):
+                ret['user'] = user[0].username
 
             if group := self.call_sync2(self.s.group.query, [['gid', '=', ret['gid']]]):
                 ret['group'] = group[0].group
@@ -730,8 +730,8 @@ class FilesystemService(Service):
             )
 
         if data['user']:
-            if user := self.middleware.call_sync('user.query', [['username', '=', data['user']]]):
-                data['uid'] = user[0]['uid']
+            if user := self.call_sync2(self.s.user.query, [['username', '=', data['user']]]):
+                data['uid'] = user[0].uid
             else:
                 verrors.add(
                     'filesystem.setacl.user',
@@ -799,7 +799,9 @@ class FilesystemService(Service):
                         self.s.group.query, who_filters, QueryOptions(get=True),
                     ).gid
                 else:
-                    entry['id'] = self.middleware.call_sync('user.query', who_filters, {'get': True})['uid']
+                    entry['id'] = self.call_sync2(
+                        self.s.user.query, who_filters, QueryOptions(get=True),
+                    ).uid
 
                 entry['who'] = None
             except MatchNotFound:

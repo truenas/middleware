@@ -5,7 +5,7 @@ from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, single_argument_args, single_argument_result
 
-from .user import UserGetUserObj
+from .user import UserGetUserObjData
 
 __all__ = [
     'AuthSessionsEntry', 'AuthGenerateOnetimePasswordArgs', 'AuthGenerateOnetimePasswordResult',
@@ -236,7 +236,7 @@ class ComposedPrivilege(BaseModel):
     webui_access: bool = Field(default=False, description="Whether the credential may log in to the web UI.")
 
 
-class AuthUserInfo(UserGetUserObj):
+class AuthUserInfo(UserGetUserObjData):
     attributes: dict = Field(description="Custom user attributes and metadata.")
     two_factor_config: dict = Field(description="Two-factor authentication configuration for the user.")
     privilege: ComposedPrivilege = Field(description="User privilege and role information.")
