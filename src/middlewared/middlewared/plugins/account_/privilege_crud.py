@@ -3,9 +3,10 @@ from __future__ import annotations
 import errno
 from typing import Any
 
-from middlewared.api.current import GroupEntry, PrivilegeCreate, PrivilegeEntry, PrivilegeUpdate
+from middlewared.api.current import GroupEntry, PrivilegeCreate, PrivilegeEntry, PrivilegeUpdate, UnmappedGroupEntry
 from middlewared.service import CallError, CRUDServicePart, ServiceContext, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.directoryservices.constants import DSStatus
 from middlewared.utils.privilege import BuiltinPrivileges
 from middlewared.utils.privilege_constants import LocalBuiltinAdminGroups
 from middlewared.utils.types import AuditCallback
@@ -111,6 +112,22 @@ class PrivilegeServicePart(CRUDServicePart[PrivilegeEntry]):
                         "privilege_update.web_shell",
                         "Web shell access may not be enabled for the built-in group for read-only administrators.",
                     )
+
+        if removed_unmapped := [
+            group.sid or group.gid
+            for group in old.ds_groups
+            if isinstance(group, UnmappedGroupEntry)
+            and group.sid not in new.ds_groups
+            and group.gid not in new.ds_groups
+        ]:
+            # No directory service group resolves while directory services are unhealthy, so these may still exist
+            ds = await self.middleware.call("directoryservices.status")
+            if ds["type"] is not None and ds["status"] != DSStatus.HEALTHY.name:
+                verrors.add(
+                    "privilege_update.ds_groups",
+                    f"{', '.join(map(str, removed_unmapped))}: directory service groups may not be removed from a "
+                    "privilege while the directory service state is unhealthy, because they cannot be resolved.",
+                )
 
         verrors.check()
 
