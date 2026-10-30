@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 
 from middlewared.service import ServiceContext
@@ -10,20 +11,36 @@ from .utils import alerts_mapping
 LOGGED_ERRORS: list[str] = []
 RE_TEST_IN_PROGRESS = re.compile(r'ups.test.result:\s*TestInProgress')
 RE_UPS_STATUS = re.compile(r'ups.status: (.*)')
+UPSC_ATTEMPTS = 3
+UPSC_RETRY_DELAY = 2
+
+
+async def read_ups_stats(context: ServiceContext, upsc_identifier: str) -> str:
+    """Return the `upsc` output for `upsc_identifier`, or an empty string when it stays unreadable.
+
+    `upsc` fails while `upsd` restarts or while the driver is reconnecting, so a single failure
+    says nothing about the UPS.
+    """
+    for attempt in range(UPSC_ATTEMPTS):
+        cp = await run('upsc', upsc_identifier, check=False)
+        if not cp.returncode:
+            return cp.stdout.decode()
+
+        if attempt + 1 < UPSC_ATTEMPTS:
+            await asyncio.sleep(UPSC_RETRY_DELAY)
+
+    stderr = cp.stderr.decode(errors='ignore')
+    if stderr not in LOGGED_ERRORS:
+        LOGGED_ERRORS.append(stderr)
+        context.logger.error('Failed to retrieve ups information: %s', stderr)
+
+    return ''
 
 
 async def handle_upssched_event(context: ServiceContext, notify_type: str) -> None:
     config = await context.call2(context.s.ups.config)
     upsc_identifier = config.complete_identifier
-    cp = await run('upsc', upsc_identifier, check=False)
-    if cp.returncode:
-        stats_output = ''
-        stderr = cp.stderr.decode(errors='ignore')
-        if stderr not in LOGGED_ERRORS:
-            LOGGED_ERRORS.append(stderr)
-            context.logger.error('Failed to retrieve ups information: %s', stderr)
-    else:
-        stats_output = cp.stdout.decode()
+    stats_output = await read_ups_stats(context, upsc_identifier)
 
     if RE_TEST_IN_PROGRESS.search(stats_output):
         context.logger.debug('Self test is in progress and %r notify event should be ignored', notify_type)
@@ -34,10 +51,16 @@ async def handle_upssched_event(context: ServiceContext, notify_type: str) -> No
         # There are cases where battery/charger issues can result in ups.status being "OL LB" at the
         # same time. This will ensure that we don't initiate a shutdown if ups is OL.
         ups_status = RE_UPS_STATUS.findall(stats_output)
-        if ups_status and 'ol' in ups_status[0].lower():
-            context.middleware.logger.debug(
-                f'Shutdown not initiated as ups.status ({ups_status[0]}) indicates '
-                f'{config.identifier} is ONLINE (OL).'
+        if not ups_status:
+            # Powering the system off on an unknown state is worse than missing a shutdown. The
+            # UPS keeps asking on every poll, so a readable status still gets its shutdown.
+            context.logger.error(
+                '%s: shutdown not initiated, ups.status is unknown', config.identifier
+            )
+        elif 'ol' in ups_status[0].lower():
+            context.logger.debug(
+                'Shutdown not initiated as ups.status (%s) indicates %s is ONLINE (OL).',
+                ups_status[0], config.identifier
             )
         else:
             # if we shutdown the active node while the passive is still online
@@ -91,9 +114,7 @@ async def handle_upssched_event(context: ServiceContext, notify_type: str) -> No
                 'battery.runtime.restart': 'Minimum battery runtime (seconds) to allow UPS restart after power-off',
             }
 
-            stats_output = (
-                await run('upsc', upsc_identifier, check=False)
-            ).stdout.decode()
+            stats_output = await read_ups_stats(context, upsc_identifier)
             recovered_stats = re.findall(
                 fr'({"|".join(data_points)}): (.*)',
                 stats_output
