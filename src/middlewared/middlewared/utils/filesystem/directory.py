@@ -16,7 +16,7 @@ import truenas_os
 
 from middlewared.api.current import FilesystemDirEntry
 
-from .acl import acl_is_present, zfs_acl_is_trivial
+from .acl import acl_is_present, statx_acl_is_trivial
 from .attrs import zfs_attributes_dump
 from .constants import FileType
 from .stat_x import STATX_DEFAULT_MASK, StatxAttr, StatxEtype
@@ -145,7 +145,7 @@ def _build_entry(
         with _readable_meta_fd(item, item_path) as meta_fd:
             xattrs = None
             acl = None
-            if mask & DirectoryRequestMask.ACL and not mask & DirectoryRequestMask.XATTRS and zfs_acl_is_trivial(st):
+            if mask & DirectoryRequestMask.ACL and not mask & DirectoryRequestMask.XATTRS and statx_acl_is_trivial(st):
                 acl = False
             elif mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
                 try:
