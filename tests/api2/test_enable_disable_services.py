@@ -1,9 +1,11 @@
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.utils import call
 
 
 def test_01_enable_services():
-    for svc in filter(lambda x: not x['enable'], call('service.query')):
-        call('service.update', svc['id'], {'enable': True})
+    with entitled("WEBSHARE"):
+        for svc in filter(lambda x: not x['enable'], call('service.query')):
+            call('service.update', svc['id'], {'enable': True})
 
 
 def test_02_disable_services():
