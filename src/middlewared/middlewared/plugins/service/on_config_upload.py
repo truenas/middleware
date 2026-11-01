@@ -24,6 +24,19 @@ def on_config_upload(middleware: Middleware, path: str) -> None:
                 continue
 
             if enabled:
+                try:
+                    enabled = middleware.run_coroutine(
+                        middleware.call_sync2(middleware.services.service.object, service).may_enable_at_boot()
+                    )
+                except Exception:
+                    middleware.logger.error(
+                        '%s: unable to decide whether to enable at boot; leaving it disabled',
+                        service,
+                        exc_info=True,
+                    )
+                    enabled = False
+
+            if enabled:
                 enable_disable_units['enable'].extend(units)
             else:
                 enable_disable_units['disable'].extend(units)

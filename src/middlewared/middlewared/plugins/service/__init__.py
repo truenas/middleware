@@ -5,8 +5,6 @@ import errno
 import os
 from typing import TYPE_CHECKING, Any, Literal, overload
 
-from truenas_pylicensed.features import LicenseFeature
-
 from middlewared.alert.source.deprecated_service import DeprecatedServiceAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -32,7 +30,6 @@ from middlewared.api.current import (
     ServiceUpdateArgs,
     ServiceUpdateResult,
 )
-from middlewared.common.license_delegate import touches
 from middlewared.service import CallError, CRUDService, filterable_api_method, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
@@ -209,10 +206,8 @@ class ServiceService(CRUDService[ServiceEntry]):
         if not app_has_write_privilege_for_service(app, svc['service']):
             raise CallError(f'{svc["service"]}: authenticated session lacks privilege to update service', errno.EPERM)
 
-        if svc['service'] == 'webshare' and data.enable and not svc['enable']:
-            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.WEBSHARE)
-            if not entitlement.entitled:
-                raise ValidationError('service_update.enable', entitlement.message)
+        if data.enable and not svc['enable']:
+            await (await self.object(svc['service'])).before_enable()
 
         rv = await self.middleware.call(
             'datastore.update', 'services.services', svc['id'], {'srv_enable': data.enable}
@@ -672,7 +667,8 @@ class ServiceService(CRUDService[ServiceEntry]):
 async def hook_license_update_rc(
     middleware: Middleware, *args: Any, changed: frozenset[str] | None = None, **kwargs: Any
 ) -> None:
-    if touches(changed, LicenseFeature.HA, LicenseFeature.WEBSHARE):
+    # A service may veto its boot unit on any licence key, so there is no fixed set of keys to filter on.
+    if changed is None or changed:
         await middleware.call('etc.generate', 'rc')
 
 

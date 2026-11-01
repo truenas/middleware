@@ -44,6 +44,12 @@ class ServiceInterface(CallMixin):
     async def before_start(self) -> None:
         pass
 
+    async def before_enable(self) -> None:
+        pass
+
+    async def may_enable_at_boot(self) -> bool:
+        return True
+
     async def after_start(self) -> None:
         pass
 

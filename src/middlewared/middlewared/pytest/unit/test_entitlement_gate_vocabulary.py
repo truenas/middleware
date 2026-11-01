@@ -25,7 +25,6 @@ VOCABULARIES = {"LicenseFeature": LicenseFeature, "DerivedEntitlement": DerivedE
 # Every gate, as (path relative to the middlewared package, the vocabulary member it names).
 # `None` is a site that reaches the endpoint without naming one: a `method=` string or a mock.
 GATES = [
-    ("etc_files/systemd.py", "LicenseFeature.WEBSHARE"),
     ("etc_files/truenas_zfstierd.py", "LicenseFeature.ZFSTIER"),
     ("plugins/alert/runtime.py", "LicenseFeature.SUPPORT"),
     ("plugins/apps/utils.py", "LicenseFeature.APPS"),
@@ -56,8 +55,8 @@ GATES = [
     ("plugins/rdma/rdma.py", "LicenseFeature.RDMA"),
     ("plugins/rdma/rdma.py", "LicenseFeature.RDMA"),
     ("plugins/security/info.py", "LicenseFeature.STIG"),
-    ("plugins/service/__init__.py", "LicenseFeature.WEBSHARE"),
     ("plugins/service/services/truesearch.py", "LicenseFeature.TRUESEARCH"),
+    ("plugins/service/services/webshare.py", "LicenseFeature.WEBSHARE"),
     ("plugins/service/services/webshare.py", "LicenseFeature.WEBSHARE"),
     ("plugins/smb.py", "LicenseFeature.SMB_BLOCK_CLONING"),
     ("plugins/smb.py", "LicenseFeature.SMB_BLOCK_CLONING"),
