@@ -15,7 +15,8 @@ from middlewared.api.current import (
     SharingNFSEntry,
     SharingNFSCreateArgs, SharingNFSCreateResult,
     SharingNFSUpdateArgs, SharingNFSUpdateResult,
-    SharingNFSDeleteArgs, SharingNFSDeleteResult
+    SharingNFSDeleteArgs, SharingNFSDeleteResult,
+    ZFSResourceQuery,
 )
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.async_validators import validate_port
@@ -23,6 +24,7 @@ from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.plugins.nfs_ import release
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.plugins.nfs_.validators import (
@@ -160,6 +162,30 @@ class NFSService(SystemServiceService):
         # in a middleware 'setup' hook.  See NAS-131762
         if not self.middleware.call_sync('system.ready'):
             self.middleware.call_sync('nfs.clear_nfs3_rmtab')
+
+    @private
+    def release_dataset_filesystems(self, name):
+        """
+        Make nfsd release every file it keeps open on the filesystems of dataset (or pool) `name` and its children,
+        so that they can be unmounted. Only for a tree whose shares are gone or stopped: its NFS clients lose their
+        locks. A filesystem that a share still exports, and the whole tree while NFSv4 clients hold byte-range locks
+        on it, are left alone. Returns the filesystems released.
+        """
+        try:
+            rows = self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[name], properties=['mountpoint', 'objsetid', 'readonly'], get_children=True),
+            )
+            shares = self.middleware.call_sync('sharing.nfs.query', [['enabled', '=', True]])
+            # a locked share's path is a directory of the parent filesystem: it must not count as the parent's export
+            exported = release.devices(share['path'] for share in shares if not share['locked'])
+            return release.release_filesystems(name, rows, exported)
+        except release.NFS4LockRevoked:
+            raise
+        except Exception:
+            # the unmount that follows then fails as it would have without the release
+            self.logger.warning('%s: failed to release NFS locks', name, exc_info=True)
+            return []
 
     @private
     async def rdma_capable(self):

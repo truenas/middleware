@@ -4,6 +4,7 @@ import shutil
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolExportArgs, PoolExportResult
+from middlewared.plugins.zfs.resource_processes_utils import processes_using_dataset_tree
 from middlewared.service import CallError, job, private, Service, ValidationError
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.filesystem import attrs as fs_attrs
@@ -162,6 +163,12 @@ class PoolService(Service):
         disks = await self.middleware.call('pool.get_disks', oid)
 
         await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
+
+        if pool['status'] != 'OFFLINE':
+            # NFS clients' locks and state keep files open after their shares are gone. Not with a local holder: the
+            # export fails anyway, and kill_processes above looks only at the pool's root filesystem.
+            if not await self.middleware.run_in_thread(processes_using_dataset_tree, self.context, pool['name']):
+                await self.middleware.call('nfs.release_dataset_filesystems', pool['name'])
 
         # Whether the pool's data is really gone by the end of this job. `options['destroy']` alone
         # does not answer that: an OFFLINE pool is not imported, so it is neither destroyed nor
