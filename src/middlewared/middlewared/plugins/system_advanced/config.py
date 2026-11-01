@@ -190,6 +190,16 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
                 f'NVIDIA GPUs: {", ".join(c.name for c in containers)}. Please stop these containers first.'
             )
 
+    @settings.fields_validator('sed_passwd')
+    async def _validate_sed_passwd(self, verrors: ValidationErrors, /, sed_passwd: str) -> None:
+        if not sed_passwd:
+            return
+
+        adv = await self.middleware.call('datastore.config', self._datastore, {'prefix': self._datastore_prefix})
+        # Pushing the password to KMIP blanks `sed_passwd` and leaves only `kmip_uid` behind.
+        if not adv['sed_passwd'] and not adv['kmip_uid']:
+            await validate_sed_license(self.middleware, verrors, 'sed_passwd')
+
     async def do_update(self, data: SystemAdvancedUpdate) -> SystemAdvancedEntry:
         old_config = await self.config()
         old_sed = await self.sed_global_password()
@@ -215,18 +225,12 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
             ],
         })
 
-        if new_sed and not old_sed:
-            adv = await self.middleware.call('datastore.config', 'system.advanced', {'prefix': 'adv_'})
-            if not adv['kmip_uid']:
-                verrors = ValidationErrors()
-                await validate_sed_license(self.middleware, verrors, 'system_advanced_update.sed_passwd')
-                verrors.check()
-
+        # `sed_passwd` is not on the entry, so it is merged in here to be visible to its validator.
         await settings.validate(
             self,
             'system_advanced_update',
-            old_config.model_dump(),
-            new_config.model_dump(),
+            old_config.model_dump() | {'sed_passwd': old_sed},
+            new_config.model_dump() | {'sed_passwd': new_sed},
         )
 
         if new_config != old_config or new_sed != old_sed:
