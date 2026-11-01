@@ -17,9 +17,10 @@ class SedLicenseDelegate(LicenseDelegate):
         if not await self.middleware.call("system.sed_credentials_exist"):
             return []
         return [
-            "Self-encrypting drives: drives are in use without a license. Drives already set up as SED keep being "
-            "unlocked. New drives are not detected as SED until the system is licensed, "
-            "so disks cannot be added to or replaced in an all-SED pool."
+            "Self-encrypting drives are configured but the system is not licensed for SED. Drives already set up "
+            "as SED are still unlocked, and disks detected as SED while the system was licensed can still be added "
+            "to an all-SED pool. Disks inserted after the license lapsed are not checked for SED support and "
+            "cannot be added. Creating an all-SED pool or setting up a new SED drive requires a license."
         ]
 
 
