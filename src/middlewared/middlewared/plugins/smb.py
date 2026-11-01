@@ -2024,15 +2024,16 @@ class SmbBlockCloningLicenseDelegate(LicenseDelegate):
 
     async def alert_lines(self, in_grace):
         shares = await self.middleware.call(
-            'sharing.smb.query', [['purpose', '=', 'VEEAM_REPOSITORY_SHARE']]
+            'sharing.smb.query', [['purpose', '=', 'VEEAM_REPOSITORY_SHARE'], ['enabled', '=', True]]
         )
         if not shares:
             return []
         names = ', '.join(sorted(share['name'] for share in shares))
         return [
-            f'SMB: block cloning on Veeam repository shares {names} stops at the next SMB settings write because '
-            'the system is not licensed for SMB block cloning. Veeam synthetic full backups will then take full '
-            'space and time.'
+            f'SMB: block cloning on Veeam repository shares {names} is turned off at the next SMB settings write, '
+            'if it has not been already, because the system is not licensed for SMB block cloning. Veeam synthetic '
+            'full backups then take full space and time. It is turned back on at the next SMB settings write after '
+            'the feature is licensed.'
         ]
 
 

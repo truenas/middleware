@@ -26,7 +26,7 @@ class S3VersioningLicenseDelegate(LicenseDelegate):
     services = frozenset({"s3"})
 
     async def alert_lines(self, in_grace: bool) -> list[str]:
-        buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
+        buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query", [["enabled", "=", True]])
         names = [bucket.name for bucket in buckets if bucket.versioning != "OFF" or bucket.object_lock]
         if not names:
             return []
@@ -51,7 +51,7 @@ class S3AuditLicenseDelegate(LicenseDelegate):
 
     async def alert_lines(self, in_grace: bool) -> list[str]:
         cfg = await self.call2(self.s.s3.config)
-        buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
+        buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query", [["enabled", "=", True]])
         names = [
             bucket.name
             for bucket in buckets
@@ -60,8 +60,9 @@ class S3AuditLicenseDelegate(LicenseDelegate):
         if not names:
             return []
         return [
-            f"S3 audit: auditing configured for buckets {', '.join(sorted(names))} is not recorded because the "
-            "system is not licensed for S3 audit."
+            f"S3 audit: auditing configured for buckets {', '.join(sorted(names))} stops being recorded at the next "
+            "S3 reload or settings change, if it has not already, because the system is not licensed for S3 audit. "
+            "Recording resumes with the saved settings when the feature is licensed."
         ]
 
     async def on_grant(self) -> None:

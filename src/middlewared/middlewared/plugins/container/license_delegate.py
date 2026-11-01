@@ -20,16 +20,22 @@ class ContainersLicenseDelegate(LicenseDelegate):
     async def alert_lines(self, in_grace: bool) -> list[str]:
         containers = await self.call2(self.s.container.query)
         if in_grace:
-            names = [c.name for c in containers if c.status.state in ACTIVE_STATES or c.autostart]
-            if not names:
-                return []
-            line = (
-                f"Containers: {', '.join(sorted(names))} keep running. Once stopped they cannot be started until "
-                "the system is licensed for containers."
-            )
-            if await self.middleware.call("failover.licensed"):
-                line += " A failover starts the containers that have autostart enabled."
-            return [line]
+            running = sorted(c.name for c in containers if c.status.state in ACTIVE_STATES)
+            stopped = sorted(c.name for c in containers if c.status.state not in ACTIVE_STATES and c.autostart)
+            lines = []
+            if running:
+                lines.append(
+                    f"Containers: {', '.join(running)} keep running. Once stopped they cannot be started until "
+                    "the system is licensed for containers."
+                )
+            if stopped:
+                lines.append(
+                    f"Containers: {', '.join(stopped)} have autostart enabled but cannot be started until "
+                    "the system is licensed for containers."
+                )
+            if lines and await self.middleware.call("failover.licensed"):
+                lines[-1] += " A failover starts the containers that have autostart enabled."
+            return lines
         names = [c.name for c in containers if c.autostart and c.status.state not in ACTIVE_STATES]
         if not names:
             return []

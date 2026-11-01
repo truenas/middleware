@@ -20,16 +20,22 @@ class VMsLicenseDelegate(LicenseDelegate):
     async def alert_lines(self, in_grace: bool) -> list[str]:
         vms = await self.call2(self.s.vm.query)
         if in_grace:
-            names = [vm.name for vm in vms if vm.status.state in ACTIVE_STATES or vm.autostart]
-            if not names:
-                return []
-            line = (
-                f"Virtual machines: {', '.join(sorted(names))} keep running. Once stopped they cannot be started "
-                "until the system is licensed for VMs."
-            )
-            if await self.middleware.call("failover.licensed"):
-                line += " A failover starts the VMs that have autostart enabled."
-            return [line]
+            running = sorted(vm.name for vm in vms if vm.status.state in ACTIVE_STATES)
+            stopped = sorted(vm.name for vm in vms if vm.status.state not in ACTIVE_STATES and vm.autostart)
+            lines = []
+            if running:
+                lines.append(
+                    f"Virtual machines: {', '.join(running)} keep running. Once stopped they cannot be started "
+                    "until the system is licensed for VMs."
+                )
+            if stopped:
+                lines.append(
+                    f"Virtual machines: {', '.join(stopped)} have autostart enabled but cannot be started until "
+                    "the system is licensed for VMs."
+                )
+            if lines and await self.middleware.call("failover.licensed"):
+                lines[-1] += " A failover starts the VMs that have autostart enabled."
+            return lines
         names = [vm.name for vm in vms if vm.autostart and vm.status.state not in ACTIVE_STATES]
         if not names:
             return []
