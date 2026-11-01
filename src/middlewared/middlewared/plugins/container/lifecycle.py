@@ -84,11 +84,17 @@ def start_on_boot(context: ServiceContext) -> None:
     # Reap orphaned runtime state under /run/truenas_containers/ before any
     # autostart so a fresh start can't collide with a leaked staged path
     # from a previous unclean shutdown (libvirtd or middlewared crash).
+    # The sweep is only safe while nothing is starting, because it removes
+    # the staged mounts of every container that is not yet active.
     try:
         context.middleware.libvirt_domains_manager.reconcile_runtime_state()
     except Exception:
         context.logger.error('Failed to reconcile container runtime state', exc_info=True)
 
+    autostart(context)
+
+
+def autostart(context: ServiceContext) -> None:
     if not context.call_sync2(context.s.truenas.entitlements.serving, LicenseFeature.CONTAINERS):
         context.logger.warning('Containers: autostart skipped, the system is not licensed to use containers')
         return

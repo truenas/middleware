@@ -39,7 +39,7 @@ class ContainersLicenseDelegate(LicenseDelegate):
         ]
 
     async def on_grant(self) -> None:
-        await self.call2(self.s.container.migrate_and_start_on_boot)
+        await self.call2(self.s.container.migrate_and_autostart)
 
 
 async def setup(middleware: Middleware) -> None:

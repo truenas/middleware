@@ -41,7 +41,7 @@ from .crud import (
 )
 from .image import ContainerImageService
 from .info import pool_choices
-from .lifecycle import handle_shutdown, start_on_boot
+from .lifecycle import autostart, handle_shutdown, start_on_boot
 from .lifecycle import start as start_container
 from .lifecycle import stop as stop_container
 from .migrate import maybe_migrate_legacy, relocate_container_origin, restore_legacy_parent_mountpoints
@@ -174,6 +174,15 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     @private
     def start_on_boot(self) -> None:
         start_on_boot(self.context)
+
+    @private
+    async def migrate_and_autostart(self) -> None:
+        await maybe_migrate_legacy(self.context)
+        await self.call2(self.s.container.autostart)
+
+    @private
+    def autostart(self) -> None:
+        autostart(self.context)
 
     @private
     async def handle_shutdown(self) -> None:
