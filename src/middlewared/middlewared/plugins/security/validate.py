@@ -273,4 +273,17 @@ class StigLicenseDelegate(LicenseDelegate):
         config = await self.call2(self.s.system.security.config)
         if not (config.enable_fips or config.enable_gpos_stig):
             return []
-        return ["Security: FIPS or STIG mode is enabled without a license. Security settings are not changed."]
+        if config.enable_fips and config.enable_gpos_stig:
+            return [
+                "Security: FIPS mode and General Purpose OS STIG compatibility mode stay in effect without a license. "
+                "They can be turned off, but cannot be turned back on until the system is licensed for STIG."
+            ]
+        if config.enable_fips:
+            return [
+                "Security: FIPS mode stays in effect without a license. "
+                "It can be turned off, but cannot be turned back on until the system is licensed for STIG."
+            ]
+        return [
+            "Security: General Purpose OS STIG compatibility mode stays in effect without a license. "
+            "It can be turned off, but cannot be turned back on until the system is licensed for STIG."
+        ]
