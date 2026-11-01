@@ -114,7 +114,7 @@ class PoolDatasetService(Service):
         })
 
     @private
-    def processes_using_paths(self, paths, include_paths=False, include_middleware=False):
+    def processes_using_paths(self, paths, include_paths=False, include_middleware=False, devices=None):
         """
         Find processes using paths supplied via `paths`. Path may be an absolute path for
         a directory (e.g. /var/db/system) or a path in /dev/zvol or /dev/zd*
@@ -124,9 +124,11 @@ class PoolDatasetService(Service):
 
         `include_middleware`: include files opened by the middlewared process in output.
         These are not included by default.
+
+        `devices`: device ids to match directly, for callers that already know them.
         """
         exact_matches = set()
-        include_devs = []
+        include_devs = set(devices or ())
         for path in paths:
             if RE_ZD.match(path):
                 exact_matches.add(path)
@@ -140,7 +142,7 @@ class PoolDatasetService(Service):
                         else:
                             exact_matches.add(os.path.realpath(path))
                     else:
-                        include_devs.append(os.stat(path).st_dev)
+                        include_devs.add(os.stat(path).st_dev)
                 except FileNotFoundError:
                     continue
 
