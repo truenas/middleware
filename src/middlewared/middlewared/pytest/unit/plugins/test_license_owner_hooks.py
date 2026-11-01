@@ -5,6 +5,7 @@ import pytest
 
 from middlewared.plugins import cron, failover, network, smb
 from middlewared.plugins import service as service_plugin
+from middlewared.plugins.account import user as account_user
 from middlewared.plugins.iscsi_ import iscsi_global
 from middlewared.pytest.unit.middleware import Middleware, fake_service_control
 
@@ -21,6 +22,7 @@ nvmet_global = importlib.import_module("middlewared.plugins.nvmet.global")
         network.hook_license_update_discovery,
         service_plugin.hook_license_update_rc,
         cron.hook_license_update_cron,
+        account_user.hook_license_update_user,
     ],
 )
 @pytest.mark.asyncio

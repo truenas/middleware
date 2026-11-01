@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Literal, overload
 
 from pydantic import Secret
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -42,6 +43,7 @@ from middlewared.api.current import (
     UserUpdateArgs,
     UserUpdateResult,
 )
+from middlewared.common.license_delegate import touches
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.types import AuditCallback
@@ -369,6 +371,13 @@ class UserService(GenericCRUDService[UserEntry]):
         return do_home_copy(self.context, job, home_old, home_new, username, new_mode, uid)
 
 
+async def hook_license_update_user(
+    middleware: Middleware, *args: Any, changed: frozenset[str] | None = None, **kwargs: Any
+) -> None:
+    if touches(changed, LicenseFeature.SUPPORT):
+        await middleware.call("etc.generate", "user")
+
+
 async def setup(middleware: Middleware) -> None:
     try:
         # ensure that our default home path is always immutable. If it's not immutable then
@@ -383,3 +392,5 @@ async def setup(middleware: Middleware) -> None:
 
     if await middleware.call2(middleware.services.keyvalue.get, "run_migration", False):
         await middleware.call2(middleware.services.user.sync_builtin)
+
+    middleware.register_hook("system.post_license_update", hook_license_update_user)
