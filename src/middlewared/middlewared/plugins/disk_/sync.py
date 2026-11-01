@@ -151,7 +151,7 @@ class DiskService(Service, ServiceChangeMixin):
                     # Disk expire time has surpassed, go ahead and remove it
                     if disk['disk_kmip_uid']:
                         self.middleware.call_sync(
-                            'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uuid'],
+                            'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid'],
                             background=True
                         )
                     self.middleware.call_sync('datastore.delete', 'storage.disk', disk['disk_identifier'], options)
