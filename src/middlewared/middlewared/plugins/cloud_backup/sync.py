@@ -84,6 +84,9 @@ def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = False, ra
 
         restic_config = get_restic_config(cloud_backup)
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
+        if cloud_backup["snapshot"] and cwd is not None:
+            # Snapshot paths change each run; match parents by task instead.
+            cmd.extend(["--group-by", "host,tags", "--tag", f"truenas-cloud-backup-{cloud_backup['id']}"])
 
         env = env_mapping("CLOUD_BACKUP_", {
             **{k: v for k, v in cloud_backup.items() if k in [
