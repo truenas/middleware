@@ -4,9 +4,10 @@ import time
 import pytest
 
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, host, mock, ssh
+from middlewared.test.integration.utils import call, host, ssh
 
 USERNAME = 'alex'
 PASSWORD = 'password'
@@ -15,7 +16,7 @@ SHARE_NAME = 'alex'
 
 @pytest.fixture(scope='module')
 def make_available():
-    with mock('truesearch.unavailable_reasons', return_value=[]):
+    with entitled('TRUESEARCH'):
         yield
 
 
