@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.api.current import ServiceOptions
 from middlewared.common.license_delegate import LicenseDelegate
 
 if TYPE_CHECKING:
@@ -15,7 +16,7 @@ class NfsSnapshotLicenseDelegate(LicenseDelegate):
     services = frozenset({"nfs"})
 
     async def alert_lines(self, in_grace: bool) -> list[str]:
-        shares = await self.call2(self.s.sharing.nfs.query, [["expose_snapshots", "=", True]])
+        shares = await self.call2(self.s.sharing.nfs.query, [["enabled", "=", True], ["expose_snapshots", "=", True]])
         if not shares:
             return []
         paths = ", ".join(sorted(share.path for share in shares))
@@ -28,6 +29,11 @@ class NfsSnapshotLicenseDelegate(LicenseDelegate):
             f"NFS: the snapshot directory of shares {paths} is hidden because the system is not licensed for NFS "
             "snapshot exposure."
         ]
+
+    async def on_grant(self) -> None:
+        await (await self.call2(self.s.service.control, "RELOAD", "nfs", ServiceOptions(ha_propagate=False))).wait(
+            raise_error=True
+        )
 
 
 async def setup(middleware: Middleware) -> None:

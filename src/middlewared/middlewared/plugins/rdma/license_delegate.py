@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.api.current import ServiceOptions
 from middlewared.common.license_delegate import LicenseDelegate
 
 if TYPE_CHECKING:
@@ -31,6 +32,12 @@ class RdmaLicenseDelegate(LicenseDelegate):
                 "NVMe-oF service. Move RDMA clients to TCP first."
             ]
         return [f"RDMA ({names}): RDMA listeners are not opened because the system is not licensed for RDMA."]
+
+    async def on_grant(self) -> None:
+        if (await self.call2(self.s.nfs.config)).rdma:
+            await (await self.call2(self.s.service.control, "RELOAD", "nfs", ServiceOptions(ha_propagate=False))).wait(
+                raise_error=True
+            )
 
 
 async def setup(middleware: Middleware) -> None:
