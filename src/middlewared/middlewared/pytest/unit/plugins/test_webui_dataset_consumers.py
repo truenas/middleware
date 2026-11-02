@@ -1,12 +1,15 @@
 from middlewared.plugins.webui.dataset_consumers import DatasetIndex, match_iscsi, match_push_tasks, match_smb
 
 
-def filesystem(name, mountpoint=None):
-    return {
-        "name": name,
-        "type": "FILESYSTEM",
-        "properties": {"mountpoint": {"raw": mountpoint or f"/mnt/{name}"}},
+def filesystem(name, mountpoint=None, *, mounted=True, locked=False):
+    properties = {
+        "mountpoint": {"raw": mountpoint or f"/mnt/{name}"},
+        "mounted": {"raw": "yes" if mounted and not locked else "no"},
+        "encryption": {"raw": "aes-256-gcm" if locked else "off"},
     }
+    if locked:
+        properties["keystatus"] = {"raw": "unavailable"}
+    return {"name": name, "type": "FILESYSTEM", "properties": properties}
 
 
 def volume(name):
@@ -33,7 +36,7 @@ def test_iscsi_extent_mapped_to_two_targets_is_listed_once():
 
 
 def test_locked_child_share_belongs_to_child_only():
-    index = DatasetIndex([filesystem("tank"), filesystem("tank/enc"), filesystem("tank/enc/locked")])
+    index = DatasetIndex([filesystem("tank"), filesystem("tank/enc"), filesystem("tank/enc/locked", locked=True)])
     resolved = []
 
     def resolve(path):
@@ -46,6 +49,30 @@ def test_locked_child_share_belongs_to_child_only():
 
     assert list(result) == ["tank/enc/locked"]
     assert resolved == []
+
+
+def test_share_owner_follows_current_mounts():
+    index = DatasetIndex(
+        [
+            filesystem("tank"),
+            filesystem("tank/x"),
+            filesystem("tank/u", mounted=False),
+            filesystem("tank/v", mounted=False),
+        ]
+    )
+    shares = [
+        {"path": "/mnt/tank/x/sub", "dataset": "tank", "enabled": True, "name": "covered"},
+        {"path": "/mnt/tank/u", "dataset": "tank", "enabled": True, "name": "beside"},
+        {"path": "/mnt/tank/v", "dataset": "tank/v", "enabled": True, "name": "own"},
+    ]
+
+    result = match_smb(index, shares, {"/mnt/tank/x/sub": "tank/x"}.get)
+
+    assert {owner: [share.share_name for share in items] for owner, items in result.items()} == {
+        "tank/x": ["covered"],
+        "tank": ["beside"],
+        "tank/v": ["own"],
+    }
 
 
 def test_push_tasks_count_ancestors_only():

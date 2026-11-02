@@ -31,27 +31,44 @@ DatasetType = Literal["FILESYSTEM", "VOLUME"]
 
 
 class DatasetIndex:
-    __slots__ = ("types", "fs_mountpoints", "unique_mountpoints")
+    __slots__ = ("types", "fs_mountpoints", "claims", "unmounted")
 
     def __init__(self, rows: Iterable[Mapping[str, Any]]) -> None:
         self.types: dict[str, DatasetType] = {}
         self.fs_mountpoints: dict[str, str] = {}
+        self.unmounted: dict[str, str] = {}
         claims: dict[str, list[str]] = defaultdict(list)
         for row in rows:
             self.types[row["name"]] = row["type"]
-            if row["type"] == "FILESYSTEM":
-                mountpoint = row["properties"]["mountpoint"]["raw"]
-                if mountpoint.startswith("/"):
-                    self.fs_mountpoints[row["name"]] = mountpoint
-                    claims[mountpoint].append(row["name"])
-        self.unique_mountpoints: dict[str, str] = {mp: names[0] for mp, names in claims.items() if len(names) == 1}
+            if row["type"] != "FILESYSTEM":
+                continue
+            props = row["properties"]
+            mountpoint = props["mountpoint"]["raw"]
+            if not mountpoint.startswith("/"):
+                continue
+            self.fs_mountpoints[row["name"]] = mountpoint
+            locked = props["encryption"]["raw"] != "off" and props["keystatus"]["raw"] != "available"
+            # a locked dataset's path resolves to its parent's placeholder directory, but the consumer belongs to the
+            # locked dataset
+            if locked or props["mounted"]["raw"] == "yes":
+                claims[mountpoint].append(row["name"])
+            else:
+                self.unmounted[row["name"]] = mountpoint
+        self.claims: dict[str, list[str]] = dict(claims)
+
+    def _nearest_claim(self, path: str) -> tuple[str | None, list[str]]:
+        for candidate in (path, *map(str, PurePosixPath(path).parents)):
+            if (names := self.claims.get(candidate)) is not None:
+                return candidate, names
+        return None, []
 
     def filesystem_owner(self, path: str, dataset: str | None, resolve: Resolver) -> str | None:
         path = os.path.normpath(path)
-        # an exact mountpoint match covers locked and unmounted datasets, whose paths the kernel cannot resolve
-        if (owner := self.unique_mountpoints.get(path)) is not None:
-            return owner
-        if dataset is not None and self.types.get(dataset) == "FILESYSTEM":
+        mountpoint, names = self._nearest_claim(path)
+        # the stored dataset is not refreshed when another dataset is later mounted between it and the path
+        if len(names) == 1 and (mountpoint == path or names[0] == dataset):
+            return names[0]
+        if mountpoint != path and dataset is not None and self.unmounted.get(dataset) == path:
             return dataset
         if not path.startswith("/mnt/"):
             return None
