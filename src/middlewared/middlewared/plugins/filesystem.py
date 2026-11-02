@@ -55,14 +55,14 @@ from middlewared.api.current import (
 )
 from middlewared.common.event_source.manager import Subscriber
 from middlewared.event import TypedEventSource
-from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
+from middlewared.plugins.account.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.filesystem_.utils import apply_zfs_attrs_recursive
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, Service, ValidationErrors, filterable_api_method, job, private
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem import attrs, stat_x
-from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID, acl_is_present, zfs_acl_is_trivial
+from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID, acl_is_present, statx_acl_is_trivial
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryRequestMask, iter_listdir
 from middlewared.utils.filesystem.stat_x import StatxEtype
@@ -522,7 +522,7 @@ class FilesystemService(Service):
             user: str | None = pwd.getpwuid(st['st'].stx_uid).pw_name
         except KeyError:
             if st['st'].stx_uid == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
-                user = SYNTHETIC_CONTAINER_ROOT['pw_name']  # type: ignore[assignment]
+                user = SYNTHETIC_CONTAINER_ROOT['pw_name']
             else:
                 user = None
 
@@ -552,7 +552,7 @@ class FilesystemService(Service):
             attributes=st['attributes'],
             user=user,
             group=group,
-            acl=not zfs_acl_is_trivial(st['st']) and acl_is_present(os.listxattr(path)),
+            acl=not statx_acl_is_trivial(st['st']) and acl_is_present(os.listxattr(path)),
         )
 
     # WARNING: following method cannot currently be audited properly due to RFC limitations on

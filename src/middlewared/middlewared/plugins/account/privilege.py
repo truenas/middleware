@@ -20,6 +20,7 @@ from middlewared.api.current import (
     PrivilegeUpdateArgs,
     PrivilegeUpdateResult,
     QueryOptions,
+    UserEntry,
     UserWebUiLoginDisabledAddedEvent,
 )
 from middlewared.service import CallError, GenericCRUDService, filterable_api_method, private
@@ -155,7 +156,7 @@ class PrivilegeService(GenericCRUDService[PrivilegeEntry]):
         return get_roles(filters, options)
 
     @private
-    async def before_user_password_disable(self, user: dict[str, Any]) -> None:
+    async def before_user_password_disable(self, user: UserEntry) -> None:
         await before_user_deactivation(
             self.context,
             user,
@@ -163,7 +164,7 @@ class PrivilegeService(GenericCRUDService[PrivilegeEntry]):
         )
 
     @private
-    async def before_user_delete(self, user: dict[str, Any]) -> None:
+    async def before_user_delete(self, user: UserEntry) -> None:
         await before_user_deactivation(self.context, user, "After deleting this user no local user")
 
     @private
@@ -197,7 +198,7 @@ class PrivilegeService(GenericCRUDService[PrivilegeEntry]):
     @private
     async def always_has_root_password_enabled(
         self,
-        users: list[dict[str, Any]] | None = None,
+        users: list[UserEntry] | None = None,
         groups: list[GroupEntry] | None = None,
     ) -> bool:
         return await self._svc_part.always_has_root_password_enabled(users, groups)
@@ -206,9 +207,9 @@ class PrivilegeService(GenericCRUDService[PrivilegeEntry]):
     async def local_administrators(
         self,
         exclude_user_ids: list[int] | None = None,
-        users: list[dict[str, Any]] | None = None,
+        users: list[UserEntry] | None = None,
         groups: list[GroupEntry] | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[UserEntry]:
         return await local_administrators(self.context, exclude_user_ids, users, groups)
 
     @private

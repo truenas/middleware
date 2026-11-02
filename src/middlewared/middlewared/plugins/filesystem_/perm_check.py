@@ -6,7 +6,7 @@ from typing import Any
 
 import truenas_os
 
-from middlewared.api.current import GroupGetGroupObj
+from middlewared.api.current import GroupGetGroupObj, UserGetUserObj
 from middlewared.service import CallError, Service, private
 from middlewared.utils.filesystem.access import get_user_details
 
@@ -62,14 +62,13 @@ class FilesystemService(Service):
 
         if id_type == 'USER':
             try:
-                out = self.middleware.call_sync(
-                    'user.get_user_obj',
-                    {'uid': xid, 'get_groups': True}
+                user_obj = self.call_sync2(
+                    self.s.user.get_user_obj, UserGetUserObj(uid=xid, get_groups=True),
                 )
-                out['id_name'] = out['pw_name']
-                return out
             except KeyError:
                 return None
+
+            return user_obj.model_dump() | {'id_name': user_obj.pw_name}
 
         try:
             grp = self.call_sync2(self.s.group.get_group_obj, GroupGetGroupObj(gid=xid))
@@ -77,18 +76,15 @@ class FilesystemService(Service):
             return None
 
         # get a UID not currently in use
-        tmp_uid = self.middleware.call_sync('user.get_next_uid')
+        tmp_uid = self.call_sync2(self.s.user.get_next_uid)
 
         try:
-            res = self.middleware.call_sync(
-                'user.get_user_obj',
-                {'uid': tmp_uid}
-            )
+            res = self.call_sync2(self.s.user.get_user_obj, UserGetUserObj(uid=tmp_uid))
             self.logger.warning(
                 '%s: user exists on system but not in TrueNAS configuration. '
                 'This may indicate that it was created manually from shell '
                 'or there is an unexpected overlap between local and directory '
-                'services user accounts', res['pw_name']
+                'services user accounts', res.pw_name
             )
             # daemon user probably should not have access to user data
             # so we'll use this for testing
@@ -127,12 +123,14 @@ class FilesystemService(Service):
         `can_access_as_user` but return a list of access errors.
         """
         try:
-            user_details = self.middleware.call_sync('user.get_user_obj', {'username': username, 'get_groups': True})
+            user_obj = self.call_sync2(
+                self.s.user.get_user_obj, UserGetUserObj(username=username, get_groups=True),
+            )
         except KeyError:
             raise CallError(f'{username!r} user does not exist', errno=errno.ENOENT)
 
         return self.can_access_as_cred_errors(
-            user_details, path, perms, path_must_exist, probe_ancestors
+            user_obj.model_dump(), path, perms, path_must_exist, probe_ancestors
         )
 
     @private

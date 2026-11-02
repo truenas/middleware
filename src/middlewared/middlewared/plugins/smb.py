@@ -37,6 +37,7 @@ from middlewared.api.current import (
     SMBUnixcharsetChoicesResult,
     SMBUpdateArgs,
     SMBUpdateResult,
+    UserGetUserObj,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
@@ -541,7 +542,7 @@ class SMBService(ConfigService):
                 verrors.add('smb_update.guest', '"root" is not a permitted guest account')
 
             try:
-                await self.middleware.call("user.get_user_obj", {"username": new["guest"]})
+                await self.call2(self.s.user.get_user_obj, UserGetUserObj(username=new["guest"]))
             except KeyError:
                 verrors.add('smb_update.guest', f'{new["guest"]}: user does not exist')
 
@@ -1297,14 +1298,6 @@ class SharingSMBService(SharingService):
             if '@' in mnt['mount_source']:
                 return
 
-            child_acltype = get_acl_type(mnt['super_opts'])
-            if child_acltype != current_acltype:
-                verrors.add(
-                    schema,
-                    f'ACL type mismatch with child mountpoint at {mnt["mountpoint"]}: '
-                    f'{this_mnt["mount_source"]} - {current_acltype}, {mnt["mount_source"]} - {child_acltype}'
-                )
-
             if mnt['fs_type'] != 'zfs':
                 verrors.add(
                     schema, f'{mnt["mountpoint"]}: child mount is not a ZFS dataset.'
@@ -1314,15 +1307,6 @@ class SharingSMBService(SharingService):
                 verrors.add(
                     schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
                 )
-
-        def get_acl_type(sb_info):
-            if 'NFS4ACL' in sb_info:
-                return 'NFSV4'
-
-            if 'POSIXACL' in sb_info:
-                return 'POSIX'
-
-            return 'OFF'
 
         st = self.middleware.call_sync('filesystem.stat', path)
         if st.type == 'SYMLINK':
@@ -1343,8 +1327,6 @@ class SharingSMBService(SharingService):
 
         if 'XATTR' not in this_mnt['super_opts']:
             verrors.add(schema, 'Extended attribute support is required for SMB shares')
-
-        current_acltype = get_acl_type(this_mnt['super_opts'])
 
         for child in iter_mountinfo(target_mnt_id=this_mnt['mount_id']):
             # The child filesystem may or may not be mounted under the SMB share. Two relevant
@@ -1526,10 +1508,10 @@ class SharingSMBService(SharingService):
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
         if not ds_enabled:
-            local_smb_user_cnt = await self.middleware.call(
-                'user.query',
+            local_smb_user_cnt = await self.call2(
+                self.s.user.query,
                 [['smb', '=', True], ['local', '=', True]],
-                {'count': True}
+                QueryOptions(count=True),
             )
             if local_smb_user_cnt == 0:
                 verrors.add(
@@ -1755,9 +1737,9 @@ class SharingSMBService(SharingService):
 
             match entry['ae_who_id']['id_type']:
                 case 'USER':
-                    sid = (await self.middleware.call(
-                        'user.query', [['uid', '=', entry['ae_who_id']['id']]], {'get': True},
-                    ))['sid']
+                    sid = (await self.call2(
+                        self.s.user.query, [['uid', '=', entry['ae_who_id']['id']]], QueryOptions(get=True),
+                    )).sid
                 case 'GROUP' | 'BOTH':
                     sid = (await self.call2(
                         self.s.group.query, [['gid', '=', entry['ae_who_id']['id']]], QueryOptions(get=True),

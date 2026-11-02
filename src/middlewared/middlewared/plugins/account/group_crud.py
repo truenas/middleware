@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from asyncio import Lock as AsyncioLock
 from collections import defaultdict
 import errno
 from typing import Any
@@ -12,8 +13,7 @@ from middlewared.api.current import (
     GroupUpdate,
     QueryOptions,
 )
-from middlewared.plugins.account import ASYNC_NEXT_GID_LOCK, GroupMembershipModel, filters_include_ds_accounts
-from middlewared.plugins.account_.constants import (
+from middlewared.plugins.account.constants import (
     ALLOWED_BUILTIN_GIDS,
     MIN_AUTO_XID,
     USERNS_IDMAP_DIRECT,
@@ -31,6 +31,12 @@ from middlewared.utils.sid import DomainRid, db_id_to_rid
 from middlewared.utils.types import AuditCallback
 
 from .group_validate import common_validation, validate_builtin_update, validate_userns_idmap_conflict
+from .membership import GroupMembershipModel
+from .utils import filters_include_ds_accounts, userns_idmap_to_db
+
+__all__ = ("ASYNC_NEXT_GID_LOCK", "GroupModel", "GroupServicePart")
+
+ASYNC_NEXT_GID_LOCK = AsyncioLock()
 
 
 class GroupModel(sa.Model):
@@ -49,16 +55,6 @@ class GroupModel(sa.Model):
         secondary=lambda: GroupMembershipModel.__table__,
         overlaps="bsdusr_groups",
     )
-
-
-def userns_idmap_to_db(userns_idmap: str | int | None) -> int:
-    match userns_idmap:
-        case "DIRECT":
-            return USERNS_IDMAP_DIRECT
-        case None:
-            return USERNS_IDMAP_NONE
-        case _:
-            return int(userns_idmap)
 
 
 class GroupServicePart(CRUDServicePart[GroupEntry]):

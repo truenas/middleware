@@ -1,6 +1,7 @@
 import os
 from typing import Any
 
+from middlewared.api.current import UserGetUserObj
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.boot.pool import boot_pool
 from middlewared.utils.path import check_path_resides_within_volume_sync
@@ -58,18 +59,20 @@ class CDROMDelegate(DeviceDelegate):
         # a) Check if libvirt user can access the file
         # b) Change ownership of the file to libvirt user as libvirt would eventually do
         # 3) Check if libvirt user can access the file
-        libvirt_user = self.middleware.call_sync('user.get_user_obj', {"username": LIBVIRT_USER})
+        libvirt_user = self.middleware.call_sync2(
+            self.middleware.services.user.get_user_obj, UserGetUserObj(username=LIBVIRT_USER),
+        )
         current_owner = os.stat(path)
         is_valid = False
-        if current_owner.st_uid != libvirt_user['pw_uid']:
+        if current_owner.st_uid != libvirt_user.pw_uid:
             if self.middleware.call_sync('filesystem.can_access_as_user', LIBVIRT_USER, path, ['READ']):
                 is_valid = True
             else:
-                os.chown(path, libvirt_user['pw_uid'], libvirt_user['pw_gid'])
+                os.chown(path, libvirt_user.pw_uid, libvirt_user.pw_gid)
         if not is_valid:
             try:
                 self.middleware.call_sync(
-                    'filesystem.check_path_execute', path, 'USER', libvirt_user['pw_uid'], False
+                    'filesystem.check_path_execute', path, 'USER', libvirt_user.pw_uid, False
                 )
             except CallError as e:
                 verrors.add('attributes.path', e.errmsg)

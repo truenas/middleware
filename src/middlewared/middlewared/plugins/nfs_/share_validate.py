@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import GroupGetGroupObj, QueryOptions, SharingNFSEntry
+from middlewared.api.current import GroupGetGroupObj, QueryOptions, SharingNFSEntry, UserGetUserObj
 from middlewared.service import ValidationErrors
 
 from .share_hosts import resolve_hostnames, share_realpath, validate_hosts_and_networks, validate_share_networks
@@ -179,7 +179,7 @@ async def validate_mappings(
             continue
 
         try:
-            await part.middleware.call("user.get_user_obj", {"username": map_user})
+            await part.call2(part.s.user.get_user_obj, UserGetUserObj(username=map_user))
         except KeyError:
             verrors.add(f"{schema_name}.{k}_user", f"User not found: {map_user}")
 

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import asyncssh
 
+from middlewared.api.current import UserGetUserObj, UserGetUserObjData
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils import run
 
@@ -215,9 +216,9 @@ async def validate_remote_path(
 
 
 async def validate_ssh_task(
-    part: RsyncTaskServicePart, verrors: ValidationErrors, data: dict[str, Any], schema: str, user: dict[str, Any]
+    part: RsyncTaskServicePart, verrors: ValidationErrors, data: dict[str, Any], schema: str, user: UserGetUserObjData
 ) -> None:
-    ssh_dir_path = pathlib.Path(os.path.join(user["pw_dir"], ".ssh"))
+    ssh_dir_path = pathlib.Path(os.path.join(user.pw_dir, ".ssh"))
     known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, "known_hosts"))
 
     known_hosts_location: Any
@@ -225,7 +226,7 @@ async def validate_ssh_task(
         connect_kwargs = await get_ssh_credentials_connect_kwargs(part, verrors, data["ssh_credentials"], schema)
         known_hosts_location = "SSH Connection Settings"
     else:
-        connect_kwargs = get_connect_kwargs(verrors, data, schema, user["pw_dir"])
+        connect_kwargs = get_connect_kwargs(verrors, data, schema, user.pw_dir)
         known_hosts_location = known_hosts_path
 
     remote_path: str = data.get("remotepath") or ""
@@ -245,8 +246,8 @@ async def validate_ssh_task(
             data["ssh_keyscan"],
             connect_kwargs["host"],
             int(connect_kwargs["port"]),
-            user["pw_uid"],
-            user["pw_gid"],
+            user.pw_uid,
+            user.pw_gid,
         ):
             connect_kwargs["known_hosts"] = known_hosts
             known_hosts_location = known_hosts_path
@@ -279,7 +280,7 @@ async def validate_rsync_task(
         raise verrors
 
     try:
-        user = await part.middleware.call("user.get_user_obj", {"username": username})
+        user = await part.call2(part.s.user.get_user_obj, UserGetUserObj(username=username))
     except KeyError:
         user = None
 

@@ -4,11 +4,12 @@ import errno
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import GroupCreate, GroupEntry, GroupGetGroupObj, GroupUpdate, QueryOptions
-from middlewared.plugins.account import validate_sudo_commands
 from middlewared.plugins.idmap_.idmap_constants import BASE_SYNTHETIC_DATASTORE_ID
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.service import ValidationErrors
 from middlewared.utils.lang import undefined
+
+from .utils import validate_sudo_commands
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -180,8 +181,8 @@ async def common_validation(
                 )
                 return
 
-    root_user = await context.middleware.call("user.query", [("username", "=", "root")], {"get": True})
-    root_user_id = root_user["id"]
+    root_user = await context.call2(context.s.user.query, [("username", "=", "root")], QueryOptions(get=True))
+    root_user_id = root_user.id
     if pk:
         pk_groupname: str | None = (await context.call2(context.s.group.get_instance, pk)).group
     else:

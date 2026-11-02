@@ -2,7 +2,7 @@ import os
 import pytest
 
 from truenas_api_client import Client
-from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
+from middlewared.plugins.account.constants import SYNTHETIC_CONTAINER_ROOT
 
 
 def test__query_by_name():

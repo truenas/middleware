@@ -1,3 +1,5 @@
+import errno
+
 import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
@@ -385,3 +387,64 @@ def test_sshpubkey_gid_lookup_failure_tolerated():
             call("user.update", u["id"], {"sshpubkey": "ssh-rsa AAAAkey2"})
             home = call("user.get_instance", u["id"])["home"]
             assert ssh(f"cat {home}/.ssh/authorized_keys").strip() == "ssh-rsa AAAAkey2"
+
+
+# ---------------------------------------------------------------------------
+# clearing sshpubkey removes the authorized_keys file
+# ---------------------------------------------------------------------------
+def test_sshpubkey_cleared_removes_authorized_keys():
+    with dataset("cov_ssh_clear") as ds:
+        with user(
+            _home_user(
+                f"/mnt/{ds}",
+                username="covsshclr",
+                home_create=True,
+                sshpubkey="ssh-rsa AAAAtobecleared",
+            )
+        ) as u:
+            home = call("user.get_instance", u["id"])["home"]
+            assert ssh(f"cat {home}/.ssh/authorized_keys").strip() == "ssh-rsa AAAAtobecleared"
+
+            # An empty key unlinks the file rather than writing an empty one
+            call("user.update", u["id"], {"sshpubkey": None})
+            assert ssh(f"test -e {home}/.ssh/authorized_keys && echo yes || echo no").strip() == "no"
+            assert call("user.get_instance", u["id"])["sshpubkey"] is None
+
+
+# ---------------------------------------------------------------------------
+# a non-directory .ssh is reported rather than silently ignored
+# ---------------------------------------------------------------------------
+def test_sshpubkey_rejected_when_ssh_dir_is_a_file():
+    # `update_sshpubkey` creates a missing `.ssh` before writing the key, so a
+    # plain file sitting at that path surfaces as EEXIST from `filesystem.mkdir`
+    # rather than silently replacing it or writing the key elsewhere.
+    with dataset("cov_ssh_isfile") as ds:
+        with user(_home_user(f"/mnt/{ds}", username="covsshfil", home_create=True)) as u:
+            home = call("user.get_instance", u["id"])["home"]
+            ssh(f"rm -rf {home}/.ssh && touch {home}/.ssh")
+
+            with pytest.raises(CallError) as ve:
+                call("user.update", u["id"], {"sshpubkey": "ssh-rsa AAAAneedsdir"})
+
+            assert ve.value.errno == errno.EEXIST, ve.value
+            assert f"{home}/.ssh: path already exists." in ve.value.errmsg, ve.value
+
+
+# ---------------------------------------------------------------------------
+# sshpubkey against an existing home, with home_create off
+# ---------------------------------------------------------------------------
+def test_create_user_sshpubkey_existing_home_without_home_create():
+    # `home_create=False` means the account's home *is* the given path, so the
+    # pubkey access probe runs against it directly instead of its parent.
+    with dataset("cov_ssh_nohc") as ds:
+        with user(
+            _home_user(
+                f"/mnt/{ds}",
+                username="covsshnohc",
+                home_create=False,
+                sshpubkey="ssh-rsa AAAAnohomecreate",
+            )
+        ) as u:
+            entry = call("user.get_instance", u["id"])
+            assert entry["home"] == f"/mnt/{ds}"
+            assert ssh(f"cat /mnt/{ds}/.ssh/authorized_keys").strip() == "ssh-rsa AAAAnohomecreate"

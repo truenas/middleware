@@ -115,7 +115,6 @@ def test_zfs_resource_snapshot_clone_path_validation():
             assert "must be a dataset path" in str(exc_info.value).lower()
 
 
-@pytest.mark.skip(reason="Fails in jenkins CI but passes locally. Needs investigation.")
 def test_zfs_resource_snapshot_clone_zvol():
     """Test cloning a zvol snapshot"""
     with dataset(
@@ -134,10 +133,9 @@ def test_zfs_resource_snapshot_clone_zvol():
                 assert result[0]["name"] == clone_path
                 assert result[0]["type"] == "VOLUME"
             finally:
-                # Use defer=True for zvol clones - kernel may still be accessing device
                 call(
                     "zfs.resource.destroy",
-                    {"path": clone_path, "recursive": True, "defer": True},
+                    {"path": clone_path, "recursive": True},
                 )
 
 

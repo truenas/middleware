@@ -1,5 +1,6 @@
+from typing import Any
+
 from middlewared.alert.source.smb import SMBUserMissingHashAlert
-from middlewared.api.current import UserEntry
 from middlewared.service import Service, filterable_api_method, job, private
 from middlewared.utils.sid import get_domain_rid
 
@@ -35,7 +36,7 @@ class SMBService(Service):
             return query_passdb_entries(filters or [], options or {}, clustered)
 
     @private
-    def update_passdb_user(self, user: UserEntry):
+    def update_passdb_user(self, user: dict[str, Any]):
         smb_config = self.middleware.call_sync('smb.config')
         server_name = smb_config['netbiosname']
         clustered = smb_config['stateful_failover']
@@ -84,7 +85,8 @@ class SMBService(Service):
         to_update = []
         broken_entries = []
 
-        for entry in self.middleware.call_sync('user.query', [("smb", "=", True), ('local', '=', True)]):
+        for user in self.call_sync2(self.s.user.query, [("smb", "=", True), ('local', '=', True)]):
+            entry = user.model_dump(expose_secrets=True)
             existing_entry = pdb_entries.pop(get_domain_rid(entry['sid']), None)
             try:
                 to_update.append(user_entry_to_passdb_entry(server_name, entry, existing_entry))

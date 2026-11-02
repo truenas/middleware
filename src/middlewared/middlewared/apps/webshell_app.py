@@ -16,7 +16,8 @@ from truenas_api_client import json
 
 from middlewared.api.base.server.app import App
 from middlewared.api.base.server.ws_handler.base import BaseWebSocketHandler
-from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
+from middlewared.api.current import UserGetUserObj
+from middlewared.plugins.account.constants import DEFAULT_HOME_PATH
 from middlewared.service_exception import (
     CallError,
     ErrnoMixin,
@@ -517,7 +518,10 @@ class ShellApplication:
                         )
 
                     try:
-                        user_obj = await self.middleware.call("user.get_user_obj", {"username": token["username"]})
+                        user_obj = await self.middleware.call2(
+                            self.middleware.services.user.get_user_obj,
+                            UserGetUserObj(username=token["username"]),
+                        )
                     except KeyError:
                         raise CallError(f'{token["username"]}: user does not exist')
 
@@ -527,7 +531,7 @@ class ShellApplication:
                         input_queue=input_queue,
                         loop=asyncio.get_event_loop(),
                         username=token["username"],
-                        homedir=user_obj["pw_dir"],
+                        homedir=user_obj.pw_dir,
                         options=options,
                         shell_type=shell_type,
                     )

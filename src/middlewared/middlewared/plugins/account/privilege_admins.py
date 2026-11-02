@@ -3,10 +3,11 @@ from __future__ import annotations
 import errno
 from typing import TYPE_CHECKING, Any
 
-from middlewared.api.current import GroupEntry
-from middlewared.plugins.account import unixhash_is_valid
+from middlewared.api.current import GroupEntry, UserEntry
 from middlewared.service import CallError
 from middlewared.utils.privilege import BuiltinPrivileges
+
+from .password import unixhash_is_valid
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -28,7 +29,7 @@ async def used_local_gids(context: ServiceContext) -> dict[int, dict[str, Any]]:
     return gids
 
 
-async def before_user_deactivation(context: ServiceContext, user: dict[str, Any], error_text: str) -> None:
+async def before_user_deactivation(context: ServiceContext, user: UserEntry, error_text: str) -> None:
     for privilege in await context.middleware.call(
         "datastore.query",
         "account.privilege",
@@ -37,7 +38,7 @@ async def before_user_deactivation(context: ServiceContext, user: dict[str, Any]
         if not await context.call2(
             context.s.group.has_password_enabled_user,
             privilege["local_groups"],
-            [user["id"]],
+            [user.id],
         ):
             raise CallError(
                 f"{error_text} will have built-in privilege {privilege['name']!r}.",
@@ -58,12 +59,12 @@ async def before_group_delete(context: ServiceContext, group: GroupEntry) -> Non
 async def local_administrators(
     context: ServiceContext,
     exclude_user_ids: list[int] | None = None,
-    users: list[dict[str, Any]] | None = None,
+    users: list[UserEntry] | None = None,
     groups: list[GroupEntry] | None = None,
-) -> list[dict[str, Any]]:
+) -> list[UserEntry]:
     exclude_user_ids = exclude_user_ids or []
     if users is None:
-        users = await context.middleware.call("user.query", [["local", "=", True]])
+        users = await context.call2(context.s.user.query, [["local", "=", True]])
     if groups is None:
         groups = await context.call2(context.s.group.query, [["local", "=", True]])
 
@@ -73,16 +74,18 @@ async def local_administrators(
         [["builtin_name", "=", BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
         {"get": True},
     )
-    administrators: list[dict[str, Any]] = await context.call2(
+    rows: list[dict[str, Any]] = await context.call2(
         context.s.group.get_password_enabled_users,
         local_administrator_privilege["local_groups"],
         exclude_user_ids,
         groups,
     )
+    by_id = {user.id: user for user in users}
+    administrators = [by_id[row["id"]] for row in rows]
     if not administrators:
-        root_user = next(u for u in users if u["username"] == "root")
-        if root_user["id"] not in exclude_user_ids:
-            if unixhash_is_valid(root_user["unixhash"]):
+        root_user = next(u for u in users if u.username == "root")
+        if root_user.id not in exclude_user_ids:
+            if unixhash_is_valid(root_user.unixhash.get_secret_value()):
                 # This can only be if `always_has_root_password_enabled` is `True`
                 administrators = [root_user]
 

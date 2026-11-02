@@ -36,6 +36,7 @@ from middlewared.api.current import (
     SharingS3Update,
     SharingS3UpdateArgs,
     SharingS3UpdateResult,
+    UserGetUserObj,
     ZFSResourceCreateArgsData,
     ZFSResourceCreateProperties,
     ZFSResourceQuery,
@@ -419,11 +420,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def resolve_owner(self, schema: str, username: str, verrors: ValidationErrors) -> int | None:
         """Resolve the owner's uid. Root is refused."""
         try:
-            user = await self.middleware.call("user.get_user_obj", {"username": username})
+            user = await self.call2(self.s.user.get_user_obj, UserGetUserObj(username=username))
         except KeyError:
             verrors.add(f"{schema}.owner", f"User {username!r} does not exist.")
             return None
-        uid: int = user["pw_uid"]
+        uid = user.pw_uid
         if uid == 0:
             verrors.add(f"{schema}.owner", "A bucket may not be owned by root.")
             return None
@@ -450,7 +451,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def owner_of_uid(self, schema: str, uid: int, verrors: ValidationErrors) -> str | None:
         """The account a backed-up owner uid belongs to."""
         try:
-            user = await self.middleware.call("user.get_user_obj", {"uid": uid})
+            user = await self.call2(self.s.user.get_user_obj, UserGetUserObj(uid=uid))
         except KeyError:
             verrors.add(
                 f"{schema}.dataset",
@@ -458,8 +459,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 f"holds. Create that account, or state owner.",
             )
             return None
-        pw_name: str = user["pw_name"]
-        return pw_name
+        return user.pw_name
 
     @private
     def config_backup_row(self, entry: SharingS3Entry) -> dict[str, Any]:

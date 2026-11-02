@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -9,6 +10,24 @@ from middlewared.api.base.handler.inspect import (
 )
 
 MockReturnModel = tuple[Literal['model', 'list', 'dict'], type[BaseModel]]
+
+
+def mock_args_match(args: list[Any] | None, params: Sequence[Any]) -> bool:
+    """Check whether the arguments a mock was registered for match the call arguments.
+
+    New style methods receive Pydantic models, whereas mocks are always registered with JSON arguments.
+    """
+    if args is None or len(args) != len(params):
+        return False
+
+    for arg, param in zip(args, params):
+        if isinstance(param, BaseModel):
+            arg = type(param).model_validate(arg)
+
+        if arg != param:
+            return False
+
+    return True
 
 
 def coerce_mock_result(result: Any, mock_return_model: MockReturnModel | None) -> Any:

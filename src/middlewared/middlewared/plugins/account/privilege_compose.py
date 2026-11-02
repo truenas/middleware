@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Collection
 from typing import TYPE_CHECKING, Any, Literal
 
-from middlewared.api.current import ComposedPrivilege
+from middlewared.api.current import ComposedPrivilege, UserGetUserObj
 from middlewared.utils.privilege import privilege_has_webui_access, privileges_group_mapping
 from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 from middlewared.utils.security import system_security_config_to_stig_type
@@ -109,15 +109,18 @@ async def roles_for_user(context: ServiceContext, username: str) -> list[str]:
     authentication does.
     """
     try:
-        user_obj = await context.middleware.call("user.get_user_obj", {"username": username, "get_groups": True})
+        user_obj = await context.call2(
+            context.s.user.get_user_obj,
+            UserGetUserObj(username=username, get_groups=True),
+        )
     except KeyError:
         return []
 
     privileges = await privileges_for_groups(
         context,
-        "local_groups" if user_obj["local"] else "ds_groups",
+        "local_groups" if user_obj.local else "ds_groups",
         # synthetic accounts (container root) have no group list
-        user_obj["grouplist"] or [],
+        user_obj.grouplist or [],
     )
     if not privileges:
         return []

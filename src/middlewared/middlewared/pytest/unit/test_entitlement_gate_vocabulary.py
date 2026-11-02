@@ -60,7 +60,7 @@ GATES = [
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
     ("plugins/vm/info.py", "LicenseFeature.VMS"),
-    ("plugins/webshare/sharing.py", "LicenseFeature.WEBSHARE"),
+    ("plugins/webshare/sharing_validate.py", "LicenseFeature.WEBSHARE"),
     ("plugins/zfs/resource_create.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/resource_set.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/snapshot_ops.py", "LicenseFeature.DEDUP"),
