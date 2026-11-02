@@ -27,6 +27,7 @@ from truenas_zfstierd_common import (
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    EntitlementEntry,
     ServiceOptions,
     ZFSResourceQuery,
     ZFSResourceSetArgsData,
@@ -361,14 +362,18 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         Controls whether tiering is enabled, how many rewrite jobs may run concurrently, the filesystem usage
         threshold at which rewrites are aborted, and the percentage of PERFORMANCE tier space reserved for
         metadata. Applying the new configuration regenerates the ``truenas_zfstierd`` daemon configuration and
-        reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
+        reloads the daemon, or restarts it if ``max_concurrent_jobs`` changed.
 
         Enabling tiering requires a license carrying the ZFSTIER feature; disabling it or changing other
-        settings is always allowed.
+        settings is always allowed. While tiering is enabled but the system is not licensed, the daemon
+        configuration is written with tiering disabled and the daemon is restarted rather than reloaded, so
+        running and queued rewrite jobs are paused instead of cancelled. Paused jobs resume when the system is
+        licensed again.
         """
         old = await self.config()
-        if data.get('enabled', old.enabled) and not old.enabled:
-            await self._require_zfstier()
+        ent = await self._zfstier_entitlement()
+        if data.get("enabled", old.enabled) and not old.enabled and not ent.entitled:
+            raise CallError(ent.message)
 
         new = await self._svc_part.do_update(data)
         await self.middleware.call("etc.generate", "truenas_zfstierd")
@@ -379,15 +384,19 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
                 new.special_class_metadata_reserve_pct,
                 await self.middleware.call("failover.licensed"),
             )
-        if new.max_concurrent_jobs != old.max_concurrent_jobs:
+        # A reload into the unlicensed (disabled) render cancels jobs; a restart stops them resumably.
+        if new.max_concurrent_jobs != old.max_concurrent_jobs or (new.enabled and not ent.entitled):
             verb: Literal["RESTART", "RELOAD"] = "RESTART"
         else:
             verb = "RELOAD"
         await self.call2(self.s.service.control, verb, "truenas_zfstierd")
         return new
 
+    async def _zfstier_entitlement(self) -> EntitlementEntry:
+        return await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
+
     async def _require_zfstier(self) -> None:
-        ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
+        ent = await self._zfstier_entitlement()
         if not ent.entitled:
             raise CallError(ent.message)
 
@@ -775,15 +784,17 @@ class ZfsTierLicenseDelegate(LicenseDelegate):
         if not (await self.call2(self.s.zfs.tier.config)).enabled:
             return []
         return [
-            "ZFS tiering: tiering is enabled but no new data movement is scheduled because the system is not "
-            "licensed for ZFS tiering. A job in progress finishes or pauses safely."
+            "ZFS tiering: this system is not licensed for ZFS tiering, so new tiering jobs cannot be started. "
+            "A job already running or queued may continue until the tiering settings are next saved, which "
+            "pauses it; paused jobs resume when the system is licensed again."
         ]
 
     async def on_grant(self) -> None:
         if (await self.call2(self.s.zfs.tier.config)).enabled:
+            # RESTART, not RELOAD: it starts a daemon left stopped and resumes jobs a reload would leave queued.
             await (
                 await self.call2(
-                    self.s.service.control, "RELOAD", "truenas_zfstierd", ServiceOptions(ha_propagate=False)
+                    self.s.service.control, "RESTART", "truenas_zfstierd", ServiceOptions(ha_propagate=False)
                 )
             ).wait(raise_error=True)
 
