@@ -4,6 +4,8 @@ from collections.abc import Callable, Mapping, Sequence
 import functools
 from typing import TYPE_CHECKING, Any
 
+from truenas_os_pyutils.mount import statmount
+
 from middlewared.api.current import (
     QueryOptions,
     WebUIDatasetConsumers,
@@ -12,7 +14,6 @@ from middlewared.api.current import (
     ZFSResourceQuery,
     ZFSResourceSnapshotCountQuery,
 )
-from middlewared.utils.mount import resolve_dataset_path
 
 from .dataset_consumers import (
     DatasetIndex,
@@ -73,7 +74,10 @@ def _authorized(app: App, methods: tuple[str, ...]) -> bool:
 def _resolver() -> Resolver:
     @functools.cache
     def resolve(path: str) -> str | None:
-        return resolve_dataset_path(path, None)[0]
+        try:
+            return statmount(path=path, as_dict=False).sb_source
+        except (OSError, ValueError):
+            return None
 
     return resolve
 

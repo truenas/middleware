@@ -376,3 +376,18 @@ def test_zfs_resource_snapshot_count_is_not_cached_within_the_same_second():
 
     assert result["same_second"], "no pair of snapshots shared a `snapshots_changed`"
     assert result["counted"] == result["actual"], result
+
+
+def test_zfs_resource_snapshot_count_dataset_not_mounted_at_its_mountpoint():
+    shadow = f"{pool}/test_snap_count_shadow_off"
+    ssh(f"zfs destroy -r {shadow}", check=False)
+    with dataset("test_snap_count_shadow") as mounted:
+        try:
+            ssh(f"zfs create -o canmount=noauto -o mountpoint=/mnt/{mounted} {shadow}")
+            with snapshot(mounted, "a"), snapshot(mounted, "b"), snapshot(shadow, "c"):
+                result = call(
+                    "zfs.resource.snapshot.count", {"paths": [mounted, shadow]}
+                )
+                assert result == {mounted: 2, shadow: 1}
+        finally:
+            ssh(f"zfs destroy -r {shadow}", check=False)
