@@ -28,8 +28,8 @@ class RdmaLicenseDelegate(LicenseDelegate):
         names = ", ".join(sorted(protocols))
         if in_grace:
             return [
-                f"RDMA ({names}): RDMA connections stop at the next reboot or a restart of the NFS, iSCSI or "
-                "NVMe-oF service. Move RDMA clients to TCP first."
+                f"RDMA ({names}): RDMA connections stop at the next reboot or an administrator stop or restart of "
+                "the NFS, iSCSI or NVMe-oF service. Move RDMA clients to TCP first."
             ]
         return [f"RDMA ({names}): RDMA listeners are not opened because the system is not licensed for RDMA."]
 

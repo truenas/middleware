@@ -269,8 +269,9 @@ class TruesearchLicenseDelegate(LicenseDelegate):
     async def alert_lines(self, in_grace: bool) -> list[str]:
         if in_grace:
             return [
-                'TrueSearch: the indexer keeps running until the next reboot or an administrator restart of '
-                'TrueSearch. After that SMB clients fall back to ordinary search.'
+                'TrueSearch: the indexer keeps running until the next reboot or an administrator stop or restart of '
+                'TrueSearch. After that it cannot be started, and SMB clients fall back to ordinary search until the '
+                'system is licensed for TrueSearch.'
             ]
         if await self.call2(self.s.truesearch.raw_directories):
             return [

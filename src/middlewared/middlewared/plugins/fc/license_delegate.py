@@ -25,7 +25,7 @@ class FibreChannelLicenseDelegate(LicenseDelegate):
             on_ports = f" on ports {ports}" if ports else ""
             return [
                 f"Fibre Channel: targets {names}{on_ports} stop being served over Fibre Channel at the next reboot "
-                "or iSCSI service restart. Move hosts off these paths first."
+                "or an administrator stop or restart of the iSCSI service. Move hosts off these paths first."
             ]
         return [
             f"Fibre Channel: targets {names} are not served over Fibre Channel because the system is not licensed "

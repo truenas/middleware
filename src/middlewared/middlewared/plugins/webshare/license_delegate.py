@@ -18,8 +18,8 @@ class WebshareLicenseDelegate(LicenseDelegate):
     async def alert_lines(self, in_grace: bool) -> list[str]:
         if in_grace:
             return [
-                "WebShare: the service and logged-in users continue until the next reboot or an administrator "
-                "restart of WebShare. After that it does not start until the system is licensed for WebShare."
+                "WebShare: the service and logged-in users continue until the next reboot or an administrator stop "
+                "or restart of WebShare. After that it cannot be started until the system is licensed for WebShare."
             ]
         service = await self.call2(self.s.service.query, [["service", "=", "webshare"]], QueryOptions(get=True))
         if service.enable:

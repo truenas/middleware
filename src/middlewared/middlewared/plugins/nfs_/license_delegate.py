@@ -22,8 +22,9 @@ class NfsSnapshotLicenseDelegate(LicenseDelegate):
         paths = ", ".join(sorted(share.path for share in shares))
         if in_grace:
             return [
-                f"NFS: the snapshot directory of shares {paths} stays visible until the next reboot or NFS service "
-                "restart. After that it is hidden until the system is licensed for NFS snapshot exposure."
+                f"NFS: the snapshot directory of shares {paths} stays visible until the next reboot or an "
+                "administrator stop or restart of the NFS service. After that it is hidden until the system is "
+                "licensed for NFS snapshot exposure."
             ]
         return [
             f"NFS: the snapshot directory of shares {paths} is hidden because the system is not licensed for NFS "
