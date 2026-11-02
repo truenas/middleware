@@ -11,6 +11,7 @@ from middlewared.api.base import (
     NetbiosDomain,
     NetbiosName,
     NonEmptyString,
+    SingleLineString,
     SmbShareName,
     UnixPerm,
     excluded_field,
@@ -346,6 +347,7 @@ class SMBStatusResult(BaseModel):
 @single_argument_args('smb_update')
 class SMBUpdateArgs(SMBEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+    description: SingleLineString
 
 
 class SMBUpdateResult(BaseModel):
@@ -1149,6 +1151,14 @@ class SmbShareCreate(SharingSMBEntry):
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
     tier: Excluded = excluded_field()
+    comment: SingleLineString = Field(
+        default='',
+        examples=['Mammalian nurturable'],
+        description=(
+            "Text field that is seen next to a share when an SMB client requests a list of SMB shares on the TrueNAS "
+            "server."
+        ),
+    )
 
     @model_validator(mode='after')
     def check_purpose_options(self) -> Self:
