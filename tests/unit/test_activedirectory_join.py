@@ -192,7 +192,7 @@ def test__ad_wait_kerberos_start_propagates_non_recoverable_immediately(join_har
     """
     err = KRB5Error(
         gss_major=458752,
-        gss_minor=39756033,  # KRB5_CONFIG_BADFORMAT (low byte 0x01)
+        gss_minor=2529639048,  # KRB5_CONFIG_BADFORMAT (136)
         errmsg="Configuration is bad",
     )
     # Sanity: this code is NOT in the recoverable allowlist

@@ -183,6 +183,10 @@ class ADHealthMixin:
                         "credentials through an unsupported method. You may need to re-join "
                         "TrueNAS to Active Directory."
                     )
+                case None:
+                    # Not a krb5 error (for example EDQUOT storing the ticket), so not evidence
+                    # of a bad secret.
+                    raise
                 case _:
                     faulted_reason = f'Failed to validate stored credential: {krberr.errmsg}'
 
