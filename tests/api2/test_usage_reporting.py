@@ -281,3 +281,20 @@ def test_count_method_calls():
         f'{method}: expected {expected_count}, got {actual_count}'
         for method, expected_count, actual_count in inconsistencies
     )
+
+
+def test_dataset_and_zvol_counts():
+    def sample():
+        return call("usage.gather", ["gather_system", "gather_filesystem_usage"])
+
+    baseline = sample()
+    with (
+        nfs_dataset("usage_count"),
+        nfs_dataset("usage_count/child"),
+        nfs_dataset("usage_count_zvol", {"type": "VOLUME", "volsize": 1048576}),
+    ):
+        latest = sample()
+
+    assert latest["system"][0]["datasets"] == baseline["system"][0]["datasets"] + 2
+    assert latest["system"][0]["zvols"] == baseline["system"][0]["zvols"] + 1
+    assert latest["zvols"]["total_size"] > baseline["zvols"]["total_size"]

@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import asyncio
-import random
 from typing import TYPE_CHECKING, Any
 
 from middlewared.service import Service
-from middlewared.utils.time_utils import utc_now
 
 from . import firstboot as _firstboot
 from . import gather as _gather
@@ -34,12 +31,12 @@ class UsageService(Service):
         return _gather.gather(self, restrict_usage)
 
 
-async def setup(middleware: Middleware) -> None:
-    now = utc_now()
-    event_loop = asyncio.get_event_loop()
+async def _start(middleware: Middleware, event_type: str | None = None, args: Any = None) -> None:
+    middleware.create_task(middleware.call2(middleware.services.usage.start))
 
+
+async def setup(middleware: Middleware) -> None:
     await middleware.call("network.general.register_activity", "usage", "Anonymous usage statistics")
-    event_loop.call_at(
-        random.uniform(1, (now.replace(hour=23, minute=59, second=59) - now).total_seconds()),
-        lambda: middleware.create_task(middleware.call2(middleware.services.usage.start)),
-    )
+    middleware.event_subscribe("system.ready", _start)
+    if await middleware.call("system.ready"):
+        await _start(middleware)
