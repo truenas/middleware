@@ -71,7 +71,8 @@ async def resolve_ds_groups(
             mapped_sids = (await context.middleware.call("idmap.convert_sids", sids_to_check))["mapped"]
         except Exception:
             context.logger.warning("Failed to generate privileges for domain groups", exc_info=True)
-            return result
+            # Report the SIDs as unmapped rather than dropping the whole list, which an update would write back
+            mapped_sids = {}
     else:
         mapped_sids = {}
 
