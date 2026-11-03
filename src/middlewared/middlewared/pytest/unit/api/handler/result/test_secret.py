@@ -349,13 +349,56 @@ def test_fallback_works():
     class NestedModel(BaseModel):
         field: Literal["TEST"]
 
-    class Model(BaseModel):
+    @single_argument_result
+    class MethodResult(BaseModel):
         child: Secret[NestedModel]
 
-    assert serialize_result(Model, {
+    assert serialize_result(MethodResult, {
         "child": {
             "field": "TEST2",
         },
     }, False, True) == {
         "child": "********",
     }
+
+
+class AuthEntry(BaseModel):
+    id: int
+    secret: Secret[str]
+    discovery_auth: Literal["NONE", "CHAP"]
+
+
+class AuthQueryResult(BaseModel):
+    result: list[AuthEntry]
+
+
+class AuthGetInstanceResult(BaseModel):
+    result: AuthEntry
+
+
+def test_fallback_redacts_a_list_of_entries():
+    rows = [
+        {"id": 1, "secret": "first", "discovery_auth": "NONE"},
+        {"id": 2, "secret": "second", "discovery_auth": "BROKEN"},
+    ]
+
+    assert serialize_result(AuthQueryResult, rows, False, True) == [
+        {"id": 1, "secret": "********", "discovery_auth": "NONE"},
+        {"id": 2, "secret": "********", "discovery_auth": "BROKEN"},
+    ]
+
+
+def test_fallback_redacts_a_single_entry():
+    row = {"id": 2, "secret": "second", "discovery_auth": "BROKEN"}
+
+    assert serialize_result(AuthGetInstanceResult, row, False, True) == {
+        "id": 2,
+        "secret": "********",
+        "discovery_auth": "BROKEN",
+    }
+
+
+def test_fallback_exposes_a_list_of_entries_to_full_admin():
+    rows = [{"id": 2, "secret": "second", "discovery_auth": "BROKEN"}]
+
+    assert serialize_result(AuthQueryResult, rows, True, True) == rows

@@ -19,7 +19,9 @@ def remove_secrets(model: type[BaseModel], value: typing.Any) -> typing.Any:
     :param value: value that potentially contains `Secret` data.
     :return: `value` with `Secret` parameters replaced with a placeholder.
     """
-    if isinstance(value, dict) and (nested_model := model_field_is_model(model, value_hint=value)):
+    if isinstance(value, dict) and (
+        nested_model := model_field_is_model(model, value_hint=value) or model_field_is_model(model)
+    ):
         result = {}
         for field_name, field_info in nested_model.model_fields.items():
             # Use alias if present, otherwise use field name
