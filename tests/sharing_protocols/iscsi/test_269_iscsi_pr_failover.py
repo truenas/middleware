@@ -167,6 +167,7 @@ class Scenarios:
     s20: PrTarget | None = None
     s21: PrTarget | None = None
     s22: PrTarget | None = None
+    s23: PrTarget | None = None
 
 
 def _tpg_port_ids(tgt_config):
@@ -218,14 +219,15 @@ def ha_env():
 
 
 @contextlib.contextmanager
-def pr_target(env, label, size_mb=LUN_MB):
-    """A target with one LUN (zvol + extent), removed again on exit."""
+def pr_target(env, label, size_mb=LUN_MB, initiator_id=None):
+    """A target with one LUN (zvol + extent), removed again on exit. Its
+    initiator group is the environment's unless `initiator_id` names one."""
     rnd = "".join(random.choices(string.digits, k=6))
     zvol_path = f"{pool_name}/ds_prf_{label.replace('-', '_')}_{rnd}"
     ext_name = f"ext_prf_{label.replace('-', '_')}_{rnd}"
     with zvol_dataset(zvol_path, size_mb):
         with zvol_extent(zvol_path, ext_name) as extent_config:
-            groups = [{"portal": env.portal["id"], "initiator": env.initiator["id"]}]
+            groups = [{"portal": env.portal["id"], "initiator": initiator_id or env.initiator["id"]}]
             with target(f"tgt-prf-{label}-{rnd}", groups) as tgt_config:
                 with target_extent_associate(tgt_config["id"], extent_config["id"]):
                     yield PrTarget(iqn=f"{BASENAME}:{tgt_config['name']}", rtpis=_tpg_port_ids(tgt_config))
@@ -396,6 +398,20 @@ def _build_scenarios(env, stack):
     with client(act, sc.s22, N1, Q1) as via_act, client(stby, sc.s22, N1, Q1) as via_stby:
         pr_register_key(via_act, K1, all_tg_pt=True)
         pr_reserve(via_stby, WE, K1)
+
+    # S23: registered and holding through the ACTIVE node's port; then the
+    # initiator is taken out of the target's initiator group and put back.
+    # Taking it out deletes its ACL, and the core drops its registration and
+    # the reservation with it, with no PR OUT; putting it back creates the
+    # ACL with nothing registered. The target has an initiator group of its
+    # own, so the other scenarios keep their ACLs.
+    s23_group = stack.enter_context(initiator(initiators=[CLIENT_IQN, LABEL_C_IQN]))
+    sc.s23 = stack.enter_context(pr_target(env, "s23", initiator_id=s23_group["id"]))
+    with client(act, sc.s23, N1, Q1) as n1:
+        pr_register_key(n1, K1)
+        pr_reserve(n1, WE, K1)
+    call("iscsi.initiator.update", s23_group["id"], {"initiators": [LABEL_C_IQN]})
+    call("iscsi.initiator.update", s23_group["id"], {"initiators": [CLIENT_IQN, LABEL_C_IQN]})
 
     # Nothing on the STANDBY node shows how far PR replication has got, so
     # there is no condition to wait for here.
@@ -635,6 +651,19 @@ def check_s22(sc):
         assert io_access(observer) == expected_access(WE, "unregistered")
 
 
+def check_s23(sc):
+    """S23: an initiator taken out of the target's initiator group and put
+    back has no registration and holds no reservation, whichever node is
+    ACTIVE: removing its ACL dropped them on the ACTIVE node, and the STANDBY
+    node must not restore them at failover from what it held before. With
+    no reservation, the initiator can read and write."""
+    t = sc.s23
+    with client(sc.act_ip, t, N1, Q1) as n1, client(sc.act_ip, t, N3, Q3) as observer:
+        assert_registrations(observer, [])
+        pr_check_reservation(observer)
+        assert io_access(n1) == (True, True)
+
+
 def check_s10(sc):
     """S10: both registrations, made through different ports with different
     ISIDs, are present, and each works through its own port."""
@@ -751,6 +780,9 @@ class _StateChecks:
 
     def test_s22_all_tg_pt_reserved_through_another_port(self, stage):
         check_s22(stage)
+
+    def test_s23_registration_dropped_with_its_acl(self, stage):
+        check_s23(stage)
 
     def test_s10_two_isids_through_two_ports(self, stage):
         check_s10(stage)
