@@ -393,6 +393,8 @@ WebUiCertificateSetupFailed                 class   Y   Y   Y   Y   Y   Y   Y
 WebUiCertificateSetupFailed                 listed  Y   Y   Y   Y   Y   Y   Y
 WebUiRootLogin                              class   Y   Y   Y   Y   Y   Y   Y
 WebUiRootLogin                              listed  Y   Y   Y   Y   Y   Y   Y
+WebshareStopped                             class   Y   Y   Y   .   .   Y   .
+WebshareStopped                             listed  Y   Y   Y   .   .   Y   .
 ZpoolCapacity                               source  Y   Y   Y   Y   Y   Y   Y
 ZpoolCapacityCritical                       class   Y   Y   Y   Y   Y   Y   Y
 ZpoolCapacityCritical                       listed  Y   Y   Y   Y   Y   Y   Y

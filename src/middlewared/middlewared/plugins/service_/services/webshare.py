@@ -1,3 +1,5 @@
+from middlewared.service_exception import CallError
+
 from .base import SimpleService
 
 
@@ -16,6 +18,10 @@ class WebShareService(SimpleService):
         "truenas-webshare-link-caddy",
         "truenas-webshare-mcp",
     ]
+
+    async def before_start(self):
+        if blocker := await self.call2(self.s.webshare.start_blocker):
+            raise CallError(blocker)
 
     async def after_start(self):
         await self.call2(self.s.truesearch.configure)

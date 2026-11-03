@@ -53,6 +53,8 @@ class TNCACMEService(Service):
                 except Exception:
                     logger.error('Failed to restart UI on remote controller', exc_info=True)
 
+            await self.middleware.call_hook('tn_connect.certificate.changed')
+
     async def initiate_cert_generation(self):
         logger.debug('Initiating cert generation steps for TNC')
         try:

@@ -225,6 +225,12 @@ class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingWebshareE
 
         await self.call2(self.s.truesearch.configure)
 
+    async def start_service(self) -> None:
+        if await self.call2(self.s.webshare.start_blocker):
+            return
+
+        await super().start_service()  # type: ignore[no-untyped-call]
+
 
 async def setup(middleware: Middleware) -> None:
     await middleware.call(
