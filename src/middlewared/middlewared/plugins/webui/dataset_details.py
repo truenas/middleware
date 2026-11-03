@@ -68,7 +68,12 @@ PROPERTIES = (
 
 def _authorized(app: App, methods: tuple[str, ...]) -> bool:
     credentials = app.authenticated_credentials
-    return credentials is not None and all(credentials.authorize("CALL", method) for method in methods)
+    if credentials is None:
+        return False
+    for method in methods:
+        if not credentials.authorize("CALL", method):
+            return False
+    return True
 
 
 def _resolver() -> Resolver:
@@ -205,6 +210,12 @@ def _entry(
 ) -> WebUIDatasetDetailsEntry:
     name = row["name"]
     props = row["properties"]
+    consumer_fields: dict[str, Any] = {}
+    for key, by_dataset in consumers.items():
+        consumer_fields[key] = None if by_dataset is None else by_dataset.get(name, [])
+    task_fields: dict[str, Any] = {}
+    for key, task_counts in tasks.items():
+        task_fields[key] = None if task_counts is None else task_counts.get(name, 0)
     return WebUIDatasetDetailsEntry(
         id=name,
         name=name,
@@ -219,10 +230,8 @@ def _entry(
         thick_provisioned=(
             bool(props["reservation"]["value"] or props["refreservation"]["value"]) if row["type"] == "VOLUME" else None
         ),
-        consumers=WebUIDatasetConsumers.model_validate(
-            {key: None if value is None else value.get(name, []) for key, value in consumers.items()}
-        ),
-        tasks=WebUIDatasetTasks(**{key: None if value is None else value.get(name, 0) for key, value in tasks.items()}),
+        consumers=WebUIDatasetConsumers(**consumer_fields),
+        tasks=WebUIDatasetTasks(**task_fields),
     )
 
 
@@ -243,9 +252,10 @@ def dataset_details(context: ServiceContext, app: App) -> list[WebUIDatasetDetai
         if _authorized(app, ("zfs.resource.snapshot.count",))
         else None
     )
-    consumers = {
-        key: fetch(context, index, resolve) if _authorized(app, methods) else None
-        for key, methods, fetch in CONSUMER_SECTIONS
-    }
-    tasks = {key: fetch(context, index) if _authorized(app, methods) else None for key, methods, fetch in TASK_SECTIONS}
+    consumers: dict[str, Mapping[str, Sequence[object]] | None] = {}
+    for key, methods, consumer_fetch in CONSUMER_SECTIONS:
+        consumers[key] = consumer_fetch(context, index, resolve) if _authorized(app, methods) else None
+    tasks: dict[str, Mapping[str, int] | None] = {}
+    for key, methods, task_fetch in TASK_SECTIONS:
+        tasks[key] = task_fetch(context, index) if _authorized(app, methods) else None
     return [_entry(row, counts, consumers, tasks) for row in rows]
