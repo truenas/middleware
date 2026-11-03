@@ -106,5 +106,9 @@ class PoolScan(BaseModel):
 
 
 class PoolScanChangedEvent(BaseModel):
+    fields: "PoolScanChangedEventFields" = Field(description="Event fields.")
+
+
+class PoolScanChangedEventFields(BaseModel):
     name: str = Field(description="Pool name.")
     scan: PoolScan = Field(description="Scan information.")
