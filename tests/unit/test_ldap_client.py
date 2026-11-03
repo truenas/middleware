@@ -21,9 +21,9 @@ class SilentLdapServer:
 
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind(('127.0.0.1', 0))
+        self.sock.bind(("127.0.0.1", 0))
         self.sock.listen(5)
-        self.url = f'ldap://127.0.0.1:{self.sock.getsockname()[1]}'
+        self.url = f"ldap://127.0.0.1:{self.sock.getsockname()[1]}"
         self.clients = []
         self.requests = []  # protocol op tags
         self.lock = threading.Lock()
@@ -42,7 +42,7 @@ class SilentLdapServer:
             threading.Thread(target=self._serve, args=(conn,), daemon=True).start()
 
     def _serve(self, conn):
-        buf = b''
+        buf = b""
         while True:
             try:
                 data = conn.recv(4096)
@@ -70,11 +70,11 @@ class SilentLdapServer:
         length = buf[1]
         offset = 2
         if length & 0x80:
-            nbytes = length & 0x7f
+            nbytes = length & 0x7F
             if len(buf) < offset + nbytes:
                 return None
 
-            length = int.from_bytes(buf[offset:offset + nbytes], 'big')
+            length = int.from_bytes(buf[offset : offset + nbytes], "big")
             offset += nbytes
 
         if len(buf) < offset + length:
@@ -93,9 +93,7 @@ class SilentLdapServer:
 
         if op == LDAP_OP_BIND_REQUEST:
             # BindResponse { resultCode success, matchedDN '', diagnosticMessage '' }
-            conn.sendall(bytes([
-                0x30, 0x0c, 0x02, 0x01, msgid, 0x61, 0x07, 0x0a, 0x01, 0x00, 0x04, 0x00, 0x04, 0x00
-            ]))
+            conn.sendall(bytes([0x30, 0x0C, 0x02, 0x01, msgid, 0x61, 0x07, 0x0A, 0x01, 0x00, 0x04, 0x00, 0x04, 0x00]))
 
     def count(self, op):
         with self.lock:
@@ -131,12 +129,12 @@ def server():
 
 def client_config(server):
     return {
-        'server_urls': [server.url],
-        'basedn': '',
-        'credential': {'credential_type': DSCredType.LDAP_ANONYMOUS},
-        'validate_certificates': False,
-        'starttls': False,
-        'timeout': TIMEOUT,
+        "server_urls": [server.url],
+        "basedn": "",
+        "credential": {"credential_type": DSCredType.LDAP_ANONYMOUS},
+        "validate_certificates": False,
+        "starttls": False,
+        "timeout": TIMEOUT,
     }
 
 
@@ -155,7 +153,7 @@ def test_search_times_out_when_server_stops_answering(server):
     start = time.monotonic()
     try:
         with pytest.raises(ldap.TIMEOUT):
-            client.search(client_config(server), '', ldap.SCOPE_BASE, '(objectclass=*)')
+            client.search(client_config(server), "", ldap.SCOPE_BASE, "(objectclass=*)")
 
         elapsed = time.monotonic() - start
         # The expected time is two search timeouts and one reconnect.
