@@ -73,6 +73,7 @@ from middlewared.utils.security import (
 from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.utils.time_utils import utc_now, UTC
+from middlewared.utils.webshare import WEBSHARE_GROUP
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, CONTAINER_ROOT_UID, SKEL_PATH, DEFAULT_HOME_PATH,
     IDMAP_COUNT, USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
@@ -365,7 +366,7 @@ class UserService(CRUDService):
             if user['username'] in ctx['pam_locked_users']:
                 user['locked'] = True
 
-        user['webshare'] = ctx['group_ids']['truenas_webshare'] in user['groups']
+        user['webshare'] = ctx['group_ids'][WEBSHARE_GROUP] in user['groups']
 
         return user
 
@@ -1939,7 +1940,7 @@ class UserService(CRUDService):
         webshare = self.middleware.call_sync(
             'datastore.query',
             'account.bsdgroups',
-            [('group', '=', 'truenas_webshare')],
+            [('group', '=', WEBSHARE_GROUP)],
             {'prefix': 'bsdgrp_', 'get': True},
         )
         # root user is excluded from participating

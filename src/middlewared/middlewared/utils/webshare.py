@@ -1,3 +1,4 @@
 WEBSHARE_PATH = "/var/db/system/webshare"
 WEBSHARE_BULK_DOWNLOAD_PATH = f"{WEBSHARE_PATH}/bulk-downloads"
 WEBSHARE_DATA_PATH = f"{WEBSHARE_PATH}/data"
+WEBSHARE_GROUP = "truenas_webshare"
