@@ -18,6 +18,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.utils.libvirt.nic import normalize_mac, random_mac
+from middlewared.utils.size import normalize_size
 
 from .bridge import BRIDGE_NAME
 from .utils import container_dataset
@@ -537,6 +538,12 @@ class ContainerService(Service):
                 needs_mount_revert = False
                 renamed = True
 
+                memory = None
+                if config.get("limits.memory.enforce") != "soft":
+                    size = normalize_size(config.get("limits.memory"), raise_exception=False)
+                    if size and size >= 20 * 1024 ** 2:
+                        memory = size // 1024 ** 2
+
                 container_instance = self.middleware.call_sync(
                     "container.create_with_dataset",
                     {
@@ -545,6 +552,7 @@ class ContainerService(Service):
                         "dataset": dst_dataset,
                         "init": "/sbin/init",
                         'cpuset': config.get('limits.cpu', None),
+                        "memory": memory,
                     },
                 )
                 existing_containers[name] = container_instance

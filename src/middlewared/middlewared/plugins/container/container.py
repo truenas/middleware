@@ -59,6 +59,7 @@ class ContainerModel(sa.Model):
     autostart = sa.Column(sa.Boolean())
     time = sa.Column(sa.Text())
     cpuset = sa.Column(sa.Text(), nullable=True)
+    memory = sa.Column(sa.Integer(), nullable=True)
     shutdown_timeout = sa.Column(sa.Integer())
     dataset = sa.Column(sa.Text())
     init = sa.Column(sa.Text())

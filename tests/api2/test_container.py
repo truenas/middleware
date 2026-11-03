@@ -131,6 +131,20 @@ def test_container_update(started_ubuntu_container):
     assert "sleep infinity" in ssh(nsenter(container, "ps -p 1 -o args"))
 
 
+def test_container_memory(ubuntu_image):
+    mem_total = "awk '/^MemTotal:/ {print $2}' /proc/meminfo"
+    with container(ubuntu_image, {"memory": 512}, start=True) as c:
+        assert ssh(nsenter(c, mem_total)).strip() == "524288"
+
+        call("container.stop", c["id"], job=True)
+        call("container.update", c["id"], {"memory": None})
+        call("container.start", c["id"])
+
+        c = call("container.get_instance", c["id"])
+        host_kib = int(ssh(mem_total).strip())
+        assert ssh(nsenter(c, mem_total)).strip() == str((host_kib // 1024) * 1024)
+
+
 def test_container_rename(ubuntu_container):
     old_dataset = ubuntu_container["dataset"]
     new_name = "renamed-container"
