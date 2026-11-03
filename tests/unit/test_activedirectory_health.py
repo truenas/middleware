@@ -495,7 +495,7 @@ def test__health_check_ad_password_test_other_krb5_error_falls_through(harness):
     def password_test_skew(*_args, **_kwargs):
         raise KRB5Error(
             gss_major=458752,
-            gss_minor=2529639061,  # KRB5KRB_AP_ERR_SKEW (37)
+            gss_minor=2529638949,  # KRB5KRB_AP_ERR_SKEW (37)
             errmsg="Clock skew too great",
         )
 
@@ -703,7 +703,7 @@ def test__health_check_ad_secret_ntstatus_without_domain_info_skips_password_tes
 def test__recover_secrets_kdc_preauth_failed_arm_is_reachable(harness):
     """
     Regression for the typo at activedirectory_health_mixin.py:147 where the arm matched
-    KRB5_PREAUTH_FAILED (209, lib-side) instead of KRB5KDC_ERR_PREAUTH_FAILED (24, the
+    KRB5_PREAUTH_FAILED (210, lib-side) instead of KRB5KDC_ERR_PREAUTH_FAILED (24, the
     KDC-returned code). _recover_secrets keeps the password test as a primary check
     (it's how we verify the restored secrets actually match AD), so this code path
     still matters.
@@ -744,6 +744,38 @@ def test__recover_secrets_kdc_preauth_failed_arm_is_reachable(harness):
     # And confirm the krb5_code we're matching is what we think it is.
     err = KRB5Error(gss_major=458752, gss_minor=2529638936, errmsg="")
     assert err.krb5_code is KRB5ErrCode.KRB5KDC_ERR_PREAUTH_FAILED
+
+
+def test__recover_secrets_non_krb5_minor_code_propagates(harness):
+    """
+    A KRB5Error with no krb5_code (errno from the keyring ccache) says nothing about the
+    stored secret, so it must propagate instead of faulting as AD_SECRET_INVALID.
+    """
+    krb5.kdc_saf_cache_set(host=SAF_PINNED_HOST, ip=SAF_PINNED_IP)
+
+    harness.middleware.call_sync.side_effect = lambda name, *_a, **_kw: {
+        "directoryservices.config": DS_CONFIG,
+        "smb.config": SMB_CONFIG,
+        "directoryservices.secrets.restore": True,
+        "directoryservices.secrets.get_machine_secret": b"cGFzc3dvcmQ=",
+    }[name]
+
+    def boom(*_args, **_kwargs):
+        raise KRB5Error(gss_major=458752, gss_minor=122, errmsg="Disk quota exceeded")
+
+    with (
+        patch.object(
+            _ADHealthHarness, "_test_machine_account_password", side_effect=boom
+        ),
+        patch(
+            "middlewared.plugins.directoryservices_.activedirectory_health_mixin.get_domain_info",
+            return_value=LIBADS_DOMAIN_INFO,
+        ),
+    ):
+        with pytest.raises(KRB5Error) as excinfo:
+            harness._recover_secrets()
+
+    assert excinfo.value.krb5_code is None
 
 
 # ---- _test_machine_account_password cleanup (#6) ------------------------------------------
