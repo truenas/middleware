@@ -17,6 +17,7 @@ from middlewared.api.current import (
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, job, private, Service
 from middlewared.utils.filesystem.perms import enforce_dir_perms
+from middlewared.utils.memory import get_memory_info
 
 from .bridge import BRIDGE_NAME, configure_container_bridge
 from .dataset import CONTAINER_DS_PARENT_DIR
@@ -166,6 +167,10 @@ class ContainerService(Service):
         ):
             configure_container_bridge(self)
 
+        if container["memory"] is None:
+            # LXC requires <memory> and shows it as MemTotal, so "no limit" has to be the host's RAM.
+            container["memory"] = get_memory_info()["total"] // 1024 ** 2
+
         pylibvirt_obj = self.pylibvirt_container(container, True)
 
         # Configure hostname files before start so init reads correct values
@@ -258,13 +263,7 @@ class ContainerService(Service):
 
         # We add this to configuration because for cpu related attrs, we need them if cpuset on
         # container is actually set
-        # For memory, lxc does not respect it but libvirt requires it in the xml to be defined
-        container.update({
-            'vcpus': None,
-            'cores': None,
-            'threads': None,
-            'memory': None,
-        })
+        container.update({'vcpus': None, 'cores': None, 'threads': None})
 
         return ContainerDomain(ContainerDomainConfiguration(**container))
 
