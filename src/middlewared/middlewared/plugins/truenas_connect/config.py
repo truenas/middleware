@@ -105,6 +105,8 @@ class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
             if old.certificate is not None:
                 await delete_cert(self, old.certificate)
 
+            await self.middleware.call_hook("tn_connect.certificate.changed")
+
         new_config = await self.config()
         self.middleware.send_event("tn_connect.config", "CHANGED", fields=new_config.model_dump())
 

@@ -65,6 +65,7 @@ from middlewared.alert.source import (  # noqa: F401
     vmware_snapshot,
     volume_status,
     web_ui_root_login,
+    webshare,
     zfs_tier,
     zpool_capacity,
 )

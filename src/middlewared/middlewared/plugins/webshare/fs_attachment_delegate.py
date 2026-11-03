@@ -21,6 +21,12 @@ class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingWebshareE
     async def restart_reload_services(self, attachments: list[SharingWebshareEntry]) -> None:
         await reload_webshare(self)
 
+    async def start_service(self) -> None:
+        if await self.call2(self.s.webshare.start_blocker):
+            return
+
+        await super().start_service()
+
 
 async def setup(middleware: Middleware) -> None:
     await middleware.call2(
