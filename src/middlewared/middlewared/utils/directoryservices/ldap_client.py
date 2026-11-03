@@ -62,14 +62,18 @@ class LDAPClient:
         self.__setup_ssl(data)
         try:
             self._handle = pyldap.initialize(uri)
+            # initialize() copies the global options to the handle. A global
+            # set_option() after initialize() does not change the handle.
+            # OPT_TIMEOUT is the default maximum time to wait for a reply. The bind
+            # and StartTLS calls use only this default.
+            self._handle.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['timeout'])
+            self._handle.set_option(pyldap.OPT_TIMEOUT, data['timeout'])
         except Exception:
             self._handle = None
             if not raise_error:
                 return False
 
             raise
-
-        pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['timeout'])
 
         if data['starttls']:
             try:
@@ -141,11 +145,11 @@ class LDAPClient:
                 break
 
         if not bound:
-            self.handle = None
+            self._handle = None
             if saved_error:
                 raise saved_error
             else:
-                raise RuntimeError(f"Failed to bind to URIs: {data['uri_list']}")
+                raise RuntimeError(f"Failed to bind to URIs: {data['server_urls']}")
 
         self.ldap_parameters = copy.deepcopy(data)
         return
@@ -194,6 +198,8 @@ class LDAPClient:
             serverctrls = [paged]
 
             try:
+                # The search_ext() timeout is only a time limit for the server.
+                # The result3() timeout is the maximum time to wait for the reply.
                 id_ = self._handle.search_ext(
                     basedn,
                     scope,
@@ -207,7 +213,7 @@ class LDAPClient:
                 )
 
                 (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
-                    id_, resp_ctrl_classes=paged_ctrls
+                    id_, timeout=ldap_config['timeout'], resp_ctrl_classes=paged_ctrls
                 )
             except Exception:
                 # our session may have died, try to re-open one time before failing.
