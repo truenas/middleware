@@ -21,6 +21,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, ServiceContext
 import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.nic import normalize_mac, random_mac
+from middlewared.utils.size import normalize_size
 
 from .bridge import BRIDGE_NAME
 from .crud import ContainerCreateWithDataset
@@ -552,6 +553,12 @@ def migrate_specific_pool(
             needs_mount_revert = False
             renamed = True
 
+            memory = None
+            if config.get('limits.memory.enforce') != 'soft':
+                size = normalize_size(config.get('limits.memory'), raise_exception=False)
+                if size and size >= 20 * 1024 ** 2:
+                    memory = size // 1024 ** 2
+
             container_instance = context.call_sync2(
                 context.s.container.create_with_dataset, ContainerCreateWithDataset(
                     name=name,
@@ -559,6 +566,7 @@ def migrate_specific_pool(
                     dataset=dst_dataset,
                     init='/sbin/init',
                     cpuset=config.get('limits.cpu', None),
+                    memory=memory,
                 )
             )
             existing_containers.append(name)

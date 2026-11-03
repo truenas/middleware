@@ -73,6 +73,15 @@ class ContainerEntry(BaseModel):
         default=None,
         description="List of physical CPU numbers that domain process and virtual CPUs can be pinned to by default.",
     )
+    memory: int | None = Field(
+        default=None,
+        ge=20,
+        description=(
+            "Hard memory limit for the container in mebibytes (MiB), also reported as its total memory. "
+            "`null` means no limit: the container sees the host's physical memory. "
+            "Changes take effect the next time the container starts."
+        ),
+    )
     autostart: bool = Field(default=True, description="Automatically start the container on boot.")
     time: Literal["LOCAL", "UTC"] = Field(
         default="LOCAL",
