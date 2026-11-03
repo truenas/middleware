@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     ConsumerFetch = Callable[[ServiceContext, DatasetIndex, Resolver], Mapping[str, Sequence[object]]]
     TaskFetch = Callable[[ServiceContext, DatasetIndex], Mapping[str, int]]
 
-PROPERTIES = [
+PROPERTIES = (
     "atime",
     "available",
     "casesensitivity",
@@ -63,7 +63,7 @@ PROPERTIES = [
     "usedbychildren",
     "usedbydataset",
     "volsize",
-]
+)
 
 
 def _authorized(app: App, methods: tuple[str, ...]) -> bool:
@@ -230,7 +230,7 @@ def dataset_details(context: ServiceContext, app: App) -> list[WebUIDatasetDetai
     rows: list[dict[str, Any]] = context.call_sync2(
         context.s.zfs.resource.list_impl,
         ZFSResourceQuery(
-            properties=PROPERTIES, get_user_properties=True, get_source=True, get_children=True, get_tier=True
+            properties=list(PROPERTIES), get_user_properties=True, get_source=True, get_children=True, get_tier=True
         ),
     )
     if not rows:

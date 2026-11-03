@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 import os
 from pathlib import PurePosixPath
@@ -211,25 +211,35 @@ def match_apps(index: DatasetIndex, apps: Iterable[AppEntry], resolve: Resolver)
 
 
 def match_snapshot_tasks(index: DatasetIndex, tasks: Iterable[Mapping[str, Any]]) -> dict[str, int]:
-    return dict(Counter(task["dataset"] for task in tasks if task["dataset"] in index.types))
+    counts: dict[str, int] = {}
+    for task in tasks:
+        if task["dataset"] in index.types:
+            counts[task["dataset"]] = counts.get(task["dataset"], 0) + 1
+    return counts
 
 
 def match_replication_tasks(index: DatasetIndex, tasks: Iterable[Mapping[str, Any]]) -> dict[str, int]:
-    return dict(
-        Counter(
-            source
-            for task in tasks
-            if task["direction"] == "PUSH"
-            for source in task["source_datasets"]
-            if source in index.types
-        )
-    )
+    counts: dict[str, int] = {}
+    for task in tasks:
+        if task["direction"] != "PUSH":
+            continue
+        for source in task["source_datasets"]:
+            if source in index.types:
+                counts[source] = counts.get(source, 0) + 1
+    return counts
 
 
 def match_push_tasks(index: DatasetIndex, tasks: Iterable[Mapping[str, Any]]) -> dict[str, int]:
-    paths = Counter(PurePosixPath(task["path"]) for task in tasks if task["direction"] == "PUSH")
+    paths: dict[PurePosixPath, int] = {}
+    for task in tasks:
+        if task["direction"] == "PUSH":
+            path = PurePosixPath(task["path"])
+            paths[path] = paths.get(path, 0) + 1
     result: dict[str, int] = {}
     for name, mountpoint in index.fs_mountpoints.items():
         mp = PurePosixPath(mountpoint)
-        result[name] = paths[mp] + sum(paths[parent] for parent in mp.parents)
+        count = paths.get(mp, 0)
+        for parent in mp.parents:
+            count += paths.get(parent, 0)
+        result[name] = count
     return result
