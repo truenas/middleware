@@ -85,6 +85,7 @@ class ContainerModel(sa.Model):
     autostart = sa.Column(sa.Boolean())
     time = sa.Column(sa.Text())
     cpuset = sa.Column(sa.Text(), nullable=True)
+    memory = sa.Column(sa.Integer(), nullable=True)
     shutdown_timeout = sa.Column(sa.Integer())
     dataset = sa.Column(sa.Text())
     init = sa.Column(sa.Text())
@@ -101,7 +102,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
     _datastore = 'container.container'
     _datastore_sql_filters = frozenset((
         'id', 'uuid', 'name', 'description', 'autostart', 'time', 'cpuset', 'shutdown_timeout', 'dataset', 'init',
-        'initdir', 'inituser', 'initgroup', 'capabilities_policy',
+        'initdir', 'inituser', 'initgroup', 'capabilities_policy', 'memory',
     ))
     _entry = ContainerEntry
 
