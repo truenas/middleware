@@ -288,6 +288,42 @@ def test_system_general_redacts_the_ui_certificate_of_an_invalid_row(
     assert result["ui_x_frame_options"] == "BROKEN"
 
 
+@contextlib.contextmanager
+def active_directory_with_ldap_trusted_domain():
+    config = call("datastore.config", "directoryservices")
+    restore = {k: config[k] for k in ("service_type", "ad_domain", "ad_enable_trusted_domains", "ad_trusted_domains")}
+    call("datastore.update", "directoryservices", config["id"], {
+        "service_type": "ACTIVEDIRECTORY",
+        "ad_domain": "ACME.INTERNAL",
+        "ad_enable_trusted_domains": True,
+        "ad_trusted_domains": [{
+            "idmap_backend": "LDAP",
+            "name": "ACME",
+            "range_low": 100000,
+            "range_high": 200000,
+            "ldap_base_dn": "dc=acme,dc=internal",
+            "ldap_user_dn": "cn=admin,dc=acme,dc=internal",
+            "ldap_user_dn_password": "canary",
+            "ldap_url": "ldap://ldap.acme.internal",
+        }],
+    })
+    try:
+        yield config["id"]
+    finally:
+        call("datastore.update", "directoryservices", config["id"], restore)
+
+
+def test_directoryservices_redacts_an_idmap_secret_of_an_invalid_row(
+    readonly_client, allow_result_serialization_fallback,
+):
+    with active_directory_with_ldap_trusted_domain() as id_:
+        with replace_datastore_field_value("directoryservices", [["id", "=", id_]], "timeout", 1):
+            result = readonly_client.call("directoryservices.config")
+
+    assert result["timeout"] == 1
+    assert result["configuration"]["trusted_domains"][0]["ldap_user_dn_password"] == REDACTED
+
+
 def test_fields_are_visible_if_has_write_access():
     with unprivileged_user_client(["ACCOUNT_WRITE"]) as c:
         result = c.call("user.get_instance", 1)
