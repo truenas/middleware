@@ -130,6 +130,8 @@ async def handle_tnc_deregistration(context: ServiceContext) -> None:
     if tnc_config["certificate"] is not None:
         await delete_cert(context, tnc_config["certificate"])
 
+    await context.middleware.call_hook("tn_connect.certificate.changed")
+
 
 async def ha_vips(context: ServiceContext) -> list[str]:
     vips: list[str] = []

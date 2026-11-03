@@ -621,6 +621,7 @@ async def test_handle_deregistration_unsets_and_deletes_cert():
     ctx.middleware = MagicMock()
     ctx.middleware.call = AsyncMock()
     ctx.middleware.send_event = MagicMock()
+    ctx.middleware.call_hook = AsyncMock()
     ctx.call2 = AsyncMock(return_value=MagicMock(model_dump=MagicMock(return_value={})))
 
     with patch.object(
@@ -633,6 +634,7 @@ async def test_handle_deregistration_unsets_and_deletes_cert():
     unset.assert_awaited_once_with(ctx, False)
     delete_cert.assert_awaited_once_with(ctx, 15)
     ctx.middleware.send_event.assert_called_once()
+    ctx.middleware.call_hook.assert_awaited_once_with('tn_connect.certificate.changed')
     # datastore.update flips enabled off and applies the unset payload
     update_call = next(
         c for c in ctx.middleware.call.call_args_list if c.args[0] == 'datastore.update'
