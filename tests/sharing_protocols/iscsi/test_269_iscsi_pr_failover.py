@@ -218,12 +218,12 @@ def ha_env():
 
 
 @contextlib.contextmanager
-def pr_target(env, label):
+def pr_target(env, label, size_mb=LUN_MB):
     """A target with one LUN (zvol + extent), removed again on exit."""
     rnd = "".join(random.choices(string.digits, k=6))
     zvol_path = f"{pool_name}/ds_prf_{label.replace('-', '_')}_{rnd}"
     ext_name = f"ext_prf_{label.replace('-', '_')}_{rnd}"
-    with zvol_dataset(zvol_path, LUN_MB):
+    with zvol_dataset(zvol_path, size_mb):
         with zvol_extent(zvol_path, ext_name) as extent_config:
             groups = [{"portal": env.portal["id"], "initiator": env.initiator["id"]}]
             with target(f"tgt-prf-{label}-{rnd}", groups) as tgt_config:
@@ -972,6 +972,64 @@ class TestAclDeletionOnActive:
             _wait_for_acl_count(act, acls, lambda n: n > 0, "ACL recreation")
             with client(stby, t, N2, Q2) as fresh:
                 fresh.conn.testunitready()
+
+
+# ---------------------------------------------------------------------------
+# Large transfers through the STANDBY node's port
+# ---------------------------------------------------------------------------
+
+LARGE_LUN_MB = 64
+MIB = 1024 * 1024
+
+# (bytes, extra logical blocks).  The HA link sends data in 256 KiB chunks;
+# before that it sent each transfer as one message and closed the link above
+# 4 MiB, so exactly 4 MiB was the smallest transfer that dropped it.
+LARGE_TRANSFERS = [
+    pytest.param(MIB, 0, id="1MiB"),
+    pytest.param(4 * MIB, 0, id="4MiB"),
+    pytest.param(4 * MIB, 1, id="4MiB-plus-one-block"),
+    pytest.param(16 * MIB, 0, id="16MiB"),
+]
+
+
+@pytest.fixture(scope="class")
+def large_target(ha_env):
+    with pr_target(ha_env, "large", size_mb=LARGE_LUN_MB) as t:
+        yield t
+
+
+def _link_drops(host):
+    """How many times lio_ha on `host` has logged a dropped HA link."""
+    return int(ssh("dmesg | grep -c 'ha_tcp: disconnected' || true", ip=host).strip() or 0)
+
+
+class TestLargeTransfersThroughStandby:
+    @pytest.mark.parametrize("base,extra_blocks", LARGE_TRANSFERS)
+    def test_write_and_read_through_the_standby_port(self, base, extra_blocks, large_target):
+        """A WRITE of `base` bytes plus `extra_blocks` blocks through the
+        STANDBY node's port lands on the ACTIVE node's storage, reads back
+        the same through both ports, and the HA link stays up throughout.
+        Sizes above the device's MAXIMUM TRANSFER LENGTH (Block Limits VPD)
+        are skipped: LIO refuses them on the ACTIVE node anyway. The
+        transfer starts at LBA 1 so it is not aligned to anything."""
+        act, stby = _node_ips()
+        with client(stby, large_target, N1, Q1) as via_stby, client(act, large_target, N1, Q2) as via_act:
+            block = via_act.conn.readcapacity16().result["block_length"]
+            # iscsi_scsi_connection() assumes 512-byte blocks.
+            via_stby.conn.blocksize = via_act.conn.blocksize = block
+            max_blocks = via_act.conn.inquiry(evpd=1, page_code=0xB0).result.get("max_xfer_len", 0)
+            size = base + extra_blocks * block
+            blocks = size // block
+            if max_blocks and blocks > max_blocks:
+                pytest.skip(f"{size} bytes exceeds the device's maximum transfer of {max_blocks * block}")
+            data = random.randbytes(size)
+            drops = (_link_drops(act), _link_drops(stby))
+
+            via_stby.conn.write16(1, blocks, bytearray(data))
+            assert bytes(via_stby.conn.read16(1, blocks).datain) == data, "read back through the STANDBY port"
+            assert bytes(via_act.conn.read16(1, blocks).datain) == data, "read back through the ACTIVE port"
+
+            assert (_link_drops(act), _link_drops(stby)) == drops, "the HA link dropped during the transfer"
 
 
 # ---------------------------------------------------------------------------
