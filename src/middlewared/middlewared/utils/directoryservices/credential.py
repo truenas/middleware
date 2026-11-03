@@ -32,7 +32,7 @@ def __kinit_with_principal(kerberos_principal: str, ccache: str, lifetime: int |
         raise CallError(f'{kerberos_principal}: not a valid kerberos principal name.', errno.EINVAL)
     except gssapi.exceptions.MissingCredentialsError as exc:
         if exc.min_code & 0xFF:
-            # Kerberos error wrapped up in GSSAPI error
+            # GSSAPI minor code set. It is not always a krb5 error code, so krb5_code may be None.
             raise KRB5Error(gss_major=exc.maj_code, gss_minor=exc.min_code, errmsg=exc.gen_message())
 
         # A more unfortunate GSSAPI error
@@ -48,7 +48,7 @@ def __kinit_with_user(username: str, password: str, ccache: str, lifetime: int |
         raise CallError(f'{username}: not a valid kerberos principal name.', errno.EINVAL)
     except gssapi.exceptions.MissingCredentialsError as exc:
         if exc.min_code & 0xFF:
-            # Kerberos error wrapped up in GSSAPI error
+            # GSSAPI minor code set. It is not always a krb5 error code, so krb5_code may be None.
             raise KRB5Error(gss_major=exc.maj_code, gss_minor=exc.min_code, errmsg=exc.gen_message())
 
         # A more unfortunate GSSAPI error

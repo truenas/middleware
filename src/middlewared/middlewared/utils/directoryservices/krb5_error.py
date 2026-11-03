@@ -1,6 +1,10 @@
 from enum import IntEnum
 
+# ERROR_TABLE_BASE_krb5 in krb5.h, as an unsigned 32-bit GSSAPI minor status
+KRB5_ERROR_TABLE_BASE = 0x96C73A00
 
+
+# Offsets in the MIT krb5 error table (krb5_err.et), without the KRB5PLACEHOLD_* entries
 class KRB5ErrCode(IntEnum):
     KRB5KDC_ERR_NONE = 0  # No error
     KRB5KDC_ERR_NAME_EXP = 1  # Client's entry in database has expired
@@ -29,6 +33,9 @@ class KRB5ErrCode(IntEnum):
     KRB5KDC_ERR_PREAUTH_FAILED = 24  # Preauthentication failed
     KRB5KDC_ERR_PREAUTH_REQUIRED = 25  # Additional pre-authentication required
     KRB5KDC_ERR_SERVER_NOMATCH = 26  # Requested server and ticket don't match
+    KRB5KDC_ERR_MUST_USE_USER2USER = 27  # Server principal valid for user2user only
+    KRB5KDC_ERR_PATH_NOT_ACCEPTED = 28  # KDC policy rejects transited path
+    KRB5KDC_ERR_SVC_UNAVAILABLE = 29  # A service is not available that is required to process the request
     KRB5KRB_AP_ERR_BAD_INTEGRITY = 31  # Decrypt integrity check failed
     KRB5KRB_AP_ERR_TKT_EXPIRED = 32  # Ticket expired
     KRB5KRB_AP_ERR_TKT_NYV = 33  # Ticket not yet valid
@@ -53,6 +60,32 @@ class KRB5ErrCode(IntEnum):
     KRB5KRB_ERR_RESPONSE_TOO_BIG = 52  # Response too big for UDP, retry with TCP
     KRB5KRB_ERR_GENERIC = 60  # Generic error (see e-text)
     KRB5KRB_ERR_FIELD_TOOLONG = 61  # Field is too long for this implementation
+    KRB5KDC_ERR_CLIENT_NOT_TRUSTED = 62  # Client not trusted
+    KRB5KDC_ERR_KDC_NOT_TRUSTED = 63  # KDC not trusted
+    KRB5KDC_ERR_INVALID_SIG = 64  # Invalid signature
+    KRB5KDC_ERR_DH_KEY_PARAMETERS_NOT_ACCEPTED = 65  # Key parameters not accepted
+    KRB5KDC_ERR_CERTIFICATE_MISMATCH = 66  # Certificate mismatch
+    KRB5KRB_AP_ERR_NO_TGT = 67  # No ticket granting ticket
+    KRB5KDC_ERR_WRONG_REALM = 68  # Realm not local to KDC
+    KRB5KRB_AP_ERR_USER_TO_USER_REQUIRED = 69  # User to user required
+    KRB5KDC_ERR_CANT_VERIFY_CERTIFICATE = 70  # Can't verify certificate
+    KRB5KDC_ERR_INVALID_CERTIFICATE = 71  # Invalid certificate
+    KRB5KDC_ERR_REVOKED_CERTIFICATE = 72  # Revoked certificate
+    KRB5KDC_ERR_REVOCATION_STATUS_UNKNOWN = 73  # Revocation status unknown
+    KRB5KDC_ERR_REVOCATION_STATUS_UNAVAILABLE = 74  # Revocation status unavailable
+    KRB5KDC_ERR_CLIENT_NAME_MISMATCH = 75  # Client name mismatch
+    KRB5KDC_ERR_KDC_NAME_MISMATCH = 76  # KDC name mismatch
+    KRB5KDC_ERR_INCONSISTENT_KEY_PURPOSE = 77  # Inconsistent key purpose
+    KRB5KDC_ERR_DIGEST_IN_CERT_NOT_ACCEPTED = 78  # Digest in certificate not accepted
+    KRB5KDC_ERR_PA_CHECKSUM_MUST_BE_INCLUDED = 79  # Checksum must be included
+    KRB5KDC_ERR_DIGEST_IN_SIGNED_DATA_NOT_ACCEPTED = 80  # Digest in signed-data not accepted
+    KRB5KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED = 81  # Public key encryption not supported
+    KRB5KRB_AP_ERR_IAKERB_KDC_NOT_FOUND = 85  # The IAKERB proxy could not find a KDC
+    KRB5KRB_AP_ERR_IAKERB_KDC_NO_RESPONSE = 86  # The KDC did not respond to the IAKERB proxy
+    KRB5KDC_ERR_PREAUTH_EXPIRED = 90  # Preauthentication expired
+    KRB5KDC_ERR_MORE_PREAUTH_DATA_REQUIRED = 91  # More preauthentication data is required
+    KRB5KDC_ERR_UNKNOWN_CRITICAL_FAST_OPTION = 93  # An unsupported critical FAST option was requested
+    KRB5KDC_ERR_NO_ACCEPTABLE_KDF = 100  # No acceptable KDF offered
     KRB5_ERR_RCSID = 128  # (RCS Id string for the krb5 error table)
     KRB5_LIBOS_BADLOCKFLAG = 129  # Invalid flag for file lock mode
     KRB5_LIBOS_CANTREADPWD = 130  # Cannot read password
@@ -125,46 +158,62 @@ class KRB5ErrCode(IntEnum):
     KRB5_CC_WRITE = 197  # Error writing to credentials cache
     KRB5_CC_NOMEM = 198  # No more memory to allocate (in credentials cache code)
     KRB5_CC_FORMAT = 199  # Bad format in credentials cache
-    KRB5_INVALID_FLAGS = 200  # Invalid KDC option combination (library internal error) [for dual tgt library calls]
-    KRB5_NO_2ND_TKT = 201  # Request missing second ticket [for dual tgt library calls]
-    KRB5_NOCREDS_SUPPLIED = 202  # No credentials supplied to library routine
-    KRB5_SENDAUTH_BADAUTHVERS = 203  # Bad sendauth version was sent
-    KRB5_SENDAUTH_BADAPPLVERS = 204  # Bad application version was sent (via sendauth)
-    KRB5_SENDAUTH_BADRESPONSE = 205  # Bad response (during sendauth exchange)
-    KRB5_SENDAUTH_REJECTED = 206  # Server rejected authentication (during sendauth exchange)
-    KRB5_PREAUTH_BAD_TYPE = 207  # Unsupported preauthentication type
-    KRB5_PREAUTH_NO_KEY = 208  # Required preauthentication key not supplied
-    KRB5_PREAUTH_FAILED = 209  # Generic preauthentication failure
-    KRB5_RCACHE_BADVNO = 210  # Unsupported replay cache format version number
-    KRB5_CCACHE_BADVNO = 211  # Unsupported credentials cache format version number
-    KRB5_KEYTAB_BADVNO = 212  # Unsupported key table format version number
-    KRB5_PROG_ATYPE_NOSUPP = 213  # Program lacks support for address type
-    KRB5_RC_REQUIRED = 214  # Message replay detection requires rcache parameter
-    KRB5_ERR_BAD_HOSTNAME = 215  # Hostname cannot be canonicalized
-    KRB5_ERR_HOST_REALM_UNKNOWN = 216  # Cannot determine realm for host
-    KRB5_SNAME_UNSUPP_NAMETYPE = 217  # Conversion to service principal undefined for name type
-    KRB5KRB_AP_ERR_V4_REPLY = 218  # Initial Ticket response appears to be Version 4 error
-    KRB5_REALM_CANT_RESOLVE = 219  # Cannot resolve KDC for requested realm
-    KRB5_TKT_NOT_FORWARDABLE = 220  # Requesting ticket can't get forwardable tickets
-    KRB5_FWD_BAD_PRINCIPAL = 221  # Bad principal name while trying to forward credentials
-    KRB5_GET_IN_TKT_LOOP = 222  # Looping detected inside krb5_get_in_tkt
-    KRB5_CONFIG_NODEFREALM = 223  # Configuration file does not specify default realm
-    KRB5_SAM_UNSUPPORTED = 224  # Bad SAM flags in obtain_sam_padata
-    KRB5_KT_NAME_TOOLONG = 225  # Keytab name too long
-    KRB5_KT_KVNONOTFOUND = 226  # Key version number for principal in key table is incorrect
-    KRB5_APPL_EXPIRED = 227  # This application has expired
-    KRB5_LIB_EXPIRED = 228  # This Krb5 library has expired
-    KRB5_CHPW_PWDNULL = 229  # New password cannot be zero length
-    KRB5_CHPW_FAIL = 230  # Password change failed
-    KRB5_KT_FORMAT = 231  # Bad format in keytab
-    KRB5_NOPERM_ETYPE = 232  # Encryption type not permitted
-    KRB5_CONFIG_ETYPE_NOSUPP = 233  # No supported encryption types (config file error?)
-    KRB5_OBSOLETE_FN = 234  # Program called an obsolete, deleted function
-    KRB5_EAI_FAIL = 235  # unknown getaddrinfo failure
-    KRB5_EAI_NODATA = 236  # no data available for host/domain name
-    KRB5_EAI_NONAME = 237  # host/domain name not found
-    KRB5_EAI_SERVICE = 238  # service name unknown
-    KRB5_ERR_NUMERIC_REALM = 239  # Cannot determine realm for numeric host address
+    KRB5_CC_NOT_KTYPE = 200  # No credentials found with supported encryption types
+    KRB5_INVALID_FLAGS = 201  # Invalid KDC option combination (library internal error) [for dual tgt library calls]
+    KRB5_NO_2ND_TKT = 202  # Request missing second ticket [for dual tgt library calls]
+    KRB5_NOCREDS_SUPPLIED = 203  # No credentials supplied to library routine
+    KRB5_SENDAUTH_BADAUTHVERS = 204  # Bad sendauth version was sent
+    KRB5_SENDAUTH_BADAPPLVERS = 205  # Bad application version was sent (via sendauth)
+    KRB5_SENDAUTH_BADRESPONSE = 206  # Bad response (during sendauth exchange)
+    KRB5_SENDAUTH_REJECTED = 207  # Server rejected authentication (during sendauth exchange)
+    KRB5_PREAUTH_BAD_TYPE = 208  # Unsupported preauthentication type
+    KRB5_PREAUTH_NO_KEY = 209  # Required preauthentication key not supplied
+    KRB5_PREAUTH_FAILED = 210  # Generic preauthentication failure
+    KRB5_RCACHE_BADVNO = 211  # Unsupported replay cache format version number
+    KRB5_CCACHE_BADVNO = 212  # Unsupported credentials cache format version number
+    KRB5_KEYTAB_BADVNO = 213  # Unsupported key table format version number
+    KRB5_PROG_ATYPE_NOSUPP = 214  # Program lacks support for address type
+    KRB5_RC_REQUIRED = 215  # Message replay detection requires rcache parameter
+    KRB5_ERR_BAD_HOSTNAME = 216  # Hostname cannot be canonicalized
+    KRB5_ERR_HOST_REALM_UNKNOWN = 217  # Cannot determine realm for host
+    KRB5_SNAME_UNSUPP_NAMETYPE = 218  # Conversion to service principal undefined for name type
+    KRB5KRB_AP_ERR_V4_REPLY = 219  # Initial Ticket response appears to be Version 4 error
+    KRB5_REALM_CANT_RESOLVE = 220  # Cannot resolve KDC for requested realm
+    KRB5_TKT_NOT_FORWARDABLE = 221  # Requesting ticket can't get forwardable tickets
+    KRB5_FWD_BAD_PRINCIPAL = 222  # Bad principal name while trying to forward credentials
+    KRB5_GET_IN_TKT_LOOP = 223  # Looping detected inside krb5_get_in_tkt
+    KRB5_CONFIG_NODEFREALM = 224  # Configuration file does not specify default realm
+    KRB5_SAM_UNSUPPORTED = 225  # Bad SAM flags in obtain_sam_padata
+    KRB5_SAM_INVALID_ETYPE = 226  # Invalid encryption type in SAM challenge
+    KRB5_SAM_NO_CHECKSUM = 227  # Missing checksum in SAM challenge
+    KRB5_SAM_BAD_CHECKSUM = 228  # Bad checksum in SAM challenge
+    KRB5_KT_NAME_TOOLONG = 229  # Keytab name too long
+    KRB5_KT_KVNONOTFOUND = 230  # Key version number for principal in key table is incorrect
+    KRB5_APPL_EXPIRED = 231  # This application has expired
+    KRB5_LIB_EXPIRED = 232  # This Krb5 library has expired
+    KRB5_CHPW_PWDNULL = 233  # New password cannot be zero length
+    KRB5_CHPW_FAIL = 234  # Password change failed
+    KRB5_KT_FORMAT = 235  # Bad format in keytab
+    KRB5_NOPERM_ETYPE = 236  # Encryption type not permitted
+    KRB5_CONFIG_ETYPE_NOSUPP = 237  # No supported encryption types (config file error?)
+    KRB5_OBSOLETE_FN = 238  # Program called an obsolete, deleted function
+    KRB5_EAI_FAIL = 239  # unknown getaddrinfo failure
+    KRB5_EAI_NODATA = 240  # no data available for host/domain name
+    KRB5_EAI_NONAME = 241  # host/domain name not found
+    KRB5_EAI_SERVICE = 242  # service name unknown
+    KRB5_ERR_NUMERIC_REALM = 243  # Cannot determine realm for numeric host address
+    KRB5_ERR_BAD_S2K_PARAMS = 244  # Invalid key generation parameters from KDC
+    KRB5_ERR_NO_SERVICE = 245  # service not available
+    KRB5_CC_READONLY = 246  # Ccache function not supported: read-only ccache type
+    KRB5_CC_NOSUPP = 247  # Ccache function not supported: not implemented
+    KRB5_DELTAT_BADFORMAT = 248  # Invalid format of Kerberos lifetime or clock skew string
+    KRB5_PLUGIN_NO_HANDLE = 249  # Supplied data not handled by this plugin
+    KRB5_PLUGIN_OP_NOTSUPP = 250  # Plugin does not support the operation
+    KRB5_ERR_INVALID_UTF8 = 251  # Invalid UTF-8 string
+    KRB5_ERR_FAST_REQUIRED = 252  # FAST protected pre-authentication required but not supported by KDC
+    KRB5_LOCAL_ADDR_REQUIRED = 253  # Auth context must contain local address
+    KRB5_REMOTE_ADDR_REQUIRED = 254  # Auth context must contain remote address
+    KRB5_TRACE_NOSUPP = 255  # Tracing unsupported
 
 
 class KRB5Error(Exception):
@@ -184,11 +233,23 @@ class KRB5Error(Exception):
         err_msg : human-readable message from GSSAPI exception (parses the
         major and minor codes and is produced by `gen_message()` method in
         exception.
+
+        WARNING: krb5_code is None when gss_minor is not a code in the krb5
+        error table. GSSAPI reports errno values (for example EDQUOT storing a
+        ticket in the keyring ccache) and its own synthetic minor codes through
+        the same exception. Every match on krb5_code must handle None.
         """
         self.gss_major_code = gss_major
         self.gss_minor_code = gss_minor
         self.errmsg = errmsg
-        self.krb5_code = KRB5ErrCode(gss_minor & 0xFF)
+        self.krb5_code: KRB5ErrCode | None = None
+        if (gss_minor & 0xFFFFFF00) == KRB5_ERROR_TABLE_BASE:
+            try:
+                self.krb5_code = KRB5ErrCode(gss_minor & 0xFF)
+            except ValueError:
+                pass
 
     def __str__(self) -> str:
+        if self.krb5_code is None:
+            return self.errmsg
         return f'[{self.krb5_code.name}] {self.errmsg}'
