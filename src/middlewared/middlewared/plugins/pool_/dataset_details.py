@@ -16,12 +16,12 @@ from middlewared.service import Service, private
 
 from .dataset_query_utils import normalize_user_properties, normalize_zfs_properties
 
-DETAILS_PROPERTIES = [
+DETAILS_PROPERTIES = (
     'atime', 'casesensitivity', 'readonly', 'used', 'available', 'usedbysnapshots', 'usedbydataset',
     'usedbychildren', 'refquota', 'origin', 'quota', 'refreservation', 'reservation', 'mountpoint', 'mounted',
     'encryption', 'encryptionroot', 'keyformat', 'keystatus', 'volsize', 'sync', 'compression', 'compressratio',
     'dedup',
-]
+)
 INTERNAL_USER_PROPERTIES = frozenset(prop.value for prop in TNUserProp)
 
 
@@ -66,7 +66,7 @@ class PoolDatasetService(Service):
         services/tasks which might be consuming them.
         """
         rows = self.call_sync2(self.s.zfs.resource.list_impl, ZFSResourceQuery(
-            properties=DETAILS_PROPERTIES, get_user_properties=True, get_source=True, get_children=True,
+            properties=list(DETAILS_PROPERTIES), get_user_properties=True, get_source=True, get_children=True,
             get_tier=True,
         ))
         counts = self._snapshot_counts([row['name'] for row in rows])
