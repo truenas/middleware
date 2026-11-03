@@ -21,10 +21,22 @@ from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 __all__ = [
     "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
-    "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "LibvirtUUID",
+    "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "SingleLineString", "LibvirtUUID",
 ]
 
 _UUID_HEX = re.compile(r'[0-9a-fA-F]{32}')
+
+
+def validate_single_line(value: str) -> str:
+    """Reject a line break.
+
+    For a field whose value is interpolated into a line-oriented configuration file. Such a field is not
+    free-form -- a line break in it lets the caller append directives of their own to the generated file.
+    """
+    if "\n" in value or "\r" in value:
+        raise ValueError("Line breaks are not allowed")
+
+    return value
 
 
 class LongStringWrapper:
@@ -89,6 +101,7 @@ def normalize_libvirt_uuid(value: str) -> str:
 
 
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
+SingleLineString = Annotated[str, AfterValidator(validate_single_line)]
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
 LongString = Annotated[
     LongStringWrapper,
