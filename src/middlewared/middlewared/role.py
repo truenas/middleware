@@ -273,6 +273,8 @@ ROLES = {
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
+BUILTIN_GROUP_ROLES = frozenset(name for name, role in ROLES.items() if not role.builtin)
+
 READ_RESOURCE_BLACKLIST = (
     '.create', '.do_create',
     '.update', '.do_update',

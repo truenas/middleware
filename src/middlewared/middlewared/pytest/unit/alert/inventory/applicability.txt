@@ -86,6 +86,9 @@ CorrectableMemoryError                      class   Y   Y   Y   Y   Y   Y   Y
 CorrectableMemoryError                      listed  Y   Y   Y   Y   Y   Y   Y
 CurrentlyRunningVersionDoesNotMatchProfile  class   Y   Y   Y   Y   Y   Y   Y
 CurrentlyRunningVersionDoesNotMatchProfile  listed  Y   Y   Y   Y   Y   Y   Y
+DeprecatedCustomPrivilege                   class   Y   Y   Y   Y   Y   Y   Y
+DeprecatedCustomPrivilege                   listed  Y   Y   Y   Y   Y   Y   Y
+DeprecatedCustomPrivilege                   source  Y   Y   Y   Y   Y   Y   Y
 DeprecatedService                           class   Y   Y   Y   Y   Y   Y   Y
 DeprecatedService                           listed  Y   Y   Y   Y   Y   Y   Y
 DeprecatedServiceConfiguration              class   Y   Y   Y   Y   Y   Y   Y

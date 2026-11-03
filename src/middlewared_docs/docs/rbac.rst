@@ -20,9 +20,12 @@ Individual roles (``builtin=true``)
 
 Individual roles are fine-grained roles attached directly to individual API
 methods.  Examples: ``DISK_READ``, ``SHARING_SMB_WRITE``, ``ACCOUNT_READ``.
-They are provided to allow selective expansion of access beyond what the
-predefined group roles cover.  Custom privileges can combine any set of these
-roles to grant precisely the access required for a given use case.
+
+Using custom privilege sets is deprecated and will be removed in TrueNAS 28.
+``privilege.create`` and ``privilege.update`` reject an individual role, so a
+privilege may grant only the predefined group roles.  TrueNAS raises a
+``DeprecatedCustomPrivilege`` alert for every privilege that still grants one.
+Delete such a privilege to clear the alert.
 
 Predefined group roles (``builtin=false``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -365,9 +368,10 @@ Managing Privileges
 Use the following API methods to manage privileges:
 
 * ``privilege.create`` — create a new privilege and link it to one or more
-  local or directory-service groups
-* ``privilege.update`` — modify an existing privilege (change roles or group
-  membership)
+  local or directory-service groups.  Only the predefined group roles may be
+  granted.
+* ``privilege.update`` — modify an existing privilege (change predefined group
+  roles or group membership)
 * ``privilege.delete`` — remove a custom privilege
 * ``privilege.query`` — list all privileges, including the three built-in ones
 * ``privilege.roles`` — list all roles; pass ``[["builtin", "=", false]]`` as

@@ -43,7 +43,9 @@ def common_checks(
     privilege = call('privilege.query', [['local_groups.0.group', '=', user_client_context.group_name]])
     assert len(privilege) > 0, 'Privilege not found'
 
-    call('privilege.update', privilege[0]['id'], {'roles': [role]})
+    # `privilege.update` grants only the built-in group roles, so an individual role can only
+    # be granted in the datastore.
+    call('datastore.update', 'account.privilege', privilege[0]['id'], {'roles': [role]})
 
     with unprivileged_custom_user_client(user_client_context) as client:
         if valid_role:
