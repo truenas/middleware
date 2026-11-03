@@ -452,7 +452,7 @@ class FailoverEventsService(Service):
         # extensive API breakage with the platform indepedent failover plugin
         # as well as the front-end (webUI) even though the term is misleading
         # in this use case
-        job.set_progress(None, description='ELECTING')
+        job.set_progress(None, description='ELECTING', extra='Bringing up NVMe/RoCE')
 
         # Attach NVMe/RoCE - wait up to 10 seconds
         logger.info('Start bring up of NVMe/RoCE')
@@ -479,6 +479,7 @@ class FailoverEventsService(Service):
         else:
             logger.info('Done bring up of NVMe/RoCE')
 
+        job.set_progress(None, extra='Taking ownership of disks')
         fenced_error = None
         if event == 'forcetakeover':
             # reserve the disks forcefully ignoring if the other node has the disks
@@ -566,6 +567,7 @@ class FailoverEventsService(Service):
         # back to the original master controller. Reloading keepalived service
         # re-generates the configuration file which ensures the config has the
         # right priority set.
+        job.set_progress(None, extra='Taking ownership of virtual IPs')
         logger.info('Pausing failover event processing')
         self.run_call('vrrpthread.pause_events')
         logger.info('Taking ownership of all VIPs')
@@ -607,6 +609,7 @@ class FailoverEventsService(Service):
             return self.FAILOVER_RESULT
 
         # unlock SED disks
+        job.set_progress(None, extra='Unlocking SED disks (if any)')
         logger.info('Unlocking all SED disks (if any)')
         maybe_unlocked = False
         try:
@@ -642,6 +645,7 @@ class FailoverEventsService(Service):
         # cachefile = ZPOOL_CACHE_FILE
         new_name = cachefile = None
         for vol in fobj['volumes']:
+            job.set_progress(None, extra=f'Importing pool {vol["name"]}')
             logger.info('Importing %r', vol['name'])
 
             # import the zpool(s)
@@ -748,6 +752,7 @@ class FailoverEventsService(Service):
         self.run_call('etc.generate', 'rc')
         logger.info('Done enabling necessary services')
 
+        job.set_progress(None, extra='Configuring system dataset')
         logger.info('Configuring system dataset')
         self.run_call('systemdataset.setup')
         logger.info('Done configuring system dataset')
@@ -771,6 +776,7 @@ class FailoverEventsService(Service):
             )
 
         # now we restart the services, prioritizing the "critical" services
+        job.set_progress(None, extra='Restarting critical services')
         logger.info('Restarting critical services.')
         self.run_call('failover.events.restart_services', {'critical': True})
         logger.info('Done restarting critical services')
@@ -791,6 +797,7 @@ class FailoverEventsService(Service):
         else:
             logger.info('Done allowing network traffic.')
 
+        job.set_progress(None, extra='Finalizing failover')
         logger.info('Critical portion of failover is now complete')
 
         if maybe_unlocked:
@@ -837,6 +844,7 @@ class FailoverEventsService(Service):
                 self.run_call('iscsi.scst.set_alua_active')
 
         # restart the remaining "non-critical" services
+        job.set_progress(None, extra='Restarting remaining services')
         logger.info('Restarting remaining services')
         self.run_call('failover.events.restart_services', {'critical': False, 'timeout': 60})
         logger.info('Done restarting remaining services')
@@ -923,7 +931,7 @@ class FailoverEventsService(Service):
         logger.info('Failover event complete.')
 
         # clear the description and set the result
-        job.set_progress(None, description='SUCCESS')
+        job.set_progress(None, description='SUCCESS', extra='Failover complete')
 
         self.FAILOVER_RESULT = 'SUCCESS'
         self.LAST_EVENT_TYPE = 'MASTER'
