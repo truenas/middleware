@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     ForUpdateMetaclass,
     HttpsOnlyURL,
+    LongNonEmptyString,
     NonEmptyString,
 )
 
@@ -66,7 +67,7 @@ class TrueNASConnectGetRegistrationUriArgs(BaseModel):
 
 
 class TrueNASConnectGetRegistrationUriResult(BaseModel):
-    result: NonEmptyString = Field(
+    result: LongNonEmptyString = Field(
         description="Registration URI for connecting this TrueNAS system to TrueNAS Connect.",
     )
 
