@@ -11,10 +11,16 @@ def join_ad():
         yield ds
 
 
-def set_ds_config(config):
+def set_ds_config(config, change_while_disabled=False):
     # Changes to `configuration` key in directory services config requires them to be disabled
-    call('directoryservices.update', {'enable': False}, job=True)
     config.pop('id', None)
+    if change_while_disabled:
+        # Save the change in the call that disables directory services and re-enable them
+        # without further changes, as happens when the change is made through a form.
+        call('directoryservices.update', config | {'enable': False}, job=True)
+        return call('directoryservices.update', {'enable': True}, job=True)
+
+    call('directoryservices.update', {'enable': False}, job=True)
     return call('directoryservices.update', config, job=True)
 
 
@@ -65,7 +71,7 @@ def update_trusted_domains(ds_config, trusted_doms):
 
 
 @contextmanager
-def set_idmap_ad(ds_config):
+def set_idmap_ad(ds_config, change_while_disabled=False):
     try:
         new_config = ds_config['configuration'] | {'idmap': {
             'builtin': {'range_low': 90000, 'range_high': 100000},
@@ -78,7 +84,7 @@ def set_idmap_ad(ds_config):
                 'schema_mode': 'RFC2307',
             }
         }}
-        yield set_ds_config(ds_config | {'configuration': new_config})
+        yield set_ds_config(ds_config | {'configuration': new_config}, change_while_disabled)
     finally:
         # restore original configuration
         set_ds_config(ds_config)
@@ -190,3 +196,22 @@ def test_idmap_ad(join_ad):
         rid = int(user_obj['sid'].split('-')[-1])
         assert user_obj['pw_uid'] == rid + 10000
         assert user_obj['pw_gid'] == 10513  # RID 513 + 10000 (offset)
+
+
+def test_idmap_change_saved_while_disabled(join_ad):
+    """
+    The user and group cache must be rebuilt when the idmap change is saved in the call that disables
+    directory services, which leaves nothing to compare against when they are re-enabled.
+    """
+    username = join_ad['account'].user_obj['pw_name']
+
+    # Make sure the account is cached under the current idmap configuration
+    cached = call('user.query', [['username', '=', username]], {'get': True})
+    assert cached['uid'] == join_ad['account'].user_obj['pw_uid']
+
+    with set_idmap_ad(join_ad['config'], change_while_disabled=True):
+        user_obj = call('user.get_user_obj', {'username': username, 'sid_info': True})
+        assert user_obj['pw_uid'] == int(user_obj['sid'].split('-')[-1]) + 10000
+
+        cached = call('user.query', [['username', '=', username]], {'get': True})
+        assert cached['uid'] == user_obj['pw_uid']
