@@ -470,6 +470,7 @@ async def test_handle_deregistration_unsets_and_deletes_cert():
     service.unset_registration_details = AsyncMock()
     service.delete_cert = AsyncMock()
     service.middleware.send_event = MagicMock()
+    service.middleware.call_hook = AsyncMock()
 
     calls = []
 
@@ -484,6 +485,7 @@ async def test_handle_deregistration_unsets_and_deletes_cert():
     service.unset_registration_details.assert_awaited_once_with(False)
     service.delete_cert.assert_awaited_once_with(15)
     service.middleware.send_event.assert_called_once()
+    service.middleware.call_hook.assert_awaited_once_with('tn_connect.certificate.changed')
     update_call = next(c for c in calls if c[0] == 'datastore.update')
     payload = update_call[1][2]
     assert payload['enabled'] is False

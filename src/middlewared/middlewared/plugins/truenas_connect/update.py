@@ -155,6 +155,8 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             if config['certificate']:
                 await self.delete_cert(config['certificate'])
 
+            await self.middleware.call_hook('tn_connect.certificate.changed')
+
         new_config = await self.config()
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=new_config)
 
@@ -290,6 +292,8 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         await self.middleware.call('alert.oneshot_create', 'TNCDisabledAutoUnconfigured', None)
         if tnc_config['certificate'] is not None:
             await self.delete_cert(tnc_config['certificate'])
+
+        await self.middleware.call_hook('tn_connect.certificate.changed')
 
     @api_method(
         TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'], removed_in='v27',

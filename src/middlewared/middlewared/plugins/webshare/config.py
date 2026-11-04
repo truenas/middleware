@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Any, TYPE_CHECKING
 
@@ -10,6 +11,8 @@ from middlewared.api.current import (
 )
 from middlewared.service import ConfigService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.plugins.truenas_connect.utils import CONFIGURED_TNC_STATES
+from middlewared.utils.hardware import get_hardware_class
 from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DATA_PATH, WEBSHARE_GROUP
 
 if TYPE_CHECKING:
@@ -158,6 +161,20 @@ class WebshareService(ConfigService[WebshareEntry]):
         hostnames = await self.middleware.call("tn_connect.hostname.details")
         return [f"https://{hostname}:755" for hostname in sorted(hostnames)]
 
+    @private
+    async def start_blocker(self) -> str | None:
+        if (await self.middleware.run_in_thread(get_hardware_class)).is_appliance:
+            return None
+
+        tnc_config = await self.middleware.call('tn_connect.config')
+        if (
+            tnc_config['enabled'] and tnc_config['status'] in CONFIGURED_TNC_STATES
+            and tnc_config['certificate'] is not None
+        ):
+            return None
+
+        return 'Webshare requires TrueNAS Connect to be configured.'
+
 
 async def tn_connect_hostname_updated(middleware: Middleware) -> None:
     if not await middleware.call("service.started", "webshare"):
@@ -166,5 +183,48 @@ async def tn_connect_hostname_updated(middleware: Middleware) -> None:
     await middleware.call("service.control", "RELOAD", "webshare")
 
 
+_reconcile_lock = asyncio.Lock()
+
+
+async def reconcile(middleware: Middleware) -> None:
+    async with _reconcile_lock:
+        if not await middleware.call('failover.is_single_master_node'):
+            return
+
+        svc = await middleware.call('service.query', [['service', '=', 'webshare']], {'get': True})
+        running = svc['state'] == 'RUNNING'
+        blocker = await middleware.call2(middleware.services.webshare.start_blocker)
+
+        if blocker is not None:
+            if running:
+                middleware.logger.info('webshare: stopping because %s', blocker)
+                await (await middleware.call('service.control', 'STOP', 'webshare')).wait(raise_error=True)
+            if svc['enable']:
+                await middleware.call('alert.oneshot_create', 'WebshareStopped', None)
+            return
+
+        await middleware.call('alert.oneshot_delete', 'WebshareStopped')
+        if running:
+            # RESTART rather than RELOAD: link-caddy also loads the TNC certificates, and the auth
+            # service's reload restarts only the main caddy.
+            middleware.logger.info('webshare: restarting to pick up TrueNAS Connect certificate changes')
+            await (await middleware.call('service.control', 'RESTART', 'webshare')).wait(raise_error=True)
+        elif svc['enable']:
+            middleware.logger.info('webshare: starting as TrueNAS Connect is configured')
+            await (await middleware.call('service.control', 'START', 'webshare')).wait(raise_error=True)
+
+
+async def tn_connect_certificate_changed(middleware: Middleware) -> None:
+    await reconcile(middleware)
+
+
+async def system_ready(middleware: Middleware, event_type: Any, args: Any) -> None:
+    # caddy-config skips licence detection until system.ready, so the units systemd started at boot
+    # hold no certificates.
+    await reconcile(middleware)
+
+
 async def setup(middleware: Middleware) -> None:
     middleware.register_hook("tn_connect.hostname.updated", tn_connect_hostname_updated)
+    middleware.register_hook('tn_connect.certificate.changed', tn_connect_certificate_changed)
+    middleware.event_subscribe('system.ready', system_ready)
