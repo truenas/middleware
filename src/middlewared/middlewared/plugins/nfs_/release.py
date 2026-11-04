@@ -27,9 +27,6 @@ NFS4_LOCK_STATE = re.compile(
     r'- 0x[0-9a-f]{32}: \{ type: lock(, superblock: "(?P<major>[0-9a-f]+):(?P<minor>[0-9a-f]+):\d+")?'
 )
 
-# the flush time of each export cache as flush_export_caches() last left it
-last_flush: dict[str, int] = {}
-
 
 class NFS4LockRevoked(CallError):
     """An NFSv4 lock stateid was revoked by the release; the filesystem must not be destroyed now."""
@@ -127,7 +124,8 @@ def flush_export_caches() -> None:
     to 30 minutes later. Removing a share flushes them, but a flush written in the same second as the one before only
     moves the cache's flush time ahead and drops nothing (write_flush() in net/sunrpc/cache.c). The file shows the
     wall-clock second of the last flush; a write takes effect once that second has passed, and shows a later second
-    otherwise. A flush is also due within half a minute of the last one: that is when a share was just removed.
+    otherwise. A flush is also due within half a minute of the last one: that is when a share was just removed. And
+    a flush drops only the entries made before it, so one is due each time the caches name the tree.
     """
     for cache in EXPORT_CACHES:
         path = f"{RPC_CACHE_DIR}/{cache}/flush"
@@ -136,8 +134,6 @@ def flush_export_caches() -> None:
                 with open(path) as f:
                     flush_time = int(f.read())
             except (OSError, ValueError):
-                break
-            if flush_time == last_flush.get(cache):
                 break
             # the second shown is converted from boot time and can be one less than the wall clock's
             time.sleep(max(0.0, flush_time + 2 - time.time()))
@@ -149,7 +145,6 @@ def flush_export_caches() -> None:
             except (OSError, ValueError):
                 break
             if flush_time <= int(time.time()):
-                last_flush[cache] = flush_time
                 break
 
 
