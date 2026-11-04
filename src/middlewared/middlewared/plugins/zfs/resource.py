@@ -22,6 +22,7 @@ from . import resource_create as _create
 from . import resource_destroy as _destroy
 from . import resource_ops as _ops
 from . import resource_query as _query
+from .count_impl import ResourceCounts, count_resources_impl
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService
 
@@ -189,6 +190,11 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def query_impl(self, tls: Any, data: ZFSResourceQuery) -> list[dict[str, Any]]:
         return _query.query_impl(self.context, tls, data)
+
+    @private
+    @pass_thread_local_storage
+    def count_impl(self, tls: Any) -> ResourceCounts:
+        return count_resources_impl(tls)
 
     @private
     @pass_thread_local_storage

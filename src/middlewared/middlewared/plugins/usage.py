@@ -1,6 +1,6 @@
 import asyncio
 import os
-import random
+import time
 from collections import defaultdict
 
 import aiohttp
@@ -8,10 +8,11 @@ import aiohttp
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
 from middlewared.utils import ajson
-from middlewared.utils.time_utils import utc_now
 from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
 USAGE_URL = 'https://usage.truenas.com/submit'
+SUBMIT_INTERVAL = 86400
+LAST_SUBMITTED_KEY = 'usage.last_submitted'
 
 
 class UsageService(Service):
@@ -21,7 +22,26 @@ class UsageService(Service):
     class Config:
         private = True
 
-    async def start(self):
+    async def get_last_submitted(self):
+        """
+        Return when the usage statistics were last submitted (epoch seconds).
+
+        When nothing is saved yet, or the saved time is in the future because the clock moved
+        backwards, the current time is saved and returned so the interval starts from now.
+        """
+        now = time.time()
+        last = await self.call2(self.s.keyvalue.get, LAST_SUBMITTED_KEY, 0)
+        if not last or last > now:
+            await self.call2(self.s.keyvalue.set, LAST_SUBMITTED_KEY, now)
+            last = now
+
+        return last
+
+    async def submit_if_due(self):
+        # Submit only when a full interval has passed, however many times this runs (middleware restarts, failover)
+        if time.time() - await self.get_last_submitted() < SUBMIT_INTERVAL:
+            return
+
         retries = self.FAILED_RETRIES
         while retries:
             if (
@@ -41,21 +61,25 @@ class UsageService(Service):
                     'usage.submit_stats', await self.middleware.call('usage.gather', restrict_usage)
                 )
             except Exception as e:
-                # We still want to schedule the next call
                 self.logger.error(e)
                 retries -= 1
                 if retries:
                     self.logger.debug('Retrying gathering stats after 30 minutes')
                     await asyncio.sleep(1800)
             else:
+                await self.call2(self.s.keyvalue.set, LAST_SUBMITTED_KEY, time.time())
                 break
 
-        event_loop = asyncio.get_event_loop()
-        now = utc_now()
-        scheduled = (
-            now.replace(hour=23, minute=59, second=59) - now
-        ).total_seconds() + random.uniform(1, 86400)
+    async def start(self):
+        scheduled = SUBMIT_INTERVAL
+        try:
+            await self.submit_if_due()
+            # A full interval after the last submission, or from now when this run was overdue but did not submit
+            scheduled = max(await self.get_last_submitted() + SUBMIT_INTERVAL - time.time(), 0) or SUBMIT_INTERVAL
+        except Exception:
+            self.logger.error('Failed to run usage statistics submission', exc_info=True)
 
+        event_loop = asyncio.get_event_loop()
         event_loop.call_later(
             scheduled,
             lambda: self.middleware.create_task(self.middleware.call('usage.start'))
@@ -74,42 +98,48 @@ class UsageService(Service):
             )
 
     def get_gather_context(self):
+        counts = self.call_sync2(self.s.zfs.resource.count_impl)
         context = {
             'network': self.middleware.call_sync('interface.query'),
             'root_datasets': {},
             'total_capacity': 0,
             'datasets_total_size': 0,
-            'datasets_total_size_recursive': 0,
-            'zvols_total_size': 0,
-            'zvols': [],
-            'datasets': {},
-            'total_datasets': 0,
-            'total_zvols': 0,
+            'zvols_total_size': counts.zvols_used,
+            'total_datasets': counts.datasets,
+            'total_zvols': counts.zvols,
             'services': [],
         }
         for i in self.middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'}):
             context['services'].append({'name': i['service'], 'enabled': i['enable']})
 
-        qry_ops = ZFSResourceQuery(get_children=True, exclude_internal_paths=False)
+        qry_ops = ZFSResourceQuery(
+            properties=[
+                'used', 'available', 'usedbydataset', 'usedbysnapshots', 'usedbychildren', 'usedbyrefreservation'
+            ],
+            exclude_internal_paths=False,
+        )
         for ds in self.call_sync2(self.s.zfs.resource.query_impl, qry_ops):
             if ds['name'] == ds['pool']:
                 context['root_datasets'][ds['pool']] = ds
-                context['total_datasets'] += 1
                 context['datasets_total_size'] += ds['properties']['used']['value']
                 context['total_capacity'] += (
                     ds['properties']['used']['value'] + ds['properties']['available']['value']
                 )
-            elif ds['type'] == 'VOLUME':
-                context['zvols'].append(ds)
-                context['total_zvols'] += 1
-                context['zvols_total_size'] += ds['properties']['used']['value']
-            elif ds['type'] == 'FILESYSTEM':
-                context['total_datasets'] += 1
-
-            context['datasets_total_size_recursive'] += ds['properties']['used']['value']
-            context['datasets'][ds['name']] = ds
 
         return context
+
+    def get_dataset_used(self, name):
+        # A task path under .zfs/snapshot resolves to a snapshot, which the query rejects
+        if '@' in name:
+            return None
+        try:
+            for ds in self.call_sync2(
+                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[name], properties=['used'])
+            ):
+                return int(ds['properties']['used']['value'])
+        except Exception:
+            self.logger.warning('%s: failed to query used space', name, exc_info=True)
+        return None
 
     def gather(self, restrict_usage=None):
         context = self.get_gather_context()
@@ -146,9 +176,12 @@ class UsageService(Service):
                 except Exception:
                     self.logger.error('Failed mapping path %r to dataset', task['path'], exc_info=True)
                 else:
-                    if (task_ds and task_ds in context['datasets']) and (task_ds not in tasks_found[namespace]):
+                    if (
+                        task_ds
+                        and task_ds not in tasks_found[namespace]
+                        and (size := self.get_dataset_used(task_ds)) is not None
+                    ):
                         # dataset for the task was found, and exists and hasn't already been calculated
-                        size = context['datasets'][task_ds]['properties']['used']['value']
                         backed[namespace] += size
                         if task_ds not in tasks_found[opposite_namespace]:
                             # a "task" (cloudsync, rsync, replication) can be backing up the same dataset
@@ -162,8 +195,9 @@ class UsageService(Service):
         repls_found = set()
         filters = [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
         for task in self.middleware.call_sync('replication.query', filters):
-            for source in filter(lambda s: s in context['datasets'] and s not in repls_found, task['source_datasets']):
-                size = context['datasets'][source]['properties']['used']['value']
+            for source in filter(lambda s: s not in repls_found, task['source_datasets']):
+                if (size := self.get_dataset_used(source)) is None:
+                    continue
                 backed['zfs_replication'] += size
                 repls_found.add(source)
                 if source not in tasks_found['cloudsync'] and source not in tasks_found['rsynctask']:
@@ -175,7 +209,7 @@ class UsageService(Service):
 
         return {
             'data_backup_stats': backed,
-            'data_without_backup_size': context['datasets_total_size_recursive'] - backed['total_size']
+            'data_without_backup_size': max(context['datasets_total_size'] - backed['total_size'], 0)
         }
 
     async def gather_applications(self, context):
@@ -291,8 +325,15 @@ class UsageService(Service):
     async def gather_pools(self, context):
         total_raw_capacity = 0  # zpool list -p -o size summed together of all zpools
         pool_list = []
-        for p in filter(lambda x: x['status'] != 'OFFLINE', await self.middleware.call('pool.query')):
-            total_raw_capacity += p['size']
+        db_pools = [
+            p['name'] for p in await self.middleware.call('datastore.query', 'storage.volume', [], {'prefix': 'vol_'})
+        ]
+        for p in await self.middleware.call(
+            'zpool.query_impl',
+            {'pool_names': db_pools, 'properties': ['size'], 'topology': True},
+        ):
+            props = p['properties']
+            total_raw_capacity += props['size']['value']
             disks = vdevs = 0
             _type = 'UNKNOWN'
             if (pd := context['root_datasets'].get(p['name'])) is None:
@@ -304,7 +345,8 @@ class UsageService(Service):
             for d in p['topology']['data']:
                 if not d.get('path'):
                     vdevs += 1
-                    _type = d['type']
+                    # dRAID vdev types carry their layout (e.g. "draid1:1d:3c:1s")
+                    _type = 'draid' if d['vdev_type'].startswith('draid') else d['vdev_type']
                     disks += len(d['children'])
                 else:
                     disks += 1
@@ -312,6 +354,8 @@ class UsageService(Service):
 
             pool_list.append({
                 'capacity': pd['used']['value'] + pd['available']['value'],
+                'used': pd['used']['value'],
+                'available': pd['available']['value'],
                 'disks': disks,
                 'l2arc': bool(p['topology']['cache']),
                 'type': _type.lower(),
@@ -447,14 +491,12 @@ class UsageService(Service):
         return {'vms': vms}
 
 
-async def setup(middleware):
-    now = utc_now()
-    event_loop = asyncio.get_event_loop()
+async def _start(middleware, event_type=None, args=None):
+    middleware.create_task(middleware.call('usage.start'))
 
+
+async def setup(middleware):
     await middleware.call('network.general.register_activity', 'usage', 'Anonymous usage statistics')
-    event_loop.call_at(
-        random.uniform(1, (
-            now.replace(hour=23, minute=59, second=59) - now
-        ).total_seconds()),
-        lambda: middleware.create_task(middleware.call('usage.start'))
-    )
+    middleware.event_subscribe('system.ready', _start)
+    if await middleware.call('system.ready'):
+        await _start(middleware)
