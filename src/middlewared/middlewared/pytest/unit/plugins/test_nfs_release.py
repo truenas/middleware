@@ -59,11 +59,9 @@ def test_flush_export_caches(tmp_path):
         os.makedirs(tmp_path / cache)
     (tmp_path / "nfsd.fh" / "flush").write_text(f"{now - 60}\n")
     (tmp_path / "nfsd.export" / "flush").write_text(f"{now}\n")
-    release.last_flush.clear()
     sleeps = []
     with (
         patch.object(release, "RPC_CACHE_DIR", str(tmp_path)),
-        patch.object(release, "last_flush", {}),
         patch.object(release.time, "time", lambda: now + 0.5),
         patch.object(release.time, "sleep", sleeps.append),
     ):
@@ -72,8 +70,8 @@ def test_flush_export_caches(tmp_path):
         assert (tmp_path / "nfsd.fh" / "flush").read_text() == "1\n"
         assert (tmp_path / "nfsd.export" / "flush").read_text() == "1\n"
         assert sleeps == [0.0, 1.5]
-        # the repeated flush is not repeated again
+        # asked again, it flushes again: entries made since the last flush outlive it
         (tmp_path / "nfsd.export" / "flush").write_text(f"{now}\n")
-        release.last_flush["nfsd.export"] = now
         release.flush_export_caches()
-        assert (tmp_path / "nfsd.export" / "flush").read_text() == f"{now}\n"
+        assert (tmp_path / "nfsd.export" / "flush").read_text() == "1\n"
+        assert sleeps == [0.0, 1.5, 0.0, 1.5]
