@@ -29,6 +29,7 @@ from middlewared.utils.license import (
     get_fingerprint_b64,
     get_legacy_license_info,
     get_license,
+    remove_license,
     upload_license,
 )
 from truenas_pylicensed import LicenseType
@@ -185,6 +186,19 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
     @private
     def info_private(self) -> LicenseInfo | None:
         return get_license()
+
+    @private
+    def remove_tnc_license(self) -> None:
+        current = self.info_private()
+        if current is None or current.type != LicenseType.COMMUNITY or not current.has_feature(LicenseFeature.TNC_SUB):
+            return
+        remove_license()
+        self.middleware.call_sync("alert.alert_source_clear_run", "LicenseStatus")
+        self.logger.info("%s: removed TrueNAS Connect license", current.id)
+        self.middleware.run_coroutine(
+            self.middleware.call_hook("system.post_license_update", had_license=True),
+            wait=False,
+        )
 
     @private
     def process_hw_license_error(self) -> None:

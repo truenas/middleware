@@ -148,6 +148,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
         if tnc_disabled:
+            await self.remove_tnc_license()
             # If TNC is disabled and was enabled earlier, we will like to restart UI and delete TNC cert
             logger.debug('Restarting nginx to not use TNC certificate anymore')
             await self.middleware.call('system.general.ui_restart', 4)
@@ -266,6 +267,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             logger.error('Failed to delete TNC certificate: %s', delete_job.error)
 
     @private
+    async def remove_tnc_license(self):
+        try:
+            await self.middleware.call('truenas.license.remove_tnc_license')
+        except Exception:
+            logger.error('TNC: failed to remove the TrueNAS Connect license', exc_info=True)
+
+    @private
     async def handle_tnc_deregistration(self):
         # Canonical handler for "TNC told us we are deregistered" (HTTP 401). This is the only path
         # that auto-unsets TNC and removes its certificate, so both the heartbeat (on a 401 response)
@@ -286,6 +294,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
             'enabled': False,
         } | get_unset_payload())
+        await self.remove_tnc_license()
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=await self.config())
         await self.middleware.call('alert.oneshot_create', 'TNCDisabledAutoUnconfigured', None)
         if tnc_config['certificate'] is not None:
