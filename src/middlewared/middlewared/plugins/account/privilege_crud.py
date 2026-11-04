@@ -82,7 +82,11 @@ class PrivilegeServicePart(CRUDServicePart[PrivilegeEntry]):
     async def do_create(self, data: PrivilegeCreate) -> PrivilegeEntry:
         await validate_privilege(self, "privilege_create", data)
 
-        return await self._create(data.model_dump())
+        privilege = await self._create(data.model_dump())
+
+        await self.call2(self.s.alert.alert_source_clear_run, "DeprecatedCustomPrivilege")
+
+        return privilege
 
     async def do_update(self, audit_callback: AuditCallback, id_: int, data: PrivilegeUpdate) -> PrivilegeEntry:
         old = await self.get_instance(id_)
@@ -140,7 +144,11 @@ class PrivilegeServicePart(CRUDServicePart[PrivilegeEntry]):
 
         await validate_privilege(self, "privilege_update", new, id_)
 
-        return await self._update(id_, new.model_dump())
+        privilege = await self._update(id_, new.model_dump())
+
+        await self.call2(self.s.alert.alert_source_clear_run, "DeprecatedCustomPrivilege")
+
+        return privilege
 
     async def do_delete(self, audit_callback: AuditCallback, id_: int) -> bool:
         privilege = await self.get_instance(id_)
@@ -150,6 +158,9 @@ class PrivilegeServicePart(CRUDServicePart[PrivilegeEntry]):
             raise CallError("Unable to delete built-in privilege", errno.EPERM)
 
         deleted: bool = await self.middleware.call("datastore.delete", self._datastore, id_)
+
+        await self.call2(self.s.alert.alert_source_clear_run, "DeprecatedCustomPrivilege")
+
         return deleted
 
     async def always_has_root_password_enabled(
