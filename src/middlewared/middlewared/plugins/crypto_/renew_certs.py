@@ -51,6 +51,12 @@ class CertificateService(Service):
         for cert in certs:
             progress += (100 / len(certs))
 
+            if cert['id'] == tnc_config['certificate']:
+                if cert['until'] is not None:
+                    # ARI can call for renewal long before renew_days
+                    self.middleware.call_sync('tn_connect.acme.renew_cert', background=True)
+                continue
+
             if not (
                 datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()
             ).days < (cert.get('renew_days') or 10):
@@ -58,10 +64,7 @@ class CertificateService(Service):
 
             # renew cert
             self.logger.debug(f'Renewing certificate {cert["name"]}')
-            if cert['id'] == tnc_config['certificate']:
-                self.middleware.call_sync('tn_connect.acme.renew_cert', background=True)
-                continue
-            elif not cert.get('acme'):
+            if not cert.get('acme'):
                 cert_str, key = generate_self_signed_certificate()
                 cert_payload = {
                     'certificate': cert_str,
