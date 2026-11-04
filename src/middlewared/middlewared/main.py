@@ -72,6 +72,7 @@ import re
 import shutil
 import signal
 import sys
+import syslog
 import textwrap
 import threading
 import time
@@ -2001,6 +2002,8 @@ def main():
 
     set_name('middlewared')
     set_cmdline('middlewared')
+    # In-process PAM modules log through libc syslog(); set_cmdline() broke its default tag.
+    syslog.openlog('middlewared', syslog.LOG_PID)
 
     if args.pidfile:
         with open(pidpath, "w") as _pidfile:
