@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 __all__ = (
     "from_license_status",
     "get_fingerprint_b64",
+    "remove_license",
     "upload_license",
 )
 
@@ -142,6 +143,19 @@ def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, No
     if had_backup:
         with contextlib.suppress(FileNotFoundError):
             os.unlink(LICENSE_BACKUP)
+
+
+def remove_license() -> None:
+    """Delete the installed license and wait for the daemon to drop it. Already absent counts as removed."""
+    initial_seq = verify().reload_seq
+    try:
+        os.unlink(LICENSE_FILE)
+    except FileNotFoundError:
+        return
+    _wait_for_reload_seq_change(
+        initial_seq,
+        "License daemon did not reload after removal (reload_seq unchanged). The daemon may be unresponsive.",
+    )
 
 
 def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | None:
