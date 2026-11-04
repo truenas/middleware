@@ -120,6 +120,12 @@ class DiskService(CRUDService):
         if context['real_names']:
             disk['real_name'] = context['identifier_to_name'].get(disk['identifier'])
 
+        if disk['sed'] and (
+            disk['name'] in context['boot_pool_disks'] or disk.get('real_name') in context['boot_pool_disks']
+        ):
+            # A PSID reset would erase the boot device and SED setup would leave it locked at the next power cycle
+            disk['sed'] = False
+
         if context['sed_status']:
             if disk['sed']:
                 entry = DiskEntryObj(name=disk['name'], devpath=f'/dev/{disk["name"]}')
@@ -153,8 +159,10 @@ class DiskService(CRUDService):
                 for disk in await self.middleware.call('disk.get_disks')
             }
 
-        if context['pools']:
+        if context['pools'] or any(row['sed'] for row in rows):
             context['boot_pool_disks'] = await self.call2(self.s.boot.get_disks)
+
+        if context['pools']:
             context['boot_pool_name'] = await self.call2(self.s.boot.pool_name)
 
             for pool in await self.middleware.call('zpool.query_impl', {'topology': True}):
