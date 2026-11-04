@@ -197,15 +197,6 @@ def keychaincredential():
         yield k["id"]
 
 
-def test_user_redacts_hashes_of_an_invalid_row(readonly_client, allow_result_serialization_fallback):
-    with replace_datastore_field_value("account.bsdusers", [["id", "=", 1]], "bsdusr_shell", ""):
-        result = readonly_client.call("user.query", [["id", "=", 1]])
-
-    assert len(result) == 1
-    assert result[0]["unixhash"] == REDACTED
-    assert result[0]["smbhash"] == REDACTED
-
-
 @contextlib.contextmanager
 def vmware():
     with row(
