@@ -1,3 +1,4 @@
+from itertools import combinations
 import os
 
 import dns
@@ -410,6 +411,8 @@ class DirectoryServices(ConfigService):
                     'when the directory service type is IPA or Active Directory.'
                 )
 
+        self.validate_idmap_ranges(old, new, verrors)
+
     @private
     def idmap_config_changed(self, old, new):
         """ Check whether the update changes how Active Directory accounts are mapped to UIDs and GIDs. """
@@ -420,6 +423,54 @@ class DirectoryServices(ConfigService):
             old['configuration'].get(key) != new['configuration'].get(key)
             for key in ('idmap', 'enable_trusted_domains', 'trusted_domains')
         )
+
+    @private
+    def idmap_domains(self, ds_config):
+        """ Returns the name, attribute and idmap settings of each Active Directory domain whose range is in use.
+        Saved configurations may lack keys that the current API model always provides. """
+        if ds_config['service_type'] != DSType.AD.value or not ds_config['configuration']:
+            return []
+
+        config = ds_config['configuration']
+        domains = []
+        if builtin := config['idmap'].get('builtin'):
+            domains.append(('BUILTIN', 'idmap.builtin', builtin))
+
+        if primary := config['idmap'].get('idmap_domain'):
+            domains.append((primary.get('name') or 'the primary domain', 'idmap.idmap_domain', primary))
+
+        if config['enable_trusted_domains']:
+            domains.extend(
+                (domain.get('name'), f'trusted_domains.{idx}', domain)
+                for idx, domain in enumerate(config['trusted_domains'])
+            )
+
+        return domains
+
+    @private
+    def validate_idmap_ranges(self, old, new, verrors):
+        """ Reject idmap ranges that overlap because of this update. Overlaps in the saved configuration are left
+        alone so that existing setups keep working. """
+        def settings(domain):
+            return domain['range_low'], domain['range_high'], domain.get('idmap_backend')
+
+        saved = {settings(domain) for _, _, domain in self.idmap_domains(old)}
+        for (name1, _, domain1), (name2, attribute, domain2) in combinations(self.idmap_domains(new), 2):
+            if domain1['range_low'] > domain2['range_high'] or domain2['range_low'] > domain1['range_high']:
+                continue
+
+            # As with testparm, the administrator is responsible for avoiding collisions between AD backend domains.
+            if domain1.get('idmap_backend') == domain2.get('idmap_backend') == 'AD':
+                continue
+
+            if settings(domain1) in saved and settings(domain2) in saved:
+                continue
+
+            verrors.add(
+                f'{SCHEMA}.configuration.{attribute}',
+                f'Idmap range [{domain2["range_low"]}-{domain2["range_high"]}] for {name2} conflicts with range '
+                f'[{domain1["range_low"]}-{domain1["range_high"]}] for {name1}.'
+            )
 
     @private
     def validate_kerberos_dns(self, schema, verrors, domain, lifetime=10):
