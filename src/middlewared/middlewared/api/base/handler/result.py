@@ -38,4 +38,4 @@ def serialize_result(
         if expose_secrets:
             return result
         else:
-            return remove_secrets(model, result)
+            return remove_secrets(model, {"result": result})["result"]

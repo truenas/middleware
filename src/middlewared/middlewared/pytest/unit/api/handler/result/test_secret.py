@@ -349,13 +349,191 @@ def test_fallback_works():
     class NestedModel(BaseModel):
         field: Literal["TEST"]
 
-    class Model(BaseModel):
+    @single_argument_result
+    class MethodResult(BaseModel):
         child: Secret[NestedModel]
 
-    assert serialize_result(Model, {
+    assert serialize_result(MethodResult, {
         "child": {
             "field": "TEST2",
         },
     }, False, True) == {
         "child": "********",
+    }
+
+
+class AuthEntry(BaseModel):
+    id: int
+    secret: Secret[str]
+    discovery_auth: Literal["NONE", "CHAP"]
+
+
+class AuthQueryResult(BaseModel):
+    result: list[AuthEntry]
+
+
+class AuthGetInstanceResult(BaseModel):
+    result: AuthEntry
+
+
+def test_fallback_redacts_a_list_of_entries():
+    rows = [
+        {"id": 1, "secret": "first", "discovery_auth": "NONE"},
+        {"id": 2, "secret": "second", "discovery_auth": "BROKEN"},
+    ]
+
+    assert serialize_result(AuthQueryResult, rows, False, True) == [
+        {"id": 1, "secret": "********", "discovery_auth": "NONE"},
+        {"id": 2, "secret": "********", "discovery_auth": "BROKEN"},
+    ]
+
+
+def test_fallback_redacts_a_single_entry():
+    row = {"id": 2, "secret": "second", "discovery_auth": "BROKEN"}
+
+    assert serialize_result(AuthGetInstanceResult, row, False, True) == {
+        "id": 2,
+        "secret": "********",
+        "discovery_auth": "BROKEN",
+    }
+
+
+def test_fallback_exposes_a_list_of_entries_to_full_admin():
+    rows = [{"id": 2, "secret": "second", "discovery_auth": "BROKEN"}]
+
+    assert serialize_result(AuthQueryResult, rows, True, True) == rows
+
+
+class ADIdmap(BaseModel):
+    idmap_backend: Literal["AD"]
+    name: str
+
+
+class LDAPIdmap(BaseModel):
+    idmap_backend: Literal["LDAP"]
+    name: str
+    ldap_user_dn_password: Secret[str]
+
+
+class ADServiceConfig(BaseModel):
+    service_type: Literal["ACTIVEDIRECTORY"]
+    domain: str
+    trusted_domains: list[Annotated[ADIdmap | LDAPIdmap, Discriminator("idmap_backend")]] = []
+
+
+class LDAPServiceConfig(BaseModel):
+    service_type: Literal["LDAP"]
+    basedn: str
+    bindpw: Secret[str]
+    ldap_schema: Literal["RFC2307"]
+
+
+class ServiceEntry(BaseModel):
+    timeout: int
+    configuration: ADServiceConfig | LDAPServiceConfig = Field(discriminator="service_type")
+
+
+class ServiceConfigResult(BaseModel):
+    result: ServiceEntry
+
+
+class ServiceUpdateArgs(BaseModel):
+    data: ServiceEntry
+
+
+def test_fallback_redacts_a_list_of_discriminated_union_items():
+    value = {
+        "timeout": "not-a-number",
+        "configuration": {
+            "service_type": "ACTIVEDIRECTORY",
+            "domain": "ACME.INTERNAL",
+            "trusted_domains": [{
+                "idmap_backend": "LDAP",
+                "name": "ACME",
+                "ldap_user_dn_password": "canary",
+            }],
+        },
+    }
+
+    assert serialize_result(ServiceConfigResult, value, False, True) == {
+        "timeout": "not-a-number",
+        "configuration": {
+            "service_type": "ACTIVEDIRECTORY",
+            "domain": "ACME.INTERNAL",
+            "trusted_domains": [{
+                "idmap_backend": "LDAP",
+                "name": "ACME",
+                "ldap_user_dn_password": "********",
+            }],
+        },
+    }
+
+
+def test_fallback_resolves_a_union_declared_with_a_field_discriminator():
+    value = {
+        "timeout": 10,
+        "configuration": {
+            "service_type": "LDAP",
+            "basedn": "dc=acme,dc=internal",
+            "bindpw": "canary",
+            "ldap_schema": "BROKEN",
+        },
+    }
+
+    assert serialize_result(ServiceConfigResult, value, False, True) == {
+        "timeout": 10,
+        "configuration": {
+            "service_type": "LDAP",
+            "basedn": "dc=acme,dc=internal",
+            "bindpw": "********",
+            "ldap_schema": "BROKEN",
+        },
+    }
+
+
+def test_dump_params_resolves_a_union_declared_with_a_field_discriminator():
+    value = {
+        "timeout": 10,
+        "configuration": {
+            "service_type": "LDAP",
+            "basedn": "dc=acme,dc=internal",
+            "bindpw": "canary",
+            "ldap_schema": "BROKEN",
+        },
+    }
+
+    assert dump_params(ServiceUpdateArgs, [value], False) == [{
+        "timeout": 10,
+        "configuration": {
+            "service_type": "LDAP",
+            "basedn": "dc=acme,dc=internal",
+            "bindpw": "********",
+            "ldap_schema": "BROKEN",
+        },
+    }]
+
+
+class EmailCredential(BaseModel):
+    username: str
+    password: Secret[str]
+    secondary_password: Secret[str] = Field(alias="secondary-password", default="")
+
+
+class TokenCredential(BaseModel):
+    scope: str
+    token: Secret[str]
+
+
+class CredentialResult(BaseModel):
+    result: EmailCredential | TokenCredential
+
+
+def test_fallback_redacts_every_secret_of_an_unmatched_union():
+    value = {"username": "ivan", "password": "canary", "secondary-password": "canary", "token": "canary"}
+
+    assert serialize_result(CredentialResult, value, False, True) == {
+        "username": "ivan",
+        "password": "********",
+        "secondary-password": "********",
+        "token": "********",
     }

@@ -72,5 +72,6 @@ def module_stig_enabled():
 @pytest.fixture(autouse=True)
 def init_test_environment():
     if not STIG_ENABLED:
-        truenas_server.client.call("test.init")
+        # Make result model validation errors cause test failures
+        truenas_server.client.call("test.set_dump_result_allow_fallback", False)
     yield
