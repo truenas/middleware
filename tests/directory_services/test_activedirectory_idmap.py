@@ -163,6 +163,22 @@ def set_idmap_ad(ds_config, change_while_disabled=False):
             'validate_certificates': False,
         },
     ], None),
+    ([
+        {
+            'name': 'CANARY1',
+            'idmap_backend': 'RID',
+            'range_low': 150000001,
+            'range_high': 300000000,
+        },
+    ], r'conflicts with range \[100000001-200000000\]'),  # Overlaps the primary domain
+    ([
+        {
+            'name': 'CANARY1',
+            'idmap_backend': 'RID',
+            'range_low': 95000000,
+            'range_high': 99000000,
+        },
+    ], r'conflicts with range \[90000001-100000000\] for BUILTIN'),
 ))
 def test_trusted_domain_configuration(join_ad, trusted_doms, error):
     # Substantive directory services changes require disabling / stopping them
