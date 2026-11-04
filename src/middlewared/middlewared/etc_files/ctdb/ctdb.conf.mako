@@ -1,7 +1,7 @@
 <%
     from middlewared.utils import ctdb
     if not render_ctx['failover.licensed']:
-        raise FileShouldNotExist
+        raise FileShouldNotExist()
 %>
 
 [logging]

@@ -49,7 +49,7 @@ changes using `write_if_changed()`. Scripts that write files directly (returning
 To signal that a file should not exist:
 ```python
 from middlewared.plugins.etc import FileShouldNotExist
-raise FileShouldNotExist
+raise FileShouldNotExist()
 ```
 
 ## Render Context
