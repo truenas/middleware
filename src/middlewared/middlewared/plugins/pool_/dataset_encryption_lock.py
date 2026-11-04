@@ -63,11 +63,17 @@ class PoolDatasetService(Service):
             await self.middleware.call('pool.dataset.stop_attachment_delegates', mountpoint)
 
             # NFS clients' locks and state keep files open after their shares are stopped. Not with a local holder:
-            # the unmount fails anyway, and the share comes back.
-            if ds['type'] != 'VOLUME' and not await self.middleware.run_in_thread(
-                processes_using_dataset_tree, self.context, id_
-            ):
-                await self.middleware.call('nfs.release_dataset_filesystems', id_)
+            # the unmount fails anyway, and the share comes back. Nor when that cannot be told.
+            if ds['type'] != 'VOLUME':
+                try:
+                    held_locally = bool(
+                        await self.middleware.run_in_thread(processes_using_dataset_tree, self.context, id_)
+                    )
+                except Exception:
+                    self.logger.warning('%s: failed to look for local holders of the dataset', id_, exc_info=True)
+                    held_locally = True
+                if not held_locally:
+                    await self.middleware.call('nfs.release_dataset_filesystems', id_)
 
             # recursive doesn't apply to zvols
             recursive = ds['type'] != 'VOLUME'
