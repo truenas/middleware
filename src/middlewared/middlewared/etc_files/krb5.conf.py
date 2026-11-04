@@ -20,7 +20,7 @@ def generate_krb5_conf(
     realms: list
 ):
     if not realms:
-        raise FileShouldNotExist
+        raise FileShouldNotExist()
 
     krbconf = KRB5Conf()
 
@@ -35,7 +35,7 @@ def generate_krb5_conf(
     default_realm = None
     ds_config = middleware.call_sync('directoryservices.config')
     if not ds_config['enable']:
-        raise FileShouldNotExist
+        raise FileShouldNotExist()
 
     default_realm = ds_config['kerberos_realm']
     # Only the IP from the SAF cache is usable in a krb5.conf kdc= line. If we only have
@@ -71,7 +71,7 @@ def generate_krb5_conf(
                         logger.error("Configuration for domain lacks required options to properly "
                                      "generate a kerberos configuration. Both kerberos realm and domain name "
                                      "are absent")
-                        raise FileShouldNotExist
+                        raise FileShouldNotExist()
 
                     realm_id = middleware.call_sync(
                         'datastore.insert', 'directoryservice.kerberosrealm',

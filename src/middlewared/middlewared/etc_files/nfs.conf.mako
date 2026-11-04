@@ -13,7 +13,7 @@
         scope = middleware.call_sync('system.global.id')
     except MatchNotFound:
         # It's possible we're on first system boot and haven't generated a system id yet
-        raise FileShouldNotExist
+        raise FileShouldNotExist()
 
     # Fail-safe setting is two nfsd
     num_nfsd = config.servers

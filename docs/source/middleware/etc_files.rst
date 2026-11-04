@@ -50,7 +50,7 @@ changes using ``write_if_changed()``. Scripts that write files directly (returni
 To signal that a file should not exist::
 
     from middlewared.plugins.etc import FileShouldNotExist
-    raise FileShouldNotExist
+    raise FileShouldNotExist()
 
 Render Context
 --------------
