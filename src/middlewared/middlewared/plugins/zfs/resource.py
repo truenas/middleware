@@ -62,6 +62,7 @@ from . import resource_processes as _processes
 from . import resource_query as _query
 from . import resource_set as _set
 from . import share_presets as _share_presets
+from .count_impl import ResourceCounts, count_resources_impl
 from .encryption_service import ZFSResourceEncryptionService
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService, audit_target
@@ -525,6 +526,11 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def list_impl(self, tls: Any, data: ZFSResourceQuery) -> builtins.list[dict[str, Any]]:
         return _query.list_impl(self.context, tls, data)
+
+    @private
+    @pass_thread_local_storage
+    def count_impl(self, tls: Any) -> ResourceCounts:
+        return count_resources_impl(tls)
 
     @private
     @pass_thread_local_storage
