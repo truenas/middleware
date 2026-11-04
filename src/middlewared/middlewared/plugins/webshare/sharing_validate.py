@@ -53,7 +53,7 @@ async def resolve_share_path(
 
     The create model excludes both fields, so they are reported rather than set on `data`.
     """
-    path_data: dict[str, Any] = {part.path_field: data.path}
+    path_data: dict[str, Any] = {part.path_field: data.path, "readonly": data.readonly, "enabled": data.enabled}
     await part.validate_path_field(path_data, schema_name, verrors, split_path=True)
     return {"dataset": path_data.get("dataset"), "relative_path": path_data.get("relative_path")}
 

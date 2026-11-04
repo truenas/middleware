@@ -45,6 +45,7 @@ class SharingWebsharePart(SharingServicePart[SharingWebshareEntry]):
     _entry = SharingWebshareEntry
 
     include_tier_info = True
+    readonly_field = "readonly"
 
     async def do_create(self, data: SharingWebshareCreate) -> SharingWebshareEntry:
         entry = await self._create(await self._validated_row("sharing_webshare_create", data))

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import functools
-from typing import TYPE_CHECKING, Any, Generator, Iterable, Protocol, TypeAlias
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Generator, Iterable, Protocol, TypeAlias
 
-from middlewared.service import GenericSharingTaskService, ServiceChangeMixin, SharingTaskService
+from middlewared.service import GenericSharingTaskService, LocalPathInfo, ServiceChangeMixin, SharingTaskService
+from middlewared.service.sharing_task_service_part import dataset_split
 
 if TYPE_CHECKING:
+    from middlewared.api.current import ZFSResourceRenameArgsData
     from middlewared.main import Middleware
     from middlewared.plugins.zfs.set_rules import SetContext
 
@@ -18,6 +21,18 @@ UnlockedDataset: TypeAlias = tuple[dict[str, Any], str | None]
 
 class Entry(Protocol):
     id: int
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class LocalPathWriter:
+    """An enabled item that may write the files under `path`. `dataset` and `relative_path` are the path as the
+    kernel resolved it when the item was saved."""
+
+    name: str
+    path: str
+    dataset: str | None
+    relative_path: str | None
+    crosses_mounts: bool
 
 
 def uncovered_mountpoints(mountpoints: Iterable[str]) -> Generator[str]:
@@ -175,6 +190,9 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
     def validate_set(self, state: SetContext) -> None:
         pass
 
+    def validate_rename(self, data: ZFSResourceRenameArgsData) -> None:
+        pass
+
     def after_set(self, state: SetContext) -> None:
         """Raising fails the set once every delegate has run; the write is not undone."""
 
@@ -199,6 +217,10 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
             self.datastore_model = svc._config.datastore  # type: ignore[attr-defined]
             self.datastore_prefix = svc._config.datastore_prefix  # type: ignore[attr-defined]
             self._resource_path = functools.partial(svc.get_path_field, svc)  # type: ignore[union-attr,arg-type]
+            self._local_path_info: Callable[[Any], Awaitable[LocalPathInfo | None]] = functools.partial(
+                svc.local_path_info, svc  # type: ignore[union-attr,arg-type]
+            )
+            self.crosses_mounts = svc.crosses_mounts  # type: ignore[union-attr]
         else:
             # Typesafe GenericSharingTaskService: field config + datastore live on the service
             # part; read them off the running instance's part.
@@ -209,6 +231,8 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
             self.datastore_model = part._datastore
             self.datastore_prefix = part._datastore_prefix
             self._resource_path = part.get_path_field
+            self._local_path_info = lambda item: part.local_path_info(item.model_dump())
+            self.crosses_mounts = part.crosses_mounts
         if not self.service:
             self.service = self.service_class._config.service  # type: ignore[attr-defined]
 
@@ -218,6 +242,24 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         columns, never an extended field such as the locked field.
         """
         return [[self.enabled_field, "=", enabled]]
+
+    async def local_path_writers(self) -> list[LocalPathWriter]:
+        """The enabled items that may write their local path, as `local_path_info` judges them when saved."""
+        writers = []
+        for item in await self.middleware.call(
+            f"{self.namespace}.query",
+            # not get_query_filters, which may narrow to the items a lock affects
+            [[self.enabled_field, "=", True]],
+            {"force_sql_filters": True, "extra": {"retrieve_locked_info": False}},
+        ):
+            if (info := await self._local_path_info(item)) is not None and info.readonly:
+                continue
+            dataset, relative_path = dataset_split(item)
+            writers.append(LocalPathWriter(
+                name=await self.get_attachment_name(item), path=await self._resource_path(item), dataset=dataset,
+                relative_path=relative_path, crosses_mounts=self.crosses_mounts,
+            ))
+        return writers
 
     async def start_service(self) -> None:
         if (

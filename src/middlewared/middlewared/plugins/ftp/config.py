@@ -97,7 +97,9 @@ class FTPServicePart(SystemServicePart[FTPEntry]):
             await check_path_resides_within_volume(
                 verrors, self.middleware, "ftp_update.anonpath", anonpath, must_be_dir=True
             )
-            await check_path_service_write_allowed(verrors, self.middleware, "ftp_update.anonpath", anonpath)
+            await check_path_service_write_allowed(
+                verrors, self.middleware, "ftp_update.anonpath", anonpath, beneath=True
+            )
 
         if new.tls:
             cert_id = new.ssltls_certificate

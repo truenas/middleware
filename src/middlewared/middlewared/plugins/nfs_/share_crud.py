@@ -43,6 +43,8 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
 
     include_tier_info = True
     readonly_field = "ro"
+    # an export stops at each dataset mounted beneath it
+    crosses_mounts = False
 
     async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
         data["networks"] = data.pop("network").split()

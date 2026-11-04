@@ -501,8 +501,8 @@ class ZFSResourceService(Service):
 
         .. warning::
 
-            No check is made whether the resource is in use. If it is used by services such as SMB, iSCSI,
-            snapshot tasks, replication, or cloud sync, renaming it may cause disruptions or service
+            Except for S3 buckets, no check is made whether the resource is in use. If it is used by services such
+            as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming it may cause disruptions or service
             failures. Proceed only if you are certain the resource is not in use.
 
         A validation error is raised when:
@@ -513,6 +513,7 @@ class ZFSResourceService(Service):
         - either name is a protected path (``EACCES``)
         - the last component of the new name begins or ends with a space (``EINVAL``)
         - ``force`` is not set
+        - an S3 bucket is configured on the resource or a dataset under it
 
         Example:
 

@@ -70,9 +70,11 @@ from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.path import FSLocation, is_child_realpath, path_location
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
+from middlewared.utils.service.path import require_path_service_write_allowed
 
 if TYPE_CHECKING:
     from middlewared.job import Job
+    from middlewared.main import Middleware
 
 
 class FilesystemReceiveFileOptions(BaseModel):
@@ -180,6 +182,12 @@ class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs])
         data = f.read()
         if data:
             queue.extend(splitlines_maxlen(data, MAX_LINE_LENGTH))
+
+
+def _require_service_write_allowed(middleware: Middleware, schema_name: str, path: str) -> None:
+    """Only checks paths under /mnt, so file transfers elsewhere, such as failover's, do not call into the S3 plugin."""
+    if (real := os.path.realpath(path)).startswith('/mnt/'):
+        require_path_service_write_allowed(middleware, schema_name, real, beneath=False)
 
 
 class FilesystemService(Service):
@@ -339,6 +347,7 @@ class FilesystemService(Service):
                 and has_internal_path(source)
             ):
                 raise CallError(f'{data.path}: path not permitted', errno.EPERM)
+            _require_service_write_allowed(self.middleware, 'filesystem.mkdir.path', realpath)
 
             os.mkdir(basename, mode=mode, dir_fd=parent_fd)
         finally:
@@ -569,6 +578,7 @@ class FilesystemService(Service):
                 'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
                 errno.EINVAL
             )
+        _require_service_write_allowed(self.middleware, 'filesystem.file_receive.path', path)
 
         dirname = os.path.dirname(path)
         # NOTE: os.makedirs follows symlinks, so an attacker could cause directories
@@ -630,6 +640,7 @@ class FilesystemService(Service):
                 'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
                 errno.EINVAL
             )
+        _require_service_write_allowed(self.middleware, 'filesystem.put.path', path)
 
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):

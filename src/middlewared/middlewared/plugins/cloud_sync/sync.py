@@ -12,6 +12,7 @@ from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.service import CallError, ServiceContext, ValidationErrors
 from middlewared.utils.lang import undefined
+from middlewared.utils.service.path import require_task_path_writable
 
 from .crud import CloudSyncTaskFailedAlert
 from .lock import FsLockDirection, local_fs_lock_manager, remote_fs_lock_manager
@@ -60,6 +61,9 @@ def _sync(
     options: CloudSyncSyncOptions,
     job: Job,
 ) -> None:
+    if cloud_sync.direction == "PULL":
+        require_task_path_writable(context.middleware, cloud_sync.path)
+
     remote = REMOTES[credentials.provider.type]
 
     local_path = cloud_sync.path

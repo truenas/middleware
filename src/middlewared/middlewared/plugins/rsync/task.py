@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from middlewared.alert.source.rsync import RsyncFailedAlert, RsyncSuccessAlert
 from middlewared.api.current import UserGetUserObj
 from middlewared.service import CallError, ServiceContext
+from middlewared.utils.service.path import require_task_path_writable
 from middlewared.utils.user_context import run_command_with_user_context
 
 from .utils import get_host_key_file_contents_from_ssh_credentials, quote_extra_args
@@ -158,6 +159,9 @@ def execute_rsync_task(context: ServiceContext, job: Job, id_: int) -> None:
     if rsync.locked:
         context.call_sync2(context.s.rsynctask.generate_locked_alert, id_)
         return
+
+    if rsync.direction == "PULL":
+        require_task_path_writable(context.middleware, rsync.path)
 
     with build_commandline(context, id_) as commandline:
         cp = run_command_with_user_context(
