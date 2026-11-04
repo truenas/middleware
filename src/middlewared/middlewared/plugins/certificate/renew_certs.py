@@ -53,6 +53,11 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
         if cert.until is None:
             continue
 
+        if cert.id == tnc_config.certificate:
+            # ARI can call for renewal long before renew_days
+            context.call_sync2(context.s.tn_connect.acme.renew_cert, background=True)
+            continue
+
         if not (datetime.datetime.strptime(cert.until, "%a %b %d %H:%M:%S %Y") - utc_now()).days < (
             cert.renew_days or 10
         ):
@@ -60,10 +65,7 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
 
         # renew cert
         context.logger.debug(f"Renewing certificate {cert.name}")
-        if cert.id == tnc_config.certificate:
-            context.call_sync2(context.s.tn_connect.acme.renew_cert, background=True)
-            continue
-        elif not cert.acme:
+        if not cert.acme:
             cert_str, key = generate_self_signed_certificate()
             cert_payload = {
                 "certificate": cert_str,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 import logging
 from typing import TYPE_CHECKING, Any
@@ -14,6 +15,7 @@ from truenas_crypto_utils.read import get_cert_id
 from middlewared.plugins.certificate.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, Service, job, private
 from middlewared.service_exception import InstanceNotFound
+from middlewared.utils.time_utils import utc_now
 
 from .internal import config_internal, set_status
 from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX
@@ -24,6 +26,8 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger('truenas_connect')
+# renew_certs and the boot/failover state check both reach renew_cert; the second must re-check the new cert.
+RENEW_LOCK = asyncio.Lock()
 
 
 class TNCACMEService(Service):
@@ -95,41 +99,42 @@ class TNCACMEService(Service):
 
     @private
     async def renew_cert(self, bypass_renewal_check: bool = False) -> None:
-        cert_renewal_id: str | None = None
-        if not bypass_renewal_check:
-            renewal_needed, cert_renewal_id = await self.call2(
-                self.s.tn_connect.acme.check_renewal_needed,
-            )
-            if not renewal_needed:
-                logger.debug('TNC certificate renewal not needed at this time')
-                return
+        async with RENEW_LOCK:
+            cert_renewal_id: str | None = None
+            if not bypass_renewal_check:
+                renewal_needed, cert_renewal_id = await self.call2(
+                    self.s.tn_connect.acme.check_renewal_needed,
+                )
+                if not renewal_needed:
+                    logger.debug('TNC certificate renewal not needed at this time')
+                    return
 
-        logger.debug('Initiating renewal of TNC certificate')
-        await set_status(self.context, Status.CERT_RENEWAL_IN_PROGRESS.name)
-        try:
-            config = await self.call2(self.s.tn_connect.config)
-            renewal_job = await self.call2(
-                self.s.tn_connect.acme.create_cert, config.certificate, cert_renewal_id,
-            )
-            await renewal_job.wait(raise_error=True)
-        except Exception:
-            logger.error('Failed to renew certificate for TNC', exc_info=True)
-            await set_status(self.context, Status.CERT_RENEWAL_FAILURE.name)
-        else:
-            logger.debug('TNC certificate renewed successfully, updating database')
-            # renewal_job.wait(raise_error=True) above guarantees a successful result.
-            assert renewal_job.result is not None
-            cert_details = renewal_job.result
-            await self.middleware.call(
-                'datastore.update',
-                'system.certificate',
-                config.certificate,
-                {'certificate': cert_details['cert']},
-                {'prefix': 'cert_'},
-            )
-            await self.middleware.call('etc.generate', 'ssl')
-            await set_status(self.context, Status.CERT_RENEWAL_SUCCESS.name)
-            await self.update_ui(False)
+            logger.debug('Initiating renewal of TNC certificate')
+            await set_status(self.context, Status.CERT_RENEWAL_IN_PROGRESS.name)
+            try:
+                config = await self.call2(self.s.tn_connect.config)
+                renewal_job = await self.call2(
+                    self.s.tn_connect.acme.create_cert, config.certificate, cert_renewal_id,
+                )
+                await renewal_job.wait(raise_error=True)
+            except Exception:
+                logger.error('Failed to renew certificate for TNC', exc_info=True)
+                await set_status(self.context, Status.CERT_RENEWAL_FAILURE.name)
+            else:
+                logger.debug('TNC certificate renewed successfully, updating database')
+                # renewal_job.wait(raise_error=True) above guarantees a successful result.
+                assert renewal_job.result is not None
+                cert_details = renewal_job.result
+                await self.middleware.call(
+                    'datastore.update',
+                    'system.certificate',
+                    config.certificate,
+                    {'certificate': cert_details['cert']},
+                    {'prefix': 'cert_'},
+                )
+                await self.middleware.call('etc.generate', 'ssl')
+                await set_status(self.context, Status.CERT_RENEWAL_SUCCESS.name)
+                await self.update_ui(False)
 
     @private
     def check_renewal_needed(self) -> tuple[bool, str | None]:
@@ -144,17 +149,15 @@ class TNCACMEService(Service):
         cert = self.middleware.call_sync2(
             self.s.certificate.get_instance, config.certificate,
         )
+        expiring = cert.until is not None and (
+            datetime.strptime(cert.until, '%a %b %d %H:%M:%S %Y') - utc_now()
+        ).days < (cert.renew_days or 10)
         try:
             cert_pem = cert.certificate or ''
             cert_id = get_cert_id(cert_pem)
         except Exception:
             logger.error('Failed to parse TNC certificate to get its ID', exc_info=True)
-            # This should not happen, but if it does
-            # what this means is that there are 5 days left till the cert expires and for some X reason we
-            # were not able to parse the cert id and in this case, let's just go ahead and renew the cert
-            # without factoring in the ARI as we were not able to parse the cert id
-            # This either should not happen or will be a rare occurrence
-            return True, None
+            return expiring, None
 
         # acme_config returns a dict from truenas_connect_utils.acme — keep dict access
         acme_cfg = self.call_sync2(self.s.tn_connect.acme.config)
@@ -175,10 +178,22 @@ class TNCACMEService(Service):
             )
             return False, None
 
+        if cert.expired is True:
+            return True, None
+
         renewal_info = fetch_renewal_info(acme_cfg['acme_details']['renewal_info'], cert_id)
         if renewal_info['error']:
+            if renewal_info.get('status_code') in (400, 404) and cert.from_ is not None and (
+                utc_now() - datetime.strptime(cert.from_, '%a %b %d %H:%M:%S %Y')
+            ).days >= 7:
+                # TNC moves accounts between CAs, and a CA that did not issue the cert answers 404 (LE, ZeroSSL)
+                # or 400 (GTS).
+                logger.warning(
+                    'TNC certificate is unknown to the current ACME CA, renewing it now: %r', renewal_info['error']
+                )
+                return True, None
             logger.error('Failed to fetch renewal info for TNC certificate: %r', renewal_info['error'])
-            return False, None
+            return expiring, None
 
         start_time = renewal_info['suggested_window']['start']
         end_time = renewal_info['suggested_window']['end']
@@ -208,7 +223,7 @@ class TNCACMEService(Service):
                 days, hours, start_time.strftime('%Y-%m-%d %H:%M:%S UTC')
             )
 
-        return within_window, cert_id
+        return within_window or expiring, cert_id
 
     @private
     async def initiate_cert_generation_impl(self) -> dict[str, Any]:

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,6 +12,7 @@ from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 from middlewared.plugins.truenas_connect.utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
+from middlewared.utils.time_utils import utc_now
 
 
 def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
@@ -667,7 +668,11 @@ async def test_handle_deregistration_noop_when_already_unset():
     ctx.middleware.call.assert_not_called()
 
 
-def _make_acme_service(acme_cfg):
+def _cert_date(days_from_now):
+    return (utc_now() + timedelta(days=days_from_now)).strftime('%a %b %d %H:%M:%S %Y')
+
+
+def _make_acme_service(acme_cfg, issued_days_ago=30, expires_in_days=60):
     """Build a TNCACMEService whose call_sync2 dispatches by service-shortcut identity.
 
     Returns (service, dereg_calls); dereg_calls records when handle_deregistration is invoked.
@@ -675,7 +680,10 @@ def _make_acme_service(acme_cfg):
     from middlewared.plugins.truenas_connect.acme import TNCACMEService
 
     service = TNCACMEService(MagicMock())
-    service.middleware.call_sync2 = MagicMock(return_value=MagicMock(certificate='PEM'))
+    service.middleware.call_sync2 = MagicMock(return_value=MagicMock(
+        certificate='PEM', from_=_cert_date(-issued_days_ago), until=_cert_date(expires_in_days),
+        expired=False, renew_days=10,
+    ))
     dereg_calls = []
 
     def dispatch(target, *args, **kwargs):
@@ -721,6 +729,30 @@ def test_check_renewal_error_without_status_code_does_not_deregister():
         result = service.check_renewal_needed()
     assert result == (False, None)
     assert dereg_calls == []
+
+
+@pytest.mark.parametrize('renewal_info, issued_days_ago, expires_in_days, expected', [
+    ({'error': 'ARI request failed: HTTP 404', 'status_code': 404}, 30, 60, (True, None)),
+    ({'error': 'ARI request failed: HTTP 400', 'status_code': 400}, 30, 60, (True, None)),
+    ({'error': 'ARI request failed: HTTP 404', 'status_code': 404}, 1, 60, (False, None)),
+    ({'error': 'ARI request failed: HTTP 429', 'status_code': 429}, 30, 60, (False, None)),
+    ({'error': 'ARI server error after 4 attempts: HTTP 503'}, 80, 5, (True, None)),
+    (
+        {'error': None, 'suggested_window': {'start': utc_now(naive=False) + timedelta(days=30),
+                                             'end': utc_now(naive=False) + timedelta(days=32)}},
+        80, 5, (True, 'cid'),
+    ),
+])
+def test_check_renewal_ari_outcome(renewal_info, issued_days_ago, expires_in_days, expected):
+    service, _ = _make_acme_service(
+        {'error': None, 'acme_details': {'renewal_info': 'https://ari.example/'}},
+        issued_days_ago=issued_days_ago, expires_in_days=expires_in_days,
+    )
+    with (
+        patch('middlewared.plugins.truenas_connect.acme.get_cert_id', return_value='cid'),
+        patch('middlewared.plugins.truenas_connect.acme.fetch_renewal_info', return_value=renewal_info),
+    ):
+        assert service.check_renewal_needed() == expected
 
 
 @pytest.mark.asyncio
