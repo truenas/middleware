@@ -37,7 +37,10 @@ async def get_last_submitted(service: Service) -> float:
 async def submit_if_due(service: Service) -> None:
     middleware = service.middleware
     # Submit only when a full interval has passed, however many times this runs (middleware restarts, failover)
-    retries = FAILED_RETRIES if time.time() - await get_last_submitted(service) >= SUBMIT_INTERVAL else 0
+    if time.time() - await get_last_submitted(service) < SUBMIT_INTERVAL:
+        return
+
+    retries = FAILED_RETRIES
     while retries:
         if not await middleware.call("failover.is_single_master_node") or not await middleware.call(
             "network.general.can_perform_activity", "usage"
