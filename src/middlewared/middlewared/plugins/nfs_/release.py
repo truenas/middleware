@@ -9,15 +9,12 @@ from typing import Any
 
 import truenas_os
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.resource_processes_utils import read_mountinfo
+from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError
 
 logger = logging.getLogger(__name__)
-
-
-class NFS4LockRevoked(CallError):
-    """An NFSv4 lock stateid was revoked by the release; the filesystem must not be destroyed now."""
-
 
 NFSD_UNLOCK_FILESYSTEM = "/proc/fs/nfsd/unlock_filesystem"
 NFS4_CLIENTS_DIR = "/proc/fs/nfsd/clients"
@@ -32,6 +29,10 @@ NFS4_LOCK_STATE = re.compile(
 
 # the flush time of each export cache as flush_export_caches() last left it
 last_flush: dict[str, int] = {}
+
+
+class NFS4LockRevoked(CallError):
+    """An NFSv4 lock stateid was revoked by the release; the filesystem must not be destroyed now."""
 
 
 def alive_in_kernel(ds: str, objsetid: int) -> bool:
@@ -319,3 +320,27 @@ def release_filesystems(name: str, rows: list[dict[str, Any]], exported: set[int
         )
     logger.debug("%s: released NFS locks on %s", name, ", ".join(released))
     return released
+
+
+def release_dataset_filesystems(context: ServiceContext, name: str) -> list[str]:
+    """
+    Make nfsd release every file it keeps open on the filesystems of dataset (or pool) `name` and its children, so
+    that they can be unmounted. Only for a tree whose shares are gone or stopped: its NFS clients lose their locks. A
+    filesystem that a share still exports, and the whole tree while NFSv4 clients hold byte-range locks on it, are
+    left alone. Returns the filesystems released.
+    """
+    try:
+        rows = context.call_sync2(
+            context.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[name], properties=["mountpoint", "objsetid", "readonly"], get_children=True),
+        )
+        shares = context.middleware.call_sync("sharing.nfs.query", [["enabled", "=", True]])
+        # a locked share's path is a directory of the parent filesystem: it must not count as the parent's export
+        exported = devices(share["path"] for share in shares if not share["locked"])
+        return release_filesystems(name, rows, exported)
+    except NFS4LockRevoked:
+        raise
+    except Exception:
+        # the unmount that follows then fails as it would have without the release
+        logger.warning("%s: failed to release NFS locks", name, exc_info=True)
+        return []
