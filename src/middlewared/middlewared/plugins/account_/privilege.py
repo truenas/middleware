@@ -11,6 +11,7 @@ from middlewared.api.current import (
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
+from middlewared.role import BUILTIN_GROUP_ROLES
 from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalBuiltinAdminGroups
 from middlewared.utils.privilege import (
     privilege_has_webui_access,
@@ -98,6 +99,8 @@ class PrivilegeService(CRUDService):
             data
         )
 
+        await self.middleware.call("alert.alert_source_clear_run", "DeprecatedCustomPrivilege")
+
         return await self.get_instance(id_)
 
     @api_method(PrivilegeUpdateArgs, PrivilegeUpdateResult, audit="Update privilege", audit_callback=True)
@@ -162,6 +165,8 @@ class PrivilegeService(CRUDService):
             new,
         )
 
+        await self.middleware.call("alert.alert_source_clear_run", "DeprecatedCustomPrivilege")
+
         return await self.get_instance(id_)
 
     @api_method(PrivilegeDeleteArgs, PrivilegeDeleteResult, audit="Delete privilege", audit_callback=True)
@@ -180,6 +185,8 @@ class PrivilegeService(CRUDService):
             self._config.datastore,
             id_
         )
+
+        await self.middleware.call("alert.alert_source_clear_run", "DeprecatedCustomPrivilege")
 
         return response
 
@@ -220,6 +227,12 @@ class PrivilegeService(CRUDService):
         for i, role in enumerate(data["roles"]):
             if role not in self.middleware.role_manager.roles:
                 verrors.add(f"{schema_name}.roles.{i}", "Invalid role")
+            elif role not in BUILTIN_GROUP_ROLES:
+                verrors.add(
+                    f"{schema_name}.roles.{i}",
+                    "Using custom privilege sets is deprecated and will be removed in TrueNAS 28. "
+                    "Only the predefined group roles may be granted."
+                )
 
         verrors.check()
 
