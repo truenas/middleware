@@ -15,6 +15,7 @@ from .internal import (
     delete_cert,
     get_effective_ips,
     ha_vips,
+    remove_tnc_license,
     unset_registration_details,
 )
 from .private_models import TrueNASConnectUpdateEnvironment
@@ -98,6 +99,7 @@ class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
         await self.middleware.call("datastore.update", DATASTORE, old.id, db_payload)
 
         if tnc_disabled:
+            await remove_tnc_license(self)
             # If TNC is disabled and was enabled earlier, we will like to restart UI and delete TNC cert
             logger.debug("Restarting nginx to not use TNC certificate anymore")
             await self.middleware.call("system.general.ui_restart", 4)
