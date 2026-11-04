@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString, single_argument_args,
+    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, LongNonEmptyString, NonEmptyString, single_argument_args,
 )
 
 
@@ -70,7 +70,7 @@ class TrueNASConnectGetRegistrationUriArgs(BaseModel):
 
 
 class TrueNASConnectGetRegistrationUriResult(BaseModel):
-    result: NonEmptyString = Field(
+    result: LongNonEmptyString = Field(
         description="Registration URI for connecting this TrueNAS system to TrueNAS Connect.",
     )
 
