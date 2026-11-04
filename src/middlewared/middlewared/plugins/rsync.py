@@ -25,6 +25,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.user_context import run_command_with_user_context
+from middlewared.utils.service.path import require_task_path_writable
 from middlewared.utils.service.task_state import TaskStateMixin
 
 
@@ -592,6 +593,9 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         if rsync['locked']:
             self.middleware.call_sync('rsynctask.generate_locked_alert', id_)
             return
+
+        if rsync['direction'] == 'PULL':
+            require_task_path_writable(self.middleware, rsync['path'])
 
         with self.commandline(id_) as commandline:
             cp = run_command_with_user_context(

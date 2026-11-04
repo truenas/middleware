@@ -13,6 +13,7 @@ from middlewared.service import LocalPathInfo, private, TaskPathService, Validat
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
+from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.service.task_state import TaskStateMixin
 from .init import IncorrectPassword
 
@@ -159,6 +160,11 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
             self.middleware.run_coroutine(
                 check_path_resides_within_volume(
                     verrors, self.middleware, f"{name}.cache_path", data["cache_path"], True,
+                )
+            )
+            self.middleware.run_coroutine(
+                check_path_service_write_allowed(
+                    verrors, self.middleware, f"{name}.cache_path", data["cache_path"], beneath=False
                 )
             )
             if not verrors:

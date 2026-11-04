@@ -27,6 +27,7 @@ from middlewared.utils.nvmet.kernel import resize_namespace as kernel_resize_nam
 from middlewared.utils.nvmet.spdk import lock_namespace as spdk_lock_namespace
 from middlewared.utils.nvmet.spdk import unlock_namespace as spdk_unlock_namespace
 from middlewared.utils.nvmet.spdk import resize_namespace as spdk_resize_namespace
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 DISABLE_VOLTHREADING_FOR_NVMET = True
 
@@ -324,6 +325,11 @@ class NVMetNamespaceService(SharingService):
                 elif os.path.isdir(device_path):
                     verrors.add(f'{schema_name}.device_path',
                                 f'FILE device_path must not be a directory: {device_path}')
+                self.middleware.run_coroutine(
+                    check_path_service_write_allowed(
+                        verrors, self.middleware, f'{schema_name}.device_path', device_path, beneath=False
+                    )
+                )
             case _:
                 verrors.add(f'{schema_name}.device_type', 'Invalid device_type supplied')
 

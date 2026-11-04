@@ -1,6 +1,20 @@
+from dataclasses import dataclass
 from typing import Generator, Iterable
 
 from middlewared.service import ServiceChangeMixin, SharingTaskService
+from middlewared.service.sharing_service import dataset_split
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class LocalPathWriter:
+    """An enabled item that may write the files under `path`. `dataset` and `relative_path` are the path as the
+    kernel resolved it when the item was saved."""
+
+    name: str
+    path: str
+    dataset: str | None
+    relative_path: str | None
+    crosses_mounts: bool
 
 
 def uncovered_mountpoints(mountpoints: Iterable[str]) -> Generator[str]:
@@ -171,6 +185,7 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         self.datastore_model = self.service_class._config.datastore
         self.datastore_prefix = self.service_class._config.datastore_prefix
         self.namespace = self.service_class._config.namespace
+        self.crosses_mounts = self.service_class.crosses_mounts
         if not self.service:
             self.service = self.service_class._config.service
 
@@ -180,6 +195,28 @@ class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
         if 'locked' in options:
             filters += [[self.locked_field, '=', options['locked']]]
         return filters
+
+    async def local_path_writers(self) -> list[LocalPathWriter]:
+        """The enabled items that may write their local path, as `local_path_info` judges them when saved."""
+        writers = []
+        for item in await self.middleware.call(
+            f'{self.namespace}.query',
+            # not get_query_filters, which may narrow to the items a lock affects
+            [[self.enabled_field, '=', True]],
+            {'force_sql_filters': True, 'extra': {'retrieve_locked_info': False}},
+        ):
+            info = await self.service_class.local_path_info(self.service_class, item)
+            if info is not None and info.readonly:
+                continue
+            dataset, relative_path = dataset_split(item)
+            writers.append(LocalPathWriter(
+                name=await self.get_attachment_name(item),
+                path=await self.service_class.get_path_field(self.service_class, item),
+                dataset=dataset,
+                relative_path=relative_path,
+                crosses_mounts=self.crosses_mounts,
+            ))
+        return writers
 
     async def start_service(self):
         if not (

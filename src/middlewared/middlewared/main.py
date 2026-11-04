@@ -932,7 +932,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         if prepared_call.is_coroutine:
             self.logger.trace('Calling %r in current IO loop', name)
-            return await methodobj(*prepared_call.args)
+            return await methodobj(*prepared_call.args, **prepared_call.kwargs)
 
         self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
         return await self.run_in_executor(

@@ -27,7 +27,9 @@ class CloudBackupService(Service):
             check_path_resides_within_volume(verrors, self.middleware, "destination_path", destination_path)
         )
         self.middleware.run_coroutine(
-            check_path_service_write_allowed(verrors, self.middleware, "destination_path", destination_path)
+            check_path_service_write_allowed(
+                verrors, self.middleware, "destination_path", destination_path, beneath=True
+            )
         )
 
         verrors.check()

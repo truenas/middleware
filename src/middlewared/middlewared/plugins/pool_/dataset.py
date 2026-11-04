@@ -1016,8 +1016,9 @@ class PoolDatasetService(CRUDService):
         """
         Rename a zfs resource (filesystem, snapshot, or zvolume) of `id`.
 
-        No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
-        as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.
+        Except for S3 buckets, which must be deleted before the dataset holding them is renamed, no check is made
+        whether the resource is in use. If the dataset is in use by services such as SMB, iSCSI, snapshot tasks,
+        replication, or cloud sync, renaming may cause disruptions or service failures.
 
         Proceed only if you are certain the ZFS resource is not in use and fully understand the risks.
         Set Force to continue.
@@ -1033,6 +1034,7 @@ class PoolDatasetService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
+        await self.call2(self.s.sharing.s3.validate_rename, id_)
         return await self.call2(
             self.s.zfs.resource.rename,
             id_,

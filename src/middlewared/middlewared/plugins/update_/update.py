@@ -9,6 +9,7 @@ import typing
 from middlewared.api.current import UpdateFileOptions, UpdateManualOptions, UpdateRunAttrs
 from middlewared.service import CallError, ServiceContext
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
+from middlewared.utils.service.path import require_path_service_write_allowed
 from .download import download_update, get_update_location
 from .install_linux import install
 from .upload_location_linux import create_upload_location, destroy_upload_location
@@ -103,6 +104,7 @@ def file_impl(context: ServiceContext, job: Job, options: UpdateFileOptions) -> 
 
     if not os.path.isdir(dest):
         raise CallError(f'Destination: {dest!r} is not a directory')
+    require_path_service_write_allowed(context.middleware, 'update.file.options.destination', dest, beneath=False)
 
     destfile = os.path.join(dest, 'manualupdate.sqsh')
 

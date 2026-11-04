@@ -35,6 +35,7 @@ from middlewared.service_exception import InstanceNotFound, ValidationError
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
+from middlewared.utils.service.path import require_path_service_write_allowed
 
 
 VALID_DISK_FORMATS = ('qcow2', 'qed', 'raw', 'vdi', 'vhdx', 'vmdk')
@@ -182,6 +183,7 @@ class VMDeviceService(CRUDService, DeviceMixin):
                     raise ValidationError(schema, f'{sp!r} does not exist', errno.ENOENT)
                 else:
                     raise e from None
+            require_path_service_write_allowed(self.middleware, schema, dip, beneath=False)
         return st
 
     @private
