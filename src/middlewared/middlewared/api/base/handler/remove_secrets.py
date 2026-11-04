@@ -83,7 +83,7 @@ def _discriminated_model(
         if name is None or name not in value:
             continue
 
-        field = member.model_fields.get(name)
+        field = member.model_fields_by_alias().get(name)
         if field is not None and typing.get_origin(field.annotation) is typing.Literal:
             if value[name] in typing.get_args(field.annotation):
                 return member
@@ -101,11 +101,12 @@ def _remove_secrets_from_unmatched_union(
     :return: `value` with `Secret` parameters replaced with a placeholder.
     """
     result = {}
+    fields_by_alias = [model.model_fields_by_alias() for model in models]
     for key, item in value.items():
         redacted = [
             _remove_secrets_from_field(field, item)
-            for model in models
-            if (field := model.model_fields.get(key)) is not None
+            for fields in fields_by_alias
+            if (field := fields.get(key)) is not None
         ]
         if SECRET_VALUE in redacted:
             result[key] = SECRET_VALUE
