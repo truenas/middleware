@@ -1,23 +1,36 @@
-import types
 import typing
 
 from pydantic import Discriminator, Secret
+from pydantic.fields import FieldInfo
 
-from middlewared.api.base import BaseModel, SECRET_VALUE
-from middlewared.utils.typing_ import is_union
-from .inspect import model_field_is_model, model_field_is_list_of_models, model_field_is_dict_of_models
+from middlewared.api.base import SECRET_VALUE, BaseModel
+
+from .inspect import (
+    model_field_is_dict_of_models,
+    model_field_is_list_of_models,
+    model_field_is_model,
+    unpack_union_model_field,
+)
 
 __all__ = ["remove_secrets"]
 
 
-def remove_secrets(model: type[BaseModel], value):
+def remove_secrets(model: type[BaseModel], value: typing.Any, discriminator: str | None = None) -> typing.Any:
     """
     Removes `Secret` values from a model value.
     :param model: `BaseModel` that corresponds to `value`.
     :param value: value that potentially contains `Secret` data.
+    :param discriminator: name of the field that selects the union member `value` corresponds to.
     :return: `value` with `Secret` parameters replaced with a placeholder.
     """
-    if isinstance(value, dict) and (nested_model := model_field_is_model(model, value_hint=value)):
+    if typing.get_origin(model) is typing.Annotated:
+        model, *metadata = typing.get_args(model)
+        discriminator = _discriminator_name(metadata) or discriminator
+
+    if isinstance(value, dict) and (
+        nested_model := _discriminated_model(model, discriminator, value)
+        or model_field_is_model(model, value_hint=value)
+    ):
         result = {}
         for field_name, field_info in nested_model.model_fields.items():
             # Use alias if present, otherwise use field name
@@ -26,16 +39,20 @@ def remove_secrets(model: type[BaseModel], value):
                 result[key] = _remove_secrets_from_field(field_info, value[key])
         return result
     elif isinstance(value, list) and (nested_model := model_field_is_list_of_models(model)):
-        return [remove_secrets(nested_model, v) for v in value]
+        return [remove_secrets(nested_model, v, discriminator) for v in value]
     elif isinstance(value, dict) and (nested_model := model_field_is_dict_of_models(model)):
         return {k: remove_secrets(nested_model, v) for k, v in value.items()}
+    elif isinstance(value, dict) and (models := [m for m, _ in _union_models(model)]):
+        # No union member validates a `value` that failed validation, which is the only reason
+        # `serialize_result` falls back here. Picking one member drops the keys of all the others.
+        return _remove_secrets_from_unmatched_union(models, value)
     elif typing.get_origin(model) is Secret:
         return SECRET_VALUE
     else:
         return value
 
 
-def _remove_secrets_from_field(field, value):
+def _remove_secrets_from_field(field: FieldInfo, value: typing.Any) -> typing.Any:
     """
     Remove secrets from a field value, handling discriminated unions.
     :param field: Pydantic FieldInfo object.
@@ -46,87 +63,91 @@ def _remove_secrets_from_field(field, value):
     if value is None:
         return None
 
-    # Check if this field has a discriminator (discriminated union)
-    if isinstance(value, dict) and (discriminated_model := _get_discriminated_union_model_from_field(field, value)):
-        return remove_secrets(discriminated_model, value)
-    else:
-        return remove_secrets(field.annotation, value)
+    # `Field(discriminator=...)` keeps the name here, `Annotated[..., Discriminator(...)]` in the metadata
+    discriminator = _discriminator_name([field.discriminator, *(field.metadata or ())])
+    return remove_secrets(field.annotation, value, discriminator)  # type: ignore[arg-type]
 
 
-def _get_discriminated_union_model_from_field(field, value: dict) -> type[BaseModel] | None:
+def _discriminated_model(
+    model: typing.Any, discriminator: str | None, value: dict[str, typing.Any]
+) -> type[BaseModel] | None:
     """
-    If `field` is a discriminated union field, returns the appropriate union member
-    based on the discriminator field value in `value`.
-    :param field: Pydantic FieldInfo that may contain a discriminated union.
-    :param value: dict value containing the discriminator field.
-    :return: the matching BaseModel from the union, or None.
+    Returns the union member whose discriminator field matches `value`, or `None`.
+    :param model: potentially, a discriminated union.
+    :param discriminator: discriminator name inherited from the field that declares `model`.
+    :param value: dict value holding the discriminator field.
+    :return: matching API model or `None`
     """
-    annotation = field.annotation
-    origin = typing.get_origin(annotation)
+    for member, member_discriminator in _union_models(model):
+        name = member_discriminator or discriminator
+        if name is None or name not in value:
+            continue
 
-    # The annotation can be:
-    # 1. Annotated[Union[...], Discriminator(...)] - metadata directly on field
-    # 2. Union[Annotated[Union[...], Discriminator(...)], None] - Optional of annotated union
-    # 3. Union[Model1, Model2] - just a union without discriminator
+        field = member.model_fields_by_alias().get(name)
+        if field is not None and typing.get_origin(field.annotation) is typing.Literal:
+            if value[name] in typing.get_args(field.annotation):
+                return member
 
-    # First, check if field has metadata with a Discriminator
+    return None
+
+
+def _remove_secrets_from_unmatched_union(
+    models: list[type[BaseModel]], value: dict[str, typing.Any]
+) -> dict[str, typing.Any]:
+    """
+    Redacts every key that any member of a union declares `Secret` and keeps the rest.
+    :param models: API models the union can resolve to.
+    :param value: dict value that matches none of them.
+    :return: `value` with `Secret` parameters replaced with a placeholder.
+    """
+    result = {}
+    fields_by_alias = [model.model_fields_by_alias() for model in models]
+    for key, item in value.items():
+        redacted = [
+            _remove_secrets_from_field(field, item)
+            for fields in fields_by_alias
+            if (field := fields.get(key)) is not None
+        ]
+        if SECRET_VALUE in redacted:
+            result[key] = SECRET_VALUE
+        else:
+            result[key] = next((r for r in redacted if r != item), item)
+
+    return result
+
+
+def _union_models(model: typing.Any) -> typing.Iterator[tuple[type[BaseModel], str | None]]:
+    """
+    Yields every API model `model` resolves to, looking through `Annotated` and nested unions.
+    :param model: potentially, a union of API models.
+    :return: an iterator of API models with the discriminator each one inherits.
+    """
     discriminator = None
-    if hasattr(field, 'metadata') and field.metadata:
-        for meta in field.metadata:
-            if isinstance(meta, Discriminator):
-                discriminator = meta
-                break
+    if typing.get_origin(model) is typing.Annotated:
+        model, *metadata = typing.get_args(model)
+        discriminator = _discriminator_name(metadata)
 
-    # If no discriminator found and this is a Union, check if any member is an Annotated type with Discriminator
-    if not discriminator and (origin is types.UnionType or origin is typing.Union):
-        for member in typing.get_args(annotation):
-            if typing.get_origin(member) is typing.Annotated:
-                # Check metadata of the Annotated member
-                annotated_args = typing.get_args(member)
-                if len(annotated_args) > 1:
-                    for meta in annotated_args[1:]:
-                        if isinstance(meta, Discriminator):
-                            discriminator = meta
-                            # Use the inner union as the annotation
-                            annotation = annotated_args[0]
-                            break
-                if discriminator:
-                    break
+    if isinstance(model, type) and issubclass(model, BaseModel):
+        yield model, discriminator
+        return
 
-    if not discriminator:
-        return None
+    for member in unpack_union_model_field(model):
+        if member is not type(None):
+            for nested, nested_discriminator in _union_models(member):
+                yield nested, nested_discriminator or discriminator
 
-    # Now annotation should be the Union[Model1, Model2, ...]
-    origin = typing.get_origin(annotation)
-    if not is_union(origin):
-        return None
 
-    # Get all union members
-    union_members = typing.get_args(annotation)
+def _discriminator_name(metadata: typing.Iterable[typing.Any]) -> str | None:
+    """
+    Returns the discriminator field name declared by any item of `metadata`, or `None`.
+    :param metadata: `Annotated` metadata, or `FieldInfo` discriminator and metadata.
+    :return: discriminator name or `None`
+    """
+    for item in metadata:
+        if isinstance(item, Discriminator):
+            item = item.discriminator
 
-    # Filter out None type and find BaseModel members
-    model_members = [m for m in union_members if isinstance(m, type) and issubclass(m, BaseModel)]
-
-    if not model_members:
-        return None
-
-    # Get the discriminator field value from the data
-    discriminator_field = discriminator.discriminator
-    if not isinstance(discriminator_field, str) or discriminator_field not in value:
-        return None
-
-    discriminator_value = value[discriminator_field]
-
-    # Find the matching union member
-    for member in model_members:
-        # Check if this member matches the discriminator value
-        if discriminator_field in member.model_fields:
-            member_field = member.model_fields[discriminator_field]
-            # Check if the field annotation is a Literal that matches our value
-            field_origin = typing.get_origin(member_field.annotation)
-            if field_origin is typing.Literal:
-                literal_values = typing.get_args(member_field.annotation)
-                if discriminator_value in literal_values:
-                    return member
+        if isinstance(item, str):
+            return item
 
     return None
