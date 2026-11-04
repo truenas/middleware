@@ -516,6 +516,7 @@ def test_dump_params_resolves_a_union_declared_with_a_field_discriminator():
 class EmailCredential(BaseModel):
     username: str
     password: Secret[str]
+    secondary_password: Secret[str] = Field(alias="secondary-password", default="")
 
 
 class TokenCredential(BaseModel):
@@ -528,10 +529,11 @@ class CredentialResult(BaseModel):
 
 
 def test_fallback_redacts_every_secret_of_an_unmatched_union():
-    value = {"username": "ivan", "password": "canary", "token": "canary"}
+    value = {"username": "ivan", "password": "canary", "secondary-password": "canary", "token": "canary"}
 
     assert serialize_result(CredentialResult, value, False, True) == {
         "username": "ivan",
         "password": "********",
+        "secondary-password": "********",
         "token": "********",
     }
