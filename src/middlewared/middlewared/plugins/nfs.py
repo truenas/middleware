@@ -418,6 +418,8 @@ class SharingNFSService(SharingService):
     include_tier_info = True
     share_task_type = 'NFS'
     readonly_field = 'ro'
+    # an export stops at each dataset mounted beneath it
+    crosses_mounts = False
 
     @private
     async def human_identifier(self, share_task):

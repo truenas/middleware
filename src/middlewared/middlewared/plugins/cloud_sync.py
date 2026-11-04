@@ -63,6 +63,7 @@ from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedu
 from middlewared.utils.crypto import ssl_random
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
+from middlewared.utils.service.path import require_task_path_writable
 from middlewared.utils.service.task_state import TaskStateMixin
 
 RE_TRANSF1 = re.compile(r"Transferred:\s*(?P<progress_1>.+), (?P<progress>[0-9]+)%$")
@@ -1092,6 +1093,9 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         self._sync(cloud_sync, options, job)
 
     def _sync(self, cloud_sync, options, job):
+        if cloud_sync["direction"] == "PULL":
+            require_task_path_writable(self.middleware, cloud_sync["path"])
+
         credentials = cloud_sync["credentials"]
 
         local_path = cloud_sync["path"]

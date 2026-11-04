@@ -46,6 +46,7 @@ from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from truenas_os_pyutils.truenas_shutil import copysendfile, copysplice
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
+from middlewared.utils.service.path import require_path_service_write_allowed
 
 
 class FilesystemReceiveFileOptions(BaseModel):
@@ -153,6 +154,12 @@ class FileFollowTailEventSource(EventSource):
         data = f.read()
         if data:
             queue.extend(splitlines_maxlen(data, MAX_LINE_LENGTH))
+
+
+def _require_service_write_allowed(middleware, schema_name, path):
+    """Only checks paths under /mnt, so file transfers elsewhere, such as failover's, do not call into the S3 plugin."""
+    if (real := os.path.realpath(path)).startswith('/mnt/'):
+        require_path_service_write_allowed(middleware, schema_name, real, beneath=False)
 
 
 class FilesystemService(Service):
@@ -314,6 +321,7 @@ class FilesystemService(Service):
         realpath = os.path.realpath(path)
         if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
+        _require_service_write_allowed(self.middleware, 'filesystem.mkdir.path', realpath)
 
         os.mkdir(path, mode=mode)
         st = stat_x.statx_entry_impl(p)
@@ -563,6 +571,7 @@ class FilesystemService(Service):
                 'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
                 errno.EINVAL
             )
+        _require_service_write_allowed(self.middleware, 'filesystem.file_receive.path', path)
 
         dirname = os.path.dirname(path)
         # NOTE: os.makedirs follows symlinks, so an attacker could cause directories
@@ -611,6 +620,7 @@ class FilesystemService(Service):
                 'Cannot use filesystem.put to write pwenc secret. Use pwenc.replace instead.',
                 errno.EINVAL
             )
+        _require_service_write_allowed(self.middleware, 'filesystem.put.path', path)
 
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):

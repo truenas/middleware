@@ -11,6 +11,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, private, ValidationErrors
 from middlewared.utils import run
+from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.types import AuditCallback
 
 from .storage_devices import IOTYPE_CHOICES
@@ -213,6 +214,7 @@ class DeviceMixin:
     @private
     async def validate_path_field(self, verrors: ValidationErrors, schema: str, path: str) -> None:
         await check_path_resides_within_volume(verrors, self.middleware, schema, path)
+        await check_path_service_write_allowed(verrors, self.middleware, schema, path, beneath=False)
 
     @private
     async def register_pylibvirt_device(

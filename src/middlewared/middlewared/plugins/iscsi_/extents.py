@@ -27,6 +27,7 @@ from middlewared.service import CallError, SharingService, ValidationErrors, pri
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import secrets
 from middlewared.utils.mount import resolve_dataset_path
+from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
 
@@ -531,6 +532,9 @@ class iSCSITargetExtentService(SharingService):
             self.middleware.call_sync(
                 'iscsi.extent.validate_path_resides_in_volume',
                 verrors, f'{schema_name}.path', path
+            )
+            self.middleware.run_coroutine(
+                check_path_service_write_allowed(verrors, self.middleware, f'{schema_name}.path', path, beneath=False)
             )
 
             if ' ' in path:
