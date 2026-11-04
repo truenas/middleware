@@ -1,3 +1,6 @@
+import importlib
+import pathlib
+
 import pytest
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -5,6 +8,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from truenas_connect_utils.status import Status
 from truenas_pylicensed import LicenseType
 
+import middlewared.api
+from middlewared.api.base import BaseModel
+from middlewared.api.base.handler.result import serialize_result
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import CallError, ValidationErrors
@@ -925,3 +931,13 @@ async def test_registration_uri_carries_the_license_only_when_there_is_a_pem(lic
         assert 'license=' not in uri
     else:
         assert expected in uri
+
+
+@pytest.mark.parametrize('api_version', sorted(
+    p.parent.name for p in pathlib.Path(middlewared.api.__file__).parent.glob('v*/tn_connect.py')
+))
+def test_registration_uri_result_allows_uris_over_the_default_string_limit(api_version):
+    # The URI carries the PEM license, which takes it past the default string limit.
+    uri = 'https://tnc.example/?license=' + 'A' * BaseModel.model_config['str_max_length']
+    model = importlib.import_module(f'middlewared.api.{api_version}.tn_connect').TrueNASConnectGetRegistrationUriResult
+    assert serialize_result(model, uri, expose_secrets=False, allow_fallback=False) == uri

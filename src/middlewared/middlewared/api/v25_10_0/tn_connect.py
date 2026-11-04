@@ -1,6 +1,8 @@
 from pydantic import Field, IPvAnyAddress
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, HttpsOnlyURL, NonEmptyString, single_argument_args
+from middlewared.api.base import (
+    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, LongNonEmptyString, NonEmptyString, single_argument_args,
+)
 
 
 __all__ = [
@@ -61,7 +63,7 @@ class TrueNASConnectGetRegistrationUriArgs(BaseModel):
 
 
 class TrueNASConnectGetRegistrationUriResult(BaseModel):
-    result: NonEmptyString = Field(
+    result: LongNonEmptyString = Field(
         description="Registration URI for connecting this TrueNAS system to TrueNAS Connect.",
     )
 
