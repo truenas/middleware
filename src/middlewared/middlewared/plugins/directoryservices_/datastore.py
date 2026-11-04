@@ -418,6 +418,17 @@ class DirectoryServices(ConfigService):
                 )
 
     @private
+    def idmap_config_changed(self, old, new):
+        """ Check whether the update changes how Active Directory accounts are mapped to UIDs and GIDs. """
+        if new['service_type'] != DSType.AD.value or not old['configuration'] or not new['configuration']:
+            return False
+
+        return any(
+            old['configuration'].get(key) != new['configuration'].get(key)
+            for key in ('idmap', 'enable_trusted_domains', 'trusted_domains')
+        )
+
+    @private
     def validate_kerberos_dns(self, schema, verrors, domain, lifetime=10):
         """ verify minimally that we can resolve kerberos SRV for the domain through all nameservers. This is
         important because kerberos by default will try to resolve hostnames and realms through DNS. If a non-domain
@@ -550,6 +561,11 @@ class DirectoryServices(ConfigService):
         self.common_validation(old, new, verrors)
         verrors.check()
 
+        # The cache holds the UIDs and GIDs assigned under the idmap configuration in effect when it was built.
+        # Idmap changes may be saved while directory services are disabled, including in the call that disables
+        # them, so they must be detected here rather than only when enabling.
+        idmap_changed = self.idmap_config_changed(old, new)
+
         if not new['enable']:
             # We'll mostly bypass validation on stopping directory services. Sometimes disabling
             # is a last resort in case of very broken configuration and so we should never stop
@@ -563,6 +579,8 @@ class DirectoryServices(ConfigService):
             else:
                 # Simply apply settings to disable
                 self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
+                if idmap_changed:
+                    expire_cache()
 
             if old['enable']:
                 job.set_progress(description=f'Disabling {old["service_type"]}')
@@ -597,8 +615,7 @@ class DirectoryServices(ConfigService):
             # We should clear these before trying to enable AD
             self.middleware.call_sync('idmap.clear_idmap_cache').wait_sync()
 
-            if old['configuration'] and old['configuration'].get('idmap') != new['configuration']['idmap']:
-                # We've changed idmap configuration so we need to expire the directory services cache
+            if idmap_changed:
                 expire_cache()
 
         # First check that our credential is functional. If the credential type is
