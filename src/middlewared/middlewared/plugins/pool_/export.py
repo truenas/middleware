@@ -166,8 +166,16 @@ class PoolService(Service):
 
         if pool['status'] != 'OFFLINE':
             # NFS clients' locks and state keep files open after their shares are gone. Not with a local holder: the
-            # export fails anyway, and kill_processes above looks only at the pool's root filesystem.
-            if not await self.middleware.run_in_thread(processes_using_dataset_tree, self.context, pool['name']):
+            # export fails anyway, and kill_processes above looks only at the pool's root filesystem. Nor when that
+            # cannot be told.
+            try:
+                held_locally = bool(
+                    await self.middleware.run_in_thread(processes_using_dataset_tree, self.context, pool['name'])
+                )
+            except Exception:
+                self.logger.warning('%s: failed to look for local holders of the pool', pool['name'], exc_info=True)
+                held_locally = True
+            if not held_locally:
                 await self.middleware.call('nfs.release_dataset_filesystems', pool['name'])
 
         # Whether the pool's data is really gone by the end of this job. `options['destroy']` alone
