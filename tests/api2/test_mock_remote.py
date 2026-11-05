@@ -1,8 +1,6 @@
-import pytest
-from auto_config import ha
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.utils import call, ha_test, mock
 
-pytestmark = pytest.mark.skipif(not ha, reason='Tests applicable to HA only')
+pytestmark = ha_test
 
 VALID_NODES = ['A', 'B']
 

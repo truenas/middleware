@@ -1,13 +1,11 @@
 import os
 import time
 
-import pytest
-
-from auto_config import ha, ha_license
-from middlewared.test.integration.utils import call
+from auto_config import ha_license
+from middlewared.test.integration.utils import call, ha_test
 
 
-@pytest.mark.skipif(not ha, reason='Test only valid for HA')
+@ha_test
 def test_apply_and_verify_license():
     if ha_license:
         _license_string = ha_license

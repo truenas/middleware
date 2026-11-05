@@ -2,10 +2,9 @@ from middlewared.service_exception import ValidationError, CallError
 from middlewared.test.integration.assets.account import user, unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import busy_wait_on_job, call, url
+from middlewared.test.integration.utils import busy_wait_on_job, call, ha_test, url
 from middlewared.test.integration.utils.audit import get_audit_entry
 
-from auto_config import ha
 from protocols import smb_connection
 from time import sleep
 
@@ -219,7 +218,7 @@ class TestAuditConfig:
         new_config = call('audit.update', {'quota': 0})
         assert new_config['quota'] == 0
 
-    @pytest.mark.skipif(not ha, reason="Skip HA tests")
+    @ha_test
     def test_audit_config_remote_node(self, init_audit):
         """ Confirm audit dataset changes are mirrored to the remote node"""
         (unused, ds_config) = init_audit
@@ -330,7 +329,7 @@ class TestAuditOps:
         assert abs(ae_ts_ts - ae_msg_ts) < 2, f"$date='{ae_ts_ts}, message_timestamp={ae_msg_ts}"
 
 
-@pytest.mark.skipif(not ha, reason="Skip HA tests")
+@ha_test
 class TestAuditOpsHA:
     @pytest.mark.parametrize('remote_available', [True, False])
     def test_audit_ha_query(self, standby_audit_event, remote_available):

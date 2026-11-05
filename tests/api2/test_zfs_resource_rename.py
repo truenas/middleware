@@ -4,9 +4,7 @@ import pytest
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, ssh
-
-from auto_config import ha
+from middlewared.test.integration.utils import call, ha_test, ssh
 
 
 POOL_NAME = "test_rename_pool"
@@ -294,7 +292,7 @@ def test_zfs_resource_rename_moves_stored_keys(rename_test_pool):
     assert call("zfs.resource.encryption.export_key", {"path": f"{dst}/child"}, job=True) == "1" * 64
 
 
-@pytest.mark.skipif(not ha, reason="Test only valid for HA")
+@ha_test
 def test_zfs_resource_rename_moves_failover_passphrases(rename_test_pool):
     pool = rename_test_pool["name"]
     src, dst = f"{pool}/test_rename_passphrase", f"{pool}/test_rename_passphrase_new"

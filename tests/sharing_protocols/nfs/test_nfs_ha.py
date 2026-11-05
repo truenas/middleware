@@ -42,7 +42,6 @@ from dataclasses import dataclass
 
 import pytest
 
-from auto_config import ha
 from xdrdef.nfs4_const import (
     FATTR4_FH_EXPIRE_TYPE,
     FATTR4_FILEID,
@@ -71,7 +70,7 @@ from xdrdef.nfs4_const import (
     WRITE_LT,
 )
 
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ha_test, ssh
 from middlewared.test.integration.utils.failover import do_failover
 from protocols import nfs_share
 from protocols.pynfs_proto import PynfsClient
@@ -93,7 +92,7 @@ from nfs_ha_utils import (
 )
 
 
-pytestmark = pytest.mark.skipif(not ha, reason="Failover tests require HA")
+pytestmark = ha_test
 
 # Per-test timeout ceilings (seconds): safety nets, not expected durations.
 # The first test in each group drives its module-scoped fixture, which pays a
