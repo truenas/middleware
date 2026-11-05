@@ -4,7 +4,6 @@ import random
 import string
 from time import sleep
 
-import iscsi
 import pytest
 from assets.websocket.iscsi import (alua_enabled, initiator_portal, target, target_extent_associate, verify_capacity,
                                     verify_ha_inquiry, verify_luns, zvol_extent)
@@ -20,11 +19,6 @@ from middlewared.test.integration.utils import call, extended_test, ha_test, set
 from middlewared.test.integration.utils.client import truenas_server
 
 pytestmark = ha_test
-
-# See: https://github.com/python-scsi/cython-iscsi/pull/8
-pyscsi_supports_check_condition = hasattr(iscsi.Task, 'raw_sense')
-skip_no_check_condition = pytest.mark.skipif(not pyscsi_supports_check_condition,
-                                             reason="PYSCSI does not support CHECK CONDITION")
 
 SERVICE_NAME = 'iscsitarget'
 MB = 1024 * 1024
@@ -941,7 +935,6 @@ class TestFixtureConfiguredALUA:
                     raise
         raise AssertionError('Unit Attentions did not drain')
 
-    @skip_no_check_condition
     @pytest.mark.timeout(900)
     def test_standby_compare_and_write_backend_ua(self, alua_configured):
         """COMPARE AND WRITE on the standby path must survive a backend CHECK CONDITION."""

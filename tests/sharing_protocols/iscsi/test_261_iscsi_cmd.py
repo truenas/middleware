@@ -9,8 +9,6 @@ import socket
 import string
 from time import sleep
 
-import iscsi
-import pyscsi
 import pytest
 import requests
 from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_portal, portal, read_capacity16, target,
@@ -19,7 +17,8 @@ from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_port
 from assets.websocket.pool import zvol as zvol_dataset
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import ha, hostname, isns_ip, password, pool_name, user
-from protocols import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connection, isns_connection
+from protocols import ISCSIDiscover, iscsi_scsi_connection, isns_connection
+from pyscsi.pyscsi.scsi_cdb_persistentreservein import PR_SCOPE, PR_TYPE
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
 from pytest_dependency import depends
 
@@ -31,29 +30,7 @@ from middlewared.test.integration.utils import call, extended_test, ha_test, set
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
-# Setup some flags that will enable/disable tests based upon the capabilities of the
-# python-scsi package in use
-try:
-    from pyscsi.pyscsi.scsi_cdb_persistentreservein import PR_SCOPE, PR_TYPE
-    pyscsi_has_persistent_reservations = 'PersistentReserveOut' in dir(pyscsi.pyscsi.scsi)
-    LU_SCOPE = PR_SCOPE.LU_SCOPE
-except ImportError:
-    pyscsi_has_persistent_reservations = False
-    LU_SCOPE = 0
-skip_persistent_reservations = pytest.mark.skipif(not pyscsi_has_persistent_reservations,
-                                                  reason="PYSCSI does not support persistent reservations")
-
-skip_multi_initiator = pytest.mark.skipif(not initiator_name_supported(),
-                                          reason="PYSCSI does not support persistent reservations")
-
-skip_invalid_initiatorname = pytest.mark.skipif(not initiator_name_supported(),
-                                                reason="Invalid initiatorname will be presented")
-
-pyscsi_has_report_target_port_groups = 'ReportTargetPortGroups' in dir(pyscsi.pyscsi.scsi)
-
-# See: https://github.com/python-scsi/cython-iscsi/pull/8
-pyscsi_supports_check_condition = hasattr(iscsi.Task, 'raw_sense')
-skip_no_check_condition = pytest.mark.skipif(not pyscsi_supports_check_condition, "PYSCSI does not support CHECK CONDITION")
+LU_SCOPE = PR_SCOPE.LU_SCOPE
 
 
 # The following strings are taken from pyscsi/pyscsi/scsi_exception
@@ -413,25 +390,15 @@ def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
     :param check_type: CheckType enum of the expected CHECK_CONDITION
 
     Issue a TEST UNIT READY and verify that the expected CHECK CONDITION is raised.
-
-    If this version of pyscsi(/cython-iscsi) does not support CHECK CONDITION
-    then just swallow the condition by issuing another TEST UNIT READY.
     """
     assert check_type in CheckType, f"Parameter '{check_type}' is not a CheckType"
-    if pyscsi_supports_check_condition:
-        with pytest.raises(Exception) as excinfo:
-            s.testunitready()
+    with pytest.raises(Exception) as excinfo:
+        s.testunitready()
 
-        e = excinfo.value
-        assert e.__class__.__name__ == str(check_type), f"Unexpected CHECK CONDITION type.  Got '{e.__class__.__name__}', expected {str(check_type)}"
-        if text:
-            assert text in str(e), f"Exception did not match: {text}"
-    else:
-        # If we cannot detect a CHECK CONDITION, then swallow it by retrying a TUR
-        try:
-            s.testunitready()
-        except TypeError:
-            s.testunitready()
+    e = excinfo.value
+    assert e.__class__.__name__ == str(check_type), f"Unexpected CHECK CONDITION type.  Got '{e.__class__.__name__}', expected {str(check_type)}"
+    if text:
+        assert text in str(e), f"Exception did not match: {text}"
 
 
 @contextlib.contextmanager
@@ -685,7 +652,6 @@ def test__initiators(iscsi_running):
                     TUR(s)
 
 
-@skip_invalid_initiatorname
 def test__chap(iscsi_running):
     """
     This tests that CHAP auth operates as expected.
@@ -724,7 +690,6 @@ def test__chap(iscsi_running):
                                     _verify_inquiry(s)
 
 
-@skip_invalid_initiatorname
 def test__mutual_chap(iscsi_running):
     """
     This tests that Mutual CHAP auth operates as expected.
@@ -1882,7 +1847,6 @@ def _pr_reservation(s, pr_type, scope=LU_SCOPE, other_connections=[], **kwargs):
                 expect_check_condition(s2, sense_ascq_dict[0x2A04])  # "RESERVATIONS RELEASED"
 
 
-@skip_persistent_reservations
 @pytest.mark.dependency(name="iscsi_basic_persistent_reservation")
 def test__basic_persistent_reservation(iscsi_running):
     with initiator_portal() as config:
@@ -2069,8 +2033,6 @@ def _check_persistent_reservations(s1, s2):
             assert r.datain == zeros + zeros, r.datain
 
 
-@skip_persistent_reservations
-@skip_multi_initiator
 def test__persistent_reservation_two_initiators(iscsi_running):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
@@ -2417,8 +2379,6 @@ def test__alua_config(iscsi_running):
             _wait_for_alua_settle()
 
 
-@skip_persistent_reservations
-@skip_multi_initiator
 @ha_test
 def test__alua_basic_persistent_reservation(request, iscsi_running):
     # Don't need to specify "iscsi_cmd_00" here
@@ -2463,8 +2423,6 @@ def test__alua_basic_persistent_reservation(request, iscsi_running):
     _ensure_alua_state(False)
 
 
-@skip_persistent_reservations
-@skip_multi_initiator
 @ha_test
 def test__alua_persistent_reservation_two_initiators(request, iscsi_running):
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
@@ -2494,8 +2452,6 @@ def restore_active_node():
             _ha_reboot_master(description='restoring original active node')
 
 
-@skip_persistent_reservations
-@skip_multi_initiator
 @ha_test
 @extended_test
 @pytest.mark.timeout(2400)
@@ -2941,7 +2897,6 @@ def test__resize_target_file(iscsi_running):
                 assert MB_512 == read_capacity16(s)
 
 
-@skip_multi_initiator
 def test__initiator_group(iscsi_running):
     initiator_base = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}"
     initiator_iqn1 = f"{initiator_base}:one"
