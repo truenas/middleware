@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from middlewared.api.current import PrivilegeCreate
+from middlewared.role import BUILTIN_GROUP_ROLES
 from middlewared.service import ValidationErrors
 
 from .privilege_groups import get_groups, resolve_ds_groups, resolve_local_groups
@@ -54,5 +55,11 @@ async def validate_privilege(
     for i, role in enumerate(data.roles):
         if role not in part.middleware.role_manager.roles:
             verrors.add(f"{schema_name}.roles.{i}", "Invalid role")
+        elif role not in BUILTIN_GROUP_ROLES:
+            verrors.add(
+                f"{schema_name}.roles.{i}",
+                "Using custom privilege sets is deprecated and will be removed in TrueNAS 28. "
+                "Only the predefined group roles may be granted.",
+            )
 
     verrors.check()

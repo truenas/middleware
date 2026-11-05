@@ -9,6 +9,7 @@ from middlewared.alert.source import (  # noqa: F401
     certificates,
     cores,
     datasets,
+    deprecated_privilege,
     deprecated_service,
     dif_formatted_disks,
     directory_services,

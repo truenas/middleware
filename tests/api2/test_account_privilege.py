@@ -3,12 +3,15 @@ import os
 import sys
 import types
 
+from time import sleep
+
 import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import group, privilege, root_with_password_disabled, user
 from middlewared.test.integration.assets.privilege import raw_privilege
 from middlewared.test.integration.utils import call, client, mock
+from middlewared.test.integration.utils.alert import get_alerts_by_class, process_alerts
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 sys.path.append(os.getcwd())
@@ -209,6 +212,40 @@ def test_create_privilege_invalid_role():
 
     assert ve.value.errors[0].attribute == "privilege_create.roles.0"
     assert ve.value.errors[0].errmsg == "Invalid role"
+
+
+def test_create_privilege_with_individual_role():
+    with pytest.raises(ValidationErrors) as ve:
+        call("privilege.create", {
+            "name": "Test",
+            "roles": ["SNAPSHOT_WRITE"],
+            "web_shell": False,
+        })
+
+    assert ve.value.errors[0].attribute == "privilege_create.roles.0"
+    assert "deprecated" in ve.value.errors[0].errmsg
+
+
+def test_update_privilege_with_individual_role():
+    with privilege({
+        "name": "Test",
+        "web_shell": False,
+    }) as p:
+        with pytest.raises(ValidationErrors) as ve:
+            call("privilege.update", p["id"], {"roles": ["SNAPSHOT_WRITE"]})
+
+        assert ve.value.errors[0].attribute == "privilege_update.roles.0"
+
+
+def test_delete_privilege_with_individual_role():
+    with privilege({
+        "name": "Test",
+        "roles": ["SNAPSHOT_WRITE"],
+        "web_shell": False,
+    }) as p:
+        call("privilege.delete", p["id"])
+
+    assert call("privilege.query", [["id", "=", p["id"]]]) == []
 
 
 def test_create_privilege_local_group_with_userns_idmap():
@@ -457,3 +494,42 @@ def test_has_password_enabled_user_deduplicates_members():
                 assert [e["username"] for e in enabled] == ["test_pw_member"]
                 assert call("group.has_password_enabled_user", gids) is True
                 assert call("group.has_password_enabled_user", gids, [u["id"]]) is False
+
+
+# ---------------------------------------------------------------------------
+# deprecation of custom privilege sets
+# ---------------------------------------------------------------------------
+def deprecated_privilege_names():
+    return {alert["args"]["name"] for alert in get_alerts_by_class("DeprecatedCustomPrivilege")}
+
+
+def test_deprecated_custom_privilege_alert():
+    with privilege({
+        "name": "Test deprecated",
+        "roles": ["SNAPSHOT_WRITE"],
+        "web_shell": False,
+    }):
+        alerts = call("alert.run_source", "DeprecatedCustomPrivilege")
+
+    assert {"name": "Test deprecated", "roles": "SNAPSHOT_WRITE"} in [alert["args"] for alert in alerts]
+
+
+def test_deleting_privilege_reruns_the_deprecation_alert_source():
+    with privilege({
+        "name": "Test deprecated",
+        "roles": ["SNAPSHOT_WRITE"],
+        "web_shell": False,
+    }):
+        process_alerts()
+        assert "Test deprecated" in deprecated_privilege_names()
+
+    # The source only runs once a day, so the alert can only be gone already because
+    # `privilege.delete` marked the source for a re-run.
+    call("core.bulk", "alert.process_alerts", [[]], job=True)
+    for _ in range(30):
+        if "Test deprecated" not in deprecated_privilege_names():
+            break
+
+        sleep(1)
+
+    assert "Test deprecated" not in deprecated_privilege_names()
