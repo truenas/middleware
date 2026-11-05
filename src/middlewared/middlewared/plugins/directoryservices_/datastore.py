@@ -466,10 +466,6 @@ class DirectoryServices(ConfigService):
             if domain1['range_low'] > domain2['range_high'] or domain2['range_low'] > domain1['range_high']:
                 continue
 
-            # As with testparm, the administrator is responsible for avoiding collisions between AD backend domains.
-            if domain1.get('idmap_backend') == domain2.get('idmap_backend') == 'AD':
-                continue
-
             if settings(domain1) in saved and settings(domain2) in saved:
                 continue
 
