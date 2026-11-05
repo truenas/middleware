@@ -113,12 +113,7 @@ class WebshareSession:
     def call(self, method, params=None):
         call_id = str(uuid.uuid4())
         self.websocket.send(json.dumps({"jsonrpc": "2.0", "id": call_id, "method": method, "params": params or {}}))
-        while True:
-            _opcode, message = self.websocket.recv_data()
-            answer = json.loads(message.decode())
-            if answer.get("id") == call_id:
-                break
-
+        answer = self._receive(lambda message: message.get("id") == call_id)
         if "error" in answer:
             raise WebshareError(answer["error"])
 
@@ -126,6 +121,39 @@ class WebshareSession:
 
     def shares(self):
         return {share["name"]: share for share in self.call("shares.list")["shares"]}
+
+    def listdir(self, path, file_handle, **params):
+        """Return the directory entries of `path`.
+
+        `directory.list` answers with nothing but an acknowledgement, then pushes the entries as
+        `directory.list.update` notifications, in as many chunks as it needs.
+        """
+        self.call("directory.list", {
+            "path": path,
+            "fileHandle": file_handle,
+            "showHidden": False,
+            "offset": 0,
+            "limit": 1000,
+            "sortBy": "name",
+            "sortOrder": "asc",
+            "metadata": "minimal",
+            **params,
+        })
+        items = []
+        while True:
+            update = self._receive(lambda message: (
+                message.get("method") == "directory.list.update" and message["params"]["path"] == path
+            ))["params"]
+            items += update["items"]
+            if update["complete"]:
+                return items
+
+    def _receive(self, matches):
+        while True:
+            _opcode, message = self.websocket.recv_data()
+            answer = json.loads(message.decode())
+            if matches(answer):
+                return answer
 
 
 @contextlib.contextmanager

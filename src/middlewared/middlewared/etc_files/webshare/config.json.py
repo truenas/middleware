@@ -14,6 +14,10 @@ def render(service, middleware):
         [["enabled", "=", True], ["locked", "=", False]],
     )
 
+    # Tiering makes the tier contract authoritative for what a share exposes, so a share root must stop at a
+    # child dataset. Mirrors `shadow:no_dataset_traversal` in smb.conf.
+    tiering_enabled = middleware.call_sync2(middleware.services.zfs.tier.config).enabled
+
     os.makedirs("/etc/webshare-auth", exist_ok=True, mode=0o700)
     return json.dumps({
         "shares": [
@@ -25,6 +29,7 @@ def render(service, middleware):
             }
             for share in shares
         ],
+        "no_dataset_traversal": tiering_enabled,
         "home_directory_template": "{{.Username}}",
         "home_directory_perms": "0700",
         "bulk_download_tmp": WEBSHARE_BULK_DOWNLOAD_PATH,
