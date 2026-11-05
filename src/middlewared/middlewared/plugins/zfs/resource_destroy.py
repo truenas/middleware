@@ -101,6 +101,9 @@ def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
             # a locked dataset's mountpoint is immutable, which would keep the destroy from removing it
             fs_attrs.set_zfs_file_attributes_dict(mountpoint, {"immutable": False})
 
+    # NFS clients' locks and state keep files open after their shares are gone
+    context.call_sync2(context.s.nfs.release_dataset_filesystems, data.path)
+
     try:
         context.run_coroutine(_destroy_with_truesearch_paused(context, mountpoint, data.path, data.recursive))
     except ZFSPathHasClonesException as e:

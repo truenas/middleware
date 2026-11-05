@@ -194,8 +194,10 @@ def processes_using_paths(
                     realpath = ""
                     # stat(2) from host may fail with EACCES if file is inside private mount
                     # namespace in a container. An example of why this can happen is if file is
-                    # in snap installed in an Ubuntu container.
-                    with contextlib.suppress(FileNotFoundError, PermissionError):
+                    # in snap installed in an Ubuntu container. It fails with ESTALE for a file on
+                    # an NFS mount whose export is gone. Skip what cannot be stat(2)ed rather than
+                    # abort the whole scan over it.
+                    with contextlib.suppress(OSError):
                         # Have second suppression here so that we don't lose list of files
                         # if we have TOCTOU issue on one of files.
                         #

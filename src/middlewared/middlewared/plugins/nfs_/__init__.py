@@ -17,10 +17,10 @@ from middlewared.api.current import (
     QueryOptions,
 )
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.service import SystemServiceService, filterable_api_method
+from middlewared.service import SystemServiceService, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
 
-from . import debug, directories, status
+from . import debug, directories, release, status
 from .config import NFSServicePart, bindip_choices
 from .debug import NfsDebug, NFSGetDebugArgs, NFSGetDebugResult, NFSSetDebugArgs, NFSSetDebugResult
 from .directories import (
@@ -244,6 +244,10 @@ class NFSService(SystemServiceService[NFSEntry]):
     @api_method(NFSCloseClientStateArgs, NFSCloseClientStateResult, private=True, check_annotations=True)
     def close_client_state(self, client_id: str) -> None:
         status.close_client_state(client_id)
+
+    @private
+    def release_dataset_filesystems(self, name: str) -> list[str]:
+        return release.release_dataset_filesystems(self.context, name)
 
     @api_method(NFSGetThreadpoolModeArgs, NFSGetThreadpoolModeResult, private=True, check_annotations=True)
     def get_threadpool_mode(self) -> ThreadpoolMode:
