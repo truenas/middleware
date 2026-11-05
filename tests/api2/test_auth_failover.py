@@ -1,12 +1,8 @@
-import pytest
-
-from middlewared.test.integration.utils import call, password, truenas_server
+from middlewared.test.integration.utils import call, ha_test, password, truenas_server
 from truenas_api_client import Client
 
-from auto_config import ha
 
-
-@pytest.mark.skipif(not ha, reason="Test only valid for HA")
+@ha_test
 def test_auth_on_standby_node():
     ha_ips = truenas_server.ha_ips()
 

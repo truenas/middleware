@@ -1,12 +1,13 @@
 import pytest
 
-from auto_config import ha, interface
+from auto_config import interface
 from middlewared.service_exception import CallError
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, non_ha_test, ssh
 
 MACVTAP = "mvtest0"
 
-pytestmark = pytest.mark.skipif(ha, reason="Bridging the primary interface is not attempted on HA")
+# Bridging the primary interface is not attempted on HA.
+pytestmark = non_ha_test
 
 
 @pytest.fixture(scope="module")

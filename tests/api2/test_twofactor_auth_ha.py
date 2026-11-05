@@ -1,18 +1,15 @@
 import json
 import shlex
 
-import pytest
-
 from middlewared.test.integration.assets.account import user as user_create
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth,
     get_2fa_totp_token,
     get_user_secret,
 )
-from middlewared.test.integration.utils import call, poll, ssh, truenas_server
-from middlewared.test.integration.utils.failover import ha_enabled
+from middlewared.test.integration.utils import call, ha_test, poll, ssh, truenas_server
 
-pytestmark = pytest.mark.skipif(not ha_enabled, reason="HA only test")
+pytestmark = ha_test
 
 TEST_USERNAME = "ha2fauser"
 TEST_PASSWORD = "testpassword1234"
