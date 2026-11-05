@@ -188,15 +188,6 @@ class EtcService(Service):
         'app_registry': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='docker/config.json'),
         )),
-        'ctdb': EtcGroup(
-            ctx=(
-                CtxMethod(method='failover.licensed'),
-            ),
-            entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='ctdb/nodes'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='ctdb/ctdb.conf'),
-            ),
-        ),
         'docker': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='docker/daemon.json'),
         )),
@@ -567,6 +558,15 @@ class EtcService(Service):
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='local/smb4.conf'),
+            ),
+        ),
+        'truenas_smbhad': EtcGroup(
+            ctx=(
+                CtxMethod(method='failover.licensed'),
+                CtxMethod(method='failover.node'),
+            ),
+            entries=(
+                EtcEntry(renderer_type=RendererType.MAKO, path='truenas_smbhad.conf'),
             ),
         ),
         'snmpd': EtcGroup(entries=(
