@@ -18,7 +18,7 @@ from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_port
                                     verify_ha_inquiry, verify_luns)
 from assets.websocket.pool import zvol as zvol_dataset
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
-from auto_config import extended_tests, ha, hostname, isns_ip, password, pool_name, user
+from auto_config import ha, hostname, isns_ip, password, pool_name, user
 from protocols import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connection, isns_connection
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
 from pytest_dependency import depends
@@ -27,7 +27,7 @@ from middlewared.service_exception import CallError, InstanceNotFound, Validatio
 from middlewared.test.integration.assets.iscsi import iscsi_extent, target_login_test
 from middlewared.test.integration.assets.iscsi import iscsi_auth as iscsi_auth_data
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call, ha_test, settle_ha, ssh
+from middlewared.test.integration.utils import call, extended_test, ha_test, settle_ha, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
@@ -45,9 +45,6 @@ skip_persistent_reservations = pytest.mark.skipif(not pyscsi_has_persistent_rese
 
 skip_multi_initiator = pytest.mark.skipif(not initiator_name_supported(),
                                           reason="PYSCSI does not support persistent reservations")
-
-skip_extended_tests = pytest.mark.skipif(not extended_tests, reason="Skip extended tests")
-
 
 skip_invalid_initiatorname = pytest.mark.skipif(not initiator_name_supported(),
                                                 reason="Invalid initiatorname will be presented")
@@ -2500,7 +2497,7 @@ def restore_active_node():
 @skip_persistent_reservations
 @skip_multi_initiator
 @ha_test
-@skip_extended_tests
+@extended_test
 @pytest.mark.timeout(2400)
 def test__alua_persistent_reservation_across_failover(request, iscsi_running, restore_active_node):
     """
