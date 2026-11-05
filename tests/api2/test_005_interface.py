@@ -8,7 +8,7 @@ import pytest
 from middlewared.service_exception import ValidationError, ValidationErrors
 from auto_config import interface, ha, netmask
 from middlewared.test.integration.utils.client import client, truenas_server
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ha_test, ssh
 
 
 @pytest.fixture(scope="module")
@@ -153,7 +153,7 @@ def test_003_recheck_ipvx(request):
     assert int(ssh(f"sysctl -n net.ipv6.conf.{interface}.autoconf")) == 0
 
 
-@pytest.mark.skipif(not ha, reason="Test valid on HA systems only")
+@ha_test
 def test_004_remove_critical_failover_group(request):
     with pytest.raises(ValidationErrors) as ve:
         call(
@@ -170,7 +170,7 @@ def test_004_remove_critical_failover_group(request):
     ]
 
 
-@pytest.mark.skipif(not ha, reason="Test valid on HA systems only")
+@ha_test
 def test_005_failover_timeout_out_of_range(request):
     # timeout values above 120 seconds produce a VRRP advertisement interval
     # beyond the VRRPv3 maximum of 40.95 seconds, which keepalived rejects,

@@ -27,7 +27,7 @@ from middlewared.service_exception import CallError, InstanceNotFound, Validatio
 from middlewared.test.integration.assets.iscsi import iscsi_extent, target_login_test
 from middlewared.test.integration.assets.iscsi import iscsi_auth as iscsi_auth_data
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call, settle_ha, ssh
+from middlewared.test.integration.utils import call, ha_test, settle_ha, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
@@ -46,7 +46,6 @@ skip_persistent_reservations = pytest.mark.skipif(not pyscsi_has_persistent_rese
 skip_multi_initiator = pytest.mark.skipif(not initiator_name_supported(),
                                           reason="PYSCSI does not support persistent reservations")
 
-skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 skip_extended_tests = pytest.mark.skipif(not extended_tests, reason="Skip extended tests")
 
 
@@ -2423,7 +2422,7 @@ def test__alua_config(iscsi_running):
 
 @skip_persistent_reservations
 @skip_multi_initiator
-@skip_ha_tests
+@ha_test
 def test__alua_basic_persistent_reservation(request, iscsi_running):
     # Don't need to specify "iscsi_cmd_00" here
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
@@ -2469,7 +2468,7 @@ def test__alua_basic_persistent_reservation(request, iscsi_running):
 
 @skip_persistent_reservations
 @skip_multi_initiator
-@skip_ha_tests
+@ha_test
 def test__alua_persistent_reservation_two_initiators(request, iscsi_running):
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     with alua_enabled():
@@ -2500,7 +2499,7 @@ def restore_active_node():
 
 @skip_persistent_reservations
 @skip_multi_initiator
-@skip_ha_tests
+@ha_test
 @skip_extended_tests
 @pytest.mark.timeout(2400)
 def test__alua_persistent_reservation_across_failover(request, iscsi_running, restore_active_node):
@@ -2728,7 +2727,7 @@ def test__extended_copy(iscsi_running, extent1, extent2):
                         _xcopy_test(s1, s2)
 
 
-@skip_ha_tests
+@ha_test
 @pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
 @pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
 def test__ha_extended_copy(request, extent1, extent2):
@@ -2877,7 +2876,7 @@ def test__resize_target_zvol(iscsi_running):
                     assert MB_512 == read_capacity16(s)
 
 
-@skip_ha_tests
+@ha_test
 def test__ha_resize_target_zvol(iscsi_running):
     """
     Verify that iSCSI clients are notified when the size of a ZVOL underlying

@@ -10,16 +10,16 @@ from assets.websocket.iscsi import (alua_enabled, initiator_portal, target, targ
                                     verify_ha_inquiry, verify_luns, zvol_extent)
 from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled
-from auto_config import extended_tests, ha, pool_name
+from auto_config import extended_tests, pool_name
 from protocols import iscsi_scsi_connection
 from pyscsi.pyscsi.scsi_command import SCSICommand
 
 from middlewared.test.integration.assets.hostkvm import get_kvm_domain, poweroff_vm, reset_vm, start_vm
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, settle_ha, ssh
+from middlewared.test.integration.utils import call, ha_test, settle_ha, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
-pytestmark = pytest.mark.skipif(not ha, reason='Tests applicable to HA only')
+pytestmark = ha_test
 skip_extended_tests = pytest.mark.skipif(not extended_tests, reason="Skip extended tests")
 
 # See: https://github.com/python-scsi/cython-iscsi/pull/8

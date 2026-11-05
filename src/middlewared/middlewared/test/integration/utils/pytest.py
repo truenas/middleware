@@ -1,6 +1,21 @@
-__all__ = ["fail"]
+import os
+import sys
+
+import pytest
+
+try:
+    apifolder = os.getcwd()
+    sys.path.append(apifolder)
+    from auto_config import ha
+except ImportError:
+    ha = False
+
+__all__ = ["fail", "ha_test", "non_ha_test"]
 
 failed = [None]
+
+ha_test = pytest.mark.skipif(not ha, reason="Test is only valid for HA")
+non_ha_test = pytest.mark.skipif(ha, reason="Test is not valid for HA")
 
 
 def fail(reason):
