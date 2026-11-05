@@ -6,8 +6,8 @@ from middlewared.test.integration.assets.directory_service import (
     AD_DOM2_LIMITED_USER_PASSWORD,
 )
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.utils import call, client, ssh, truenas_server
-from middlewared.test.integration.utils.failover import do_failover, ha_enabled
+from middlewared.test.integration.utils import call, client, ha_test, ssh, truenas_server
+from middlewared.test.integration.utils.failover import do_failover
 
 
 SAF_PATH = '/root/.KDC_SERVER_AFFINITY'
@@ -55,7 +55,7 @@ def check_status_ad_impl():
     assert active_secrets == standby_secrets
 
 
-@pytest.mark.skipif(not ha_enabled, reason='HA only test')
+@ha_test
 @pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY', 'IPA', 'LDAP'])
 def test_failover(service_type):
     with directoryservice(service_type):
@@ -90,7 +90,7 @@ def test_failover(service_type):
     check_ds_status(call('failover.call_remote', 'directoryservices.status'), None)
 
 
-@pytest.mark.skipif(not ha_enabled, reason='HA only test')
+@ha_test
 def test_ad_user_privilege_auth_survives_failover(enable_ds_auth):
     """
     An AD user granted API access through a group privilege must still authenticate to the
