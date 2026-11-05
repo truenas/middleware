@@ -19,6 +19,7 @@ def trusted(range_low, range_high, idmap_backend="RID", name="DOMAIN1"):
 
 
 OVERLAP = trusted(150000001, 300000000)
+AD_OVERLAP = trusted(150000001, 300000000, "AD")
 
 
 def ds_config(*trusted_domains, enable=True, enable_trusted_domains=True, idmap_domain=PRIMARY):
@@ -80,6 +81,11 @@ def errors(ds_service, old, new):
             ["idmap.idmap_domain"],
             id="ad_backend_overlaps_builtin",
         ),
+        pytest.param(
+            ds_config(AD_OVERLAP, idmap_domain=AD_PRIMARY),
+            ["trusted_domains.0"],
+            id="both_domains_use_ad_backend",
+        ),
     ],
 )
 def test__overlap_is_rejected(ds_service, new, attributes):
@@ -116,10 +122,6 @@ def test__error_message(ds_service, new, errmsg):
     "new",
     [
         pytest.param(ds_config(trusted(200000001, 300000000)), id="adjacent_ranges"),
-        pytest.param(
-            ds_config(trusted(100000001, 200000000, "AD"), idmap_domain=AD_PRIMARY),
-            id="both_domains_use_ad_backend",
-        ),
         pytest.param(ds_config(OVERLAP, enable_trusted_domains=False), id="trusted_domains_disabled"),
     ],
 )
@@ -146,6 +148,11 @@ def test__no_conflict(ds_service, new):
         ),
         pytest.param(without_builtin(ds_config(OVERLAP)), without_builtin(ds_config(OVERLAP)), id="saved_no_builtin"),
         pytest.param(ds_config(OVERLAP), ds_config(trusted(200000001, 300000000)), id="overlap_is_fixed"),
+        pytest.param(
+            ds_config(AD_OVERLAP, idmap_domain=AD_PRIMARY),
+            ds_config(AD_OVERLAP, idmap_domain=AD_PRIMARY),
+            id="saved_ad_backend_overlap",
+        ),
     ],
 )
 def test__existing_setup_keeps_working(ds_service, old, new):
@@ -165,9 +172,14 @@ def test__existing_setup_keeps_working(ds_service, old, new):
         ),
         pytest.param(ds_config(OVERLAP), ds_config(trusted(140000001, 300000000)), id="range_changed"),
         pytest.param(
-            ds_config(trusted(150000001, 300000000, "AD"), idmap_domain=AD_PRIMARY),
+            ds_config(AD_OVERLAP, idmap_domain=AD_PRIMARY),
             ds_config(OVERLAP, idmap_domain=AD_PRIMARY),
             id="ad_backend_replaced",
+        ),
+        pytest.param(
+            ds_config(AD_OVERLAP, idmap_domain=AD_PRIMARY),
+            ds_config(trusted(140000001, 300000000, "AD"), idmap_domain=AD_PRIMARY),
+            id="ad_backend_range_changed",
         ),
         pytest.param(
             ds_config(OVERLAP, enable_trusted_domains=False),
