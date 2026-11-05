@@ -27,19 +27,17 @@ class SMBService(Service):
     @filterable_api_method(private=True)
     def passdb_list(self, filters, options):
         """ query existing passdb users """
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         try:
-            return query_passdb_entries(filters or [], options or {}, clustered)
+            return query_passdb_entries(filters or [], options or {})
         except PassdbMustReinit as err:
             self.logger.warning(err.errmsg)
             self.middleware.call_sync('smb.synchronize_passdb').wait_sync(raise_error=True)
-            return query_passdb_entries(filters or [], options or {}, clustered)
+            return query_passdb_entries(filters or [], options or {})
 
     @private
     def update_passdb_user(self, user: dict[str, Any]):
         smb_config = self.middleware.call_sync('smb.config')
         server_name = smb_config['netbiosname']
-        clustered = smb_config['stateful_failover']
 
         existing_entry = self.passdb_list([['username', '=', user['username']]])
         passdb_entry = user_entry_to_passdb_entry(
@@ -48,13 +46,12 @@ class SMBService(Service):
             existing_entry[0] if existing_entry else None,
         )
 
-        update_passdb_entry(passdb_entry, clustered)
+        update_passdb_entry(passdb_entry)
         self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def remove_passdb_user(self, username, sid):
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
-        delete_passdb_entry(username, get_domain_rid(sid), clustered)
+        delete_passdb_entry(username, get_domain_rid(sid))
         self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
@@ -71,17 +68,15 @@ class SMBService(Service):
         Raises:
             RuntimeError - TDB library error
         """
-        smb_config = self.middleware.call_sync('smb.config')
-        server_name = smb_config['netbiosname']
-        clustered = smb_config['stateful_failover']
+        server_name = self.middleware.call_sync('smb.config')['netbiosname']
 
         try:
-            pdb_entries = {entry['user_rid']: entry for entry in query_passdb_entries([], {}, clustered)}
+            pdb_entries = {entry['user_rid']: entry for entry in query_passdb_entries([], {})}
         except PassdbMustReinit:
-            reinit_passdb(clustered)
+            reinit_passdb()
             pdb_entries = {}
 
-        add_version_info(clustered)
+        add_version_info()
         to_update = []
         broken_entries = []
 
@@ -97,19 +92,19 @@ class SMBService(Service):
 
             if existing_entry and existing_entry['username'] != entry['username']:
                 # username changed. Since it's part of key for one of tdb entries we have to nuke it.
-                delete_passdb_entry(existing_entry['username'], existing_entry['user_rid'], clustered)
+                delete_passdb_entry(existing_entry['username'], existing_entry['user_rid'])
 
         # inserting over existing entries replaces them
         # this is performed with a transaction lock in place and so
         # we don't have to worry about rollback in case of failure
-        insert_passdb_entries(to_update, clustered)
+        insert_passdb_entries(to_update)
 
         for entry in pdb_entries.values():
             # we popped off keys as we matched them to existing DB users.
             # any remaining shouldn't be in the passdb file
 
             self.logger.debug('%s: removing user from SMB user database', entry['username'])
-            delete_passdb_entry(entry['username'], entry['user_rid'], clustered)
+            delete_passdb_entry(entry['username'], entry['user_rid'])
 
         if broken_entries:
             self.call_sync2(self.s.alert.oneshot_create,
