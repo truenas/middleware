@@ -72,6 +72,10 @@ UnsubscribeProcedure: typing.TypeAlias = typing.Callable[[Exception | None], typ
 class EventSource:
     args: type['BaseModel'] | None = None
     event: type['BaseModel'] | None = None
+    # The event types this source sends. Only these are documented; `REMOVED` carries no `fields`.
+    event_types: tuple['EventType', ...] = ('ADDED',)
+    # Type of the `id` this source sends with each event, or `None` if it sends none.
+    event_id: type | None = None
     roles: list[str] = []
 
     def __init__(

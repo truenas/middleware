@@ -10,7 +10,6 @@ from middlewared.api.base import (
     excluded_field,
     query_result,
     single_argument_args,
-    single_argument_result,
 )
 
 from .common import QueryFilters, QueryOptions, StorageTier
@@ -145,9 +144,8 @@ class ZfsTierRewriteJobQueryEventSourceArgs(BaseModel):
     """No arguments — subscribes to all rewrite job lifecycle events."""
 
 
-@single_argument_result
 class ZfsTierRewriteJobQueryEventSourceEvent(BaseModel):
-    fields: ZfsTierRewriteJobEntry = Field(description="Current job entry reflecting the latest lifecycle state.")
+    result: ZfsTierRewriteJobEntry = Field(description="Current job entry reflecting the latest lifecycle state.")
 
 
 class ZfsTierRewriteJobStatusEventSourceArgs(BaseModel):
@@ -159,9 +157,8 @@ class ZfsTierRewriteJobStatusEventSourceArgs(BaseModel):
     )
 
 
-@single_argument_result
 class ZfsTierRewriteJobStatusEventSourceEvent(BaseModel):
-    fields: ZfsTierRewriteJobStatusEntry = Field(
+    result: ZfsTierRewriteJobStatusEntry = Field(
         description="Current status and statistics for the requested rewrite job.",
     )
 
