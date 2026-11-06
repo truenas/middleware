@@ -1,4 +1,3 @@
-from copy import deepcopy
 from itertools import combinations
 import os
 
@@ -613,8 +612,7 @@ class DirectoryServices(ConfigService):
     @job(lock='directoryservices_change', lock_queue_size=1)
     def update(self, job, data):
         old = self.middleware.call_sync('directoryservices.config')
-        # Validation updates `new` in place, which must not change what `old` reports as the saved configuration.
-        new = deepcopy(old) | data
+        new = old | data
         revert = []  # list of methods and arguments required to revert back to clean state
 
         verrors = ValidationErrors()

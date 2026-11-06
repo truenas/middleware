@@ -1,14 +1,16 @@
 """Unit tests for the checks on Active Directory idmap ranges and domain names in directoryservices.update."""
 
-from copy import deepcopy
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+
+import pytest
 
 from middlewared.plugins.directoryservices_.datastore import DirectoryServices
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.directoryservices.constants import DSCredType, DSType
-import pytest
 
 ATTR = "directoryservices.update.configuration"
+CREDENTIAL = "middlewared.utils.directoryservices.credential"
+PRINCIPAL = "TRUENAS$@AD03.LOCAL"
 BUILTIN = {"name": None, "range_low": 90000001, "range_high": 100000000}
 PRIMARY = {"name": "AD03", "idmap_backend": "RID", "range_low": 100000001, "range_high": 200000000}
 AD_PRIMARY = PRIMARY | {"idmap_backend": "AD"}
@@ -34,8 +36,9 @@ def ds_config(*trusted_domains, enable=True, enable_trusted_domains=True, idmap_
         "service_type": DSType.AD.value,
         "enable": enable,
         "kerberos_realm": None,
-        "credential": {"credential_type": DSCredType.KERBEROS_PRINCIPAL, "principal": "TRUENAS$@AD03.LOCAL"},
+        "credential": {"credential_type": DSCredType.KERBEROS_PRINCIPAL, "principal": PRINCIPAL},
         "configuration": {
+            "domain": "ad03.local",
             "idmap": {"builtin": builtin, "idmap_domain": idmap_domain},
             "enable_trusted_domains": enable_trusted_domains,
             "trusted_domains": list(trusted_domains),
@@ -441,8 +444,9 @@ class ReachedDnsValidation(Exception):
 
 def enable_with_workgroup(ds_service, saved, data, workgroup):
     """Run the body of directoryservices.update for a request that enables directory services, stopping at the DNS
-    checks that follow credential validation. Validating the credential replaces the name of the primary domain with
-    the workgroup that the domain controller reports."""
+    checks that follow credential validation. Credential validation is the real code, with only its calls to the
+    domain controller and the system replaced. It stores the workgroup that the domain controller reports as the name
+    of the primary domain."""
 
     def fake_call_sync(method, *args, **kwargs):
         match method:
@@ -450,48 +454,68 @@ def enable_with_workgroup(ds_service, saved, data, workgroup):
                 return saved
             case "failover.is_single_master_node":
                 return True
-            case "idmap.clear_idmap_cache" | "kerberos.kdestroy" | "revert.credential":
+            case "idmap.clear_idmap_cache" | "kerberos.kdestroy" | "etc.generate":
                 return MagicMock()
 
         raise AssertionError(f"unexpected middleware call_sync: {method}")
 
-    def fake_validate_credential(schema, new, verrors, revert):
-        revert.append({"method": "revert.credential", "args": []})
-        new["configuration"]["idmap"]["idmap_domain"]["name"] = workgroup
-
     ds_service.middleware.call_sync = MagicMock(side_effect=fake_call_sync)
     ds_service.validate_dns = MagicMock(side_effect=ReachedDnsValidation)
+    domain_info = {"workgroup": workgroup, "server_time_offset": 0, "kdc_server": "192.0.2.1"}
 
     with (
-        patch("middlewared.plugins.directoryservices_.datastore.validate_credential", fake_validate_credential),
         patch("middlewared.plugins.directoryservices_.datastore.expire_cache"),
+        patch(f"{CREDENTIAL}.get_domain_info", return_value=domain_info),
+        patch(f"{CREDENTIAL}.lookup_dc", return_value={"domain_controller": "dc.ad03.local"}),
+        patch(f"{CREDENTIAL}.kdc_saf_cache_set"),
+        patch(f"{CREDENTIAL}.KRB5Conf"),
+        patch(f"{CREDENTIAL}.ktutil_list_impl", return_value=[{"principal": PRINCIPAL}]),
+        patch(f"{CREDENTIAL}.kinit_with_cred"),
     ):
         # bypass the api_method argument validation wrapper
         DirectoryServices.update.__wrapped__(ds_service, MagicMock(), data)
 
 
+def unnamed_primary(*trusted_domains):
+    """A new copy of a disabled configuration whose primary domain does not have a name yet."""
+    return ds_config(*trusted_domains, enable=False, idmap_domain=PRIMARY | {"name": None})
+
+
 @pytest.mark.parametrize("send_configuration", [False, True], ids=["configuration_saved_earlier", "configuration_sent"])
 def test__update_rejects_collision_with_name_from_domain_controller(ds_service, send_configuration):
-    saved = ds_config(USES_PRIMARY_NAME, enable=False, idmap_domain=PRIMARY | {"name": None})
     data = {"enable": True}
     if send_configuration:
-        data["configuration"] = deepcopy(saved["configuration"])
+        data["configuration"] = unnamed_primary(USES_PRIMARY_NAME)["configuration"]
 
     with pytest.raises(ValidationErrors) as exc:
-        enable_with_workgroup(ds_service, saved, data, "AD03")
+        enable_with_workgroup(ds_service, unnamed_primary(USES_PRIMARY_NAME), data, "AD03")
 
     assert [attribute for attribute, _, _ in exc.value] == [f"{ATTR}.trusted_domains.0"]
     ds_service.validate_dns.assert_not_called()
-    assert "revert.credential" in [call.args[0] for call in ds_service.middleware.call_sync.call_args_list]
+    assert call("etc.generate", "kerberos") in ds_service.middleware.call_sync.call_args_list
 
 
 @pytest.mark.parametrize(
     "saved",
     [
         pytest.param(ds_config(USES_PRIMARY_NAME, enable=False), id="saved_collision"),
-        pytest.param(ds_config(UNRELATED, enable=False, idmap_domain=PRIMARY | {"name": None}), id="no_collision"),
+        pytest.param(unnamed_primary(UNRELATED), id="no_collision"),
     ],
 )
 def test__update_continues_after_name_from_domain_controller(ds_service, saved):
     with pytest.raises(ReachedDnsValidation):
         enable_with_workgroup(ds_service, saved, {"enable": True}, "AD03")
+
+
+def test__credential_validation_updates_new_and_leaves_saved_configuration_alone(ds_service):
+    saved = unnamed_primary(UNRELATED)
+
+    with pytest.raises(ReachedDnsValidation):
+        enable_with_workgroup(ds_service, saved, {"enable": True}, "AD03")
+
+    new = ds_service.validate_dns.call_args.args[1]
+    assert new["configuration"]["domain"] == "AD03.LOCAL"
+    assert new["configuration"]["idmap"]["idmap_domain"]["name"] == "AD03"
+    assert new["kerberos_realm"] == "AD03.LOCAL"
+    # The update compares against the saved configuration and restores it if a later step fails.
+    assert saved == unnamed_primary(UNRELATED)
