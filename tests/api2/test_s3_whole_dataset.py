@@ -222,12 +222,13 @@ def test_a_dataset_the_service_would_exclude_is_refused(owner):
             assert "not mounted" in refusal(ds)
         finally:
             ssh(f"zfs mount {ds}")
-        moved = f"/mnt/{pool}/s3-export-moved"
+        # The pool's altroot of /mnt is prepended, so this mounts at /mnt/{pool}/s3-export-moved.
+        moved = f"/{pool}/s3-export-moved"
         ssh(f"zfs set mountpoint={moved} {ds}")
         try:
             assert "is mounted at" in refusal(ds)
         finally:
-            ssh(f"zfs inherit mountpoint {ds} && rmdir {moved}")
+            ssh(f"zfs inherit mountpoint {ds} && rmdir /mnt{moved}")
         was = zfs_props(ds, ["xattr"])["xattr"]
         ssh(f"zfs set xattr=off {ds}")
         try:
@@ -241,7 +242,7 @@ def test_a_dataset_the_service_would_exclude_is_refused(owner):
     locked = {
         "encryption": True,
         "inherit_encryption": False,
-        "encryption_options": {"generate_key": False, "pbkdf2iters": 100000, "passphrase": "s3export-passphrase"},
+        "encryption_options": {"generate_key": False, "passphrase": "s3export-passphrase"},
     }
     with dataset("s3-export-locked", locked) as ds:
         call("pool.dataset.lock", ds, job=True)
