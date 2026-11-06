@@ -145,3 +145,26 @@ def oversize_pool():
         ssh(f"zpool create {pool['name']} -o altroot=/mnt -f mirror {' '.join(devices)}")
         pool = call("pool.get_instance", pool["id"])
         yield pool
+
+
+@contextlib.contextmanager
+def draid_pool():
+    unused_disks = call("disk.get_unused")
+    assert len(unused_disks) >= 2
+
+    with another_pool(
+        {
+            "name": "test_draid_pool",
+            "topology": {
+                "data": [
+                    {
+                        "disks": [disk["name"] for disk in unused_disks[:2]],
+                        "type": "DRAID1",
+                        "draid_data_disks": 1,
+                    }
+                ],
+            },
+            "allow_duplicate_serials": True,
+        }
+    ) as pool:
+        yield pool

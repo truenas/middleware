@@ -49,8 +49,7 @@ def iscsitarget():
 
 
 def test_volsize_grow_resyncs_the_iscsi_extent_size():
-    if call("iscsi.global.lio_enabled"):
-        pytest.skip("reads the SCST device size")
+    assert not call("iscsi.global.lio_enabled")  # reads the SCST device size
 
     with volume("zre_iscsi_volsize") as zvol:
         with iscsi_extent({"name": "zre_volsize_extent", "type": "DISK", "disk": f"zvol/{zvol}"}):

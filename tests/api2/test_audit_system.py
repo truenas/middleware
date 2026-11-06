@@ -1,17 +1,8 @@
 from time import sleep
 
-import pytest
+from middlewared.test.integration.utils import call, ha_test, ssh
 
-from middlewared.test.integration.utils import call, ssh
-
-
-@pytest.fixture(scope='module')
-def require_enterprise():
-    # SYSTEM audit events are produced by the tnaudit handler daemon, which only
-    # processes auditd events on Enterprise systems (it no-ops on Community
-    # Edition). Skip these tests where the pipeline is intentionally inactive.
-    if call('truenas.entitlements.facts')['hardware_type'] != 'TRUENAS':
-        pytest.skip('SYSTEM auditing is only active on Enterprise systems')
+pytestmark = ha_test
 
 
 def test_audit_system_escalation(require_enterprise):
