@@ -142,9 +142,9 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
     match ds_type:
         case DSType.AD:
             # Force domain to upper case
-            new['configuration']['domain'] = new['configuration']['domain'].upper()
+            domain = new['configuration']['domain'].upper()
             try:
-                domain_info = get_domain_info(new['configuration']['domain'], retry=True)
+                domain_info = get_domain_info(domain, retry=True)
             except CallError as e:
                 verrors.add(f'{schema}.configuration.domain', e.errmsg)
                 return False
@@ -160,14 +160,18 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
                 kdc.append(domain_info['kdc_server'])
 
             saf_ip = domain_info['kdc_server']
-            saf_host = lookup_dc(
-                new['configuration']['domain'], server=saf_ip
-            ).get('domain_controller') or None
+            saf_host = lookup_dc(domain, server=saf_ip).get('domain_controller') or None
 
             if not realm:
-                realm = new['configuration']['domain']
+                realm = domain
 
-            new['configuration']['idmap']['idmap_domain']['name'] = domain_info['workgroup']
+            # `new['configuration']` can be the same dictionary as the saved configuration that the caller compares
+            # against and restores on failure, so it is replaced rather than written to.
+            idmap = new['configuration']['idmap']
+            new['configuration'] = new['configuration'] | {
+                'domain': domain,
+                'idmap': idmap | {'idmap_domain': idmap['idmap_domain'] | {'name': domain_info['workgroup']}},
+            }
             new['kerberos_realm'] = realm
 
         case DSType.IPA:

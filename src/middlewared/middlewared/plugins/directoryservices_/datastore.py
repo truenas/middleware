@@ -1,4 +1,3 @@
-from copy import deepcopy
 from itertools import combinations
 import os
 
@@ -634,8 +633,7 @@ class DirectoryServices(ConfigService):
         domain cleanly.
         """
         old = self.middleware.call_sync('directoryservices.config')
-        # Validation updates `new` in place, which must not change what `old` reports as the saved configuration.
-        new = deepcopy(old) | data
+        new = old | data
         revert = []  # list of methods and arguments required to revert back to clean state
 
         verrors = ValidationErrors()
