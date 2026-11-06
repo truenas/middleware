@@ -1,3 +1,4 @@
+from itertools import combinations
 import os
 
 import dns
@@ -410,6 +411,9 @@ class DirectoryServices(ConfigService):
                     'when the directory service type is IPA or Active Directory.'
                 )
 
+        self.validate_idmap_ranges(old, new, verrors)
+        self.validate_idmap_names(old, new, verrors)
+
     @private
     def idmap_config_changed(self, old, new):
         """ Check whether the update changes how Active Directory accounts are mapped to UIDs and GIDs. """
@@ -420,6 +424,81 @@ class DirectoryServices(ConfigService):
             old['configuration'].get(key) != new['configuration'].get(key)
             for key in ('idmap', 'enable_trusted_domains', 'trusted_domains')
         )
+
+    @private
+    def idmap_domains(self, ds_config, include_disabled=False):
+        """ Returns the key, name, attribute and idmap settings of each Active Directory domain whose range is in use,
+        and of trusted domains that are disabled if `include_disabled` is set.
+        The key identifies a domain across updates. A trusted domain's position can change and its name can match the
+        primary domain's, so it is keyed by its role and name. Saved configurations may lack keys that the current API
+        model always provides. """
+        if ds_config['service_type'] != DSType.AD.value or not ds_config['configuration']:
+            return []
+
+        config = ds_config['configuration']
+        domains = []
+        if builtin := config['idmap'].get('builtin'):
+            domains.append(('builtin', 'BUILTIN', 'idmap.builtin', builtin))
+
+        if primary := config['idmap'].get('idmap_domain'):
+            domains.append(('primary', primary.get('name') or 'the primary domain', 'idmap.idmap_domain', primary))
+
+        if config['enable_trusted_domains'] or include_disabled:
+            domains.extend(
+                (('trusted', domain.get('name')), domain.get('name'), f'trusted_domains.{idx}', domain)
+                for idx, domain in enumerate(config['trusted_domains'])
+            )
+
+        return domains
+
+    @private
+    def validate_idmap_ranges(self, old, new, verrors):
+        """ Reject idmap ranges that overlap because of this update. Two domains that both keep their saved settings
+        already overlapped in the saved configuration, and are left alone so that existing setups keep working. """
+        def settings(key, domain):
+            return key, domain['range_low'], domain['range_high'], domain.get('idmap_backend')
+
+        saved = {settings(key, domain) for key, _, _, domain in self.idmap_domains(old)}
+        for (key1, name1, _, domain1), (key2, name2, attribute, domain2) in combinations(self.idmap_domains(new), 2):
+            if domain1['range_low'] > domain2['range_high'] or domain2['range_low'] > domain1['range_high']:
+                continue
+
+            if settings(key1, domain1) in saved and settings(key2, domain2) in saved:
+                continue
+
+            verrors.add(
+                f'{SCHEMA}.configuration.{attribute}',
+                f'Idmap range [{domain2["range_low"]}-{domain2["range_high"]}] for {name2} conflicts with range '
+                f'[{domain1["range_low"]}-{domain1["range_high"]}] for {name1}.'
+            )
+
+    @private
+    def validate_idmap_names(self, old, new, verrors):
+        """ Reject domain names that collide because of this update. The SMB configuration holds one set of idmap
+        parameters per name, which Samba compares without regard to case, so one domain would take over the settings
+        of the other. Disabled trusted domains are checked because they are written to the SMB configuration too.
+        BUILTIN is written as `*`, so its name is not used. Domains that both keep their saved name and settings are
+        left alone so that existing setups keep working. """
+        def settings(key, domain):
+            return key, domain.get('name'), domain['range_low'], domain['range_high'], domain.get('idmap_backend')
+
+        saved = {settings(key, domain) for key, _, _, domain in self.idmap_domains(old, include_disabled=True)}
+        domains = [
+            (key, attribute, domain) for key, _, attribute, domain in self.idmap_domains(new, include_disabled=True)
+            if key != 'builtin' and domain.get('name')
+        ]
+        for (key1, _, domain1), (key2, attribute, domain2) in combinations(domains, 2):
+            if domain1['name'].casefold() != domain2['name'].casefold():
+                continue
+
+            if settings(key1, domain1) in saved and settings(key2, domain2) in saved:
+                continue
+
+            other = 'the primary domain' if key1 == 'primary' else f'trusted domain {domain1["name"]}'
+            verrors.add(
+                f'{SCHEMA}.configuration.{attribute}',
+                f'Domain name {domain2["name"]} is already used by {other}.'
+            )
 
     @private
     def validate_kerberos_dns(self, schema, verrors, domain, lifetime=10):
@@ -609,6 +688,8 @@ class DirectoryServices(ConfigService):
                 self.logger.debug('kdestroy failed while preparing initial credentials', exc_info=True)
 
         validate_credential(SCHEMA, new, verrors, revert)
+        # Validating a Kerberos credential replaces the primary domain's name with the one the domain controller reports
+        self.validate_idmap_names(old, new, verrors)
         if verrors:
             self.__revert_changes(revert)
 
