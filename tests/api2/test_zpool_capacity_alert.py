@@ -4,7 +4,7 @@ from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, mock, pool
 
 
-MOCK_METHOD = "zpool.query_impl"
+MOCK_METHOD = "zpool.list_impl"
 
 
 def _mock_pool(capacity):

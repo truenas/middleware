@@ -16,6 +16,7 @@ from middlewared.api.current import (
     PoolScrubScrubResult,
     PoolScrubUpdateArgs,
     PoolScrubUpdateResult,
+    ZpoolScrubRun,
 )
 from middlewared.plugins.zpool.exceptions import ZpoolException
 from middlewared.plugins.zpool.scrub_impl import scrub_pool
@@ -234,4 +235,4 @@ class PoolScrubService(CRUDService):
         .. deprecated:: 27.0.0
             Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
         """
-        self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})
+        self.call_sync2(self.s.zpool.scrub.run, ZpoolScrubRun(pool_name=name, threshold=threshold))

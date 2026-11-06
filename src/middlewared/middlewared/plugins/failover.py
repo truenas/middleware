@@ -246,7 +246,7 @@ class FailoverService(ConfigService):
             # the connection remains alive. Without the timeout, this could take
             # 20+ seconds to return which is unacceptable during a failover event.
             remote_imported = await self.middleware.call(
-                'failover.call_remote', 'zpool.query', [], {'timeout': 5}
+                'failover.call_remote', 'zpool.list', [], {'timeout': 5}
             )
             if len(remote_imported) == 0:
                 # getting here means we dont have a pool and neither does remote node

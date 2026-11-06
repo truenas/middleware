@@ -42,6 +42,7 @@ module = [
     "catalog_reader.*",
     "certbot_dns_cloudflare.*",
     "certbot_dns_digitalocean.*",
+    "fenced.*",
     "google.*",
     "google_auth_httplib2.*",
     "googleapiclient.*",
