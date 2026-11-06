@@ -17,7 +17,9 @@ import time
 import pytest
 
 from middlewared.service_exception import CallError
-from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.utils import call, client, enterprise_test, ssh
+
+pytestmark = enterprise_test
 
 
 _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"

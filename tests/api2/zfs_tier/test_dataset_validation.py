@@ -14,7 +14,9 @@ import time
 import pytest
 
 from middlewared.service_exception import ValidationError, ValidationErrors
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, enterprise_test
+
+pytestmark = enterprise_test
 
 
 _16M = 16 * 1024 * 1024

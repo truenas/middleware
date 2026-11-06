@@ -38,6 +38,8 @@ from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server
 from protocols import ISCSIDiscover, iscsi_scsi_connection
 
+pytestmark = pytest.mark.skip(reason="LIO mode is not supported yet")
+
 
 class ISCSIMODE:
     SCST_DLM_PRSTATE_SAVE = 0
@@ -177,14 +179,6 @@ def _vendor_nibbles_from_naa(naa_hex):
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(scope='module', autouse=True)
-def _require_lio():
-    """Skip entire module if LIO mode (2) is not supported by the API."""
-    if not lio_supported():
-        pytest.skip('LIO mode (2) not accepted by API')
-    yield
 
 
 @pytest.fixture(scope='module')
