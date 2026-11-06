@@ -175,10 +175,32 @@ def set_idmap_ad(ds_config, change_while_disabled=False):
         {
             'name': 'CANARY1',
             'idmap_backend': 'RID',
+            'range_low': 100000001,
+            'range_high': 200000000,
+        },
+    ], r'conflicts with range \[100000001-200000000\]'),  # Same range and backend as the primary domain
+    ([
+        {
+            'name': 'CANARY1',
+            'idmap_backend': 'RID',
             'range_low': 95000000,
             'range_high': 99000000,
         },
     ], r'conflicts with range \[90000001-100000000\] for BUILTIN'),
+    ([
+        {
+            'name': 'CANARY1',
+            'idmap_backend': 'RID',
+            'range_low': 200000001,
+            'range_high': 300000000,
+        },
+        {
+            'name': 'canary1',
+            'idmap_backend': 'RID',
+            'range_low': 300000001,
+            'range_high': 400000000,
+        },
+    ], 'Domain name canary1 is already used by trusted domain CANARY1'),
 ))
 def test_trusted_domain_configuration(join_ad, trusted_doms, error):
     # Substantive directory services changes require disabling / stopping them
@@ -202,6 +224,34 @@ def test_trusted_domain_configuration(join_ad, trusted_doms, error):
             # Make sure idmap config applied
             for dom in trusted_doms:
                 check_idmap_config(dom)
+
+
+def test_trusted_domain_uses_primary_domain_name(join_ad):
+    name = join_ad['config']['configuration']['idmap']['idmap_domain']['name']
+    trusted_dom = {'name': name, 'idmap_backend': 'RID', 'range_low': 200000001, 'range_high': 300000000}
+    with pytest.raises(Exception, match='is already used by the primary domain'):
+        with update_trusted_domains(join_ad['config'], [trusted_dom]):
+            pass
+
+
+def test_trusted_domain_uses_name_reported_by_domain_controller(join_ad):
+    """
+    The primary domain's name may be unset when the configuration is saved. It is replaced by the name that the domain
+    controller reports when directory services are enabled, so the collision can only be detected at that point.
+    """
+    config = join_ad['config']
+    idmap = config['configuration']['idmap']
+    name = idmap['idmap_domain']['name']
+    new_config = config['configuration'] | {
+        'idmap': idmap | {'idmap_domain': idmap['idmap_domain'] | {'name': None}},
+        'enable_trusted_domains': True,
+        'trusted_domains': [{'name': name, 'idmap_backend': 'RID', 'range_low': 200000001, 'range_high': 300000000}],
+    }
+    try:
+        with pytest.raises(Exception, match='is already used by the primary domain'):
+            set_ds_config(config | {'configuration': new_config}, change_while_disabled=True)
+    finally:
+        set_ds_config(config)
 
 
 def test_idmap_ad(join_ad):
