@@ -28,6 +28,7 @@ def write_config(ctx: Context) -> None:
         update = {ctx.update}
         artifacts = "{ctx.artifacts}"
         isns_ip = "{ctx.isns_ip}"
+        enterprise_tests = {ctx.enterprise_tests}
         extended_tests = {ctx.extended_tests}
         sshKey = {ctx.ssh_key!r}
     """)
