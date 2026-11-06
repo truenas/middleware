@@ -165,19 +165,14 @@ class FailoverEventsService(Service):
         be running on the standby controller
         """
         data.setdefault('timeout', 15)
-        to_stop = set(BACKUP_STOP_SERVICES)
-        # Avoid stopping cifs service on standby controller if stateful failover is enabled.
-        if (await self.middleware.call('smb.config'))['stateful_failover']:
-            to_stop.remove('cifs')
-
         exceptions = await asyncio.gather(
             *[
                 self.service_action(svc, data['timeout'], 'STOP')
-                for svc in to_stop
+                for svc in BACKUP_STOP_SERVICES
             ],
             return_exceptions=True
         )
-        for svc, exc in zip(to_stop, exceptions):
+        for svc, exc in zip(BACKUP_STOP_SERVICES, exceptions):
             if isinstance(exc, asyncio.TimeoutError):
                 logger.error(
                     'Failed to stop service "%s" after %d seconds',

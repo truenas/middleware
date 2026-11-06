@@ -1,22 +1,15 @@
-import binascii
-import enum
-import os
-
-import tdb
-
-try:
-    import pyctdb
-except ImportError:
-    pyctdb = None
-
 from base64 import b64decode, b64encode
+import binascii
 from collections import defaultdict, namedtuple
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from dataclasses import dataclass
+import enum
+import os
 from threading import RLock
-from typing import Any, Callable, Literal, overload
+from typing import Any, Literal, overload
 
+import tdb
 from truenas_api_client import ejson as json
 
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
@@ -28,9 +21,8 @@ FD_CLOSED = -1
 MUTEX_LOCKING = 4096
 
 TDB_LOCKS: defaultdict[str, RLock] = defaultdict(RLock)
-TDBOptions = namedtuple('TDBOptions', ['backend', 'data_type', 'clustered'], defaults=[None, None, False])
+TDBOptions = namedtuple('TDBOptions', ['backend', 'data_type'])
 TDB_HANDLES: dict[str, 'TDBHandle'] = {}
-CTDB_HANDLES: dict[str, Any] = {}
 
 
 class TDBPathType(enum.Enum):
@@ -108,19 +100,9 @@ class TDBBatchOperation:
     value: str | bytes | dict[str, Any] | None = None
 
 
-@dataclass(slots=True, frozen=True)
-class TDBOps:
-    """ Function references for operations on a given handle """
-    fetch: Callable[..., Any]
-    store: Callable[..., Any]
-    delete: Callable[..., Any]
-    clear: Callable[..., Any]
-    vacuum: Callable[..., Any]
-
-
 def keys_are_null_terminated(name: str, data_type: TDBDataType) -> bool:
     """
-    Whether the on-disk keys of the TDB/CTDB database identified by `name` carry a
+    Whether the on-disk keys of the TDB database identified by `name` carry a
     trailing NUL terminator.
 
     ``secrets.tdb`` is the odd one out: unlike most samba databases (which key via
@@ -147,9 +129,6 @@ class TDBHandle:
     full_path: str | None = None
     keys_null_terminated: bool = False
 
-    # function pointers for basic ops (always set in __init__)
-    ops: Any = None
-
     def __enter__(self) -> 'TDBHandle':
         return self
 
@@ -158,8 +137,6 @@ class TDBHandle:
 
     def close(self) -> None:
         """ Close the TDB handle """
-        self.ops = None
-
         if self.hdl is not None:
             self.hdl.close()
             self.hdl = None
@@ -216,13 +193,8 @@ class TDBHandle:
         if self.keys_null_terminated:
             tdb_key += b"\x00"
 
-        try:
-            tdb_val = self.ops.fetch(tdb_key)
-        except FileNotFoundError:
+        if (tdb_val := self.hdl.get(tdb_key)) is None:
             raise MatchNotFound(key)
-        else:
-            if tdb_val is None:
-                raise MatchNotFound(key)
 
         return self.parse_value(tdb_val)
 
@@ -281,7 +253,7 @@ class TDBHandle:
         if self.keys_null_terminated:
             tdb_key += b'\x00'
 
-        self.ops.store(tdb_key, self.encode_value(value))
+        self.hdl.store(tdb_key, self.encode_value(value))
 
     def delete(self, key: str) -> None:
         """
@@ -294,7 +266,7 @@ class TDBHandle:
         if self.keys_null_terminated:
             tdb_key += b"\x00"
 
-        self.ops.delete(tdb_key)
+        self.hdl.delete(tdb_key)
 
     def clear(self) -> None:
         """
@@ -303,7 +275,7 @@ class TDBHandle:
         Raises:
             RuntimeError
         """
-        self.ops.clear()
+        self.hdl.clear()
 
     @overload
     def entries(self, include_keys: Literal[True] = ..., key_prefix: str | None = None) -> Iterable[dict[str, Any]]: ...
@@ -388,7 +360,7 @@ class TDBHandle:
 
     def vacuum(self) -> None:
         """ Repack the database to free up space """
-        self.ops.vacuum()
+        self.hdl.repack()
 
     def __init__(
         self,
@@ -418,8 +390,6 @@ class TDBHandle:
                 open_flags = os.O_CREAT | os.O_RDWR
                 open_mode = 0o600
 
-        # Key NUL-termination is a property of the database itself, so it must be derived
-        # identically here and in CTDBHandle (see keys_are_null_terminated).
         self.keys_null_terminated = keys_are_null_terminated(name, self.data_type)
 
         match self.path_type:
@@ -437,158 +407,11 @@ class TDBHandle:
 
         self.hdl = tdb.Tdb(self.full_path, 0, tdb_flags, open_flags, open_mode)
         self.options = options
-        self.ops = TDBOps(
-            fetch=self.hdl.get,
-            store=self.hdl.store,
-            clear=self.hdl.clear,
-            delete=self.hdl.delete,
-            vacuum=self.hdl.repack
-        )
-
-
-class CTDBHandle(TDBHandle):
-    def close(self) -> None:
-        """ decrement reference on handle and client """
-        del self.hdl
-        self.hdl = None
-        self.ops = None
-
-    def validate_handle(self) -> bool:
-        """ CTDB handles are basically always valid """
-        return self.hdl is not None
-
-    @overload
-    def entries(self, include_keys: Literal[True] = ..., key_prefix: str | None = None) -> Iterable[dict[str, Any]]: ...
-
-    @overload
-    def entries(self, include_keys: Literal[False] = ..., key_prefix: str | None = None) -> (
-        Iterable[dict[str, Any] | str | bytes]
-    ): ...
-
-    def entries(
-        self, include_keys: bool = True, key_prefix: str | None = None
-    ) -> Iterable[dict[str, Any] | str | bytes]:
-        for ctdb_key, ctdb_val in self.hdl.iter():
-            key = ctdb_key.decode()
-            # Must match TDBHandle.entries(); batch_op() and store() add this terminator
-            if self.keys_null_terminated:
-                key = key[:-1]
-
-            if key_prefix and not key.startswith(key_prefix):
-                continue
-
-            value = self.parse_value(ctdb_val)
-
-            if include_keys:
-                yield {'key': key, 'value': value}
-            else:
-                yield value
-
-    def flush(self) -> None:
-        """ This doesn't really make sense for ctdb so we'll just NO-OP it for API consistency """
-        pass
-
-    def batch_op(self, ops: list[TDBBatchOperation]) -> dict[str, Any]:
-        """
-        Perform batch operations on CTDB database.
-
-        Converts TDBBatchOperation objects to pyctdb.BatchOp format
-        and executes them atomically.
-        """
-        batch_ops = []
-
-        for op in ops:
-            tdb_key = op.key.encode()
-            if self.keys_null_terminated:
-                tdb_key += b'\x00'
-
-            match op.action:
-                case TDBBatchAction.GET:
-                    # pyctdb.BatchOp is a struct sequence and so takes a single tuple
-                    batch_ops.append(pyctdb.BatchOp(('GET', tdb_key, None)))
-                case TDBBatchAction.SET:
-                    if op.value is None:
-                        raise ValueError(f'{op.key}: SET operation requires a value')
-
-                    batch_ops.append(pyctdb.BatchOp(('SET', tdb_key, self.encode_value(op.value))))
-                case TDBBatchAction.DEL:
-                    batch_ops.append(pyctdb.BatchOp(('DEL', tdb_key, None)))
-                case _:
-                    raise ValueError(f'{op.action}: unknown batch operation type')
-
-        # Execute batch operations (returns dict with index -> bytes value)
-        raw_results = self.hdl.batch_op(batch_ops)
-
-        # Convert results back to user format
-        output = {}
-        for idx, op in enumerate(ops):
-            if op.action == TDBBatchAction.GET and idx in raw_results:
-                output[op.key] = self.parse_value(raw_results[idx])
-
-        return output
-
-    def sync_with_tdb(self, tdb_path: str) -> None:
-        """ Sync up ctdb contents with the specified tdb file. This is useful for
-        cases where we're transitioning from non-clustered to clustered."""
-        if not os.path.exists(tdb_path):
-            raise FileNotFoundError(tdb_path)
-
-        self.hdl.sync_with_tdb_file(tdb_path)
-
-    def vacuum_noop_impl(self) -> None:
-        """ XXX: placeholder until I wrap vacuum op in pyctdb """
-        return
-
-    def __init__(self, name: str, options: TDBOptions):
-        if pyctdb is None:
-            raise RuntimeError('pyctdb module not available')
-
-        self.name = name
-        self.data_type = TDBDataType(options.data_type)
-        self.path_type = TDBPathType(options.backend)
-        self.options = options
-        # Must agree with the local-file TDBHandle for the same database (see
-        # keys_are_null_terminated). Hardcoding True here silently NUL-terminated
-        # secrets.tdb keys in ctdb and broke SMB stateful failover.
-        self.keys_null_terminated = keys_are_null_terminated(name, self.data_type)
-
-        # lazy-initialize CTDB client
-        try:
-            client = CTDB_HANDLES['__client__']
-        except KeyError:
-            client = CTDB_HANDLES['__client__'] = pyctdb.Client()
-
-        persistent = self.path_type == TDBPathType.PERSISTENT
-
-        # Open or create the database. For now we're not interacting with volatile DBs
-        self.hdl = client.get_db(db_name=name, persistent=persistent, create_ok=True)
-        self.ops = TDBOps(
-            fetch=self.hdl.fetch,
-            store=self.hdl.store,
-            delete=self.hdl.delete,
-            clear=self.hdl.wipe_db,
-            vacuum=self.vacuum_noop_impl
-        )
 
 
 @contextmanager
 def get_tdb_handle(name: str, tdb_options: TDBOptions) -> Generator[TDBHandle]:
     """ Open handle on TDB file under a threading lock """
-    if tdb_options.clustered:
-        if (entry := CTDB_HANDLES.get(name)) is None:
-            entry = CTDB_HANDLES.setdefault(name, CTDBHandle(name, tdb_options))
-
-        if entry.options != tdb_options:
-            raise ValueError('Inconsistent options')
-
-        if not entry.validate_handle():
-            entry.close()
-            entry = CTDBHandle(name, tdb_options)
-            CTDB_HANDLES[name] = entry
-
-        yield entry
-        return
-
     lock = TDB_LOCKS[name]
     with lock:
         if (entry := TDB_HANDLES.get(name)) is None:
