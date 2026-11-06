@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 import contextlib
 import errno
+import itertools
 import os
 import socket
 import struct
@@ -13,7 +15,7 @@ from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError
 
 from .client import NTPClient
-from .enums import ChronyAddressFamily, ChronyPacketType, ChronyReply, ChronyRequest, Mode, State
+from .enums import ChronyAddressFamily, ChronyAuthMode, ChronyPacketType, ChronyReply, ChronyRequest, Mode, State
 
 # chronyd command and monitoring protocol, see candm.h in the chrony source
 CHRONYD_RUN_DIR = "/run/chrony"
@@ -23,6 +25,12 @@ REQUEST_HEADER = struct.Struct("!BBBBHHIII")
 REPLY_HEADER = struct.Struct("!BBBBHHHHHHIII")
 N_SOURCES = struct.Struct("!I")
 SOURCE_DATA = struct.Struct("!16sH2xhHHHHHIIII")
+# A SOURCE_DATA reply starts with the source's address, which AUTH_DATA and NTP_SOURCE_NAME requests take as is
+IP_ADDR_LENGTH = 20
+AUTH_DATA = struct.Struct("!HHIHHIHHHH")
+SOURCE_NAME = struct.Struct("!256s")
+# What AUTH_DATA reports as the time since the last key establishment before the first one succeeds
+NEVER = 0xFFFFFFFF
 # Indexed by RPY_SD_MD_* and RPY_SD_ST_*
 MODES = (Mode.SERVER, Mode.PEER, Mode.LOCAL)
 STATES = (State.BEST, State.NOT_SELECTABLE, State.FALSE_TICKER, State.TOO_VARIABLE, State.SELECTED, State.SELECTABLE)
@@ -56,9 +64,17 @@ class NTPPeerEntry(BaseModel):
     active: bool
 
 
-def test_ntp_server(addr: str) -> bool:
+class NTSAuthData(TypedDict):
+    name: str
+    key_length: int
+    cookies: int
+    attempts: int
+    last_success: int | None
+
+
+def test_ntp_server(addr: str, port: int = 123) -> bool:
     try:
-        return bool(NTPClient(addr).make_request()["version"])
+        return bool(NTPClient(addr, port).make_request()["version"])
     except Exception:
         return False
 
@@ -105,6 +121,31 @@ def parse_source_data(data: bytes) -> NTPPeerData | None:
     }
 
 
+def parse_auth_data(name: str, data: bytes) -> NTSAuthData:
+    """Convert the payload of an AUTH_DATA reply for an NTS source, same as chronyc authdata does"""
+    _mode, _key_type, _key_id, key_length, attempts, last_ke_ago, cookies, _cookie_length, _nak, _pad = (
+        AUTH_DATA.unpack_from(data)
+    )
+    return {
+        "name": name,
+        "key_length": key_length,
+        "cookies": cookies,
+        "attempts": attempts,
+        "last_success": None if last_ke_ago == NEVER else last_ke_ago,
+    }
+
+
+def parse_source_name(data: bytes) -> str:
+    """The name a source is configured with, from the payload of an NTP_SOURCE_NAME reply, same as chronyc -N"""
+    raw: bytes = SOURCE_NAME.unpack_from(data)[0]
+    name, terminated, _ = raw.partition(b"\0")
+    # Like chronyc, do not trust a name that is not terminated or not printable
+    if not terminated or not name or not all(0x21 <= c <= 0x7E for c in name):
+        return "?"
+
+    return name.decode()
+
+
 def chronyd_request(
     sock: socket.socket, seq: int, command: ChronyRequest, body: bytes, reply: ChronyReply, length: int
 ) -> bytes:
@@ -135,7 +176,8 @@ def chronyd_request(
     return payload
 
 
-def query_chronyd_sources() -> list[bytes]:
+@contextlib.contextmanager
+def chronyd_socket() -> Iterator[socket.socket]:
     # chronyd replies to the path the client is bound to, this is what chronyc does as well
     path = f"{CHRONYD_RUN_DIR}/middlewared.{uuid.uuid4().hex}.sock"
     with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
@@ -146,18 +188,60 @@ def query_chronyd_sources() -> list[bytes]:
             # do not follow a symlink it could have put in place of the socket.
             os.chmod(path, 0o666, follow_symlinks=False)
             sock.connect(CHRONYD_SOCK)
-            (n_sources,) = N_SOURCES.unpack_from(
-                chronyd_request(sock, 0, ChronyRequest.N_SOURCES, b"", ChronyReply.N_SOURCES, N_SOURCES.size)
-            )
-            return [
-                chronyd_request(
-                    sock, i + 1, ChronyRequest.SOURCE_DATA, N_SOURCES.pack(i), ChronyReply.SOURCE_DATA, SOURCE_DATA.size
-                )
-                for i in range(n_sources)
-            ]
+            yield sock
         finally:
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(path)
+
+
+def chronyd_sources(sock: socket.socket, seq: Iterator[int]) -> list[bytes]:
+    """The SOURCE_DATA payloads of all of chronyd's sources"""
+    (n_sources,) = N_SOURCES.unpack_from(
+        chronyd_request(sock, next(seq), ChronyRequest.N_SOURCES, b"", ChronyReply.N_SOURCES, N_SOURCES.size)
+    )
+    return [
+        chronyd_request(
+            sock, next(seq), ChronyRequest.SOURCE_DATA, N_SOURCES.pack(i), ChronyReply.SOURCE_DATA, SOURCE_DATA.size
+        )
+        for i in range(n_sources)
+    ]
+
+
+def query_chronyd_sources() -> list[bytes]:
+    with chronyd_socket() as sock:
+        return chronyd_sources(sock, itertools.count())
+
+
+def chronyd_nts_sources(sock: socket.socket) -> list[NTSAuthData]:
+    """The authentication state of the sources that use NTS, same as chronyc -N authdata -a"""
+    seq = itertools.count()
+    sources: list[NTSAuthData] = []
+    for source in chronyd_sources(sock, seq):
+        mode = SOURCE_DATA.unpack_from(source)[5]
+        if mode >= len(MODES) or MODES[mode] is Mode.LOCAL:
+            # Reference clocks are not authenticated
+            continue
+
+        # Unlike chronyc sources, keep the sources that are not resolved yet: chronyd knows them by an ID, and a name
+        # that does not resolve is a reason for NTS to fail
+        ip_addr = source[:IP_ADDR_LENGTH]
+        auth = chronyd_request(sock, next(seq), ChronyRequest.AUTH_DATA, ip_addr, ChronyReply.AUTH_DATA, AUTH_DATA.size)
+        if AUTH_DATA.unpack_from(auth)[0] != ChronyAuthMode.NTS:
+            continue
+
+        name = chronyd_request(
+            sock, next(seq), ChronyRequest.NTP_SOURCE_NAME, ip_addr, ChronyReply.NTP_SOURCE_NAME, SOURCE_NAME.size
+        )
+        sources.append(parse_auth_data(parse_source_name(name), auth))
+
+    return sources
+
+
+def chronyd_error(error: OSError) -> CallError:
+    return CallError(
+        f"Failed to query chronyd: {error}",
+        errno.ECONNREFUSED if isinstance(error, (ConnectionRefusedError, FileNotFoundError)) else errno.EFAULT,
+    )
 
 
 def get_peers(context: ServiceContext) -> list[NTPPeerData]:
@@ -169,10 +253,7 @@ def get_peers(context: ServiceContext) -> list[NTPPeerData]:
     try:
         sources = query_chronyd_sources()
     except OSError as e:
-        raise CallError(
-            f"Failed to query chronyd: {e}",
-            errno.ECONNREFUSED if isinstance(e, (ConnectionRefusedError, FileNotFoundError)) else errno.EFAULT,
-        )
+        raise chronyd_error(e)
 
     for source in sources:
         try:
@@ -185,3 +266,15 @@ def get_peers(context: ServiceContext) -> list[NTPPeerData]:
             peers.append(peer)
 
     return peers
+
+
+def get_nts_authdata(context: ServiceContext) -> list[NTSAuthData]:
+    """NTS key establishment state of every source that uses NTS, by the name it is configured with"""
+    if not context.middleware.call_sync("system.ready"):
+        return []
+
+    try:
+        with chronyd_socket() as sock:
+            return chronyd_nts_sources(sock)
+    except OSError as e:
+        raise chronyd_error(e)
