@@ -35,6 +35,10 @@ class StatxAttr(IntFlag):
     # when it keeps no ACL
     POSIXACL = 0x0100000000000000
     NFSV4ACL = 0x0200000000000000
+    # TrueNAS kernels report a file on a read-only mount, as the mount or
+    # its superblock is read only, such as a dataset with readonly=on or a
+    # snapshot
+    RDONLY = 0x1000000000000000
 
 
 STATX_DEFAULT_MASK = (
