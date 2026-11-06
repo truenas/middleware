@@ -17,6 +17,7 @@ class RunArgs:
     test_dir: str
     testexpr: str | None
     update: bool
+    enterprise_tests: bool
     extended_tests: bool
     returncode: bool
     verbose: int
@@ -127,6 +128,11 @@ def parse(args: list[str] | None = None) -> RunArgs:
         "--update",
         action="store_true",
         help="enable update tests",
+    )
+    behaviour.add_argument(
+        "--enterprise_tests",
+        action="store_true",
+        help="run enterprise tests",
     )
     behaviour.add_argument(
         "--extended_tests",
