@@ -1,6 +1,7 @@
-"""Unit tests for the overlap check on Active Directory idmap ranges in directoryservices.update."""
+"""Unit tests for the checks on Active Directory idmap ranges and domain names in directoryservices.update."""
 
-from unittest.mock import MagicMock
+from copy import deepcopy
+from unittest.mock import MagicMock, patch
 
 from middlewared.plugins.directoryservices_.datastore import DirectoryServices
 from middlewared.service_exception import ValidationErrors
@@ -20,9 +21,14 @@ def trusted(range_low, range_high, idmap_backend="RID", name="DOMAIN1"):
 
 OVERLAP = trusted(150000001, 300000000)
 AD_OVERLAP = trusted(150000001, 300000000, "AD")
+PRIMARY_COPY = trusted(100000001, 200000000)
+UNRELATED = trusted(300000001, 400000000, name="DOMAIN2")
+USES_PRIMARY_NAME = trusted(300000001, 400000000, name="AD03")
+DOMAIN1 = trusted(200000001, 300000000)
+DOMAIN1_AGAIN = trusted(300000001, 400000000)
 
 
-def ds_config(*trusted_domains, enable=True, enable_trusted_domains=True, idmap_domain=PRIMARY):
+def ds_config(*trusted_domains, enable=True, enable_trusted_domains=True, idmap_domain=PRIMARY, builtin=BUILTIN):
     return {
         "id": 1,
         "service_type": DSType.AD.value,
@@ -30,7 +36,7 @@ def ds_config(*trusted_domains, enable=True, enable_trusted_domains=True, idmap_
         "kerberos_realm": None,
         "credential": {"credential_type": DSCredType.KERBEROS_PRINCIPAL, "principal": "TRUENAS$@AD03.LOCAL"},
         "configuration": {
-            "idmap": {"builtin": BUILTIN, "idmap_domain": idmap_domain},
+            "idmap": {"builtin": builtin, "idmap_domain": idmap_domain},
             "enable_trusted_domains": enable_trusted_domains,
             "trusted_domains": list(trusted_domains),
         },
@@ -49,10 +55,18 @@ def ds_service():
     return svc
 
 
-def errors(ds_service, old, new):
+def collect(validate, old, new):
     verrors = ValidationErrors()
-    ds_service.validate_idmap_ranges(old, new, verrors)
+    validate(old, new, verrors)
     return [(attribute, errmsg) for attribute, errmsg, _ in verrors]
+
+
+def errors(ds_service, old, new):
+    return collect(ds_service.validate_idmap_ranges, old, new)
+
+
+def name_errors(ds_service, old, new):
+    return collect(ds_service.validate_idmap_names, old, new)
 
 
 @pytest.mark.parametrize(
@@ -137,7 +151,7 @@ def test__no_conflict(ds_service, new):
         pytest.param(ds_config(OVERLAP), ds_config(OVERLAP), id="update_while_enabled"),
         pytest.param(
             ds_config(OVERLAP),
-            ds_config(OVERLAP, trusted(300000001, 400000000, name="DOMAIN2")),
+            ds_config(OVERLAP, UNRELATED),
             id="add_unrelated_trusted_domain",
         ),
         pytest.param(ds_config(OVERLAP | {"sssd_compat": False}), ds_config(OVERLAP), id="saved_row_has_other_keys"),
@@ -153,6 +167,9 @@ def test__no_conflict(ds_service, new):
             ds_config(AD_OVERLAP, idmap_domain=AD_PRIMARY),
             id="saved_ad_backend_overlap",
         ),
+        pytest.param(ds_config(PRIMARY_COPY), ds_config(PRIMARY_COPY), id="saved_copy_of_primary"),
+        pytest.param(ds_config(OVERLAP, UNRELATED), ds_config(UNRELATED, OVERLAP), id="trusted_domains_reordered"),
+        pytest.param(ds_config(UNRELATED, OVERLAP), ds_config(OVERLAP), id="earlier_trusted_domain_removed"),
     ],
 )
 def test__existing_setup_keeps_working(ds_service, old, new):
@@ -191,6 +208,29 @@ def test__existing_setup_keeps_working(ds_service, old, new):
             ds_config(OVERLAP, trusted(160000001, 170000000, name="DOMAIN2")),
             id="another_domain_overlaps",
         ),
+        pytest.param(ds_config(), ds_config(PRIMARY_COPY), id="trusted_copies_primary"),
+        pytest.param(ds_config(), ds_config(PRIMARY_COPY | {"name": "AD03"}), id="trusted_copies_primary_and_its_name"),
+        pytest.param(
+            ds_config(idmap_domain=AD_PRIMARY),
+            ds_config(PRIMARY_COPY | {"idmap_backend": "AD"}, idmap_domain=AD_PRIMARY),
+            id="trusted_copies_ad_backend_primary",
+        ),
+        pytest.param(
+            ds_config(PRIMARY_COPY, enable_trusted_domains=False),
+            ds_config(PRIMARY_COPY),
+            id="copy_of_primary_enabled",
+        ),
+        pytest.param(
+            ds_config(UNRELATED),
+            ds_config(UNRELATED, idmap_domain=PRIMARY | {"range_low": 300000001, "range_high": 400000000}),
+            id="primary_copies_trusted",
+        ),
+        pytest.param(
+            ds_config(OVERLAP, UNRELATED),
+            ds_config(UNRELATED | {"name": "DOMAIN1"}, OVERLAP | {"name": "DOMAIN2"}),
+            id="trusted_domains_swap_ranges",
+        ),
+        pytest.param(ds_config(OVERLAP), ds_config(OVERLAP | {"name": "DOMAIN2"}), id="replacement_inherits_range"),
     ],
 )
 def test__update_introducing_overlap_is_rejected(ds_service, old, new):
@@ -202,7 +242,14 @@ def test__other_service_type_is_not_checked(ds_service):
     assert errors(ds_service, NOT_CONFIGURED, new) == []
 
 
-def test__update_rejects_overlap_before_saving(ds_service):
+@pytest.mark.parametrize(
+    "domain",
+    [
+        pytest.param(OVERLAP, id="range"),
+        pytest.param(USES_PRIMARY_NAME, id="name"),
+    ],
+)
+def test__update_rejects_conflict_before_saving(ds_service, domain):
     def call_sync(method, *args, **kwargs):
         match method:
             case "directoryservices.config":
@@ -219,5 +266,232 @@ def test__update_rejects_overlap_before_saving(ds_service):
         DirectoryServices.update.__wrapped__(
             ds_service,
             MagicMock(),
-            {"enable": False, "configuration": ds_config(OVERLAP)["configuration"]},
+            {"enable": False, "configuration": ds_config(domain)["configuration"]},
         )
+
+
+@pytest.mark.parametrize(
+    "new, attributes",
+    [
+        pytest.param(ds_config(USES_PRIMARY_NAME), ["trusted_domains.0"], id="trusted_uses_primary_name"),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME | {"name": "ad03"}),
+            ["trusted_domains.0"],
+            id="trusted_uses_primary_name_in_other_case",
+        ),
+        pytest.param(ds_config(UNRELATED, USES_PRIMARY_NAME), ["trusted_domains.1"], id="later_trusted_domain"),
+        pytest.param(ds_config(DOMAIN1, DOMAIN1_AGAIN), ["trusted_domains.1"], id="trusted_domains_share_name"),
+        pytest.param(
+            ds_config(DOMAIN1, DOMAIN1_AGAIN | {"name": "domain1"}),
+            ["trusted_domains.1"],
+            id="trusted_domains_differ_by_case",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME, enable_trusted_domains=False),
+            ["trusted_domains.0"],
+            id="trusted_domains_disabled",
+        ),
+        pytest.param(
+            ds_config(DOMAIN1, DOMAIN1_AGAIN, enable_trusted_domains=False),
+            ["trusted_domains.1"],
+            id="duplicates_while_trusted_domains_disabled",
+        ),
+        pytest.param(
+            ds_config(DOMAIN1 | {"name": "AD03"}, USES_PRIMARY_NAME),
+            ["trusted_domains.0", "trusted_domains.1", "trusted_domains.1"],
+            id="primary_and_two_trusted_domains",
+        ),
+    ],
+)
+def test__duplicate_name_is_rejected(ds_service, new, attributes):
+    result = name_errors(ds_service, NOT_CONFIGURED, new)
+    assert [attribute for attribute, _ in result] == [f"{ATTR}.{attribute}" for attribute in attributes]
+
+
+@pytest.mark.parametrize(
+    "new, errmsg",
+    [
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME), "Domain name AD03 is already used by the primary domain.", id="primary"
+        ),
+        pytest.param(
+            ds_config(DOMAIN1, DOMAIN1_AGAIN | {"name": "domain1"}),
+            "Domain name domain1 is already used by trusted domain DOMAIN1.",
+            id="trusted",
+        ),
+    ],
+)
+def test__duplicate_name_error_message(ds_service, new, errmsg):
+    assert [message for _, message in name_errors(ds_service, NOT_CONFIGURED, new)] == [errmsg]
+
+
+@pytest.mark.parametrize(
+    "new",
+    [
+        pytest.param(ds_config(DOMAIN1, UNRELATED), id="unique_names"),
+        pytest.param(ds_config(USES_PRIMARY_NAME, idmap_domain=PRIMARY | {"name": None}), id="primary_without_name"),
+        pytest.param(
+            ds_config(DOMAIN1, builtin=BUILTIN | {"name": "DOMAIN1"}),
+            id="name_of_builtin_is_not_used",
+        ),
+        pytest.param(
+            {"service_type": DSType.IPA.value, "enable": True, "configuration": {"domain": "ipa.local"}},
+            id="other_service_type",
+        ),
+    ],
+)
+def test__no_name_conflict(ds_service, new):
+    assert name_errors(ds_service, NOT_CONFIGURED, new) == []
+
+
+@pytest.mark.parametrize(
+    "old, new",
+    [
+        pytest.param(ds_config(USES_PRIMARY_NAME), ds_config(USES_PRIMARY_NAME, enable=False), id="disable"),
+        pytest.param(ds_config(USES_PRIMARY_NAME, enable=False), ds_config(USES_PRIMARY_NAME), id="enable"),
+        pytest.param(ds_config(USES_PRIMARY_NAME), ds_config(USES_PRIMARY_NAME), id="update_while_enabled"),
+        pytest.param(ds_config(DOMAIN1, DOMAIN1_AGAIN), ds_config(DOMAIN1, DOMAIN1_AGAIN), id="saved_duplicates"),
+        pytest.param(
+            ds_config(DOMAIN1, DOMAIN1_AGAIN),
+            ds_config(DOMAIN1_AGAIN, DOMAIN1),
+            id="saved_duplicates_reordered",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME | {"sssd_compat": False}),
+            ds_config(USES_PRIMARY_NAME),
+            id="saved_row_has_other_keys",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME, enable_trusted_domains=False),
+            ds_config(USES_PRIMARY_NAME, enable_trusted_domains=False),
+            id="saved_while_trusted_domains_disabled",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME, enable_trusted_domains=False),
+            ds_config(USES_PRIMARY_NAME),
+            id="trusted_domains_enabled",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME),
+            ds_config(USES_PRIMARY_NAME, trusted(400000001, 500000000, name="DOMAIN2")),
+            id="add_unrelated_trusted_domain",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME),
+            ds_config(USES_PRIMARY_NAME | {"name": "DOMAIN1"}),
+            id="collision_is_fixed",
+        ),
+    ],
+)
+def test__existing_name_collision_keeps_working(ds_service, old, new):
+    assert name_errors(ds_service, old, new) == []
+
+
+@pytest.mark.parametrize(
+    "old, new",
+    [
+        pytest.param(ds_config(enable=False), ds_config(USES_PRIMARY_NAME, enable=False), id="saved_while_disabled"),
+        pytest.param(ds_config(), ds_config(USES_PRIMARY_NAME, enable=False), id="saved_in_disabling_call"),
+        pytest.param(ds_config(enable=False), ds_config(USES_PRIMARY_NAME), id="saved_in_enabling_call"),
+        pytest.param(
+            {"service_type": DSType.LDAP.value, "enable": False, "configuration": {"basedn": "dc=ad03"}},
+            ds_config(USES_PRIMARY_NAME),
+            id="switch_from_other_service",
+        ),
+        pytest.param(ds_config(UNRELATED), ds_config(UNRELATED | {"name": "AD03"}), id="trusted_domain_renamed"),
+        pytest.param(
+            ds_config(UNRELATED),
+            ds_config(UNRELATED, idmap_domain=PRIMARY | {"name": "DOMAIN2"}),
+            id="primary_domain_renamed",
+        ),
+        pytest.param(
+            ds_config(UNRELATED, idmap_domain=PRIMARY | {"name": None}),
+            ds_config(UNRELATED, idmap_domain=PRIMARY | {"name": "DOMAIN2"}),
+            id="primary_domain_gets_name",
+        ),
+        pytest.param(
+            ds_config(enable_trusted_domains=False),
+            ds_config(PRIMARY_COPY | {"name": "AD03"}, enable_trusted_domains=False),
+            id="trusted_domain_copies_all_primary_settings",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME),
+            ds_config(USES_PRIMARY_NAME, trusted(400000001, 500000000, name="ad03")),
+            id="another_domain_joins_collision",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME),
+            ds_config(USES_PRIMARY_NAME | {"range_high": 500000000}),
+            id="range_of_collision_changed",
+        ),
+        pytest.param(
+            ds_config(USES_PRIMARY_NAME),
+            ds_config(USES_PRIMARY_NAME | {"idmap_backend": "AD"}),
+            id="backend_of_collision_changed",
+        ),
+    ],
+)
+def test__update_introducing_name_collision_is_rejected(ds_service, old, new):
+    assert name_errors(ds_service, old, new)
+
+
+class ReachedDnsValidation(Exception):
+    pass
+
+
+def enable_with_workgroup(ds_service, saved, data, workgroup):
+    """Run the body of directoryservices.update for a request that enables directory services, stopping at the DNS
+    checks that follow credential validation. Validating the credential replaces the name of the primary domain with
+    the workgroup that the domain controller reports."""
+
+    def fake_call_sync(method, *args, **kwargs):
+        match method:
+            case "directoryservices.config":
+                return saved
+            case "failover.is_single_master_node":
+                return True
+            case "idmap.clear_idmap_cache" | "kerberos.kdestroy" | "revert.credential":
+                return MagicMock()
+
+        raise AssertionError(f"unexpected middleware call_sync: {method}")
+
+    def fake_validate_credential(schema, new, verrors, revert):
+        revert.append({"method": "revert.credential", "args": []})
+        new["configuration"]["idmap"]["idmap_domain"]["name"] = workgroup
+
+    ds_service.middleware.call_sync = MagicMock(side_effect=fake_call_sync)
+    ds_service.validate_dns = MagicMock(side_effect=ReachedDnsValidation)
+
+    with (
+        patch("middlewared.plugins.directoryservices_.datastore.validate_credential", fake_validate_credential),
+        patch("middlewared.plugins.directoryservices_.datastore.expire_cache"),
+    ):
+        # bypass the api_method argument validation wrapper
+        DirectoryServices.update.__wrapped__(ds_service, MagicMock(), data)
+
+
+@pytest.mark.parametrize("send_configuration", [False, True], ids=["configuration_saved_earlier", "configuration_sent"])
+def test__update_rejects_collision_with_name_from_domain_controller(ds_service, send_configuration):
+    saved = ds_config(USES_PRIMARY_NAME, enable=False, idmap_domain=PRIMARY | {"name": None})
+    data = {"enable": True}
+    if send_configuration:
+        data["configuration"] = deepcopy(saved["configuration"])
+
+    with pytest.raises(ValidationErrors) as exc:
+        enable_with_workgroup(ds_service, saved, data, "AD03")
+
+    assert [attribute for attribute, _, _ in exc.value] == [f"{ATTR}.trusted_domains.0"]
+    ds_service.validate_dns.assert_not_called()
+    assert "revert.credential" in [call.args[0] for call in ds_service.middleware.call_sync.call_args_list]
+
+
+@pytest.mark.parametrize(
+    "saved",
+    [
+        pytest.param(ds_config(USES_PRIMARY_NAME, enable=False), id="saved_collision"),
+        pytest.param(ds_config(UNRELATED, enable=False, idmap_domain=PRIMARY | {"name": None}), id="no_collision"),
+    ],
+)
+def test__update_continues_after_name_from_domain_controller(ds_service, saved):
+    with pytest.raises(ReachedDnsValidation):
+        enable_with_workgroup(ds_service, saved, {"enable": True}, "AD03")
