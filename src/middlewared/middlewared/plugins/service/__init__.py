@@ -509,6 +509,16 @@ class ServiceService(CRUDService[ServiceEntry]):
         """
         Reload the service specified by ``service``.
         """
+        try:
+            return await self._reload(app, service, options)
+        except Exception:
+            if not options.silent:
+                raise
+
+            self.logger.error('%s: failed to reload service', service, exc_info=True)
+            return False
+
+    async def _reload(self, app: App, service: str, options: ServiceOptions) -> bool:
         # Check permissions before calling the private method
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to reload service', errno.EPERM)
@@ -543,9 +553,6 @@ class ServiceService(CRUDService[ServiceEntry]):
                 else:
                     return await self._restart(service, service_object)
         except asyncio.TimeoutError:
-            if options.silent:
-                return False
-
             raise CallError('Timed out while reloading the service', errno.ETIMEDOUT)
 
     SERVICES: dict[str, ServiceInterface] = {}
