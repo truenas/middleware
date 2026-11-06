@@ -66,6 +66,7 @@ Optional option
     --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
     --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
     --test_dir <api2>           - Name of the tests directory from which to run tests
+    --enterprise_tests          - Run enterprise tests
     --extended_tests            - Run extended tests
     """ % argv[0]
 
@@ -95,6 +96,7 @@ option_list = [
     "ha-license-path=",
     "hostname=",
     "show_locals",
+    "enterprise_tests",
     "extended_tests",
 ]
 
@@ -123,6 +125,7 @@ gateway = None
 ha_license = ''
 hostname = None
 show_locals = False
+enterprise_tests = False
 extended_tests = False
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -173,6 +176,8 @@ for output, arg in myopts:
             ha_license = f.read()
     elif output == '--show_locals':
         show_locals = True
+    elif output == '--enterprise_tests':
+        enterprise_tests = True
     elif output == '--extended_tests':
         extended_tests = True
 
@@ -286,6 +291,7 @@ ha_license = {ha_license!r}
 update = {update}
 artifacts = "{artifacts}"
 isns_ip = "{isns_ip}"
+enterprise_tests = {enterprise_tests}
 extended_tests = {extended_tests}
 """
 
