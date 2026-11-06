@@ -111,11 +111,9 @@ class WebshareSession:
         self.websocket = websocket_
 
     def call(self, method, params=None):
-        call_id = str(uuid.uuid4())
-        self.websocket.send(json.dumps({"jsonrpc": "2.0", "id": call_id, "method": method, "params": params or {}}))
+        call_id = self._send(method, params)
         while True:
-            _opcode, message = self.websocket.recv_data()
-            answer = json.loads(message.decode())
+            answer = self._recv()
             if answer.get("id") == call_id:
                 break
 
@@ -126,6 +124,52 @@ class WebshareSession:
 
     def shares(self):
         return {share["name"]: share for share in self.call("shares.list")["shares"]}
+
+    def list_directory(self, path, file_handle):
+        """Return the names listed in `path`, hidden files included.
+
+        `directory.list` only answers that the listing started; the entries follow as
+        `directory.list.update` notifications, the last of which is marked complete.
+        """
+        call_id = self._send("directory.list", {
+            "path": path,
+            "fileHandle": file_handle,
+            "showHidden": True,
+            "offset": 0,
+            "limit": 1000,
+            "sortBy": "name",
+            "sortOrder": "asc",
+            "metadata": "minimal",
+        })
+        names = []
+        while True:
+            answer = self._recv()
+            if answer.get("id") == call_id:
+                if "error" in answer:
+                    raise WebshareError(answer["error"])
+
+                continue
+
+            params = answer.get("params") or {}
+            if params.get("path") != path:
+                continue
+
+            if answer.get("method") == "directory.list.error":
+                raise WebshareError(params)
+
+            if answer.get("method") == "directory.list.update":
+                names.extend(item["name"] for item in params["items"])
+                if params["complete"]:
+                    return names
+
+    def _send(self, method, params):
+        call_id = str(uuid.uuid4())
+        self.websocket.send(json.dumps({"jsonrpc": "2.0", "id": call_id, "method": method, "params": params or {}}))
+        return call_id
+
+    def _recv(self):
+        _opcode, message = self.websocket.recv_data()
+        return json.loads(message.decode())
 
 
 @contextlib.contextmanager
