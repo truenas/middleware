@@ -42,9 +42,6 @@ async def get_urls(context: ServiceContext) -> list[str]:
 
 
 async def tn_connect_hostname_updated(middleware: Middleware) -> None:
-    if not await middleware.call2(middleware.services.service.started, "webshare"):
-        return
-
     await middleware.call2(middleware.services.service.control, "RELOAD", "webshare")
 
 
