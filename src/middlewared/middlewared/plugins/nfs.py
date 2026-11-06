@@ -23,6 +23,7 @@ from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.plugins.nfs_ import release
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.plugins.nfs_.validators import (
@@ -160,6 +161,10 @@ class NFSService(SystemServiceService):
         # in a middleware 'setup' hook.  See NAS-131762
         if not self.middleware.call_sync('system.ready'):
             self.middleware.call_sync('nfs.clear_nfs3_rmtab')
+
+    @private
+    def release_dataset_filesystems(self, name):
+        return release.release_dataset_filesystems(self.context, name)
 
     @private
     async def rdma_capable(self):
