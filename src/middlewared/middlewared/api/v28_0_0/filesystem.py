@@ -137,7 +137,8 @@ FILESYSTEM_STATX_ATTRS = Literal[
     'VERIFY',
     'DAX',
     'POSIXACL',
-    'NFSV4ACL'
+    'NFSV4ACL',
+    'RDONLY'
 ]
 
 
