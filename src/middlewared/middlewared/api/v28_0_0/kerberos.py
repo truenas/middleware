@@ -21,6 +21,7 @@ __all__ = [
     'KerberosKeytabCreateArgs', 'KerberosKeytabCreateResult',
     'KerberosKeytabUpdateArgs', 'KerberosKeytabUpdateResult',
     'KerberosKeytabDeleteArgs', 'KerberosKeytabDeleteResult',
+    'KerberosKeytabKerberosPrincipalChoicesArgs', 'KerberosKeytabKerberosPrincipalChoicesResult',
 ]
 
 
@@ -180,3 +181,13 @@ class KerberosKeytabDeleteArgs(BaseModel):
 
 class KerberosKeytabDeleteResult(BaseModel):
     result: None = Field(description="Returns `null` when the Kerberos keytab entry is successfully deleted.")
+
+
+class KerberosKeytabKerberosPrincipalChoicesArgs(BaseModel):
+    pass
+
+
+class KerberosKeytabKerberosPrincipalChoicesResult(BaseModel):
+    result: list[str] = Field(
+        description="Unique principal names in the system keytab, sorted. Empty if the system keytab does not exist.",
+    )
