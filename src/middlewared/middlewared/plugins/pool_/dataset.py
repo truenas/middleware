@@ -990,6 +990,8 @@ class PoolDatasetService(CRUDService):
                 {'immutable': False},
             )
 
+        # NFS clients' locks and state keep files open after their shares are gone
+        await self.middleware.call('nfs.release_dataset_filesystems', id_)
         try:
             async with self.s.truesearch.remove_mountpoint(mountpoint):
                 await self.call2(
