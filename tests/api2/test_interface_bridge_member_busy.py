@@ -12,14 +12,13 @@ pytestmark = non_ha_test
 
 @pytest.fixture(scope="module")
 def primary_interface():
-    # The commit below must fail *while this connection stays up*. Without a database row the sync
-    # flushes the NIC's address, and with DHCP it restarts dhcpcd, so either way the address flaps and
-    # the CallError never reaches the client. test_005 normally leaves the NIC static.
-    if not call("datastore.query", "network.interfaces", [["int_interface", "=", interface]]):
-        pytest.skip(f"{interface} has no persisted network configuration")
+    # test_005 normally leaves the NIC static.
+    assert call("datastore.query", "network.interfaces", [["int_interface", "=", interface]])
+
     iface = call("interface.query", [["name", "=", interface]], {"get": True})
-    if iface["ipv4_dhcp"] or not iface["aliases"]:
-        pytest.skip(f"{interface} is not configured with a static address")
+    assert not iface["ipv4_dhcp"]
+    assert iface["aliases"]
+
     return iface
 
 

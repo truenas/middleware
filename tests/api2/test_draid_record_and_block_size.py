@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.pool import another_pool
+from middlewared.test.integration.assets.pool import another_pool, draid_pool as _draid_pool
 from middlewared.test.integration.utils import call
 
 from auto_config import ha
@@ -15,19 +15,8 @@ def check_unused_disks():
 
 @pytest.fixture(scope='module')
 def draid_pool():
-    unused_disks = call('disk.get_unused')
-    with another_pool({
-        'name': 'test_draid_pool',
-        'topology': {
-            'data': [{
-                'disks': [disk['name'] for disk in unused_disks[:2]],
-                'type': 'DRAID1',
-                'draid_data_disks': 1
-            }],
-        },
-        'allow_duplicate_serials': True,
-    }) as pool_name:
-        yield pool_name
+    with _draid_pool() as pool:
+        yield pool
 
 
 @pytest.fixture(scope='module')
@@ -42,8 +31,8 @@ def mirror_pool():
             }],
         },
         'allow_duplicate_serials': True,
-    }) as pool_name:
-        yield pool_name
+    }) as pool:
+        yield pool
 
 
 @pytest.mark.usefixtures('check_unused_disks')
