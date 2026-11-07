@@ -124,6 +124,7 @@ from .vm_device import *
 from .vmware import *
 from .webshare import *
 from .webui_crypto import *
+from .webui_dataset import *
 from .webui_enclosure import *
 from .webui_main_dashboard import *
 from .zfs_resource_crud import *
