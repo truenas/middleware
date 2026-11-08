@@ -1,12 +1,31 @@
 import os
 
-from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceCreateProperties, ZFSResourceQuery
+from middlewared.api.current import (
+    ZFSResourceCreateArgsData,
+    ZFSResourceCreateProperties,
+    ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
+)
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
 
 from .utils import CONTAINER_DS_NAME, container_dataset, container_dataset_mountpoint
 
 CONTAINER_DS_PARENT_DIR = f"/mnt/{CONTAINER_DS_NAME}"
+
+
+async def pin_dedup_off(context: ServiceContext, pool: str) -> None:
+    ds = container_dataset(pool)
+    for row in await context.call2(
+        context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[ds], properties=["dedup"], get_source=True)
+    ):
+        dedup = row["properties"]["dedup"]
+        if dedup["raw"] != "off" or dedup["source"]["type"] != "LOCAL":
+            await context.call2(
+                context.s.zfs.resource.set_impl,
+                ZFSResourceSetArgsData(path=ds, properties=ZFSResourceSetProperties(dedup="off"), bypass=True),
+            )
 
 
 async def ensure_datasets(context: ServiceContext, pool: str) -> None:
@@ -42,10 +61,13 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
                     acltype="posix",
                     aclmode="discard",
                     snapdir="hidden",
+                    dedup="off",
                 ),
                 bypass=True,
             ),
         )
+    else:
+        await pin_dedup_off(context, pool)
 
     if not await context.to_thread(os.path.ismount, f"/mnt{main_dataset_mountpoint}"):
         await context.call2(context.s.zfs.resource.mount, main_dataset)

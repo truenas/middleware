@@ -10,6 +10,7 @@ from .utils import SYSDATASET_PATH
 class SystemDatasetZfsProperties(StrEnum):
     ATIME = 'atime'
     CANMOUNT = 'canmount'
+    DEDUP = 'dedup'
     MOUNTPOINT = 'mountpoint'
     PREFETCH = 'prefetch'
     PRIMARYCACHE = 'primarycache'
@@ -99,6 +100,7 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         {
             'name': os.path.join(pool_name, '.system'),
             'props': {
+                SystemDatasetZfsProperties.DEDUP: 'off',
                 SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
                 SystemDatasetZfsProperties.READONLY: 'off',
                 SystemDatasetZfsProperties.SNAPDIR: 'hidden',

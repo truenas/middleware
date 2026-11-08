@@ -753,7 +753,8 @@ class SystemDatasetService(ConfigService):
                 self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(
                     paths=list(datasets),
-                    properties=['encryption', 'quota', 'used'] + list(SystemDatasetZfsProperties)
+                    properties=['encryption', 'quota', 'used'] + list(SystemDatasetZfsProperties),
+                    get_source=True,
                 ),
             )
         }
@@ -793,7 +794,14 @@ class SystemDatasetService(ConfigService):
                 # encryption cannot be changed once a dataset exists
                 update_props = {
                     k: v for k, v in props.items()
-                    if k != 'encryption' and datasets_prop[dataset][k]['raw'] != v
+                    if k != 'encryption' and (
+                        datasets_prop[dataset][k]['raw'] != v
+                        # inheriting "off" still follows the pool root once it is set to on
+                        or (
+                            k == SystemDatasetZfsProperties.DEDUP
+                            and datasets_prop[dataset][k]['source']['type'] != 'LOCAL'
+                        )
+                    )
                 }
                 if update_props:
                     await self.call2(

@@ -21,7 +21,7 @@ from middlewared.utils.filesystem.perms import enforce_dir_perms
 from middlewared.utils.memory import get_memory_info
 
 from .bridge import BRIDGE_NAME, configure_container_bridge
-from .dataset import CONTAINER_DS_PARENT_DIR
+from .dataset import CONTAINER_DS_PARENT_DIR, pin_dedup_off
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
 IDMAPPED_ROOT_DIR = "/run/truenas_containers/root"
@@ -115,6 +115,7 @@ def start(context: ServiceContext, id_: int) -> None:
     apply_idmapped_root_acl()
 
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
+    context.run_coroutine(pin_dedup_off(context, container.dataset.split("/")[0]))
     if any(
         isinstance(device.attributes, ContainerNICDevice) and device.attributes.nic_attach == BRIDGE_NAME
         for device in container.devices

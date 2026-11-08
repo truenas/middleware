@@ -93,12 +93,15 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
     actual_docker_datasets = {
         i['name']: i['properties'] for i in context.call_sync2(
             context.s.zfs.resource.list_impl,
-            ZFSResourceQuery(paths=expected_docker_datasets, properties=list(expected_values)),
+            ZFSResourceQuery(paths=expected_docker_datasets, properties=list(expected_values), get_source=True),
         )
     }
     for dataset_name in expected_docker_datasets:
         if existing_dataset := actual_docker_datasets.get(dataset_name):
-            if any(val['raw'] != expected_values[name] for name, val in existing_dataset.items()):
+            if any(
+                val['raw'] != expected_values[name] or (name == 'dedup' and val['source']['type'] != 'LOCAL')
+                for name, val in existing_dataset.items()
+            ):
                 # if any of the zfs properties don't match what we expect we'll update all properties
                 context.call_sync2(
                     context.s.zfs.resource.set_impl,
