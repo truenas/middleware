@@ -463,12 +463,18 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                     f'{schema_name}.cpuset',
                     f'Must be specified when "{schema_name}.pin_vcpus" is set.'
                 )
-            elif len(parse_numeric_set(data.cpuset)) != vcpus:
-                verrors.add(
-                    f'{schema_name}.pin_vcpus',
-                    f'Number of cpus in "{schema_name}.cpuset" must be equal to total number '
-                    'vcpus if pinning is enabled.'
-                )
+            else:
+                try:
+                    cpus = parse_numeric_set(data.cpuset)
+                except ValueError as e:
+                    verrors.add(f'{schema_name}.cpuset', f'Invalid cpuset format: {e}')
+                else:
+                    if len(cpus) != vcpus:
+                        verrors.add(
+                            f'{schema_name}.pin_vcpus',
+                            f'Number of cpus in "{schema_name}.cpuset" must be equal to total number '
+                            'vcpus if pinning is enabled.'
+                        )
 
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
