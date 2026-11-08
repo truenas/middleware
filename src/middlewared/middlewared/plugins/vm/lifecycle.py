@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import os
 import typing
 
@@ -54,16 +55,26 @@ def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None
 def stop_vm(context: ServiceContext, id_: int, options: VMStopOptions) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     libvirt_domain = pylibvirt_vm(context, vm)
-    if options.force:
-        context.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
-        return
+    vms = context.middleware.libvirt_domains_manager.vms
+    try:
+        if options.force:
+            vms.destroy(libvirt_domain)
+            return
 
-    context.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm.shutdown_timeout)
-    if (
-        options.force_after_timeout
-        and context.call_sync2(context.s.vm.get_instance, id_).status.state == 'RUNNING'
-    ):
-        context.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
+        if vm.status.state == 'SUSPENDED':
+            # A paused guest cannot act on the shutdown request.
+            vms.resume(libvirt_domain)
+
+        vms.shutdown(libvirt_domain, vm.shutdown_timeout)
+        if context.call_sync2(context.s.vm.get_instance, id_).status.state != 'STOPPED':
+            if options.force_after_timeout:
+                vms.destroy(libvirt_domain)
+            else:
+                raise CallError(
+                    f'VM {vm.name!r} did not stop within {vm.shutdown_timeout} seconds', errno.ETIMEDOUT,
+                )
+    except PyLibvirtError as e:
+        raise CallError(str(e))
 
 
 def poweroff_vm(context: ServiceContext, id_: int) -> None:

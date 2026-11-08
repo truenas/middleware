@@ -143,16 +143,24 @@ def start(context: ServiceContext, id_: int) -> None:
 def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> None:
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
     pylibvirt_container_obj = pylibvirt_container(context, container)
-    if options.force:
-        context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
-        return
+    containers = context.middleware.libvirt_domains_manager.containers
+    try:
+        if options.force:
+            containers.destroy(pylibvirt_container_obj)
+            return
 
-    context.middleware.libvirt_domains_manager.containers.shutdown(pylibvirt_container_obj)
-    if (
-        options.force_after_timeout
-        and context.run_coroutine(context.call2(context.s.container.get_instance, id_)).status.state == "RUNNING"
-    ):
-        context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
+        containers.shutdown(pylibvirt_container_obj)
+        state = context.run_coroutine(context.call2(context.s.container.get_instance, id_)).status.state
+        if state != "STOPPED":
+            if options.force_after_timeout:
+                containers.destroy(pylibvirt_container_obj)
+            else:
+                raise CallError(
+                    f"Container {container.name!r} did not stop within {container.shutdown_timeout} seconds",
+                    errno.ETIMEDOUT,
+                )
+    except PyLibvirtError as e:
+        raise CallError(str(e))
 
 
 def pylibvirt_container(
