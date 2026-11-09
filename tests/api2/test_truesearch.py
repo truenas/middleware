@@ -1,22 +1,28 @@
 import os
+import struct
 import time
 
 import pytest
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.entitlements import entitled
+from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, host, mock, ssh
 
 USERNAME = 'alex'
 PASSWORD = 'password'
 SHARE_NAME = 'alex'
+PASSPHRASE = 'truesearch-passphrase'
 
 
 @pytest.fixture(scope='module')
 def make_available():
+    # truesearchd and truesearch-indexer each ask middleware for the entitlement when they start.
     with mock('truesearch.unavailable_reasons', return_value=[]):
-        yield
+        with entitled('TRUESEARCH'):
+            yield
 
 
 @pytest.fixture(scope='module')
@@ -32,16 +38,16 @@ def share(make_available):
             'group_create': True,
             'password': PASSWORD
         }):
-            with smb_share(os.path.join('/mnt', ds), SHARE_NAME):
-                # FIXME: Remove this when we fix https://ixsystems.atlassian.net/browse/NAS-137715
-                ssh("chmod 777 /run/truesearch/truesearch-es.sock")
-
+            with smb_share(os.path.join('/mnt', ds), SHARE_NAME) as smb:
                 yield {
                     'dataset': ds,
+                    'share': smb,
                 }
 
 
 def expect_search_result(expected: list[str]):
+    # This search goes through SMB, as a search from a Mac does. mdsearch is the Spotlight client of Samba, so the
+    # query uses the Spotlight syntax. truesearch.query does not use this syntax.
     for i in range(10):
         result = ssh(f"mdsearch --debug-stdout -U {USERNAME} --password={PASSWORD} {host().ip} {SHARE_NAME} "
                      "'kMDItemDisplayName==\"*test*\"'", check=False, complete_response=True)
@@ -53,18 +59,190 @@ def expect_search_result(expected: list[str]):
         assert False, (result["returncode"], result["output"])
 
 
+def query(path: str, filters: list, **fields):
+    return call('truesearch.query', {
+        'path': path, 'query-filters': filters, 'query-options': {'limit': 100}, **fields,
+    })
+
+
+def expect_api_query(path: str, filters: list, expected: list[str], **fields):
+    for i in range(10):
+        try:
+            result = query(path, filters, **fields)
+        except Exception as e:
+            # The index target of a dataset mounted a moment ago is not served yet.
+            result = e
+        else:
+            if sorted(entry['path'] for entry in result) == sorted(expected):
+                return result
+
+        time.sleep(5)
+
+    assert False, result
+
+
 def test_index_and_search(share):
     expect_search_result(["mytest.txt"])
 
 
-def test_index_new_dataset(share):
+def test_query_api(share):
+    hits = expect_api_query(f"/mnt/{share['dataset']}", [['name', 'Crin', 'MYTEST']],
+                            [f"/mnt/{share['dataset']}/mytest.txt"])
+    assert hits[0]['name'] == 'mytest.txt'
+    assert hits[0]['inode'] == int(ssh(f"stat -c %i /mnt/{share['dataset']}/mytest.txt"))
+    # The ZFS file handle that the description of `generation` gives is the handle of the kernel.
+    path = f"/mnt/{share['dataset']}/mytest.txt"
+    kernel = ssh(f"python3 -c \"import truenas_os; print(bytes(truenas_os.fhandle(path='{path}')).hex())\"").strip()
+    body = (
+        struct.pack('<H', 10) + hits[0]['inode'].to_bytes(6, 'little')
+        + (hits[0]['generation'] or 1).to_bytes(4, 'little')
+    )
+    assert kernel == (struct.pack('<Ii', len(body), 1) + body).hex()
+    assert hits[0]['type'] == 'FILE'
+    assert hits[0]['size'] == 0
+
+
+def expect_status(ds: str):
+    for i in range(10):
+        status = call('truesearch.status')
+        entry = next((d for d in status['datasets'] if d['dataset'] == ds), None)
+        if entry is not None and entry['state'] == 'READY' and entry['served']:
+            return status, entry
+
+        time.sleep(5)
+
+    assert False, status
+
+
+def daemon_pids() -> list[str]:
+    return ssh("systemctl show -p MainPID --value truesearchd truesearch-indexer").split()
+
+
+def environments() -> set[str]:
+    return set(ssh("ls /var/db/system/truesearchd").split())
+
+
+def test_status(share):
+    status, entry = expect_status(share['dataset'])
+    assert status['running'] is True
+    assert entry['path'] == f"/mnt/{share['dataset']}"
+    assert entry['entries'] >= 1
+    assert entry['last_full_pass'] is not None
+
+
+def test_nested_dataset_has_its_own_index(share):
     with dataset('truesearch/nested', data={'share_type': 'SMB'}) as ds:
         ssh(f"touch /mnt/{ds}/anothertest.txt")
 
         # TrueSearch is reconfigured 1 second after the mount and then needs time to index
-        time.sleep(5)
+        expect_api_query(f"/mnt/{ds}", [['name', '^', 'anothertest']], [f"/mnt/{ds}/anothertest.txt"])
 
-        expect_search_result(["mytest.txt", "nested/anothertest.txt"])
+        # A search through a share stays on the share's dataset.
+        expect_search_result(["mytest.txt"])
+
+        # A query from the parent dataset finds the file only with recursive.
+        parent = f"/mnt/{share['dataset']}"
+        assert query(parent, [['name', '^', 'anothertest']]) == []
+        expect_api_query(parent, [['name', '^', 'anothertest']], [f"/mnt/{ds}/anothertest.txt"], recursive=True)
+
+
+def test_destroying_an_indexed_dataset_keeps_the_others_served(share):
+    with dataset('truesearch/destroyed', data={'share_type': 'SMB'}) as ds:
+        ssh(f"touch /mnt/{ds}/destroyedtest.txt")
+        expect_api_query(f"/mnt/{ds}", [['name', '^', 'destroyedtest']], [f"/mnt/{ds}/destroyedtest.txt"])
+        pids = daemon_pids()
+
+    # The destroy released that dataset with a reload. Both daemons continued to run and to serve the share.
+    assert daemon_pids() == pids
+    status, entry = expect_status(share['dataset'])
+    assert ds not in [d['dataset'] for d in status['datasets']]
+    expect_search_result(["mytest.txt"])
+
+
+def test_a_disabled_share_keeps_its_index(share):
+    with dataset('truesearch_other', data={'share_type': 'SMB'}) as other:
+        with smb_share(os.path.join('/mnt', other), 'truesearch_other'):
+            expect_status(other)
+            expect_status(share['dataset'])
+            kept, pids = environments(), daemon_pids()
+
+            call('sharing.smb.update', share['share']['id'], {'enabled': False})
+            try:
+                # TrueSearch continues to run for the other share. The dataset of the disabled share is not
+                # indexed, and its index stays.
+                assert share['dataset'] not in [d['dataset'] for d in call('truesearch.status')['datasets']]
+                assert environments() == kept
+                assert daemon_pids() == pids
+            finally:
+                call('sharing.smb.update', share['share']['id'], {'enabled': True})
+
+            expect_status(share['dataset'])
+            expect_search_result(["mytest.txt"])
+            assert environments() == kept
+
+
+def test_export_and_import_keep_the_index(share):
+    with another_pool() as pool:
+        with dataset('indexed', data={'share_type': 'SMB'}, pool=pool['name']) as ds:
+            ssh(f"touch /mnt/{ds}/exportedtest.txt")
+            with smb_share(os.path.join('/mnt', ds), 'truesearch_export'):
+                expect_api_query(f"/mnt/{ds}", [['name', '^', 'exportedtest']], [f"/mnt/{ds}/exportedtest.txt"])
+                kept, pids = environments(), daemon_pids()
+
+                # TrueSearch releases the pool with a reload, so the export stops neither daemon.
+                call('pool.export', pool['id'], job=True)
+                assert daemon_pids() == pids
+                assert environments() == kept
+                expect_search_result(["mytest.txt"])
+
+                call('pool.import_pool', {'guid': pool['guid']}, job=True)
+                # The import enables the share again. The daemons open the old index and do not build a new one.
+                expect_api_query(f"/mnt/{ds}", [['name', '^', 'exportedtest']], [f"/mnt/{ds}/exportedtest.txt"])
+                assert environments() == kept
+
+
+def test_the_index_dataset_is_encrypted_with_the_pwenc_secret(share):
+    pool = call('systemdataset.config')['pool']
+    properties = ssh(f"zfs get -H -o value encryption,keyformat,keylocation,keystatus {pool}/.system/truesearchd")
+    assert properties.split() == ['aes-256-gcm', 'raw', 'file:///data/pwenc_secret', 'available']
+
+
+def test_an_encrypted_dataset_is_indexed_and_can_be_locked(share):
+    with dataset('truesearch/locked', data={
+        'share_type': 'SMB',
+        'encryption': True,
+        'inherit_encryption': False,
+        'encryption_options': {'generate_key': False, 'passphrase': PASSPHRASE},
+    }) as ds:
+        ssh(f"touch /mnt/{ds}/lockedtest.txt")
+        expect_api_query(f"/mnt/{ds}", [['name', '^', 'lockedtest']], [f"/mnt/{ds}/lockedtest.txt"])
+        kept = environments()
+
+        # Both daemons release the dataset before the lock unmounts it. Its row is disabled, and its index stays.
+        call('pool.dataset.lock', ds, job=True)
+        assert ds not in [d['dataset'] for d in call('truesearch.status')['datasets']]
+        assert environments() == kept
+
+        call('pool.dataset.unlock', ds.split('/')[0], {
+            'datasets': [{'name': ds, 'passphrase': PASSPHRASE}], 'recursive': True,
+        }, job=True)
+        expect_api_query(f"/mnt/{ds}", [['name', '^', 'lockedtest']], [f"/mnt/{ds}/lockedtest.txt"])
+
+
+def test_a_system_dataset_move_makes_the_index_dataset_again(share):
+    pool = call('systemdataset.config')['pool']
+    with another_pool() as other:
+        call('systemdataset.update', {'pool': other['name']}, job=True)
+        try:
+            index_dataset = f"{other['name']}/.system/truesearchd"
+            properties = ssh(f"zfs get -H -o value encryption,keyformat,keylocation {index_dataset}")
+            assert properties.split() == ['aes-256-gcm', 'raw', 'file:///data/pwenc_secret']
+            # The indexes are not copied. truesearch-indexer builds them again on the new pool.
+            expect_search_result(["mytest.txt"])
+        finally:
+            call('systemdataset.update', {'pool': pool}, job=True)
+
+    expect_search_result(["mytest.txt"])
 
 
 def test_user_cannot_read_file(share):
@@ -77,3 +255,46 @@ def test_user_cannot_read_file(share):
     call("filesystem.setperm", {"path": prohibited_dir, "mode": "700", "options": {"stripacl": True}}, job=True)
 
     expect_search_result(["mytest.txt"])
+
+
+def test_query_as_a_user(share):
+    hidden_dir = f"/mnt/{share['dataset']}/hidden"
+    ssh(f"mkdir {hidden_dir}")
+    ssh(f"touch {hidden_dir}/hiddentest.txt")
+    call("filesystem.setperm", {"path": hidden_dir, "mode": "700", "options": {"stripacl": True}}, job=True)
+
+    # Root sees every match. The user sees what the user can reach.
+    expect_api_query(f"/mnt/{share['dataset']}", [['name', '^', 'hiddentest']], [f"{hidden_dir}/hiddentest.txt"])
+    assert query(f"/mnt/{share['dataset']}", [['name', '^', 'hiddentest']], username=USERNAME) == []
+
+
+def test_query_filters(share):
+    base = f"/mnt/{share['dataset']}/filters"
+    ssh(f"mkdir -p {base}/docs && truncate -s 3000 {base}/report.pdf && truncate -s 10 {base}/notes.txt && "
+        f"ln -s notes.txt {base}/link")
+    # A Mac stores Finder tags in a Samba stream: a binary plist and one trailing byte.
+    ssh(f"""python3 - <<'EOF'
+import os, plistlib
+os.setxattr({base + '/notes.txt'!r}, 'user.DosStream.com.apple.metadata\\uf022_kMDItemUserTags:$DATA',
+            plistlib.dumps(['Red\\n6'], fmt=plistlib.FMT_BINARY) + b'\\0')
+EOF""")
+
+    expect_api_query(base, [['name', 'C^', 'REPORT']], [f"{base}/report.pdf"])
+    expect_api_query(base, [['macos_kind', '=', 'PDF']], [f"{base}/report.pdf"])
+    expect_api_query(base, [['size', '>', 1000], ['type', '=', 'FILE']], [f"{base}/report.pdf"])
+    expect_api_query(base, [['type', '=', 'DIRECTORY']], [f"{base}/docs"])
+    expect_api_query(base, [['type', '=', 'SYMLINK']], [f"{base}/link"])
+    expect_api_query(base, [['type', '=', 'FILE']], [f"{base}/report.pdf", f"{base}/notes.txt"])
+    expect_api_query(base, [['tags', 'Crin', 'red']], [f"{base}/notes.txt"])
+    expect_api_query(base, [['OR', [['name', 'Crin', 'OTES'], ['name', '$', '.pdf']]]],
+                     [f"{base}/notes.txt", f"{base}/report.pdf"])
+    expect_api_query(base, [['mtime.$date', '>', '2000-01-01T00:00:00']],
+                     [f"{base}/docs", f"{base}/report.pdf", f"{base}/notes.txt", f"{base}/link"])
+    assert len(query(base, [])) == 4
+    assert len(query(base, [], **{'query-options': {'limit': 1}})) == 1
+
+    with pytest.raises(ValidationErrors):
+        query(base, [['name', '~', 'rep.*']])
+    for option in ({'order_by': ['size']}, {'offset': 1}, {'get': True}, {'select': ['name']}):
+        with pytest.raises(ValidationErrors):
+            query(base, [], **{'query-options': option})

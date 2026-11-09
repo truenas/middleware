@@ -2,7 +2,6 @@ from enum import StrEnum
 import os
 
 from middlewared.plugins.vm.utils import LIBVIRT_QEMU_GID, LIBVIRT_QEMU_UID
-from middlewared.utils.truesearch import TRUESEARCH_GID, TRUESEARCH_UID
 
 from .utils import SYSDATASET_PATH
 
@@ -87,10 +86,25 @@ SYSTEM_DATASET_JSON_SCHEMA = {
                     'required': ['method']
                 }
             },
+            'pwenc_encrypted': {'type': 'boolean'},
         },
         'required': ['name', 'props', 'chown_config'],
         'additionalProperties': False,
     }
+}
+
+
+# These are the properties of a dataset that holds an LMDB store. The tiering dataset and the TrueSearch index dataset
+# use them. Each spec gets a copy, because setup_datasets changes the properties of a spec.
+MDBSTORE_PROPS = {
+    SystemDatasetZfsProperties.ATIME: 'off',
+    SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
+    SystemDatasetZfsProperties.READONLY: 'off',
+    SystemDatasetZfsProperties.SNAPDIR: 'hidden',
+    SystemDatasetZfsProperties.PREFETCH: 'none',
+    SystemDatasetZfsProperties.PRIMARYCACHE: 'metadata',
+    SystemDatasetZfsProperties.SECONDARYCACHE: 'none',
+    SystemDatasetZfsProperties.RECORDSIZE: '32k',
 }
 
 
@@ -165,16 +179,7 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
         },
         {
             'name': os.path.join(pool_name, '.system/truenas_zfstierd'),
-            'props': {
-                SystemDatasetZfsProperties.ATIME: 'off',
-                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
-                SystemDatasetZfsProperties.READONLY: 'off',
-                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
-                SystemDatasetZfsProperties.PREFETCH: 'none',
-                SystemDatasetZfsProperties.PRIMARYCACHE: 'metadata',
-                SystemDatasetZfsProperties.SECONDARYCACHE: 'none',
-                SystemDatasetZfsProperties.RECORDSIZE: '32k',
-            },
+            'props': {**MDBSTORE_PROPS},
             'chown_config': {
                 'uid': 0,
                 'gid': 0,
@@ -182,15 +187,18 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             },
         },
         {
-            'name': os.path.join(pool_name, '.system/truesearch'),
-            'props': {
-                SystemDatasetZfsProperties.MOUNTPOINT: 'legacy',
-                SystemDatasetZfsProperties.READONLY: 'off',
-                SystemDatasetZfsProperties.SNAPDIR: 'hidden',
-            },
+            # truesearch-indexer keeps an index for each indexed dataset here. Both daemons run as root.
+            # The indexes also hold the names, tags and comments of files in encrypted datasets. So the pwenc secret
+            # encrypts this dataset. See systemdataset.setup_datasets.
+            # Both daemons map the indexes into memory and read 4 KiB pages at random. A small record makes a page
+            # fault cheaper. With primarycache=metadata, the ARC does not keep a second copy of the pages in the page
+            # cache.
+            'name': os.path.join(pool_name, '.system/truesearchd'),
+            'props': {**MDBSTORE_PROPS},
+            'pwenc_encrypted': True,
             'chown_config': {
-                'uid': TRUESEARCH_UID,
-                'gid': TRUESEARCH_GID,
+                'uid': 0,
+                'gid': 0,
                 'mode': 0o700,
             },
             'post_mount_actions': [

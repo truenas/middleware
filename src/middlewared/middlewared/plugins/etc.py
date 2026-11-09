@@ -192,7 +192,7 @@ class EtcService(Service):
             EtcEntry(renderer_type=RendererType.PY, path='docker/daemon.json'),
         )),
         'truesearch': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='truesearch/config.json'),
+            EtcEntry(renderer_type=RendererType.PY, path='truesearchd/truesearch.conf'),
         )),
         'truenas_s3': EtcGroup(
             ctx=(CtxMethod(method='s3.render_data'),),
