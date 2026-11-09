@@ -31,7 +31,7 @@ plugins = ["sqlalchemy.ext.mypy.plugin"]
 [[tool.mypy.overrides]]
 module = [
     "apps_ci.*", "apps_schema.*", "apps_validation.*", "catalog_reader.*",
-    "isodate.*", "ixhardware.*", "licenselib.*", "mako.*", "pam.*", "samba.*", "pyctdb.*", "pyudev.*", "tdb.*",
+    "isodate.*", "ixhardware.*", "licenselib.*", "mako.*", "pam.*", "samba.*", "pyudev.*", "tdb.*",
     "truenas_zfstierd_client.*", "truenas_zfstierd_common.*",
     "truenas_keyring",
 ]

@@ -92,6 +92,11 @@ def tls_cert(erase_syslogservers):
         'msg': 'ZZZZ: random scst test',
         'path': '/var/log/scst.log',  # This is just to make sure our exclude filter works as intended
     },
+    {
+        'ident': 'truenas_smbhad',
+        'msg': 'ZZZZ: random truenas_smbhad test',
+        'path': '/var/log/truenas_smbhad.log',
+    },
 ])
 def test_local_syslog_filter(params):
     """
