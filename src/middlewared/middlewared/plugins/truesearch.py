@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import contextlib
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
@@ -770,7 +771,7 @@ def _entry(path: str, st: Any) -> TruesearchEntry:
     if st is None:
         return TruesearchEntry(
             path=path, name=os.path.basename(path), type='OTHER', size=None, mode=None, uid=None, gid=None,
-            mtime=None, btime=None, atime=None, inode=None, generation=None,
+            mtime=None, btime=None, atime=None, inode=None, handle=None,
         )
 
     return TruesearchEntry(
@@ -785,7 +786,7 @@ def _entry(path: str, st: Any) -> TruesearchEntry:
         btime=_time(st.btime_sec, st.btime_nsec),
         atime=_time(st.atime_sec, st.atime_nsec),
         inode=st.ino,
-        generation=st.generation,
+        handle=base64.b64encode(st.handle).decode(),
     )
 
 

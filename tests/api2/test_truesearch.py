@@ -1,5 +1,5 @@
+import base64
 import os
-import struct
 import time
 
 import pytest
@@ -90,14 +90,10 @@ def test_query_api(share):
                             [f"/mnt/{share['dataset']}/mytest.txt"])
     assert hits[0]['name'] == 'mytest.txt'
     assert hits[0]['inode'] == int(ssh(f"stat -c %i /mnt/{share['dataset']}/mytest.txt"))
-    # The ZFS file handle that the description of `generation` gives is the handle of the kernel.
+    # The handle is the one that the kernel gives the file.
     path = f"/mnt/{share['dataset']}/mytest.txt"
     kernel = ssh(f"python3 -c \"import truenas_os; print(bytes(truenas_os.fhandle(path='{path}')).hex())\"").strip()
-    body = (
-        struct.pack('<H', 10) + hits[0]['inode'].to_bytes(6, 'little')
-        + (hits[0]['generation'] or 1).to_bytes(4, 'little')
-    )
-    assert kernel == (struct.pack('<Ii', len(body), 1) + body).hex()
+    assert base64.b64decode(hits[0]['handle']).hex() == kernel
     assert hits[0]['type'] == 'FILE'
     assert hits[0]['size'] == 0
 

@@ -85,15 +85,10 @@ class TruesearchEntry(BaseModel):
     btime: datetime | None = Field(description="The time that the file was created.")
     atime: datetime | None = Field(description="The last time that the file was read.")
     inode: int | None = Field(description="The inode number, as `st_ino` gives it.")
-    generation: int | None = Field(
-        description="The low 32 bits of the inode generation number.\n\n"
-        "Use `inode` and `generation` to make the ZFS file handle of the file. You can open the file with "
-        "this handle and `open_by_handle_at`. The handle is also the file system part of the NFS file "
-        "handle of the file. The handle has type 1 and contains 12 bytes:\n\n"
-        "* Bytes 0 and 1: the number 10, as a 16-bit integer in host byte order.\n"
-        "* Bytes 2 to 7: the value of `inode`, with the least significant byte first.\n"
-        "* Bytes 8 to 11: the value of `generation`, with the least significant byte first. If "
-        "`generation` is 0, write 1.",
+    handle: str | None = Field(
+        description="The file handle of the file, encoded in base64. It is a `struct file_handle` of ZFS: the size "
+        "and the type of the handle as 32-bit integers in host byte order, then the 12 bytes of the handle. Use it "
+        "with `open_by_handle_at`.",
     )
 
 

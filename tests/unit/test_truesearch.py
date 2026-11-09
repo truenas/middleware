@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from datetime import datetime, timezone
 import errno
 from types import SimpleNamespace
@@ -573,8 +574,11 @@ def query(svc, path="/mnt/tank/data/shares", filters=(), options=None, **fields)
 
 
 def stat(**fields):
-    return SimpleNamespace(
+    """A stat that truesearchd returns. A field that is not given has a test value."""
+    return truesearch_client.Stat(
         **{
+            "file_id": 0,
+            "volume_id": 0,
             "mode": 0o100644,
             "size": 5,
             "uid": 0,
@@ -608,7 +612,7 @@ def test_query_as_root(client):
         5,
     )
     assert entry.btime == datetime.fromtimestamp(1_600_000_000, tz=timezone.utc)
-    assert (entry.inode, entry.generation) == (1234, 98765)
+    assert (entry.inode, base64.b64decode(entry.handle)) == (1234, stat().handle)
     m["filesystem.can_access_as_cred_errors"].assert_not_called()
 
 
