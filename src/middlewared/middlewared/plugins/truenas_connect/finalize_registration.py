@@ -5,7 +5,11 @@ import datetime
 import logging
 from typing import Any
 
-from truenas_connect_utils.finalize import FinalizeResult, classify_finalize_response
+from truenas_connect_utils.finalize import (
+    FinalizeResult,
+    classify_finalize_response,
+    get_finalize_failure_reason,
+)
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_registration_finalization_uri
 
@@ -21,9 +25,9 @@ BACKOFF_BASE_SLEEP = 5
 
 
 async def status_update(
-    context: ServiceContext, status: Status, log_message: str | None = None,
+    context: ServiceContext, status: Status, log_message: str | None = None, status_detail: str | None = None,
 ) -> None:
-    await set_status(context, status.name)
+    await set_status(context, status.name, {'status_detail': status_detail})
     if log_message:
         logger.error(log_message)
 
@@ -91,6 +95,7 @@ async def finalize_registration_impl(context: ServiceContext) -> None:
                 context,
                 Status.REGISTRATION_FINALIZATION_FAILED,
                 f'TNC registration terminal failure: {description}',
+                get_finalize_failure_reason(poll_status),
             )
             return
         else:

@@ -40,6 +40,7 @@ class TrueNASConnectModel(sa.Model):
     jwt_token = sa.Column(sa.EncryptedText(), default=None, nullable=True)
     registration_details = sa.Column(sa.JSON(dict), nullable=False)
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
+    status_detail = sa.Column(sa.Text(), default=None, nullable=True)
     certificate_id = sa.Column(sa.ForeignKey("system_certificate.id"), index=True, nullable=True)
     account_service_base_url = sa.Column(
         sa.String(255), nullable=False, default="https://account-service.tys1.truenasconnect.net/"
@@ -59,7 +60,7 @@ class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
     _entry = TrueNASConnectEntry
 
     async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
-        data["status_reason"] = Status[data["status"]].value
+        data["status_reason"] = data.pop("status_detail", None) or Status[data["status"]].value
         data.pop("jwt_token", None)
         if data["certificate"]:
             data["certificate"] = data["certificate"]["id"]

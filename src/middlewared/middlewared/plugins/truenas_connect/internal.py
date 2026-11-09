@@ -39,7 +39,7 @@ async def set_status(
         "datastore.update",
         DATASTORE,
         entry.id,
-        {"status": new_status} | (db_payload or {}),
+        {"status": new_status, "status_detail": None} | (db_payload or {}),
     )
     new_entry = await context.call2(context.s.tn_connect.config)
     context.middleware.send_event(

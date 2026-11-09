@@ -43,6 +43,7 @@ def get_unset_payload() -> dict[str, typing.Any]:
         'registration_details': {},
         'jwt_token': None,
         'status': Status.DISABLED.name,
+        'status_detail': None,
         'certificate': None,
         'last_heartbeat_failure_datetime': None,
     }
