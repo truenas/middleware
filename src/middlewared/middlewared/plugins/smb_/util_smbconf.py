@@ -12,7 +12,6 @@ from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE, SMBEncrypti
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
 from middlewared.plugins.smb_.utils import get_share_name
-from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
@@ -50,9 +49,6 @@ AD_KEYTAB_PARAMS = (
 )
 
 EXCLUDED_IDMAP_ITEMS = frozenset(['name', 'range_low', 'range_high', 'idmap_backend', 'sssd_compat'])
-
-# Paths used for stateful failover implementation
-SAMBA_HA_LOCKDIR = os.path.join(SYSDATASET_PATH, 'samba4', 'lock')
 
 
 class TrueNASVfsObjects(enum.StrEnum):
@@ -701,10 +697,7 @@ def generate_smb_conf_dict(
         smbconf['server signing'] = 'mandatory'
 
     if smb_service_config['stateful_failover']:
-        smbconf.update({
-            'truenas stateful failover': True,
-            'clustering': True,
-        })
+        smbconf['truenas stateful failover'] = True
 
     if tiering_enabled:
         smbconf['shadow:no_dataset_traversal'] = True
