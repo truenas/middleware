@@ -27,7 +27,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call, ha_test, ssh
+from middlewared.test.integration.utils import call, ha_test, ssh, wait_ha_ready
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.failover import do_failover
 
@@ -65,29 +65,6 @@ UNPROTECTED_MARKERS = (
     "starting on boot",
     "stopped",
 )
-
-
-def wait_ha_ready(timeout=480, poll=5):
-    deadline = time.monotonic() + timeout
-    last = None
-    while True:
-        try:
-            reasons = call("failover.disabled.reasons")
-            connected = call("failover.remote_connected")
-            peer = None
-            if connected:
-                peer = call("failover.call_remote", "failover.status")
-            # After a takeover, changes are not replicated until the new active controller
-            # resends the database, retried every 30 s. Failing back earlier loses them.
-            db_failure = call("failover.datastore.is_failure")
-            last = {"reasons": reasons, "connected": connected, "peer": peer, "db_failure": db_failure}
-            if not reasons and connected and peer == "BACKUP" and not db_failure:
-                return
-        except Exception as exc:
-            last = repr(exc)
-        if time.monotonic() > deadline:
-            raise TimeoutError(f"HA pair not ready after {timeout}s: {last}")
-        time.sleep(poll)
 
 
 def tail(text, lines=40):
