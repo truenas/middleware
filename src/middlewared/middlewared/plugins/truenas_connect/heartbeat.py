@@ -55,7 +55,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
 
     async def maybe_install_license(self, pem):
         # TNC re-sends the same PEM until our heartbeat reports its id, so skip when it is already
-        # installed; reinstalling would needlessly re-run etc.generate / license hooks / ctdb restart.
+        # installed; reinstalling would needlessly re-run etc.generate and the license hooks.
         current = await self.middleware.call('system.license', True)
         if current and (current.get('raw_license') or '').strip() == pem.strip():
             logger.debug('TNC Heartbeat: delivered license already installed, skipping')

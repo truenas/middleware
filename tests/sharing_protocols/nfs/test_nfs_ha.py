@@ -70,7 +70,7 @@ from xdrdef.nfs4_const import (
     WRITE_LT,
 )
 
-from middlewared.test.integration.utils import call, ha_test, ssh
+from middlewared.test.integration.utils import call, ha_test, ssh, wait_ha_ready
 from middlewared.test.integration.utils.failover import do_failover
 from protocols import nfs_share
 from protocols.pynfs_proto import PynfsClient
@@ -88,7 +88,6 @@ from nfs_ha_utils import (
     fsid_tuple,
     nfs_ha_dataset,
     wait_export_serving,
-    wait_ha_ready,
 )
 
 
