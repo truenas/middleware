@@ -14,7 +14,8 @@ Structure. One module fixture (`scenarios`) builds every scenario's target and
 puts its reservation state in place through the node that is ACTIVE. Then
 classes check the state in the order the module runs them:
 
-  TestPreFailoverOnly    scenarios that need no failover (S7, S11a)
+  TestPreFailoverOnly    scenarios that need no failover (S7, S11a, S24
+                         with sessions open)
   TestBeforeFailover     the state as built
   TestAfterFailover      after the ACTIVE node is rebooted (S8, S10 to S13,
                          S16 to S21, plus S9 and S15, which change their
@@ -80,6 +81,7 @@ from iscsi_ua_pr_utils import (
     wait_for_alua_settle,
 )
 from middlewared.test.integration.assets.iscsi import lio_supported
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from pyscsi.pyscsi.scsi_cdb_persistentreservein import PR_TYPE
@@ -101,6 +103,9 @@ ALUA_TRANSITIONING = 15
 # What the ACTIVE node gives the STANDBY group until the STANDBY has synced.
 ALUA_STANDBY_SETTLING = (ALUA_UNAVAILABLE, ALUA_TRANSITIONING)
 LUN_MB = 20
+# S24: a FILE extent's size when created, and after it is grown.
+S24_MB = 20
+S24_GROWN_MB = 40
 
 # Three initiators. N1 is the default pyscsi name; None selects it.
 N1, N2, N3 = None, LABEL_B_IQN, LABEL_C_IQN
@@ -168,6 +173,7 @@ class Scenarios:
     s21: PrTarget | None = None
     s22: PrTarget | None = None
     s23: PrTarget | None = None
+    s24: PrTarget | None = None
 
 
 def _tpg_port_ids(tgt_config):
@@ -231,6 +237,37 @@ def pr_target(env, label, size_mb=LUN_MB, initiator_id=None):
             with target(f"tgt-prf-{label}-{rnd}", groups) as tgt_config:
                 with target_extent_associate(tgt_config["id"], extent_config["id"]):
                     yield PrTarget(iqn=f"{BASENAME}:{tgt_config['name']}", rtpis=_tpg_port_ids(tgt_config))
+
+
+@contextlib.contextmanager
+def file_target(env, label, size_mb):
+    """A target with one LUN backed by a FILE extent of `size_mb`, removed
+    again on exit. Yields the target and the extent's id."""
+    rnd = "".join(random.choices(string.digits, k=6))
+    with dataset(f"ds_prf_{label.replace('-', '_')}_{rnd}") as ds:
+        extent_config = call(
+            "iscsi.extent.create",
+            {
+                "type": "FILE",
+                "name": f"ext_prf_{label.replace('-', '_')}_{rnd}",
+                "filesize": size_mb * MIB,
+                "path": f"/mnt/{ds}/lun",
+            },
+        )
+        try:
+            groups = [{"portal": env.portal["id"], "initiator": env.initiator["id"]}]
+            with target(f"tgt-prf-{label}-{rnd}", groups) as tgt_config:
+                with target_extent_associate(tgt_config["id"], extent_config["id"]):
+                    tgt = PrTarget(iqn=f"{BASENAME}:{tgt_config['name']}", rtpis=_tpg_port_ids(tgt_config))
+                    yield tgt, extent_config["id"]
+        finally:
+            call("iscsi.extent.delete", extent_config["id"], True, True)
+
+
+def capacity(session):
+    """The LUN's size in bytes, from READ CAPACITY (16)."""
+    data = session.conn.readcapacity16().result
+    return (data["returned_lba"] + 1) * data["block_length"]
 
 
 @contextlib.contextmanager
@@ -412,6 +449,11 @@ def _build_scenarios(env, stack):
         pr_reserve(n1, WE, K1)
     call("iscsi.initiator.update", s23_group["id"], {"initiators": [LABEL_C_IQN]})
     call("iscsi.initiator.update", s23_group["id"], {"initiators": [CLIENT_IQN, LABEL_C_IQN]})
+
+    # S24: a FILE extent grown through the API. The LUN must have the new
+    # size on both nodes: the STANDBY node's device is the LUN after failover.
+    sc.s24, s24_extent = stack.enter_context(file_target(env, "s24", S24_MB))
+    call("iscsi.extent.update", s24_extent, {"filesize": S24_GROWN_MB * MIB})
 
     # Nothing on the STANDBY node shows how far PR replication has got, so
     # there is no condition to wait for here.
@@ -664,6 +706,18 @@ def check_s23(sc):
         assert io_access(n1) == (True, True)
 
 
+def check_s24(sc):
+    """S24: a FILE extent grown before the failover has its new size through
+    both nodes' ports, whichever node is ACTIVE. LIO takes a regular file's
+    capacity from the storage object's fd_dev_size, not from the file: the
+    ACTIVE node must take the file's new length on rescan, and the STANDBY
+    node, whose device is not open, when it opens it at failover, or the LUN
+    shrinks back to its old size."""
+    for host in (sc.act_ip, sc.stby_ip):
+        with client(host, sc.s24, N1, Q1) as n1:
+            assert capacity(n1) == S24_GROWN_MB * MIB, f"through {host}"
+
+
 def check_s10(sc):
     """S10: both registrations, made through different ports with different
     ISIDs, are present, and each works through its own port."""
@@ -783,6 +837,9 @@ class _StateChecks:
 
     def test_s23_registration_dropped_with_its_acl(self, stage):
         check_s23(stage)
+
+    def test_s24_grown_file_extent_keeps_its_size(self, stage):
+        check_s24(stage)
 
     def test_s10_two_isids_through_two_ports(self, stage):
         check_s10(stage)
@@ -935,6 +992,23 @@ class TestPreFailoverOnly:
                 assert {r.rtpi for r in regs} == set(t.rtpis), regs
                 pr_unregister_key(b, K2)
                 assert_registrations(a, [(K1, N1, Q1)])
+
+    def test_s24_grown_file_extent_is_seen_by_open_sessions(self, ha_env):
+        """S24, with sessions open: growing a FILE extent raises CAPACITY
+        DATA HAS CHANGED on the session through the ACTIVE node's port, and
+        READ CAPACITY then reports the new size through both nodes' ports.
+        Fails if rescan does not take the file's new length: for a regular
+        file LIO reports the storage object's fd_dev_size."""
+        act, stby = _node_ips()
+        with file_target(ha_env, "s24-live", S24_MB) as (t, extent_id):
+            with client(act, t, N1, Q1) as via_act, client(stby, t, N1, Q2) as via_stby:
+                assert capacity(via_act) == S24_MB * MIB
+                assert capacity(via_stby) == S24_MB * MIB
+                call("iscsi.extent.update", extent_id, {"filesize": S24_GROWN_MB * MIB})
+                assert_ua(via_act, 0x2A, 0x09, timeout=UA_WAIT_SECONDS)  # CAPACITY DATA HAS CHANGED
+                assert capacity(via_act) == S24_GROWN_MB * MIB
+                drain_ua(via_stby)
+                assert capacity(via_stby) == S24_GROWN_MB * MIB
 
 
 # ---------------------------------------------------------------------------
