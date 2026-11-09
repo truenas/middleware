@@ -10,6 +10,21 @@ import stat
 from typing import TYPE_CHECKING, Any, AsyncGenerator
 
 from truenas_pylicensed.features import LicenseFeature
+from truesearch_client import Busy, Client, Identity, NoIndex, OpenRequest, Refused, TruesearchError
+from truesearch_client import CallError as BoundError
+from truesearch_client.config import TARGETS_DIR, TargetRow, read_config, target_id
+from truesearch_client.control import (
+    INDEXER_CONTROL,
+    RELEASE_TIMEOUT,
+    IndexerStatus,
+    IndexerTarget,
+    UnindexedTarget,
+    devices_of,
+    indexer_status,
+    served_ids,
+    wait_released,
+)
+from truesearch_client.control import request as control_request
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -32,25 +47,6 @@ from middlewared.plugins.smb_.utils import is_time_machine_share
 from middlewared.service import CallError, Service, ValidationError, private
 from middlewared.utils.path import EXTERNAL_PATH
 from middlewared.utils.smb import SearchProtocol, SMBSharePurpose
-from middlewared.utils.truesearch import (
-    CONFIG_PATH,
-    DAEMON_CONTROL,
-    INDEXER_CONTROL,
-    RELEASE_TIMEOUT,
-    TRUESEARCHD_DIR,
-    IndexerStatus,
-    IndexerTarget,
-    TargetRow,
-    beneath,
-    carried_rows,
-    control_request,
-    devices_of,
-    parse_indexer_status,
-    parse_served_ids,
-    rendered_rows,
-    target_id,
-    wait_released,
-)
 from middlewared.utils.truesearch_filters import spotlight_query
 from middlewared.utils.zfs import query_imported_fast_impl
 
@@ -203,7 +199,7 @@ class TrueSearchService(Service):
             if row.enabled and await self.call2(self.s.zfs.resource.path_is_locked, row.dataset) else row
             for row in rows
         ]
-        if old := await self.middleware.run_in_thread(_configured_rows):
+        if old := await self.middleware.run_in_thread(read_config):
             imported = await self.middleware.run_in_thread(query_imported_fast_impl)
             rows += carried_rows(old, rows, {pool['name'] for pool in imported.values()}, shared)
 
@@ -393,7 +389,7 @@ class TrueSearchService(Service):
         async with self.configure_lock:
             enabled = await self.enabled()
             running = await self.call2(self.s.service.started, 'truesearch')
-            before = await self.middleware.run_in_thread(_configured_rows)
+            before = await self.middleware.run_in_thread(read_config)
 
             try:
                 if enabled and running:
@@ -409,7 +405,7 @@ class TrueSearchService(Service):
                 # The configuration file can have other rows now.
                 self._indexed = None
 
-            after = await self.middleware.run_in_thread(_configured_rows)
+            after = await self.middleware.run_in_thread(read_config)
             if before is None or after is None:
                 return
 
@@ -448,7 +444,7 @@ class TrueSearchService(Service):
         """
         held = []
         if mountpoint is not None and await self.call2(self.s.service.started, 'truesearch'):
-            rows = await self.middleware.run_in_thread(_configured_rows) or []
+            rows = await self.middleware.run_in_thread(read_config) or []
             held = [row.root for row in rows if row.enabled and beneath(row.root, mountpoint)]
 
         if not held:
@@ -473,17 +469,17 @@ class TrueSearchService(Service):
     )
     def query(self, data: TruesearchQuery) -> list[TruesearchEntry]:
         """
-        Search the TrueSearch index for files and directories in `path` and its subdirectories.
+        Search the TrueSearch index for files and directories in ``path`` and its subdirectories.
 
         TrueSearch uses the index that answers macOS Spotlight searches through SMB. Middleware converts the filters
         into a Spotlight query. Thus, a query gets the same results as a Spotlight search from a Mac. The description
-        of `query-filters` gives the fields, the operators, and examples.
+        of ``query-filters`` gives the fields, the operators, and examples.
 
         A query finds at most 1000 entries. TrueSearch returns the newest entries first.
 
-        If you set `username`, the search runs as that user. The results then include only the files and directories
-        that the user can access, and the user must be able to access `path`. If you do not set `username`, the search
-        runs as root and returns all matches.
+        If you set ``username``, the search runs as that user. The results then include only the files and directories
+        that the user can access, and the user must be able to access ``path``. If you do not set ``username``, the
+        search runs as root and returns all matches.
         """
         try:
             query = spotlight_query(data.query_filters)
@@ -495,12 +491,6 @@ class TrueSearchService(Service):
         groups: list[int] = []
         if data.username is not None:
             uid, gid, groups, searches = self._user_identity(data.username, searches, data.recursive)
-
-        try:
-            from truesearch_client import Busy, Client, Identity, NoIndex, OpenRequest, Refused, TruesearchError
-            from truesearch_client import CallError as BoundError
-        except ImportError:
-            raise CallError('The TrueSearch client is not installed.', errno.ENOSYS)
 
         hits: list[tuple[str, Any]] = []
         try:
@@ -596,7 +586,7 @@ class TrueSearchService(Service):
         if (indexed := self._indexed) is not None:
             return indexed
 
-        rows = [row for row in _configured_rows() or [] if row.enabled]
+        rows = [row for row in read_config() or [] if row.enabled]
         mountpoints = {}
         if rows:
             for found in self.call_sync2(self.s.zfs.resource.list_impl, ZFSResourceQuery(
@@ -651,13 +641,13 @@ class TrueSearchService(Service):
         last update. It also tells whether searches use the index.
         """
         # The daemons index and serve the enabled rows of the configuration file.
-        rows = [row for row in _configured_rows() or [] if row.enabled]
+        rows = [row for row in read_config() or [] if row.enabled]
         try:
-            indexer = parse_indexer_status(control_request(INDEXER_CONTROL, 'status', STATUS_TIMEOUT))
+            indexer = indexer_status(STATUS_TIMEOUT)
         except (OSError, ValueError):
             indexer = None
         try:
-            served = parse_served_ids(control_request(DAEMON_CONTROL, 'status', STATUS_TIMEOUT))
+            served = served_ids(STATUS_TIMEOUT)
         except (OSError, ValueError):
             served = set()
 
@@ -681,19 +671,19 @@ def _dataset_status(row: TargetRow, indexer: IndexerStatus | None, served: set[s
     match target:
         case None:
             state = 'STOPPED' if indexer is None else 'INDEXING'
+        case UnindexedTarget():
+            state = 'UNAVAILABLE'
+            reason = target.why
         case IndexerTarget(activity='idle'):
             state = 'READY'
-        case IndexerTarget(activity='held'):
-            state = 'UNAVAILABLE'
-            reason = target.held
         case IndexerTarget(activity='waiting for its root'):
             state = 'UNAVAILABLE'
             reason = f'The dataset is not mounted at {row.root!r}.'
         case _:
             state = 'INDEXING'
 
-    # The indexer gives no counts for a dataset that it does not list or that it holds.
-    counted = None if target is None or target.activity == 'held' else target
+    # The indexer gives counts only for the index targets that it runs.
+    counted = target if isinstance(target, IndexerTarget) else None
     return TruesearchDatasetStatus(
         dataset=row.dataset,
         path=row.root,
@@ -721,7 +711,34 @@ def _is_home_share(share: dict[str, Any]) -> bool:
 
 
 def _index_dataset_mounted() -> bool:
-    return os.path.ismount(TRUESEARCHD_DIR)
+    return os.path.ismount(TARGETS_DIR)
+
+
+def beneath(path: str, top: str) -> bool:
+    """Whether `path` is `top` or a path beneath it."""
+    return path == top or path.startswith(top.rstrip('/') + '/')
+
+
+def carried_rows(
+    old: list[TargetRow], rows: list[TargetRow], imported: set[str], directories: set[str],
+) -> list[TargetRow]:
+    """
+    The rows of the file `old` that stay, disabled, because their pool is not imported. A row stays while a share
+    directory of `directories` is in its root or above it. So an exported pool keeps its index until its shares are
+    deleted. A row of an imported pool is not carried, because its dataset is gone.
+    """
+    ids = {row.id for row in rows}
+    roots = {row.root for row in rows}
+    return [
+        replace(row, enabled=False, exclude=())
+        for row in old
+        if row.root
+        and row.dataset
+        and row.dataset.split('/')[0] not in imported
+        and row.id not in ids
+        and row.root not in roots
+        and any(beneath(row.root, directory) or beneath(directory, row.root) for directory in directories)
+    ]
 
 
 def _pools(directories: set[str]) -> set[str]:
@@ -733,17 +750,6 @@ def _created(hit: tuple[str, Any]) -> tuple[int, int]:
     """The sort key of a hit: the creation time in its stat, or zero for a hit without a stat."""
     st = hit[1]
     return (0, 0) if st is None else (st.btime_sec, st.btime_nsec)
-
-
-def _configured_rows() -> list[TargetRow] | None:
-    """
-    The rows of the configuration file, or `None` if there is no file. The daemons use the enabled rows.
-    """
-    try:
-        with open(CONFIG_PATH, encoding='utf-8') as f:
-            return rendered_rows(f.read())
-    except FileNotFoundError:
-        return None
 
 
 def _hit_type(mode: int) -> TruesearchEntryType:
@@ -804,7 +810,7 @@ class TrueSearchFSAttachmentDelegate(FSAttachmentDelegate[TargetRow]):
             return []
 
         exact = (options or {}).get('exact_match', False)
-        rows = await self.middleware.run_in_thread(_configured_rows) or []
+        rows = await self.middleware.run_in_thread(read_config) or []
         return [row for row in rows if row.enabled and (row.root == path if exact else beneath(row.root, path))]
 
     async def delete(self, attachments: list[TargetRow]) -> None:

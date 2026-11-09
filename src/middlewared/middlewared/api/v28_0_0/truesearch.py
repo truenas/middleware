@@ -28,8 +28,9 @@ class TruesearchQueryOptions(BaseModel):
     """
     Options for the results of the query.
 
-    A query finds at most 1000 entries. TrueSearch returns the newest entries first and cannot sort them in a different
-    order. Thus, `order_by`, `offset`, `count` and the other options of other query methods are not available.
+    A query finds at most 1000 entries.
+    TrueSearch returns the newest entries first and cannot sort them in a different order.
+    Thus, `order_by`, `offset`, `count` and the other options of other query methods are not available.
     """
 
     limit: int = Field(default=100, ge=1, le=MAX_RESULTS, description="The maximum number of entries to return.")

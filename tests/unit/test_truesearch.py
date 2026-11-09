@@ -1,21 +1,28 @@
 import asyncio
 from datetime import datetime, timezone
 import errno
-import sys
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 from truenas_pylicensed.features import LicenseFeature
+import truesearch_client
+from truesearch_client.config import TargetRow
+from truesearch_client.control import IndexerStatus, IndexerTarget, UnindexedTarget
 
 from middlewared.api.current import TruesearchQuery
 import middlewared.plugins.truesearch as truesearch_plugin
-from middlewared.plugins.truesearch import DatasetInfo, TrueSearchFSAttachmentDelegate, TrueSearchService
+from middlewared.plugins.truesearch import (
+    DatasetInfo,
+    TrueSearchFSAttachmentDelegate,
+    TrueSearchService,
+    beneath,
+    carried_rows,
+)
 from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import FakeJob, Middleware
 from middlewared.service import CallError, ValidationError
-from middlewared.utils.truesearch import DAEMON_CONTROL, INDEXER_CONTROL, IndexerStatus, IndexerTarget, TargetRow
 from middlewared.utils.truesearch_filters import spotlight_query
 
 BOOT_POOL_REASON = "The system dataset must not reside on the boot pool."
@@ -253,7 +260,7 @@ def target_service(monkeypatch, indexed, shared=None, old=None, imported=("tank"
     )
     svc.timemachine_directories = AsyncMock(return_value={"/mnt/tank/data/tm", "/mnt/tank/other/tm"})
     svc.datasets = AsyncMock(return_value=DATASETS)
-    monkeypatch.setattr(truesearch_plugin, "_configured_rows", lambda: old)
+    monkeypatch.setattr(truesearch_plugin, "read_config", lambda: old)
     monkeypatch.setattr(
         truesearch_plugin,
         "query_imported_fast_impl",
@@ -361,7 +368,7 @@ def configured(monkeypatch, enabled, running, files):
     svc = TrueSearchService(m)
     svc.enabled = AsyncMock(return_value=enabled)
     files = iter(files)
-    monkeypatch.setattr(truesearch_plugin, "_configured_rows", lambda: next(files))
+    monkeypatch.setattr(truesearch_plugin, "read_config", lambda: next(files))
     sent = []
     monkeypatch.setattr(truesearch_plugin, "control_request", lambda path, line: sent.append(line) or "dropped")
     waited = []
@@ -422,7 +429,7 @@ def releasing_service(monkeypatch, running=True):
     m = Middleware()
     m.services.service.started = AsyncMock(return_value=running)
     svc = TrueSearchService(m)
-    monkeypatch.setattr(truesearch_plugin, "_configured_rows", lambda: rows("ds1", "ds2", disabled={"ds2"}))
+    monkeypatch.setattr(truesearch_plugin, "read_config", lambda: rows("ds1", "ds2", disabled={"ds2"}))
     seen = []
 
     async def configure():
@@ -469,7 +476,7 @@ async def test_attachments_are_the_rows_both_daemons_hold(monkeypatch):
     m.services.service.started = AsyncMock(return_value=True)
     monkeypatch.setattr(
         truesearch_plugin,
-        "_configured_rows",
+        "read_config",
         lambda: rows("ds1", "ds2", disabled={"ds2"}) + [TargetRow(id="ds3", dataset="other/x", root="/mnt/other/x")],
     )
     delegate = TrueSearchFSAttachmentDelegate(m)
@@ -508,28 +515,11 @@ class FakeClient:
 
 @pytest.fixture
 def client(monkeypatch):
-    class TruesearchError(Exception):
-        pass
-
-    class Refused(TruesearchError):
-        def __init__(self, detail):
-            super().__init__(detail)
-            self.detail = detail
-
-    module = ModuleType("truesearch_client")
-    module.Client = FakeClient
-    module.OpenRequest = lambda **kwargs: SimpleNamespace(**kwargs)
-    module.Identity = lambda uid, gid, gids=(): SimpleNamespace(uid=uid, gid=gid, gids=gids)
-    module.TruesearchError = TruesearchError
-    module.Refused = Refused
-    module.NoIndex = type("NoIndex", (Refused,), {})
-    module.Busy = type("Busy", (Refused,), {})
-    module.CallError = type("CallError", (TruesearchError, ValueError), {})
-    monkeypatch.setitem(sys.modules, "truesearch_client", module)
+    monkeypatch.setattr(truesearch_plugin, "Client", FakeClient)
     FakeClient.requests, FakeClient.hits, FakeClient.error = [], (), None
     FakeClient.hits_by_dataset, FakeClient.errors_by_dataset = {}, {}
-    monkeypatch.setattr(truesearch_plugin, "_configured_rows", lambda: SEARCH_ROWS)
-    return module
+    monkeypatch.setattr(truesearch_plugin, "read_config", lambda: SEARCH_ROWS)
+    return truesearch_client
 
 
 # The rows of the configuration file in the search tests.
@@ -808,40 +798,27 @@ def test_query_refusals(client, refusal, code):
     assert e.value.errno == code
 
 
-def test_query_without_the_client(monkeypatch):
-    monkeypatch.setitem(sys.modules, "truesearch_client", None)
-    monkeypatch.setattr(truesearch_plugin, "_configured_rows", lambda: SEARCH_ROWS)
-    m, svc = search_service()
-    with pytest.raises(CallError) as e:
-        query(svc)
-    assert e.value.errno == errno.ENOSYS
-
-
-INDEXER_STATUS = "\n".join(
-    [
-        "ok",
-        "targets=1 draining=false index_bytes=94208 free_bytes=1000000 space_low=false",
-        "target ds1 root=/mnt/tank/one live=2 tombstones=0 commit=13 activity=idle watching=true events=0 "
-        "last_full=1794142012 last_dirs=0 map=0 queued=0 size=94208 ahead=false fsid=00151c7996f7c081",
-        "target ds2 root=/mnt/tank/missing live=0 tombstones=0 commit=0 activity=held watching=false events=0 "
-        'last_full=0 last_dirs=0 map=0 queued=0 size=0 ahead=unknown fsid=unknown held="the root is gone"',
-    ]
+# The status of both daemons in the status tests.
+INDEXER_STATUS = IndexerStatus(
+    index_bytes=94208,
+    free_bytes=1000000,
+    space_low=False,
+    targets={
+        "ds1": IndexerTarget(
+            live=2, activity="idle", watching=True, last_full=1794142012, last_dirs=0, queued=0, size=94208
+        ),
+        "ds2": UnindexedTarget(why="the root is gone"),
+    },
 )
-DAEMON_STATUS = "\n".join(
-    [
-        "ok",
-        "handles=0 identities=0 draining=false",
-        "target ds1 root=/mnt/tank/one format=1 fold=1 kinds=1 live=2 tombstones=0 commit=13 fsid=00151c7996f7c081",
-        'target ds2 root=/mnt/tank/missing served=false why="gone"',
-    ]
-)
+SERVED = {"ds1"}
 
 
-def status_service(monkeypatch, answers):
+def status_service(monkeypatch, indexer, served):
+    """A service whose daemons give the status `indexer` and the ids `served`. An exception in either is raised."""
     m = Middleware()
     monkeypatch.setattr(
         truesearch_plugin,
-        "_configured_rows",
+        "read_config",
         lambda: [
             TargetRow(id="ds1", dataset="tank/one", root="/mnt/tank/one"),
             TargetRow(id="ds2", dataset="tank/missing", root="/mnt/tank/missing"),
@@ -850,18 +827,21 @@ def status_service(monkeypatch, answers):
         ],
     )
 
-    def request(path, line, timeout):
-        assert line == "status"
-        if isinstance(answer := answers[path], Exception):
-            raise answer
-        return answer
+    def answer(result):
+        def status(timeout):
+            if isinstance(result, Exception):
+                raise result
+            return result
 
-    monkeypatch.setattr(truesearch_plugin, "control_request", request)
+        return status
+
+    monkeypatch.setattr(truesearch_plugin, "indexer_status", answer(indexer))
+    monkeypatch.setattr(truesearch_plugin, "served_ids", answer(served))
     return TrueSearchService(m)
 
 
 def test_status(monkeypatch):
-    svc = status_service(monkeypatch, {INDEXER_CONTROL: INDEXER_STATUS, DAEMON_CONTROL: DAEMON_STATUS})
+    svc = status_service(monkeypatch, INDEXER_STATUS, SERVED)
     status = svc.status()
     assert (status.running, status.index_bytes, status.free_bytes, status.space_low) == (True, 94208, 1000000, False)
 
@@ -880,14 +860,15 @@ def test_status(monkeypatch):
 
 
 def test_status_with_both_daemons_down(monkeypatch):
-    svc = status_service(monkeypatch, {INDEXER_CONTROL: FileNotFoundError(), DAEMON_CONTROL: FileNotFoundError()})
+    svc = status_service(monkeypatch, FileNotFoundError(), FileNotFoundError())
     status = svc.status()
     assert (status.running, status.index_bytes, status.space_low) == (False, None, None)
     assert [(d.state, d.served) for d in status.datasets] == [("STOPPED", False)] * 3
 
 
 def test_status_of_a_draining_indexer(monkeypatch):
-    svc = status_service(monkeypatch, {INDEXER_CONTROL: "draining", DAEMON_CONTROL: DAEMON_STATUS})
+    # A draining indexer answers `draining`, which is not a status.
+    svc = status_service(monkeypatch, ValueError("not a status: 'draining'"), SERVED)
     status = svc.status()
     assert status.running is False
     assert [d.served for d in status.datasets] == [True, False, False]
@@ -904,7 +885,6 @@ def test_status_of_a_draining_indexer(monkeypatch):
         ("directory pass", "INDEXING", None),
         ("rebuild", "INDEXING", None),
         ("an activity of a later indexer", "INDEXING", None),
-        ("held", "UNAVAILABLE", "its root is gone"),
         ("waiting for its root", "UNAVAILABLE", "The dataset is not mounted at '/mnt/tank/one'."),
     ],
 )
@@ -917,9 +897,69 @@ def test_each_activity_has_a_state(activity, state, reason):
         last_dirs=0,
         queued=0,
         size=4096,
-        held="its root is gone" if activity == "held" else None,
     )
     indexer = IndexerStatus(index_bytes=0, free_bytes=0, space_low=False, targets={"ds1": target})
     row = TargetRow(id="ds1", dataset="tank/one", root="/mnt/tank/one")
     status = truesearch_plugin._dataset_status(row, indexer, set())
     assert (status.state, status.reason) == (state, reason)
+
+
+def test_a_row_that_the_indexer_does_not_run_is_unavailable():
+    # The row is held, in conflict, or refused. The indexer gives no counts for it.
+    targets = {"ds1": UnindexedTarget(why="its root is gone")}
+    indexer = IndexerStatus(index_bytes=0, free_bytes=None, space_low=False, targets=targets)
+    row = TargetRow(id="ds1", dataset="tank/one", root="/mnt/tank/one")
+    status = truesearch_plugin._dataset_status(row, indexer, set())
+    assert (status.state, status.reason, status.entries, status.index_size) == (
+        "UNAVAILABLE",
+        "its root is gone",
+        None,
+        None,
+    )
+
+
+@pytest.mark.parametrize(
+    "path,top,result",
+    [
+        ("/mnt/tank/a", "/mnt/tank/a", True),
+        ("/mnt/tank/a/b", "/mnt/tank/a", True),
+        ("/mnt/tank/ab", "/mnt/tank/a", False),
+        ("/mnt/tank", "/mnt/tank/a", False),
+    ],
+)
+def test_beneath(path, top, result):
+    assert beneath(path, top) is result
+
+
+OLD = [
+    TargetRow(id="ds1", dataset="gone/a", root="/mnt/gone/a"),
+    TargetRow(id="ds2", dataset="gone/b", root="/mnt/gone/b", exclude=("tm",)),
+    TargetRow(id="ds3", dataset="tank/c", root="/mnt/tank/c"),
+    TargetRow(id="ds4", dataset="gone/d", root="/mnt/gone/d", enabled=False),
+    TargetRow(id="ds5", dataset="", root="/mnt/gone/e"),
+]
+
+
+def test_carried_rows_keep_the_shared_rows_of_a_pool_that_is_not_imported():
+    shares = {"/mnt/gone/a/team", "/mnt/gone", "/mnt/tank/c"}
+    assert carried_rows(OLD, [], {"tank"}, shares) == [
+        TargetRow(id="ds1", dataset="gone/a", root="/mnt/gone/a", enabled=False),
+        TargetRow(id="ds2", dataset="gone/b", root="/mnt/gone/b", enabled=False),
+        TargetRow(id="ds4", dataset="gone/d", root="/mnt/gone/d", enabled=False),
+    ]
+
+
+def test_carried_rows_leave_a_row_without_a_share():
+    assert carried_rows(OLD, [], {"tank"}, {"/mnt/gone/a"}) == [
+        TargetRow(id="ds1", dataset="gone/a", root="/mnt/gone/a", enabled=False),
+    ]
+
+
+def test_carried_rows_leave_a_row_the_datasets_hold():
+    rows = [
+        TargetRow(id="ds1", dataset="gone/a", root="/mnt/gone/x"),
+        TargetRow(id="ds9", dataset="gone/x", root="/mnt/gone/b"),
+    ]
+    assert carried_rows(OLD, rows, set(), {"/mnt/gone"}) == [
+        TargetRow(id="ds4", dataset="gone/d", root="/mnt/gone/d", enabled=False),
+    ]
