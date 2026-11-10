@@ -9,7 +9,9 @@ import time
 
 import pytest
 
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, enterprise_test, ssh
+
+pytestmark = enterprise_test
 
 # Written by the tier_pool conftest fixture context; used by tests that stage
 # data through the SPECIAL vdev.

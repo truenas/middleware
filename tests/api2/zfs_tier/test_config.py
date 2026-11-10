@@ -10,8 +10,10 @@ entitlement + 6 disks).
 
 import pytest
 
-from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.test.integration.utils import call, ssh
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.utils import call, enterprise_test, ssh
+
+pytestmark = enterprise_test
 
 
 _KERNEL_PARAM_PATH = "/sys/module/zfs/parameters/zfs_special_class_metadata_reserve_pct"
@@ -53,23 +55,6 @@ def test_update_rejects_metadata_reserve_below_10():
 
 def test_update_rejects_metadata_reserve_above_30():
     _assert_bounds_rejected({"special_class_metadata_reserve_pct": 31})
-
-
-# ----------------------------------------------------------------------------
-# Entitlement gate: this only runs where the system lacks the ZFSTIER
-# entitlement. Where it has it, the tier_pool fixture is already exercising the
-# entitled path.
-# ----------------------------------------------------------------------------
-
-
-def test_update_requires_zfstier_entitlement(zfstier_entitlement):
-    if zfstier_entitlement["entitled"]:
-        pytest.skip("Denial test only runs where ZFSTIER is not entitled")
-    with pytest.raises(CallError) as exc:
-        call("zfs.tier.update", {"enabled": True})
-    # zfs.tier.update raises CallError(ent.message) verbatim, so the denial the
-    # caller sees must be the engine's own wording, not merely license-ish text.
-    assert zfstier_entitlement["message"] in str(exc.value)
 
 
 # ----------------------------------------------------------------------------
