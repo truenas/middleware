@@ -105,7 +105,7 @@ class TrueNASLicenseUploadOptions(BaseModel):
 
 
 class TrueNASLicenseUploadArgs(BaseModel):
-    license: Secret[LongNonEmptyString] = Field(description="PEM-wrapped license to apply to the system.")
+    license: Secret[Multiline[LongNonEmptyString]] = Field(description="PEM-wrapped license to apply to the system.")
     options: TrueNASLicenseUploadOptions = Field(default=TrueNASLicenseUploadOptions(), description="Options.")
 
 
