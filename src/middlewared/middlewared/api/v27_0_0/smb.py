@@ -215,10 +215,7 @@ class SMBEntry(BaseModel):
         description=(
             "List of enabled search protocols for the SMB server. Currently the only support search protocol is "
             "SPOTLIGHT for MacOS clients. When SPOTLIGHT search protocol support is enabled, MacOS clients can send "
-            "spotlight protocol requests to the TrueNAS samba server and receive results from indexed paths.\n\n"
-            "WARNING: TrueSearch also indexes shares on encrypted datasets. This system keeps the key of the indexes. "
-            "The index of a passphrase-encrypted dataset stays after the dataset is locked. Thus, a person with the "
-            "boot device and the pool can read the names and metadata of files in a locked dataset."
+            "spotlight protocol requests to the TrueNAS samba server and receive results from indexed paths."
         ),
     )
     admin_group: str | None = Field(
