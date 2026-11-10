@@ -17,10 +17,13 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.utils.cpu import online_cpus
 from middlewared.utils.libvirt.nic import normalize_mac, random_mac
+from middlewared.utils.memory import get_memory_info
 from middlewared.utils.size import normalize_size
 
 from .bridge import BRIDGE_NAME
+from .container import cpuset_error
 from .utils import container_dataset
 
 
@@ -543,6 +546,24 @@ class ContainerService(Service):
                     size = normalize_size(config.get("limits.memory"), raise_exception=False)
                     if size and size >= 20 * 1024 ** 2:
                         memory = size // 1024 ** 2
+                        if memory > (host_memory := get_memory_info()["total"] // 1024 ** 2):
+                            job.logs_fd.write((
+                                f"Memory limit of container {name!r} ({memory} MiB) exceeds host memory "
+                                f"({host_memory} MiB) and was not migrated\n"
+                            ).encode())
+                            memory = None
+
+                cpuset = config.get("limits.cpu") or None
+                if cpuset is not None:
+                    if cpuset.isdigit():
+                        error: str | None = "a CPU count has no cpuset equivalent"
+                    else:
+                        error = cpuset_error(cpuset, online_cpus())
+                    if error:
+                        job.logs_fd.write((
+                            f"CPU limit {cpuset!r} of container {name!r} was not migrated: {error}\n"
+                        ).encode())
+                        cpuset = None
 
                 container_instance = self.middleware.call_sync(
                     "container.create_with_dataset",
@@ -551,7 +572,7 @@ class ContainerService(Service):
                         "autostart": config.get("user.autostart") == "true",
                         "dataset": dst_dataset,
                         "init": "/sbin/init",
-                        'cpuset': config.get('limits.cpu', None),
+                        'cpuset': cpuset,
                         "memory": memory,
                     },
                 )
