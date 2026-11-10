@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import errno
 import os
 import stat
-from typing import TYPE_CHECKING, Any, AsyncGenerator
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Literal
 
 from truenas_pylicensed.features import LicenseFeature
 from truesearch_client import Busy, Client, Identity, NoIndex, OpenRequest, Refused, TruesearchError
@@ -43,10 +43,11 @@ from middlewared.api.current import (
     ZFSResourceQuery,
 )
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.plugins.service.services.truesearch import alive as units_alive
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.utils import is_time_machine_share
 from middlewared.service import CallError, Service, ValidationError, private
-from middlewared.utils.path import EXTERNAL_PATH
+from middlewared.utils.path import FSLocation, path_location
 from middlewared.utils.smb import SearchProtocol, SMBSharePurpose
 from middlewared.utils.truesearch_filters import spotlight_query
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -86,8 +87,10 @@ class TruesearchService(Service):
         # The mountpoints that are about to be destroyed. remove_mountpoint() adds them. Their rows are disabled.
         self.releasing: list[str] = []
         self.configure_lock = asyncio.Lock()
-        # The datasets that the daemons index now. _indexed_datasets() fills this list when a query needs it.
-        self._indexed: list[IndexedDataset] | None = None
+        # The datasets that the daemons index now, with the generation that they were read in. _indexed_datasets()
+        # fills this when a query needs it. A change of the configuration file or a mount starts a new generation.
+        self._indexed: tuple[int, list[IndexedDataset]] | None = None
+        self._generation = 0
 
     @private
     async def unavailable_reasons(self) -> list[str]:
@@ -145,7 +148,7 @@ class TruesearchService(Service):
 
             properties = dataset['properties']
             mountpoint = properties['mountpoint']['value']
-            if mountpoint and mountpoint != 'legacy':
+            if mountpoint and mountpoint not in ('legacy', 'none'):
                 guid = (properties.get('guid') or {}).get('value')
                 result[mountpoint] = DatasetInfo(name=dataset.get('name', ''), guid=str(guid) if guid else None)
 
@@ -178,7 +181,8 @@ class TruesearchService(Service):
         """
         The index targets of truesearchd. A dataset has one row if it holds an indexed directory or is mounted beneath
         one. The root of the row is the directory that those directories share. truesearchd serves one index target
-        on a filesystem, and every share beneath its root. A Time Machine share beneath the root is excluded.
+        on a filesystem, and every share beneath its root. A Time Machine share is not indexed. A Time Machine share
+        beneath the root is excluded, and its own dataset gets no row.
 
         Some rows are disabled and keep their indexes. These are the datasets whose shares are disabled, whose share
         service does not run, or whose pool is not imported. Also disabled are the datasets that are locked, about to
@@ -219,7 +223,9 @@ class TruesearchService(Service):
         ]
         ids = {row.id for row in rows}
         rows += [
-            replace(row, enabled=False) for row in self._dataset_rows(datasets, shared, set()) if row.id not in ids
+            replace(row, enabled=False)
+            for row in self._dataset_rows(datasets, shared, timemachine)
+            if row.id not in ids
         ]
         return rows
 
@@ -229,6 +235,11 @@ class TruesearchService(Service):
         directories = set()
         for directory in raw:
             directories |= self._processed_directories_for_directory(datasets, directory)
+
+        # The dataset of a Time Machine share, and every dataset beneath it, is not indexed.
+        directories = {
+            directory for directory in directories if not any(beneath(directory, path) for path in timemachine)
+        }
 
         by_dataset: dict[str, list[str]] = {}
         for directory in directories:
@@ -288,7 +299,7 @@ class TruesearchService(Service):
             for share in shares
             if (
                 (not enabled_only or share[share_field.LOCKED] is False)
-                and share[share_field.PATH] != EXTERNAL_PATH
+                and path_location(share[share_field.PATH]) is FSLocation.LOCAL
                 and not is_time_machine_share(share)
                 and not _is_home_share(share)
             )
@@ -297,16 +308,17 @@ class TruesearchService(Service):
     @private
     async def timemachine_directories(self) -> set[str]:
         """
-        The directories of Time Machine shares. They are not indexed.
+        The directories of Time Machine shares. They are not indexed. A disabled share keeps its backups, so its
+        directory is not indexed either.
         """
         shares = await self.middleware.call(
-            'sharing.smb.query', [[share_field.ENABLED, '=', True]], {'force_sql_filters': True},
+            'sharing.smb.query', [], {'force_sql_filters': True, 'extra': {'retrieve_locked_info': False}},
         )
 
         return {
             share[share_field.PATH]
             for share in shares
-            if share[share_field.PATH] != EXTERNAL_PATH and is_time_machine_share(share)
+            if path_location(share[share_field.PATH]) is FSLocation.LOCAL and is_time_machine_share(share)
         }
 
     @private
@@ -342,7 +354,7 @@ class TruesearchService(Service):
         for every mount is expensive.
         """
         # A mount can change the mountpoint of an indexed dataset.
-        self._indexed = None
+        self._generation += 1
         self.mounted_paths.add(mountpoint)
         if self.mount_check_timer is not None:
             self.mount_check_timer.cancel()
@@ -392,26 +404,38 @@ class TruesearchService(Service):
             running = await self.call2(self.s.service.started, 'truesearch')
             before = await self.middleware.run_in_thread(read_config)
 
+            verb: Literal['START', 'STOP', 'RESTART', 'RELOAD']
             try:
                 if enabled and running:
-                    await (await self.call2(self.s.service.control, 'RELOAD', 'truesearch')).wait(raise_error=True)
-                elif enabled and not running:
-                    await (await self.call2(self.s.service.control, 'START', 'truesearch')).wait(raise_error=True)
-                elif not enabled and running:
-                    await (await self.call2(self.s.service.control, 'STOP', 'truesearch')).wait(raise_error=True)
-                    return
+                    verb = 'RELOAD'
+                # The service is stopped when one daemon is down. The daemon that runs reads the file only when it
+                # starts, so it restarts.
+                elif enabled:
+                    verb = 'RESTART' if await self.alive() else 'START'
+                elif await self.alive():
+                    verb = 'STOP'
                 else:
                     return
+
+                done = await (await self.call2(self.s.service.control, verb, 'truesearch')).wait(raise_error=True)
             finally:
                 # The configuration file can have other rows now.
-                self._indexed = None
+                self._generation += 1
+
+            if not done:
+                self.logger.error('TrueSearch: the service failed to %s.', verb.lower())
+            if verb == 'STOP':
+                return
 
             after = await self.middleware.run_in_thread(read_config)
             if before is None or after is None:
                 return
 
-            if running:
+            # A daemon that did not reload still holds the datasets.
+            if running and done:
                 await self.middleware.run_in_thread(self._wait_released, before, after)
+            # The rows that left the file are dropped even when the service failed. It wrote the file first, so the
+            # next configure() does not see them leave.
             if gone := {row.id for row in before} - {row.id for row in after}:
                 await self.middleware.run_in_thread(self._drop, sorted(gone))
 
@@ -431,9 +455,17 @@ class TruesearchService(Service):
             try:
                 answer = control_request(INDEXER_CONTROL, f'drop {id_}')
             except OSError as e:
-                self.logger.warning('TrueSearch: index target %s was not dropped: %s', id_, e)
+                self.logger.warning('TrueSearch: index target %s was not dropped: %s', id_, e, exc_info=True)
             else:
                 self.logger.info('TrueSearch: dropping index target %s: %s', id_, answer)
+
+    @private
+    async def alive(self) -> bool:
+        """
+        Whether truesearchd or truesearch-indexer runs. The service is started only when both run. A step that needs
+        the daemons to let go of a dataset asks this, because one daemon alone still holds it.
+        """
+        return await units_alive()
 
     @private
     @contextlib.asynccontextmanager
@@ -444,7 +476,7 @@ class TruesearchService(Service):
         rows of the datasets that are gone leave the file, and `configure` drops their indexes.
         """
         held = []
-        if mountpoint is not None and await self.call2(self.s.service.started, 'truesearch'):
+        if mountpoint is not None and await self.alive():
             rows = await self.middleware.run_in_thread(read_config) or []
             held = [row.root for row in rows if row.enabled and beneath(row.root, mountpoint)]
 
@@ -474,12 +506,6 @@ class TruesearchService(Service):
 
         TrueSearch uses the index that answers macOS Spotlight searches through SMB. Middleware converts the filters
         into a Spotlight query. Thus, a query gets the same results as a Spotlight search from a Mac.
-
-        A query finds at most 1000 entries. TrueSearch returns the newest entries first.
-
-        If you set ``username``, the search runs as that user. The results then include only the files and directories
-        that the user can access, and the user must be able to access ``path``. If you do not set ``username``, the
-        search runs as root and returns all matches.
         """
         try:
             query = spotlight_query(data.query_filters)
@@ -490,7 +516,7 @@ class TruesearchService(Service):
         uid, gid = 0, 0
         groups: list[int] = []
         if data.username is not None:
-            uid, gid, groups, searches = self._user_identity(data.username, searches, data.recursive)
+            uid, gid, groups, searches = self._user_identity(data.username, searches)
 
         hits: list[tuple[str, Any]] = []
         try:
@@ -541,7 +567,8 @@ class TruesearchService(Service):
         for each indexed dataset that is mounted beneath `path`.
         """
         parts = path.strip('/').split('/')
-        if not path.startswith('/mnt/') or any(part in ('', '.', '..') for part in parts):
+        # `/mnt/` is `/mnt` once it is normalized, and a search of `/mnt` would cover every pool.
+        if not path.startswith('/mnt/') or len(parts) < 2 or any(part in ('', '.', '..') for part in parts):
             raise ValidationError(
                 f'{_SCHEMA}.path', 'Must be an absolute path beneath /mnt with no "." or ".." component.',
             )
@@ -583,8 +610,9 @@ class TruesearchService(Service):
         mountpoints. The list stays until `configure` writes the file again or a dataset is mounted. Thus, a query of
         a path that is not indexed fails at once.
         """
-        if (indexed := self._indexed) is not None:
-            return indexed
+        generation = self._generation
+        if (cached := self._indexed) is not None and cached[0] == generation:
+            return cached[1]
 
         rows = [row for row in read_config() or [] if row.enabled]
         mountpoints = {}
@@ -601,11 +629,12 @@ class TruesearchService(Service):
             for row in rows
             if row.dataset in mountpoints
         ]
-        self._indexed = indexed
+        # A configure or a mount during this read starts a new generation. Then the list serves this query only.
+        self._indexed = (generation, indexed)
         return indexed
 
     def _user_identity(
-        self, username: str, searches: list[tuple[str, str, str]], recursive: bool,
+        self, username: str, searches: list[tuple[str, str, str]],
     ) -> tuple[int, int, list[int], list[tuple[str, str, str]]]:
         """
         The IDs and groups of the user, and the searches that the user can reach. truesearchd checks access from the
@@ -617,18 +646,17 @@ class TruesearchService(Service):
         except KeyError:
             raise ValidationError(f'{_SCHEMA}.username', f'{username!r}: no such user.')
 
-        # One lookup of the user serves all searches.
+        # One lookup of the user serves all searches. A directory that is gone since the configuration file was
+        # written is not refused here. truesearchd does not serve it, and a recursive query skips it.
         details = user.model_dump()
         reachable = [
             search for search in searches
             if not self.middleware.call_sync(
-                'filesystem.can_access_as_cred_errors', details, search[0], ['READ', 'EXECUTE'], True, True,
+                'filesystem.can_access_as_cred_errors', details, search[0], ['READ', 'EXECUTE'], False, True,
             )
         ]
-        if not reachable or (not recursive and len(reachable) < len(searches)):
-            raise ValidationError(
-                f'{_SCHEMA}.username', f'{username!r} cannot reach {searches[0][0]!r}.', errno.EACCES,
-            )
+        if not reachable:
+            raise CallError(f'{username!r} cannot reach {searches[0][0]!r}.', errno.EACCES)
 
         return user.pw_uid, user.pw_gid, list(user.grouplist or []), reachable
 
@@ -761,8 +789,15 @@ def _hit_type(mode: int) -> TruesearchEntryType:
     return 'OTHER'
 
 
-def _time(seconds: int, nanoseconds: int) -> datetime:
-    return datetime.fromtimestamp(seconds + nanoseconds / 1e9, tz=timezone.utc)
+def _time(seconds: int, nanoseconds: int) -> datetime | None:
+    """
+    A time of a stat, to the microsecond. It is never rounded up into the next second. A time that `datetime` cannot
+    hold, such as a year after 9999, is None.
+    """
+    try:
+        return datetime.fromtimestamp(seconds, tz=timezone.utc).replace(microsecond=nanoseconds // 1000)
+    except (OverflowError, OSError, ValueError):
+        return None
 
 
 def _entry(path: str, st: Any) -> TruesearchEntry:
@@ -805,7 +840,7 @@ class TrueSearchFSAttachmentDelegate(FSAttachmentDelegate[TargetRow]):
         The rows both daemons hold at or beneath `path`. No disabled row is listed. TrueSearch follows the shares, and
         `pool.post_import` configures it after an import.
         """
-        if not enabled or not await self.call2(self.s.service.started, 'truesearch'):
+        if not enabled or not await self.call2(self.s.truesearch.alive):
             return []
 
         exact = (options or {}).get('exact_match', False)

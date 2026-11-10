@@ -3,6 +3,8 @@ from middlewared.plugins.service.services.base_state import ServiceState
 from middlewared.plugins.service.services.dbus_router import system_dbus
 
 INDEXER_UNIT = "truesearch-indexer"
+# The states in which a unit has no process.
+STOPPED_STATES = ("inactive", "failed")
 
 
 class TruesearchService(SimpleService):
@@ -21,9 +23,10 @@ class TruesearchService(SimpleService):
         return [INDEXER_UNIT]
 
     async def get_state(self) -> ServiceState:
-        # The service runs when both units run. `configure` starts a dead indexer again.
+        # The service runs when both units run. `configure` starts a dead indexer again. A reload counts as running,
+        # as it does for the main unit.
         state = await super().get_state()
-        if state.running and await system_dbus.get_unit_active_state(INDEXER_UNIT) != "active":
+        if state.running and await system_dbus.get_unit_active_state(INDEXER_UNIT) not in ("active", "reloading"):
             return ServiceState(False, [])
 
         return state
@@ -43,3 +46,15 @@ class TruesearchService(SimpleService):
     async def reload(self) -> None:
         await self._systemd_unit(INDEXER_UNIT, "reload")
         await super().reload()
+
+
+async def alive() -> bool:
+    """
+    Whether truesearchd or truesearch-indexer has a process. The service is stopped when only one of them runs, but
+    that one still holds the index files and the indexed datasets.
+    """
+    for unit in (TruesearchService.systemd_unit, INDEXER_UNIT):
+        if await system_dbus.get_unit_active_state(unit) not in STOPPED_STATES:
+            return True
+
+    return False

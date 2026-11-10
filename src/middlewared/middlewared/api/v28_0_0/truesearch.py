@@ -44,9 +44,9 @@ class TruesearchQuery(BaseModel):
     )
     username: str | None = Field(
         default=None,
-        description="The user to search as. The results include only the files and directories that this user can "
-        "access. An administrator can use this to see what the user can find. If `username` is `null`, "
-        "the search runs as root and returns all matches.",
+        description="The user to search as. The user must be able to access `path`. The results include only the "
+        "files and directories that this user can access. An administrator can use this to see what the user can "
+        "find. If `username` is `null`, the search runs as root and returns all matches.",
     )
     recursive: bool = Field(
         default=False,

@@ -146,20 +146,38 @@ def test_a_configuration_upload_with_another_secret_rekeys_the_index_dataset(mon
     assert [c.args for c in calls] == ([(str(upload),)] if rekeyed else [])
 
 
+def index_dataset_row(keystatus="available"):
+    """The encryption properties of the index dataset, as zfs.resource.list_impl gives them."""
+    return {
+        "name": INDEX_DATASET,
+        "properties": {
+            "encryption": {"raw": "aes-256-gcm"},
+            "keyformat": {"raw": "raw"},
+            "keylocation": {"raw": KEY_LOCATION},
+            "keystatus": {"raw": keystatus},
+        },
+    }
+
+
 @pytest.mark.parametrize(
-    "pool,imported,rekeyed",
+    "pool,imported,found,rekeyed",
     [
-        ("tank", ["boot-pool", "tank"], [INDEX_DATASET]),
+        ("tank", ["boot-pool", "tank"], [index_dataset_row()], [INDEX_DATASET]),
         # The standby controller has not imported the pool.
-        ("tank", ["boot-pool"], []),
+        ("tank", ["boot-pool"], [index_dataset_row()], []),
         # The datasets on the boot pool are not encrypted.
-        ("boot-pool", ["boot-pool"], []),
+        ("boot-pool", ["boot-pool"], [], []),
+        # A dataset that does not exist is made with the new secret at the next boot.
+        ("tank", ["boot-pool", "tank"], [], []),
+        # A locked dataset cannot be wrapped again. It can be encrypted with the new secret already.
+        ("tank", ["boot-pool", "tank"], [index_dataset_row("unavailable")], []),
     ],
 )
-def test_only_the_node_with_the_pool_rekeys_the_index_dataset(monkeypatch, pool, imported, rekeyed):
+def test_a_rekey_wraps_only_a_loaded_key_on_the_node_with_the_pool(monkeypatch, pool, imported, found, rekeyed):
     m = Middleware()
     m["systemdataset.config"] = Mock(return_value={"pool": pool, "uuid": "uuid"})
     m.services.boot.pool_name = Mock(return_value="boot-pool")
+    m.services.zfs.resource.list_impl = Mock(return_value=found)
     monkeypatch.setattr(
         sysdataset_plugin, "query_imported_fast_impl", lambda: {name: {"name": name} for name in imported}
     )
@@ -167,6 +185,24 @@ def test_only_the_node_with_the_pool_rekeys_the_index_dataset(monkeypatch, pool,
     monkeypatch.setattr(sysdataset_plugin, "rekey_pwenc_dataset", lambda tls, name, secret_path: done.append(name))
     SystemDatasetService(m).rekey_encrypted_datasets(None, "/data/pwenc_secret_uploaded")
     assert done == rekeyed
+    queried = [c.args[0].paths for c in m.services.zfs.resource.list_impl.call_args_list]
+    assert queried == ([[INDEX_DATASET]] if pool == "tank" and "tank" in imported else [])
+
+
+def test_a_release_stops_a_daemon_that_runs_alone_and_starts_it_after_a_failure(monkeypatch):
+    m = Middleware()
+    # The truesearch service is stopped, because one daemon is down. The other daemon still holds the index files.
+    m.services.service.started = Mock(return_value=False)
+    m.services.service.control = Mock()
+    m.services.truesearch.alive = Mock(return_value=True)
+    m.services.truesearch.configure = Mock()
+    monkeypatch.setattr(sysdataset_plugin, "close_sysdataset_tdb_handles", lambda: None)
+    with pytest.raises(OSError):
+        with SystemDatasetService(m).release_system_dataset():
+            raise OSError("the swap failed")
+
+    assert ("STOP", "truesearch") in [c.args for c in m.services.service.control.call_args_list]
+    m.services.truesearch.configure.assert_called_once_with()
 
 
 def sysdataset(pool="tank", passphrase=False, existing=None, setup=None):
@@ -233,7 +269,7 @@ async def test_the_index_dataset_is_not_encrypted_on_the_boot_pool():
 
 @pytest.mark.asyncio
 async def test_an_index_dataset_that_cannot_be_set_up_is_left_out():
-    m, svc = sysdataset(setup=AsyncMock(side_effect=OSError("no secret")))
+    m, svc = sysdataset(setup=AsyncMock(side_effect=CallError(f"The pwenc secret does not unlock {INDEX_DATASET}.")))
     names = [ds["name"] for ds in await svc.setup_datasets("tank", "uuid")]
     # It is not mounted, so truesearchd and truesearch-indexer do not start.
     assert INDEX_DATASET not in names

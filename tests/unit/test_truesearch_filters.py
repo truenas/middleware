@@ -48,6 +48,8 @@ from middlewared.utils.truesearch_filters import FIELDS, spotlight_query
         ),
         ([["btime", "<", "2026-01-01T02:30:00+02:00"]], "kMDItemFSCreationDate < $time.iso(2026-01-01T00:30:00Z)"),
         ([["atime", "=", "2026-01-01"]], "kMDItemLastUsedDate == $time.iso(2026-01-01T00:00:00Z)"),
+        # truesearchd reads a year of four digits.
+        ([["mtime", ">", "0999-06-05T00:00:00"]], "kMDItemFSContentChangeDate > $time.iso(0999-06-05T00:00:00Z)"),
         # Choices.
         ([["type", "=", "DIRECTORY"]], 'kMDItemContentTypeTree == "public.directory"'),
         ([["type", "=", "SYMLINK"]], 'kMDItemContentTypeTree == "public.symlink"'),
@@ -89,6 +91,8 @@ def test_spotlight_query(filters, query):
         ([["name", "in", "a"]], "one or more values"),
         ([["mtime", ">", "yesterday"]], "not an ISO-8601 date"),
         ([["mtime", ">", 1700000000]], "ISO-8601 date string"),
+        ([["mtime", ">", "0001-01-01T00:00:00+05:00"]], "between the years 1 and 9999"),
+        ([["type", ">", "FILE"]], "does not use"),
         ([["name.$date", ">", "2026-01-01"]], "not a date field"),
         ([["OR", []]], '"OR" must have'),
         ([["name", "="]], "is not a filter"),
@@ -100,11 +104,39 @@ def test_spotlight_query_refuses(filters, why):
         spotlight_query(filters)
 
 
-@pytest.mark.parametrize("name", ["type", "macos_kind"])
-def test_every_choice_is_a_value_of_its_attribute(name):
-    field = FIELDS[name]
-    for choice, value in field.choices.items():
-        assert spotlight_query([[name, "=", choice]]) == f'{field.attribute} == "{value}"'
+# Each choice and the Spotlight query of it. The kinds are the kMDItemKind names that truesearchd knows.
+CHOICES = [
+    ("type", "DIRECTORY", 'kMDItemContentTypeTree == "public.directory"'),
+    ("type", "FILE", 'kMDItemContentTypeTree == "public.data"'),
+    ("type", "SYMLINK", 'kMDItemContentTypeTree == "public.symlink"'),
+    ("macos_kind", "FOLDER", 'kMDItemKind == "Folder"'),
+    ("macos_kind", "PDF", 'kMDItemKind == "PDF"'),
+    ("macos_kind", "IMAGE", 'kMDItemKind == "Image"'),
+    ("macos_kind", "MOVIE", 'kMDItemKind == "Movie"'),
+    ("macos_kind", "AUDIO", 'kMDItemKind == "Audio"'),
+    ("macos_kind", "TEXT", 'kMDItemKind == "Text"'),
+    ("macos_kind", "DOCUMENT", 'kMDItemKind == "Document"'),
+    ("macos_kind", "SPREADSHEET", 'kMDItemKind == "Spreadsheet"'),
+    ("macos_kind", "PRESENTATION", 'kMDItemKind == "Presentation"'),
+    ("macos_kind", "ARCHIVE", 'kMDItemKind == "Archive"'),
+    ("macos_kind", "APPLICATION", 'kMDItemKind == "Application"'),
+    ("macos_kind", "DISK_IMAGE", 'kMDItemKind == "Disk Image"'),
+    ("macos_kind", "PACKAGE", 'kMDItemKind == "Package"'),
+    ("macos_kind", "FONT", 'kMDItemKind == "Font"'),
+    ("macos_kind", "CONTACT", 'kMDItemKind == "Contact"'),
+    ("macos_kind", "MAIL", 'kMDItemKind == "Mail"'),
+]
+
+
+@pytest.mark.parametrize("name,choice,query", CHOICES)
+def test_each_choice_has_its_spotlight_value(name, choice, query):
+    assert spotlight_query([[name, "=", choice]]) == query
+
+
+def test_every_choice_is_tested():
+    assert {(name, choice) for name, choice, query in CHOICES} == {
+        (name, choice) for name, field in FIELDS.items() for choice in field.choices
+    }
 
 
 def test_the_api_names_the_filter_fields_that_are_not_in_the_results():

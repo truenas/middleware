@@ -28,22 +28,25 @@ def make_available():
 
 @pytest.fixture(scope='module')
 def share(make_available):
+    protocols = call('smb.config')['search_protocols']
     call('smb.update', {'search_protocols': ['SPOTLIGHT']})
+    try:
+        with dataset('truesearch', data={'share_type': 'SMB'}) as ds:
+            ssh(f"touch /mnt/{ds}/mytest.txt")
 
-    with dataset('truesearch', data={'share_type': 'SMB'}) as ds:
-        ssh(f"touch /mnt/{ds}/mytest.txt")
-
-        with user({
-            'username': USERNAME,
-            'full_name': 'Alex',
-            'group_create': True,
-            'password': PASSWORD
-        }):
-            with smb_share(os.path.join('/mnt', ds), SHARE_NAME) as smb:
-                yield {
-                    'dataset': ds,
-                    'share': smb,
-                }
+            with user({
+                'username': USERNAME,
+                'full_name': 'Alex',
+                'group_create': True,
+                'password': PASSWORD
+            }):
+                with smb_share(os.path.join('/mnt', ds), SHARE_NAME) as smb:
+                    yield {
+                        'dataset': ds,
+                        'share': smb,
+                    }
+    finally:
+        call('smb.update', {'search_protocols': protocols})
 
 
 @contextlib.contextmanager
@@ -172,6 +175,7 @@ def test_a_disabled_share_keeps_its_index(share):
             expect_status(other)
             expect_status(share['dataset'])
             kept, pids = environments(), daemon_pids()
+            assert kept
 
             call('sharing.smb.update', share['share']['id'], {'enabled': False})
             try:
@@ -195,14 +199,16 @@ def test_export_and_import_keep_the_index(share):
             with another_share(os.path.join('/mnt', ds), 'truesearch_export'):
                 expect_api_query(f"/mnt/{ds}", [['name', '^', 'exportedtest']], [f"/mnt/{ds}/exportedtest.txt"])
                 kept, pids = environments(), daemon_pids()
+                assert kept
 
                 # TrueSearch releases the pool with a reload, so the export stops neither daemon.
                 call('pool.export', pool['id'], job=True)
-                assert daemon_pids() == pids
-                assert environments() == kept
-                expect_search_result(["mytest.txt"])
-
-                call('pool.import_pool', {'guid': pool['guid']}, job=True)
+                try:
+                    assert daemon_pids() == pids
+                    assert environments() == kept
+                    expect_search_result(["mytest.txt"])
+                finally:
+                    call('pool.import_pool', {'guid': pool['guid']}, job=True)
                 # The import enables the share again. The daemons open the old index and do not build a new one.
                 expect_api_query(f"/mnt/{ds}", [['name', '^', 'exportedtest']], [f"/mnt/{ds}/exportedtest.txt"])
                 assert environments() == kept
@@ -224,15 +230,17 @@ def test_an_encrypted_dataset_is_indexed_and_can_be_locked(share):
         ssh(f"touch /mnt/{ds}/lockedtest.txt")
         expect_api_query(f"/mnt/{ds}", [['name', '^', 'lockedtest']], [f"/mnt/{ds}/lockedtest.txt"])
         kept = environments()
+        assert kept
 
         # Both daemons release the dataset before the lock unmounts it. Its row is disabled, and its index stays.
         call('pool.dataset.lock', ds, job=True)
-        assert ds not in [d['dataset'] for d in call('truesearch.status')['datasets']]
-        assert environments() == kept
-
-        call('pool.dataset.unlock', ds.split('/')[0], {
-            'datasets': [{'name': ds, 'passphrase': PASSPHRASE}], 'recursive': True,
-        }, job=True)
+        try:
+            assert ds not in [d['dataset'] for d in call('truesearch.status')['datasets']]
+            assert environments() == kept
+        finally:
+            call('pool.dataset.unlock', ds.split('/')[0], {
+                'datasets': [{'name': ds, 'passphrase': PASSPHRASE}], 'recursive': True,
+            }, job=True)
         expect_api_query(f"/mnt/{ds}", [['name', '^', 'lockedtest']], [f"/mnt/{ds}/lockedtest.txt"])
 
 
@@ -242,8 +250,8 @@ def test_a_system_dataset_move_makes_the_index_dataset_again(share):
         call('systemdataset.update', {'pool': other['name']}, job=True)
         try:
             index_dataset = f"{other['name']}/.system/truesearchd"
-            properties = ssh(f"zfs get -H -o value encryption,keyformat,keylocation {index_dataset}")
-            assert properties.split() == ['aes-256-gcm', 'raw', 'file:///data/pwenc_secret']
+            properties = ssh(f"zfs get -H -o value encryption,keyformat,keylocation,keystatus {index_dataset}")
+            assert properties.split() == ['aes-256-gcm', 'raw', 'file:///data/pwenc_secret', 'available']
             # The indexes are not copied. truesearch-indexer builds them again on the new pool.
             expect_search_result(["mytest.txt"])
         finally:

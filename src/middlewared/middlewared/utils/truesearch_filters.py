@@ -223,7 +223,10 @@ def _single(field_name: str, query_field: QueryField, operator: str, value: Any,
 
 
 def _iso(field_name: str, value: Any) -> str:
-    """Convert a date to the form that `$time.iso` reads: UTC, in seconds. A date without a time zone is UTC."""
+    """
+    Convert a date to the form that `$time.iso` reads: UTC, a year of four digits, and whole seconds. truesearchd
+    compares whole seconds. A date without a time zone is UTC.
+    """
     if not isinstance(value, str):
         raise ValueError(f"The value of {field_name!r} must be an ISO-8601 date string.")
 
@@ -235,7 +238,12 @@ def _iso(field_name: str, value: Any) -> str:
     if when.tzinfo is None:
         when = when.replace(tzinfo=timezone.utc)
 
-    return when.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    try:
+        when = when.astimezone(timezone.utc)
+    except OverflowError:
+        raise ValueError(f"{value!r} is not between the years 1 and 9999 in UTC.") from None
+
+    return when.replace(tzinfo=None, microsecond=0).isoformat() + "Z"
 
 
 def _operator_list(field_type: FieldType) -> str:

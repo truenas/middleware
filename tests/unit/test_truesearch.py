@@ -12,6 +12,9 @@ from truesearch_client.config import TargetRow
 from truesearch_client.control import IndexerStatus, IndexerTarget, UnindexedTarget
 
 from middlewared.api.current import TruesearchQuery
+from middlewared.plugins.service.services import truesearch as truesearch_units
+from middlewared.plugins.service.services.base import SimpleService
+from middlewared.plugins.service.services.base_state import ServiceState
 import middlewared.plugins.truesearch as truesearch_plugin
 from middlewared.plugins.truesearch import (
     DatasetInfo,
@@ -215,6 +218,25 @@ async def test_a_legacy_time_machine_share_is_not_indexed():
 
 
 @pytest.mark.asyncio
+async def test_a_disabled_time_machine_share_stays_excluded():
+    m = Middleware()
+    shares = [
+        {
+            "path": "/mnt/tank/data/tm",
+            "enabled": False,
+            "locked": False,
+            "purpose": "LEGACY_SHARE",
+            "options": {"home": False, "timemachine": True},
+        },
+    ]
+    # sharing.smb.query applies a filter on `enabled`.
+    m["sharing.smb.query"] = Mock(
+        side_effect=lambda filters, options: [s for s in shares if not filters or s["enabled"]]
+    )
+    assert await TruesearchService(m).timemachine_directories() == {"/mnt/tank/data/tm"}
+
+
+@pytest.mark.asyncio
 async def test_the_webshare_home_base_is_not_indexed():
     m = Middleware()
     m.services.webshare.config = AsyncMock(return_value=Mock(search=True))
@@ -356,18 +378,31 @@ async def test_targets_disable_the_rows_beneath_a_mountpoint_being_destroyed(mon
     ]
 
 
+@pytest.mark.asyncio
+async def test_targets_give_no_row_to_the_dataset_of_a_time_machine_share(monkeypatch):
+    svc = target_service(monkeypatch, {"/mnt/tank/data"})
+    svc.datasets = AsyncMock(return_value={**DATASETS, "/mnt/tank/data/tm": DatasetInfo("tank/data/tm", "7")})
+    assert await svc.targets() == [
+        TargetRow(id="ds2", dataset="tank/data", root="/mnt/tank/data"),
+        TargetRow(id="ds3", dataset="tank/data/media", root="/mnt/tank/data/media"),
+        TargetRow(id="ds4", dataset="tank/data/secret", root="/mnt/tank/data/secret", enabled=False),
+    ]
+
+
 def rows(*ids, disabled=()):
     return [
         TargetRow(id=id_, dataset=f"tank/{id_}", root=f"/mnt/tank/{id_}", enabled=id_ not in disabled) for id_ in ids
     ]
 
 
-def configured(monkeypatch, enabled, running, files):
+def configured(monkeypatch, enabled, running, files, alive=None, done=True):
     m = Middleware()
     m.services.service.started = AsyncMock(return_value=running)
-    m.services.service.control = AsyncMock(return_value=FakeJob())
+    m.services.service.control = AsyncMock(return_value=FakeJob(done))
     svc = TruesearchService(m)
     svc.enabled = AsyncMock(return_value=enabled)
+    # A daemon runs when the service runs. A test of a single daemon gives `alive`.
+    svc.alive = AsyncMock(return_value=running if alive is None else alive)
     files = iter(files)
     monkeypatch.setattr(truesearch_plugin, "read_config", lambda: next(files))
     sent = []
@@ -426,10 +461,37 @@ async def test_configure_waits_for_nothing_when_it_starts(monkeypatch):
     assert (waited, sent) == ([], ["drop ds1"])
 
 
-def releasing_service(monkeypatch, running=True):
+@pytest.mark.asyncio
+async def test_configure_stops_a_daemon_that_runs_alone(monkeypatch):
+    # The service is stopped when one daemon is down. The other one still holds the datasets.
+    m, svc, sent, waited = configured(monkeypatch, False, False, [rows("ds1"), []], alive=True)
+    await svc.configure()
+    m.services.service.control.assert_awaited_once_with("STOP", "truesearch")
+
+
+@pytest.mark.asyncio
+async def test_configure_restarts_a_daemon_that_runs_alone(monkeypatch):
+    # The daemon that runs reads the file again only when it restarts. Then it does not hold ds1.
+    m, svc, sent, waited = configured(monkeypatch, True, False, [rows("ds1", "ds2"), rows("ds2")], alive=True)
+    await svc.configure()
+    m.services.service.control.assert_awaited_once_with("RESTART", "truesearch")
+    assert (waited, sent) == ([], ["drop ds1"])
+
+
+@pytest.mark.asyncio
+async def test_configure_drops_but_waits_for_nothing_after_a_failed_reload(monkeypatch):
+    # The service wrote the file before the reload failed.
+    m, svc, sent, waited = configured(monkeypatch, True, True, [rows("ds1", "ds2"), rows("ds2")], done=False)
+    await svc.configure()
+    assert (waited, sent) == ([], ["drop ds1"])
+
+
+def releasing_service(monkeypatch, running=True, alive=None):
     m = Middleware()
     m.services.service.started = AsyncMock(return_value=running)
     svc = TruesearchService(m)
+    # A daemon runs when the service runs. A test of a single daemon gives `alive`.
+    svc.alive = AsyncMock(return_value=running if alive is None else alive)
     monkeypatch.setattr(truesearch_plugin, "read_config", lambda: rows("ds1", "ds2", disabled={"ds2"}))
     seen = []
 
@@ -445,6 +507,15 @@ async def test_remove_mountpoint_releases_the_rows_beneath_it(monkeypatch):
     svc, seen = releasing_service(monkeypatch)
     async with svc.remove_mountpoint("/mnt/tank/ds1"):
         assert seen == [["/mnt/tank/ds1"]]
+
+    assert seen == [["/mnt/tank/ds1"], []]
+
+
+@pytest.mark.asyncio
+async def test_remove_mountpoint_releases_while_one_daemon_runs(monkeypatch):
+    svc, seen = releasing_service(monkeypatch, running=False, alive=True)
+    async with svc.remove_mountpoint("/mnt/tank/ds1"):
+        pass
 
     assert seen == [["/mnt/tank/ds1"], []]
 
@@ -472,9 +543,9 @@ async def test_remove_mountpoint_of_nothing_held_changes_nothing(monkeypatch, mo
 
 
 @pytest.mark.asyncio
-async def test_attachments_are_the_rows_both_daemons_hold(monkeypatch):
+async def test_attachments_are_the_rows_the_daemons_hold(monkeypatch):
     m = Middleware()
-    m.services.service.started = AsyncMock(return_value=True)
+    m.services.truesearch.alive = AsyncMock(return_value=True)
     monkeypatch.setattr(
         truesearch_plugin,
         "read_config",
@@ -486,7 +557,8 @@ async def test_attachments_are_the_rows_both_daemons_hold(monkeypatch):
     assert await delegate.query("/mnt/tank", False) == []
     assert await delegate.get_attachment_name(rows("ds1")[0]) == "tank/ds1"
 
-    m.services.service.started = AsyncMock(return_value=False)
+    # No daemon runs.
+    m.services.truesearch.alive = AsyncMock(return_value=False)
     assert await delegate.query("/mnt/tank", True) == []
 
 
@@ -616,6 +688,22 @@ def test_query_as_root(client):
     m["filesystem.can_access_as_cred_errors"].assert_not_called()
 
 
+def test_a_time_that_datetime_cannot_hold_has_no_value(client):
+    m, svc = search_service()
+    # touch -d '9999-12-31 23:59:59' west of UTC gives a time after the year 9999.
+    FakeClient.hits = (SimpleNamespace(path="future.txt", st=stat(mtime_sec=253_402_329_599)),)
+    [entry] = query(svc)
+    assert (entry.name, entry.mtime) == ("future.txt", None)
+    assert entry.btime == datetime.fromtimestamp(1_600_000_000, tz=timezone.utc)
+
+
+def test_a_time_is_not_rounded_into_the_next_second(client):
+    m, svc = search_service()
+    FakeClient.hits = (SimpleNamespace(path="a.txt", st=stat(mtime_sec=1_794_142_012, mtime_nsec=999_999_600)),)
+    [entry] = query(svc)
+    assert entry.mtime == datetime.fromtimestamp(1_794_142_012, tz=timezone.utc).replace(microsecond=999_999)
+
+
 def test_query_reads_the_indexed_datasets_once(client):
     m, svc = search_service()
     query(svc)
@@ -627,19 +715,36 @@ def test_query_reads_the_indexed_datasets_once(client):
     assert len(FakeClient.requests) == 2
 
 
+def test_a_mount_during_a_read_of_the_indexed_datasets_is_not_lost(client):
+    m, svc = search_service()
+    listing = m.services.zfs.resource.list_impl.return_value
+
+    def list_impl(query):
+        # A dataset mounts on the event loop while a query reads the mountpoints.
+        asyncio.run(svc.schedule_mount_check("/mnt/tank/new"))
+        svc.mount_check_timer.cancel()
+        return listing
+
+    m.services.zfs.resource.list_impl = Mock(side_effect=list_impl)
+    svc._indexed_datasets()
+    svc._indexed_datasets()
+    # The list read across the mount served one query. The next query reads the mountpoints again.
+    assert m.services.zfs.resource.list_impl.call_count == 2
+
+
 @pytest.mark.asyncio
 async def test_configure_forgets_the_indexed_datasets(monkeypatch):
     m, svc, sent, waited = configured(monkeypatch, True, True, [rows("ds1"), rows("ds1")])
-    svc._indexed = []
+    generation = svc._generation
     await svc.configure()
-    assert svc._indexed is None
+    assert svc._generation == generation + 1
 
 
 @pytest.mark.asyncio
 async def test_a_mount_forgets_the_indexed_datasets(truesearch):
-    truesearch._indexed = []
+    generation = truesearch._generation
     await truesearch.schedule_mount_check("/mnt/tank/share/child")
-    assert truesearch._indexed is None
+    assert truesearch._generation == generation + 1
     truesearch.mount_check_timer.cancel()
 
 
@@ -694,6 +799,22 @@ def test_query_recursive_skips_a_dataset_the_user_cannot_reach(client):
     assert [request.dataset for request in FakeClient.requests] == ["tank/data"]
 
 
+def test_query_recursive_skips_a_directory_that_is_gone(client):
+    m, svc = search_service()
+
+    def access(details, path, perms, path_must_exist, probe_ancestors):
+        # As filesystem.can_access_as_cred_errors does for a path that does not exist.
+        if path_must_exist and path.endswith("/media"):
+            raise CallError(f"{path!r} does not exist", errno.EINVAL)
+        return []
+
+    m["filesystem.can_access_as_cred_errors"] = Mock(side_effect=access)
+    # truesearchd does not serve the index target whose root is gone.
+    FakeClient.errors_by_dataset = {"tank/data/shares/media": client.NoIndex("its root is gone")}
+    FakeClient.hits = (SimpleNamespace(path="a.txt", st=stat()),)
+    assert [entry.name for entry in query(svc, recursive=True, username="alex")] == ["a.txt"]
+
+
 def test_query_above_the_index_root_searches_the_root(client):
     m, svc = search_service()
     query(svc, path="/mnt/tank/data")
@@ -723,7 +844,7 @@ def test_query_as_a_user(client):
         USER_DETAILS,
         "/mnt/tank/data/shares/team",
         ["READ", "EXECUTE"],
-        True,
+        False,
         True,
     )
 
@@ -731,8 +852,9 @@ def test_query_as_a_user(client):
 def test_query_as_a_user_who_cannot_reach_the_directory(client):
     m, svc = search_service()
     m["filesystem.can_access_as_cred_errors"] = Mock(return_value=["denied"])
-    with pytest.raises(ValidationError):
+    with pytest.raises(CallError) as e:
         query(svc, username="alex")
+    assert e.value.errno == errno.EACCES
     assert FakeClient.requests == []
 
 
@@ -744,6 +866,9 @@ def test_query_as_a_user_who_cannot_reach_the_directory(client):
         "/mnt/./tank",
         "mnt/tank/data",
         "/etc/passwd",
+        # Each is /mnt once it is normalized.
+        "/mnt/",
+        "/mnt//",
     ],
 )
 def test_query_refuses_a_path_outside_mnt_or_with_dot_components(client, path):
@@ -967,3 +1092,25 @@ def test_carried_rows_leave_a_row_the_datasets_hold():
     assert carried_rows(OLD, rows, set(), {"/mnt/gone"}) == [
         TargetRow(id="ds4", dataset="gone/d", root="/mnt/gone/d", enabled=False),
     ]
+
+
+@pytest.mark.asyncio
+async def test_the_service_runs_while_the_indexer_reloads(monkeypatch):
+    monkeypatch.setattr(SimpleService, "get_state", AsyncMock(return_value=ServiceState(True, [100])))
+    dbus = SimpleNamespace(get_unit_active_state=AsyncMock(return_value="reloading"))
+    monkeypatch.setattr(truesearch_units, "system_dbus", dbus)
+    assert (await truesearch_units.TruesearchService(Middleware()).get_state()).running is True
+
+
+@pytest.mark.parametrize(
+    "states,alive",
+    [
+        ({"truesearchd": "inactive", "truesearch-indexer": "deactivating"}, True),
+        ({"truesearchd": "failed", "truesearch-indexer": "inactive"}, False),
+    ],
+)
+@pytest.mark.asyncio
+async def test_a_daemon_alone_is_alive(monkeypatch, states, alive):
+    dbus = SimpleNamespace(get_unit_active_state=AsyncMock(side_effect=states.get))
+    monkeypatch.setattr(truesearch_units, "system_dbus", dbus)
+    assert await truesearch_units.alive() is alive

@@ -788,10 +788,7 @@ class SystemDatasetService(ConfigService):
                 except Exception as e:
                     # The dataset is not mounted, so the services that use it do not start. Nothing goes to an
                     # unencrypted directory in its place. A CallError says what to do.
-                    self.logger.error(
-                        '%s: failed to set up the encrypted dataset: %s', dataset, e,
-                        exc_info=not isinstance(e, CallError),
-                    )
+                    self.logger.error('%s: failed to set up the encrypted dataset: %s', dataset, e, exc_info=True)
                     failed.append(dataset)
                     continue
 
@@ -857,9 +854,18 @@ class SystemDatasetService(ConfigService):
         if config['pool'] == self.call_sync2(self.s.boot.pool_name) or config['pool'] not in imported:
             return
 
-        for ds in get_system_dataset_spec(config['pool'], config['uuid']):
-            if ds.get('pwenc_encrypted'):
-                rekey_pwenc_dataset(tls, ds['name'], secret_path)
+        spec = get_system_dataset_spec(config['pool'], config['uuid'])
+        names = [ds['name'] for ds in spec if ds.get('pwenc_encrypted')]
+        for found in self.call_sync2(
+            self.s.zfs.resource.list_impl,
+            ZFSResourceQuery(paths=names, properties=['encryption', 'keyformat', 'keylocation', 'keystatus']),
+        ):
+            # A dataset that does not exist is made with the new secret at the next boot. A locked one cannot be
+            # wrapped again. It can be encrypted with the new secret already, on a pool of the system that saved the
+            # configuration.
+            enc = get_encryption_info(found['properties'])
+            if enc.encrypted and not enc.locked:
+                rekey_pwenc_dataset(tls, found['name'], secret_path)
 
     @private
     def mount_system_dataset(self, datasets):
@@ -1086,9 +1092,10 @@ class SystemDatasetService(ConfigService):
             restart.append('nfs')
         if self.call_sync2(self.s.service.started, 'open-vm-tools'):
             restart.append('open-vm-tools')
-        # Both TrueSearch daemons map the index files on the system dataset. After a swap, the post-mount action of
-        # the index dataset runs `truesearch.configure`, which starts them again. After a failure, it runs here.
-        truesearch = self.call_sync2(self.s.service.started, 'truesearch')
+        # Both TrueSearch daemons map the index files on the system dataset, and one daemon alone still holds them.
+        # After a swap, the post-mount action of the index dataset runs `truesearch.configure`, which starts them
+        # again. After a failure, it runs here.
+        truesearch = self.call_sync2(self.s.truesearch.alive)
         finished = False
 
         try:
