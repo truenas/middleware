@@ -7,7 +7,7 @@ import re
 
 import pytest
 
-from middlewared.api.current import TruesearchQuery
+from middlewared.api.current import TruesearchEntry, TruesearchQuery
 from middlewared.utils.truesearch_filters import FIELDS, spotlight_query
 
 
@@ -107,8 +107,6 @@ def test_every_choice_is_a_value_of_its_attribute(name):
         assert spotlight_query([[name, "=", choice]]) == f'{field.attribute} == "{value}"'
 
 
-def test_the_api_documents_every_field_and_choice():
+def test_the_api_names_the_filter_fields_that_are_not_in_the_results():
     doc = TruesearchQuery.model_fields["query_filters"].description
-    assert set(re.findall(r"^\* `(\w+)`: ", doc, re.MULTILINE)) == set(FIELDS)
-    choices = {choice for field in FIELDS.values() for choice in field.choices}
-    assert set(re.findall(r"^  \* `(\w+)`: ", doc, re.MULTILINE)) == choices
+    assert set(re.findall(r"`(\w+)`", doc)) == set(FIELDS) - set(TruesearchEntry.model_fields)

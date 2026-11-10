@@ -473,8 +473,7 @@ class TruesearchService(Service):
         Search the TrueSearch index for files and directories in ``path`` and its subdirectories.
 
         TrueSearch uses the index that answers macOS Spotlight searches through SMB. Middleware converts the filters
-        into a Spotlight query. Thus, a query gets the same results as a Spotlight search from a Mac. The description
-        of ``query-filters`` gives the fields, the operators, and examples.
+        into a Spotlight query. Thus, a query gets the same results as a Spotlight search from a Mac.
 
         A query finds at most 1000 entries. TrueSearch returns the newest entries first.
 

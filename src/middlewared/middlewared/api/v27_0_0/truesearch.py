@@ -22,103 +22,6 @@ __all__ = [
     "TruesearchStatusResult",
 ]
 
-# The filters that `middlewared.utils.truesearch_filters` converts into a Spotlight query.
-_QUERY_FILTERS_DOC = (
-    "The filters that select the files and directories. Write each filter as `[field, operator, value]`, as in other "
-    'query methods. All filters must match. To match one of several filters, use `["OR", [filter, filter]]`. If you '
-    "give no filters, the query returns all files and directories in `path` and its subdirectories.\n"
-    "\n"
-    "TrueSearch uses the index that answers macOS Spotlight searches through SMB. Middleware converts the filters "
-    "into a Spotlight query. Thus, a query gets the same results as a Spotlight search from a Mac. TrueSearch does "
-    "not use regular expressions.\n"
-    "\n"
-    "Text fields:\n"
-    "\n"
-    "* `name`: The name of the file or directory.\n"
-    "* `comment`: The comment that a macOS user set on the file in the Finder.\n"
-    "\n"
-    "Text fields use these operators:\n"
-    "\n"
-    "* `=` and `!=` compare the full value.\n"
-    "* `^` and `!^` compare the start of the value.\n"
-    "* `$` and `!$` compare the end of the value.\n"
-    "* `rin` finds the text anywhere in the value. `rnin` finds values that do not contain the text.\n"
-    "* `in` and `nin` compare the full value with each value in a list.\n"
-    "* Put `C` before an operator to ignore case and accents, for example `C=` or `Crin`.\n"
-    "\n"
-    "Tag fields:\n"
-    "\n"
-    "* `tags`: The tags that a macOS user set on the file in the Finder.\n"
-    "\n"
-    "Tag fields use these operators:\n"
-    "\n"
-    "* `rin` finds files that have the tag. `rnin` finds files that do not have the tag.\n"
-    "* The tag must agree with the full value. Put `C` before the operator to ignore case and accents.\n"
-    "\n"
-    "Number fields:\n"
-    "\n"
-    "* `size`: The size in bytes. For a directory, ZFS gives the number of entries in the directory.\n"
-    "* `uid`: The user ID of the owner.\n"
-    "* `gid`: The group ID of the owner group.\n"
-    "\n"
-    "Number fields use these operators:\n"
-    "\n"
-    "* `=`, `!=`, `>`, `>=`, `<`, and `<=` compare the value.\n"
-    "* `in` and `nin` compare the value with each value in a list.\n"
-    "\n"
-    "Date fields:\n"
-    "\n"
-    "* `mtime`: The last time that the data changed.\n"
-    "* `btime`: The time that the file was created.\n"
-    "* `atime`: The last time that the file was read.\n"
-    "\n"
-    "Date fields use these operators:\n"
-    "\n"
-    "* `=`, `!=`, `>`, `>=`, `<`, and `<=` compare the date.\n"
-    "* Write the date as an ISO-8601 string, for example `2026-01-31T09:00:00`. A date without a time zone is in "
-    "UTC. As in other query methods, you can add `.$date` to the field name.\n"
-    "\n"
-    "Choice fields:\n"
-    "\n"
-    "* `type`: The type of the entry.\n"
-    "  * `DIRECTORY`: A directory. A macOS package is also a directory.\n"
-    "  * `FILE`: A file. FIFOs, sockets, and device files are also files here.\n"
-    "  * `SYMLINK`: A symbolic link. TrueSearch does not follow links.\n"
-    "* `macos_kind`: The kind of file that the macOS Finder shows. TrueSearch gets the kind from the file name "
-    "extension, not from the content. A file with an unknown extension has no kind.\n"
-    "  * `FOLDER`: A directory that is not a macOS package.\n"
-    "  * `PDF`: A PDF document with the `.pdf` extension.\n"
-    "  * `IMAGE`: An image, for example `.jpg`, `.png`, `.gif`, `.heic`, `.tiff`, or `.psd`.\n"
-    "  * `MOVIE`: A video, for example `.mp4`, `.mov`, `.mkv`, or `.avi`.\n"
-    "  * `AUDIO`: An audio file, for example `.mp3`, `.m4a`, `.flac`, or `.wav`.\n"
-    "  * `TEXT`: A text file, for example `.txt`, `.md`, `.csv`, `.html`, or source code.\n"
-    "  * `DOCUMENT`: A word processor document: `.doc`, `.docx`, `.odt`, `.rtf`, or `.pages`.\n"
-    "  * `SPREADSHEET`: A spreadsheet: `.xls`, `.xlsx`, `.ods`, `.numbers`, or `.csv`.\n"
-    "  * `PRESENTATION`: A presentation: `.ppt`, `.pptx`, `.odp`, or `.key`.\n"
-    "  * `ARCHIVE`: An archive: `.zip`, `.7z`, `.rar`, `.tar`, `.gz`, or `.xz`.\n"
-    "  * `APPLICATION`: A macOS application with the `.app` extension, or a disk image. A Windows program with the "
-    "`.exe` extension is not an application here.\n"
-    "  * `DISK_IMAGE`: A disk image: a `.dmg` file, or a `.sparsebundle` or `.backupbundle` package.\n"
-    "  * `PACKAGE`: A macOS package. A package is a directory that a Mac shows as one item, for example `.app`, "
-    "`.sparsebundle`, `.photoslibrary`, or `.rtfd`.\n"
-    "  * `FONT`: A font: `.ttf`, `.otf`, `.woff`, or `.woff2`.\n"
-    "  * `CONTACT`: A contact card with the `.vcf` extension.\n"
-    "  * `MAIL`: An email message with the `.eml` extension.\n"
-    "\n"
-    "Choice fields use these operators:\n"
-    "\n"
-    "* `=` and `!=` compare the value.\n"
-    "* `in` and `nin` compare the value with each value in a list.\n"
-    "\n"
-    "Examples:\n"
-    "\n"
-    '* `[["name", "Crin", "report"]]` finds names that contain "report", in any case.\n'
-    '* `[["macos_kind", "=", "PDF"], ["size", ">", 1048576]]` finds PDF documents that are larger than 1 MiB.\n'
-    '* `[["OR", [["name", "$", ".jpg"], ["name", "$", ".png"]]]]` finds names that end with `.jpg` or `.png`.\n'
-    '* `[["mtime", ">=", "2026-01-01T00:00:00"]]` finds files that changed in 2026 or later.\n'
-    '* `[["tags", "rin", "Important"]]` finds files that have the tag "Important".'
-)
-
 
 class TruesearchQueryOptions(BaseModel):
     """
@@ -153,7 +56,11 @@ class TruesearchQuery(BaseModel):
         "`recursive`, the query merges the results of all datasets, newest first. `limit` applies to the "
         "merged results.",
     )
-    query_filters: QueryFilters = Field(alias="query-filters", default=[], description=_QUERY_FILTERS_DOC)
+    query_filters: QueryFilters = Field(
+        alias="query-filters",
+        default=[],
+        description="Filters can also use `macos_kind`, `tags`, and `comment`. These fields are not in the results.",
+    )
     query_options: TruesearchQueryOptions = Field(
         alias="query-options",
         default=TruesearchQueryOptions(),
