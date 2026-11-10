@@ -91,7 +91,8 @@ def unmount_impl(
         unload_encryption_key: Unload keys for any encryption roots unmounted by this operation.
     """
     rsrc = open_resource(tls, filesystem)
-    kwargs: dict[str, Any] = {}
+    # pylibzfs defaults this to True, so it must always be passed explicitly.
+    kwargs: dict[str, Any] = {"unload_encryption_key": unload_encryption_key}
     if mountpoint is not None:
         kwargs["mountpoint"] = mountpoint
     if recursive:
@@ -100,6 +101,4 @@ def unmount_impl(
         kwargs["force"] = force
     if lazy:
         kwargs["lazy"] = lazy
-    if unload_encryption_key:
-        kwargs["unload_encryption_key"] = unload_encryption_key
     rsrc.unmount(**kwargs)
