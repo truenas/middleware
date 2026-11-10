@@ -8,6 +8,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     IPv4Address,
     IPvAnyAddress,
+    Multiline,
     NonEmptyString,
     NotRequired,
     UniqueList,
@@ -59,7 +60,7 @@ class InterfaceEntryStatePort(BaseModel):
 class InterfaceEntryState(BaseModel):
     name: str = Field(description="Current name of the network interface.")
     orig_name: str = Field(description="Original name of the network interface before any renaming.")
-    description: str = Field(description="Human-readable description of the network interface.")
+    description: Multiline[str] = Field(description="Human-readable description of the network interface.")
     mtu: int = Field(description="Maximum transmission unit size for the interface.")
     cloned: bool = Field(description="Whether the interface is a cloned/virtual interface.")
     flags: list[str] = Field(
@@ -239,7 +240,7 @@ class InterfaceEntry(InterfaceCommonOptions):
     aliases: list[InterfaceEntryAlias] = Field(description="List of IP address aliases configured on the interface.")
     ipv4_dhcp: bool = Field(description="Whether IPv4 DHCP is enabled for automatic IP address assignment.")
     ipv6_auto: bool = Field(description="Whether IPv6 autoconfiguration is enabled.")
-    description: str = Field(description="Human-readable description of the interface.")
+    description: Multiline[str] = Field(description="Human-readable description of the interface.")
     mtu: int | None = Field(description="Maximum transmission unit size for the interface.")
     fec_mode: FecModeName = Field(
         default=NotRequired,
@@ -334,7 +335,7 @@ class InterfaceCreate(InterfaceCommonOptions):
         default=NotRequired,
         description="Generate a name if not provided based on `type`, e.g. \"br0\", \"bond1\", \"vlan0\".",
     )
-    description: str = Field(default="", description="Human-readable description of the interface.")
+    description: Multiline[str] = Field(default="", description="Human-readable description of the interface.")
     type: Literal["BRIDGE", "LINK_AGGREGATION", "VLAN"] = Field(description="Type of interface to create.")
     ipv4_dhcp: bool = Field(default=False, description="Enable IPv4 DHCP for automatic IP address assignment.")
     ipv6_auto: bool = Field(default=False, description="Enable IPv6 autoconfiguration.")

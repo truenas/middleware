@@ -8,6 +8,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     FullAdmin,
     LongString,
+    Multiline,
     NonEmptyString,
     SingleLineNonEmptyString,
     SingleLineString,
@@ -39,9 +40,11 @@ class UPSEntry(BaseModel):
         ),
     )
     hostsync: int = Field(ge=0, description="Maximum seconds to wait for other systems to shutdown before continuing.")
-    description: str = Field(description="Human-readable description of this UPS configuration.")
+    description: Multiline[str] = Field(description="Human-readable description of this UPS configuration.")
     driver: str = Field(description="UPS driver name that handles communication with the specific UPS hardware model.")
-    extrausers: FullAdmin[LongString] = Field(description="Additional user configurations for UPS monitoring access.")
+    extrausers: FullAdmin[Multiline[LongString]] = Field(
+        description="Additional user configurations for UPS monitoring access.",
+    )
     identifier: NonEmptyString = Field(
         description="Unique identifier name for this UPS device within the monitoring system.",
     )
@@ -54,8 +57,12 @@ class UPSEntry(BaseModel):
     )
     monpwd: str = Field(description="Password for UPS monitoring authentication.")
     monuser: NonEmptyString = Field(description="Username for UPS monitoring authentication.")
-    options: FullAdmin[LongString] = Field(description="Additional configuration options passed to the UPS driver.")
-    optionsupsd: FullAdmin[LongString] = Field(description="Additional configuration options for the UPS daemon.")
+    options: FullAdmin[Multiline[LongString]] = Field(
+        description="Additional configuration options passed to the UPS driver.",
+    )
+    optionsupsd: FullAdmin[Multiline[LongString]] = Field(
+        description="Additional configuration options for the UPS daemon.",
+    )
     port: str = Field(description="Serial port or device path for UPS communication.")
     remotehost: str = Field(description="Hostname or IP address of remote UPS server when operating in SLAVE mode.")
     shutdown: Literal['LOWBATT', 'BATT'] = Field(

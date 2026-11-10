@@ -7,6 +7,7 @@ from middlewared.api.base import (
     EmailString,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NotRequired,
 )
 
@@ -35,7 +36,7 @@ class SupportEntry(BaseModel):
 
 class SupportNewTicketCommunity(BaseModel):
     title: str = Field(max_length=200, description="Title of the support ticket.")
-    body: str = Field(max_length=20000, description="Detailed description of the issue or request.")
+    body: Multiline[str] = Field(max_length=20000, description="Detailed description of the issue or request.")
     attach_debug: bool = Field(default=False, description="Whether to attach debug information to the ticket.")
     token: Secret[str] = Field(description="Authentication token for creating community tickets.")
     type: Literal['BUG', 'FEATURE'] = Field(description="Type of ticket being created.")
@@ -44,7 +45,7 @@ class SupportNewTicketCommunity(BaseModel):
 
 class SupportNewTicketEnterprise(BaseModel):
     title: str = Field(max_length=200, description="Title of the support ticket.")
-    body: str = Field(max_length=20000, description="Detailed description of the issue or request.")
+    body: Multiline[str] = Field(max_length=20000, description="Detailed description of the issue or request.")
     category: str = Field(description="Category or classification of the support issue.")
     attach_debug: bool = Field(default=False, description="Whether to attach debug information to the ticket.")
     criticality: str = Field(description="Priority or criticality level of the issue.")
@@ -57,7 +58,7 @@ class SupportNewTicketEnterprise(BaseModel):
 
 class SupportSimilarIssue(BaseModel):
     url: str = Field(default=NotRequired, description="URL link to the similar issue or knowledge base article.")
-    summary: str = Field(default=NotRequired, description="Brief summary of the similar issue.")
+    summary: Multiline[str] = Field(default=NotRequired, description="Brief summary of the similar issue.")
 
     class Config:
         extra = 'allow'
@@ -127,7 +128,7 @@ class SupportNewTicket(BaseModel):
     ticket: int | None = Field(description="Ticket number if successfully created. `null` if creation failed.")
     url: str | None = Field(description="URL to view the created ticket. `null` if not available.")
     has_debug: bool = Field(description="Whether debug information was attached to the ticket.")
-    debug_attach_error: str | None = Field(
+    debug_attach_error: Multiline[str] | None = Field(
         description="If attaching debug information failed, the error message will appear here.",
     )
 

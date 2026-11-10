@@ -9,6 +9,7 @@ from middlewared.api.base import (
     FullAdmin,
     IPvAnyAddress,
     LibvirtUUID,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
@@ -72,7 +73,9 @@ class VMEntry(BaseModel):
         description="Specific CPU model to emulate. `null` to use hypervisor default.",
     )
     name: NonEmptyString = Field(description="Display name of the virtual machine.")
-    description: str = Field(default='', description="Optional description or notes about the virtual machine.")
+    description: Multiline[str] = Field(
+        default='', description="Optional description or notes about the virtual machine.",
+    )
     vcpus: int = Field(
         ge=1,
         default=1,
@@ -371,7 +374,9 @@ class VMVirtualizationDetailsArgs(BaseModel):
 
 class VMVirtualizationDetails(BaseModel):
     supported: bool = Field(description="Whether hardware virtualization is supported and available.")
-    error: str | None = Field(description="Error message if virtualization is not available. `null` if supported.")
+    error: Multiline[str] | None = Field(
+        description="Error message if virtualization is not available. `null` if supported.",
+    )
 
 
 class VMVirtualizationDetailsResult(BaseModel):
@@ -489,7 +494,7 @@ class VMGetDisplayWebUriArgs(BaseModel):
 
 
 class VMGetDisplayWebUri(BaseModel):
-    error: str | None = Field(description="Error message if URI generation failed. `null` on success.")
+    error: Multiline[str] | None = Field(description="Error message if URI generation failed. `null` on success.")
     uri: str | None = Field(description="Generated web URI for accessing the VM display. `null` on error.")
 
 

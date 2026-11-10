@@ -11,6 +11,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongNonEmptyString,
+    Multiline,
     NetbiosDomain,
     NonEmptyString,
     excluded_field,
@@ -587,7 +588,7 @@ class LDAPConfig(BaseModel):
             "if the LDAP server is non-standard."
         ),
     )
-    auxiliary_parameters: LongNonEmptyString | None = Field(
+    auxiliary_parameters: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description=(
             "Additional paramaters to add to the SSSD configuration.\n"

@@ -9,6 +9,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     HttpUrl,
     LongString,
+    Multiline,
     NonEmptyString,
     excluded_field,
     single_argument_args,
@@ -32,11 +33,11 @@ __all__ = ["KeychainCredentialEntry",
 
 class SSHKeyPair(BaseModel):
     """At least one of the two keys must be provided on creation."""
-    private_key: LongString | None = Field(
+    private_key: Multiline[LongString] | None = Field(
         default=None,
         description="SSH private key in OpenSSH format. `null` if only public key is provided.",
     )
-    public_key: LongString | None = Field(
+    public_key: Multiline[LongString] | None = Field(
         default=None,
         description="Can be omitted and automatically derived from the private key.",
     )
@@ -47,7 +48,9 @@ class SSHCredentials(BaseModel):
     port: int = Field(default=22, description="SSH server port number.")
     username: str = Field(default="root", description="SSH username for authentication.")
     private_key: int = Field(description="Keychain Credential ID.")
-    remote_host_key: str = Field(description="Can be discovered with keychaincredential.remote_ssh_host_key_scan.")
+    remote_host_key: Multiline[str] = Field(
+        description="Can be discovered with keychaincredential.remote_ssh_host_key_scan.",
+    )
     connect_timeout: int = Field(default=10, description="Connection timeout in seconds for SSH connections.")
 
 
@@ -180,7 +183,7 @@ class KeychainCredentialRemoteSshHostKeyScanArgs(BaseModel):
 
 
 class KeychainCredentialRemoteSshHostKeyScanResult(BaseModel):
-    result: LongString = Field(description="SSH host public key retrieved from the remote server.")
+    result: Multiline[LongString] = Field(description="SSH host public key retrieved from the remote server.")
 
 
 class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):

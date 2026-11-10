@@ -8,6 +8,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NotRequired,
     excluded_field,
 )
@@ -46,11 +47,11 @@ class MailUpdate(MailEntry, metaclass=ForUpdateMetaclass):
 
 class MailSendMessage(BaseModel):
     subject: str = Field(description="Subject line for the email message.")
-    text: LongString = Field(
+    text: Multiline[LongString] = Field(
         default=NotRequired,
         description="Formatted to HTML using Markdown and rendered using default email template.",
     )
-    html: LongString | None = Field(
+    html: Multiline[LongString] | None = Field(
         default=NotRequired,
         description="Custom HTML (overrides `text`). If null, no HTML MIME part will be added to the email.",
     )

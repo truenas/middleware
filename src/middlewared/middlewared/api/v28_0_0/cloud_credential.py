@@ -5,6 +5,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
@@ -73,7 +74,7 @@ class CredentialsVerifyArgs(BaseModel):
 
 class CredentialsVerifyData(BaseModel):
     valid: bool = Field(description="Whether the cloud credentials are valid and functional.")
-    error: LongString | None = Field(
+    error: Multiline[LongString] | None = Field(
         default=None,
         description="Error message if credential verification failed or `null` on success.",
     )

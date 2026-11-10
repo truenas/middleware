@@ -7,6 +7,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LibvirtUUID,
+    Multiline,
     NonEmptyString,
     excluded_field,
     single_argument_args,
@@ -63,7 +64,7 @@ class ContainerEntry(BaseModel):
     id: int = Field(description="Container ID.")
     uuid: str = Field(description="Container UUID (for libvirt).")
     name: NonEmptyString = Field(description="Container name.")
-    description: str = Field(default="", description="Container description.")
+    description: Multiline[str] = Field(default="", description="Container description.")
     devices: list[ContainerDeviceEntry] = Field(default=[], description="Container's devices.")
     cpuset: str | None = Field(
         default=None,

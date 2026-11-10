@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, excluded_field
 
 from .common import CronModel
 
@@ -26,7 +26,7 @@ class PoolScrubEntry(BaseModel):
         default=35,
         description="Days before a scrub is due when a scrub should automatically start.",
     )
-    description: str = Field(default="", description="Description or notes for this scrub schedule.")
+    description: Multiline[str] = Field(default="", description="Description or notes for this scrub schedule.")
     schedule: PoolScrubCron = Field(
         default_factory=PoolScrubCron,
         description="Cron schedule for when scrubs should run.",

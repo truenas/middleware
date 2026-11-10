@@ -8,6 +8,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NetbiosDomain,
     NetbiosName,
     NonEmptyString,
@@ -174,7 +175,7 @@ class SMBEntry(BaseModel):
             "NetBIOS domain of the Active Directory domain. This must differ from `netbiosname`."
         ),
     )
-    description: str = Field(
+    description: Multiline[str] = Field(
         description="Description of the SMB server. SMB clients may see this description during some operations.",
     )
     minimum_protocol: SMBMinProtocol = Field(
@@ -266,7 +267,7 @@ class SMBEntry(BaseModel):
             "and group accounts."
         ),
     )
-    smb_options: str = Field(
+    smb_options: Multiline[str] = Field(
         description=(
             "Additional unvalidated and unsupported configuration options for the SMB server. WARNING: Using "
             "`smb_options` may produce unexpected server behavior."
@@ -593,7 +594,7 @@ class LegacyOpt(BaseModel):
             "share."
         ),
     )
-    auxsmbconf: LongString = Field(
+    auxsmbconf: Multiline[LongString] = Field(
         default='',
         description=(
             "Additional parameters to set on the SMB share. Parameters must be separated by the new-line character.\n"
@@ -1006,7 +1007,7 @@ class SharingSMBEntry(BaseModel):
         ),
     )
     enabled: bool = Field(default=True, description="If unset, the SMB share is not available over the SMB protocol.")
-    comment: str = Field(
+    comment: Multiline[str] = Field(
         default='',
         examples=['Mammalian nurturable'],
         description=(

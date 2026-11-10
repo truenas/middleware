@@ -12,7 +12,7 @@ from pydantic import Secret
 from truenas_api_client import Client
 from truenas_api_client.exc import ClientException
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, convert_model
+from middlewared.api.base import BaseModel, LongString, Multiline, NonEmptyString, convert_model
 from middlewared.api.current import (
     KeychainCredentialCreateSSHCredentialsEntry,
     KeychainCredentialCreateSSHKeyPairEntry,
@@ -34,7 +34,7 @@ from .ssh_key import process_ssh_keyscan_output
 class KeychainCredentialSSHPairArg(BaseModel):
     remote_hostname: NonEmptyString
     username: str = "root"
-    public_key: LongString
+    public_key: Multiline[LongString]
 
 
 class KeychainCredentialSSHPairArgs(BaseModel):
@@ -43,7 +43,7 @@ class KeychainCredentialSSHPairArgs(BaseModel):
 
 class KeychainCredentialSSHPairResultData(BaseModel):
     port: int
-    host_key: LongString
+    host_key: Multiline[LongString]
 
 
 class KeychainCredentialSSHPairResult(BaseModel):

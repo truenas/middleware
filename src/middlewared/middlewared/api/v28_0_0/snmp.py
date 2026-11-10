@@ -8,6 +8,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     FullAdmin,
+    Multiline,
     SingleLineString,
     excluded_field,
 )
@@ -54,7 +55,7 @@ class SNMPEntry(BaseModel):
         default=None,
         description="Privacy passphrase for SNMP version 3 encryption. This field is required when `privproto` is set.",
     )
-    options: FullAdmin[str] = Field(
+    options: FullAdmin[Multiline[str]] = Field(
         description=(
             "Additional SNMP daemon configuration options. Manual settings should be used with caution as they may "
             "render the SNMP service non-functional."
