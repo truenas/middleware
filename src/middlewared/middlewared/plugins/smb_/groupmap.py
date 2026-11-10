@@ -42,17 +42,10 @@ assert MAPPED_WELL_KNOWN_SIDS_CNT + len(WINBINDD_AUTO_ALLOCATED) < WINBINDD_WELL
 
 WINBIND_IDMAP_CACHE = f'{SMBPath.CACHE_DIR.path}/winbindd_cache.tdb'
 WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
-WINBIND_IDMAP_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
-WINBIND_IDMAP_TDB_CONFIG = (WINBIND_IDMAP_CACHE, WINBIND_IDMAP_TDB_OPTIONS)
-WINBIND_IDMAP_CTDB_CONFIG = ('winbindd_cache.tdb', WINBIND_IDMAP_CTDB_OPTIONS)
 
 
-def _get_winbind_idmap_cache_config(clustered):
-    return WINBIND_IDMAP_CTDB_CONFIG if clustered else WINBIND_IDMAP_TDB_CONFIG
-
-
-def clear_winbind_idmap_cache(clustered):
-    with get_tdb_handle(*_get_winbind_idmap_cache_config(clustered)) as hdl:
+def clear_winbind_idmap_cache():
+    with get_tdb_handle(WINBIND_IDMAP_CACHE, WINBIND_IDMAP_TDB_OPTIONS) as hdl:
         return hdl.clear()
 
 
@@ -64,7 +57,6 @@ class SMBService(Service):
 
     @private
     def add_groupmap(self, group):
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         server_sid = self.middleware.call_sync('smb.local_server_sid')
         rid = db_id_to_rid(IDType.GROUP, group['id'])
         entry = SMBGroupMap(
@@ -74,16 +66,15 @@ class SMBService(Service):
             name=group['group'],
             comment=''
         )
-        insert_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, [entry])
+        insert_groupmap_entries(GroupmapFile.DEFAULT, [entry])
         self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def del_groupmap(self, db_id):
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         server_sid = self.middleware.call_sync('smb.local_server_sid')
         rid = db_id_to_rid(IDType.GROUP, db_id)
         delete_groupmap_entry(
-            GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED,
+            GroupmapFile.DEFAULT,
             GroupmapEntryType.GROUP_MAPPING,
             entry_sid=f'{server_sid}-{rid}',
         )
@@ -127,7 +118,6 @@ class SMBService(Service):
         # a member of S-1-5-32-545
         users = [groupmap['local'][SMBBuiltin.USERS.rid]['sid']]
         smb_config = self.middleware.call_sync('smb.config')
-        groupmap_file = GroupmapFile.DEFAULT if not smb_config['stateful_failover'] else GroupmapFile.CLUSTERED
 
         if (admin_group := smb_config['admin_group']):
             if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
@@ -163,10 +153,10 @@ class SMBService(Service):
             except Exception:
                 self.logger.warning('Failed to retrieve domain SID from secrets', exc_info=True)
 
-        insert_groupmap_entries(groupmap_file, entries)
+        insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
 
         # double-check that we have expected memberships now and no extras
-        unexpected_memberof_entries = query_groupmap_entries(groupmap_file, [
+        unexpected_memberof_entries = query_groupmap_entries(GroupmapFile.DEFAULT, [
             ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
             ['sid', 'nin', admins + guests + users]
         ], {})
@@ -183,7 +173,7 @@ class SMBService(Service):
 
             try:
                 delete_groupmap_entry(
-                    groupmap_file,
+                    GroupmapFile.DEFAULT,
                     GroupmapEntryType.MEMBERSHIP,
                     entry_sid=entry['sid'],
                 )
@@ -217,7 +207,7 @@ class SMBService(Service):
         return tdb_handle
 
     @private
-    def validate_groupmap_hwm(self, low_range, clustered):
+    def validate_groupmap_hwm(self, low_range):
         """
         Middleware forces allocation of GIDs for Users, Groups, and Administrators
         to be deterministic with the default idmap backend. Bump up the idmap_tdb
@@ -293,10 +283,6 @@ class SMBService(Service):
         finally:
             tdb_handle.close()
 
-        if clustered:
-            with get_tdb_handle('winbind_idmap.tdb', WINBIND_IDMAP_CTDB_OPTIONS) as hdl:
-                hdl.sync_with_tdb(f"{SMBPath.STATEDIR.path}/winbindd_idmap.tdb")
-
         return must_reload
 
     @private
@@ -309,10 +295,9 @@ class SMBService(Service):
         rv = {"builtins": {}, "local": {}, "local_builtins": {}}
 
         localsid = self.middleware.call_sync('smb.local_server_sid')
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         entries_to_fix = []
 
-        for g in query_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, [
+        for g in query_groupmap_entries(GroupmapFile.DEFAULT, [
             ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name]
         ], {}):
             gid = g['gid']
@@ -365,7 +350,7 @@ class SMBService(Service):
 
             try:
                 delete_groupmap_entry(
-                    GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED,
+                    GroupmapFile.DEFAULT,
                     GroupmapEntryType.GROUP_MAPPING,
                     entry_sid=entry['sid'],
                 )
@@ -390,15 +375,13 @@ class SMBService(Service):
         example, the administrators RID for a domain (remote and local) must be a member of S-1-5-32-544
         otherwise domain admins won't have DACL override privileges.
         """
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
-
         if not sid_is_valid(sid):
             raise ValueError(f'{sid}: not a valid SID')
 
-        return list_foreign_group_memberships(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, sid)
+        return list_foreign_group_memberships(GroupmapFile.DEFAULT, sid)
 
     @private
-    def sync_builtins(self, to_add, clustered):
+    def sync_builtins(self, to_add):
         """
         builtin groups are automatically allocated by winbindd / idmap_tdb. We want these
         mappings to be written deterministically so that if for some horrible reason an
@@ -423,7 +406,7 @@ class SMBService(Service):
                 comment=''
             ))
 
-        return self.validate_groupmap_hwm(low_range, clustered)
+        return self.validate_groupmap_hwm(low_range)
 
     @private
     def reconcile_group_mappings(self, bypass_sentinel_check=False):
@@ -438,7 +421,6 @@ class SMBService(Service):
         4) flush various caches if required.
         """
         entries = []
-        clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
 
         if not bypass_sentinel_check and not self.middleware.call_sync('smb.is_configured'):
             raise CallError(
@@ -463,8 +445,6 @@ class SMBService(Service):
                 comment=''
             ))
 
-        groupmap_file = GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED
-
         for entry in groupmap['local'].values():
             # delete entries that don't map to a local account
             if entry['gid'] in gid_set:
@@ -472,20 +452,20 @@ class SMBService(Service):
 
             try:
                 delete_groupmap_entry(
-                    groupmap_file,
+                    GroupmapFile.DEFAULT,
                     GroupmapEntryType.GROUP_MAPPING,
                     entry_sid=entry['sid'],
                 )
             except Exception:
                 self.logger.warning('%s: failed to remove group mapping', entry['sid'], exc_info=True)
 
-        must_remove_cache = self.sync_builtins(entries, clustered)
-        insert_groupmap_entries(groupmap_file, entries)
+        must_remove_cache = self.sync_builtins(entries)
+        insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
 
         self.sync_foreign_groups()
 
         if must_remove_cache:
-            clear_winbind_idmap_cache(clustered)
+            clear_winbind_idmap_cache()
             try:
                 self.middleware.call_sync('idmap.gencache.flush')
             except Exception:

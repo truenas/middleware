@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from enum import StrEnum
-from time import monotonic, time
+from time import monotonic
 from typing import Any
 
 from middlewared.service import periodic, Service
@@ -12,12 +12,10 @@ from middlewared.utils.tdb import (
 
 CACHE_FILE_NAME = 'middleware_cache'
 CACHE_LOCAL_VOLATILE_OPTS = TDBOptions(TDBPathType.VOLATILE, TDBDataType.JSON)
-CACHE_CLUSTER_OPTS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON, True)
 
 
 class CacheType(StrEnum):
     VOLATILE = "VOLATILE"
-    CLUSTERED = "CLUSTERED"
 
 
 class KVCache:
@@ -126,9 +124,6 @@ class KVCache:
         Otherwise, calls method() to generate a new value, caches it, and returns it.
 
         A `timeout` of 0 means the generated value never expires.
-
-        NOTE: This operation is atomic for the local persistent cache, but not for clustered cache.
-        More design work will be required if atomicity is needed on clustered database.
         """
         call_method = False
 
@@ -172,14 +167,11 @@ class CacheService(Service):
     def __init__(self, *args, **kwargs):
         super(CacheService, self).__init__(*args, **kwargs)
         self.volatile = KVCache(CACHE_FILE_NAME, CACHE_LOCAL_VOLATILE_OPTS, monotonic)
-        self.cluster = KVCache(CACHE_FILE_NAME, CACHE_CLUSTER_OPTS, time)
 
     def __get_cache(self, cache_type: CacheType) -> KVCache:
         match cache_type:
             case CacheType.VOLATILE:
                 return self.volatile
-            case CacheType.CLUSTERED:
-                return self.cluster
             case _:
                 raise ValueError(f'{cache_type}: unexpected cache type')
 
@@ -220,12 +212,7 @@ class CacheService(Service):
     @periodic(86400, run_on_start=False)
     def cleanup_expired(self):
         """Internal method to clear out any expired keys from caches to prevent unbounded growth."""
-        failover_licensed = self.middleware.call_sync('failover.licensed')
-
         for cache in CacheType:
-            if not failover_licensed and cache is CacheType.CLUSTERED:
-                continue
-
             hdl = self.__get_cache(cache)
             try:
                 hdl.cleanup_expired()
