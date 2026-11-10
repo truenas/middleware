@@ -77,10 +77,11 @@ def test_audit_backend_alert(setup_state):
 
     # Get the alerts and filter on the desired enties
     alerts = call("alert.list")
-    class_alerts = [alert for alert in alerts if alert['klass'] == alert_class]
-    assert len(class_alerts) > 0, class_alerts
-    assert class_alerts[0]['klass'] == 'AuditBackendSetup', class_alerts
-    assert class_alerts[0]['args']['service'] == db_path, class_alerts
+    class_alerts = [
+        alert for alert in alerts
+        if alert['klass'] == alert_class and alert['args']['service'] == db_path
+    ]
+    assert len(class_alerts) == 1, alerts
     assert class_alerts[0]['formatted'].startswith("Audit service failed backend setup"), class_alerts
 
 
