@@ -90,7 +90,8 @@ def test_a_scope_is_relative_to_the_share(spotlight_share):
 
 
 def test_the_user_does_not_find_what_the_user_cannot_open(spotlight_share):
-    expect('kMDItemFSName=="report*"cd', ["Reports/report_q3.pdf"])
+    # The search ignores case. Thus the folder Reports is a hit too.
+    expect('kMDItemFSName=="report*"cd', ["Reports", "Reports/report_q3.pdf"])
 
     # The private file is in the index. A search as root finds it.
     found = call(
