@@ -10,9 +10,8 @@ from middlewared.plugins.zfs.create_impl import create_leaf
 from middlewared.plugins.zfs.encryption import check_key, load_key
 from middlewared.plugins.zfs.utils import open_resource
 from middlewared.service_exception import CallError
-from middlewared.utils.pwenc import PWENC_FILE_SECRET
+from middlewared.utils.pwenc import PWENC_KEY_LOCATION
 
-PWENC_KEY_LOCATION = f"file://{PWENC_FILE_SECRET}"
 # What to do about a dataset that setup_pwenc_dataset refuses.
 _RECOVERY = "Destroy it. At the next boot, middleware makes a new one, and TrueSearch builds its indexes again."
 

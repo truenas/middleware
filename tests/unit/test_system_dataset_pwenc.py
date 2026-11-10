@@ -10,6 +10,7 @@ import pytest
 from middlewared.plugins.sysdataset import SystemDatasetService
 from middlewared.plugins.system_dataset import encryption
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
+from middlewared.plugins.zfs import encryption_info
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service_exception import CallError
 
@@ -21,6 +22,29 @@ PROPS = {"atime": "off", "mountpoint": "legacy"}
 def test_only_the_index_dataset_is_encrypted_with_the_pwenc_secret():
     spec = get_system_dataset_spec("tank", "uuid")
     assert [ds["name"] for ds in spec if ds.get("pwenc_encrypted")] == [INDEX_DATASET]
+
+
+def test_a_pool_unlock_leaves_the_index_dataset_to_the_system_dataset(monkeypatch):
+    # The pool unlock at boot and at failover, its summary, and the pool import take the locked encryption roots from
+    # encryption_roots. Only the system dataset setup can load the key of the index dataset.
+    def locked_root(name, keyformat, keylocation):
+        return {
+            "name": name,
+            "type": "FILESYSTEM",
+            "properties": {
+                "mountpoint": {"raw": "legacy"},
+                "encryption": {"raw": "aes-256-gcm"},
+                "encryptionroot": {"value": name},
+                "keyformat": {"raw": keyformat},
+                "keystatus": {"raw": "unavailable"},
+                "keylocation": {"raw": keylocation},
+            },
+        }
+
+    rows = [locked_root("tank/secret", "hex", "prompt"), locked_root(INDEX_DATASET, "raw", KEY_LOCATION)]
+    monkeypatch.setattr(encryption_info._query, "list_impl", lambda context, tls, query: rows)
+    monkeypatch.setattr(encryption_info, "stored_keys", lambda context, filters: {"tank/secret": "ab" * 32})
+    assert list(encryption_info.encryption_roots(None, None, "tank", "locked")) == ["tank/secret"]
 
 
 @pytest.fixture
