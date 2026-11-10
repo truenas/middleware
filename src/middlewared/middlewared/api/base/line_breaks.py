@@ -31,7 +31,7 @@ class MultilineAllowed:
             metadata = {}
 
         schema["metadata"] = {**metadata, _HANDLED: True}
-        return schema  # type: ignore[return-value]
+        return schema
 
 
 if TYPE_CHECKING:
@@ -52,7 +52,8 @@ def add_line_break_validators(schema: core_schema.CoreSchema) -> core_schema.Cor
 
     The result is idempotent: a node this function wrapped is left alone on a second pass.
     """
-    return _walk(schema)
+    walked: core_schema.CoreSchema = _walk(schema)
+    return walked
 
 
 def _walk(node: Any) -> Any:

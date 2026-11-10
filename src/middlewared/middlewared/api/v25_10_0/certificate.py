@@ -114,7 +114,7 @@ class CertificateEntry(BaseModel):
         ),
     )
     cert_type_CA: bool = Field(description="Whether this certificate is a Certificate Authority (CA) certificate.")
-    chain_list: list[LongString] = Field(
+    chain_list: list[Multiline[LongString]] = Field(
         description="Array of PEM-encoded certificates in the certificate chain, starting with the leaf certificate.",
     )
     key_length: int | None = Field(

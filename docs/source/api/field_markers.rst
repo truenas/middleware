@@ -5,10 +5,11 @@ API Model Field Markers
     :depth: 3
 
 The type annotation of an API model field can carry a marker that changes how middleware treats the field, beyond
-validating its value. Three are in use: ``Secret``, ``Private`` and ``FullAdmin``. Each answers a different question
-about the field, so a field may carry more than one; ``FullAdmin[Secret[dict]]`` is valid and in use.
+validating its value. Four are in use: ``Secret``, ``Private``, ``FullAdmin`` and ``Multiline``. Each answers a
+different question about the field, so a field may carry more than one; ``FullAdmin[Secret[dict]]`` and
+``Secret[Multiline[LongString] | None]`` are both valid and in use.
 
-All three are exported by ``middlewared.api.base``.
+All four are exported by ``middlewared.api.base``.
 
 Choosing a marker
 -----------------
@@ -22,9 +23,9 @@ Ask these questions about every new or changed field of a public API model, in t
 3. Does middleware pass the value through to a root command line, or interpolate it into the configuration file of
    a privileged daemon, without constraining what it may contain?
    Wrap it in ``FullAdmin``.
-4. Is the value interpolated bare into a line-oriented configuration file, where a line break would let the caller
-   append a directive of their own?
-   Use ``SingleLineString`` (or ``SingleLineNonEmptyString``) on the model that accepts writes.
+4. May the value genuinely carry a line break -- a PEM body, a banner, a script, a traceback, or anything read
+   back from a kernel, a filesystem or a remote server?
+   Wrap it in ``Multiline``. Every string rejects a line break unless you do.
 
 A ``Literal``, a port, an IP address, or any other field whose validator fully constrains the value needs none of
 these.
@@ -136,10 +137,66 @@ Do not use it when:
 
 Marking a field fences off nothing on its own if a sibling field reaches the same file unconstrained. A line break in
 any field interpolated bare into a line-oriented configuration file lets the caller append the very directives the
-marked field exists to deny. Constrain those siblings with ``SingleLineString`` on the model that accepts writes
-(``UPSUpdate``, ``SNMPUpdate`` and ``SSHUpdate`` do this), and not on the entry model: ``config`` and ``update`` read
-the stored entry first, so a constraint on the entry would make a value stored before the constraint existed break
-both, with no way to repair it through the API.
+marked field exists to deny. Every string of an API model now rejects a line break for that reason, so a sibling is
+constrained unless somebody marked it ``Multiline``. Check that none of them is.
+
+Multiline
+---------
+
+``Multiline[T]`` marks a string that may carry a line break.
+
+.. code-block:: python
+
+    class MyServiceEntry(BaseModel):
+        motd: Multiline[str] = Field(description="Message shown after a console login.")
+        certificate: Multiline[LongString] | None = Field(description="Certificate in PEM format.")
+        aliases: list[NonEmptyString] = Field(description="One alias per entry; each stays on one line.")
+
+What it does:
+
+* Every ``str`` of every API model rejects ``\n`` and ``\r`` by default, wherever the string sits: a field, a
+  list item, a dict key, a dict value, a union member, the inside of a ``Secret``. The rejection is a
+  ``ValidationError`` on the exact position of the offending string, with the message
+  ``Line breaks are not allowed``.
+* ``Multiline`` opts out exactly the string it wraps. ``list[Multiline[str]]`` allows a break inside an entry;
+  ``Multiline[list[str]]`` is not a thing to write, because the ban is on the string and not on the list.
+* The default is a ban because a value interpolated bare into a line-oriented configuration file lets its caller
+  append directives of their own, and finding every such field is not something a reviewer can be relied on to
+  do. Opting out is a decision somebody makes and a reviewer can see.
+
+When to use it
+^^^^^^^^^^^^^^
+
+Use ``Multiline`` when the value is genuinely more than one line:
+
+* a PEM body, or base64 that whoever pasted it may have wrapped (``certificate.certificate``,
+  ``keychain.private_key``, ``kerberos_keytab.file``);
+* an aux-config block, a banner, a message of the day, a script (``ssh.options``, ``ftp.banner``,
+  ``system_advanced.motd``, ``cloudsync.pre_script``);
+* text middleware produced, including the message of an exception (``core.get_jobs`` ``error``, ``exception``
+  and ``logs_excerpt``, every ``status_detail``);
+* anything read back from a kernel, a filesystem, a catalog or a remote server (a ZFS property value, a
+  ``filesystem.listdir`` entry name, an app readme, an audit username from the SMB wire).
+
+The last two are the ones that are easy to miss: a result field does not have to accept a line break for anybody
+to notice, until the day it gets one.
+
+Do not use it when:
+
+* The value is a label, a name, an identifier, a path or a hostname. A ``description``, a ``comment`` and a
+  ``label`` are marked, because nothing interpolates them and a caller may want two lines; an identifier that
+  reaches ``ups.conf`` or ``smb.conf`` is not.
+* A validator already constrains the value fully (a ``Literal``, a port, an IP address, a ``TimeString``).
+
+A field constrained on the write model only
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``config`` and ``update`` both start by reading the entry, so an entry model has to read back whatever is stored.
+Where a value reaches a line-oriented file but a stored break may predate the ban, mark the entry ``Multiline`` and
+leave the create or update model strict -- ``UPSEntry.description`` against ``UPSUpdate.description``, and
+``SharingSMBEntry.comment`` against ``SmbShareCreate.comment``, both do this. Alembic revision ``ede75214c588``
+replaces a stored line break, so this split is needed only where a value also arrives from somewhere other than
+the API.
 
 Review with Claude
 ------------------
@@ -155,7 +212,7 @@ when it edits or reviews a file under ``src/middlewared/middlewared/api/``. To a
 .. code-block:: text
 
     Review the API model changes on this branch. For every added or changed field, say whether it
-    needs Secret, Private, FullAdmin or SingleLineString, and why. Trace where each value ends up
+    needs Secret, Private, FullAdmin or Multiline, and why. Trace where each value ends up
     (command line, configuration file, database) before deciding.
 
 Treat the answer as a second pair of eyes, not as sign-off: the reviewer still confirms where the value ends up, and

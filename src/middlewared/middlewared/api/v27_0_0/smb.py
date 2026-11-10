@@ -12,7 +12,6 @@ from middlewared.api.base import (
     NetbiosDomain,
     NetbiosName,
     NonEmptyString,
-    SingleLineString,
     SmbShareName,
     UnixPerm,
     excluded_field,
@@ -348,7 +347,7 @@ class SMBStatusResult(BaseModel):
 @single_argument_args('smb_update')
 class SMBUpdateArgs(SMBEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
-    description: SingleLineString
+    description: str
 
 
 class SMBUpdateResult(BaseModel):
@@ -1152,7 +1151,7 @@ class SmbShareCreate(SharingSMBEntry):
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
     tier: Excluded = excluded_field()
-    comment: SingleLineString = Field(
+    comment: str = Field(
         default='',
         examples=['Mammalian nurturable'],
         description=(

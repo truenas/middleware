@@ -10,7 +10,6 @@ from middlewared.api.base import (
     FullAdmin,
     LongString,
     Multiline,
-    SingleLineString,
     TcpPort,
     excluded_field,
 )
@@ -83,7 +82,7 @@ class SSHUpdate(SSHEntry, metaclass=ForUpdateMetaclass):
     The constraint is on this model rather than `SSHEntry`, so a value stored before it existed stays readable.
     """
     id: Excluded = excluded_field()
-    password_login_groups: list[Annotated[SingleLineString, StringConstraints(pattern=r'^[^"]*$')]]
+    password_login_groups: list[Annotated[str, StringConstraints(pattern=r'^[^"]*$')]]
     privatekey: Excluded = excluded_field()
     host_dsa_key: Excluded = excluded_field()
     host_dsa_key_pub: Excluded = excluded_field()

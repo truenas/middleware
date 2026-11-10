@@ -9,7 +9,6 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     FullAdmin,
     Multiline,
-    SingleLineString,
     excluded_field,
 )
 
@@ -17,7 +16,7 @@ __all__ = ["SNMPEntry", "SNMPUpdate", "SNMPUpdateArgs", "SNMPUpdateResult"]
 
 _CONTACT_PATTERN = r'^[-_a-zA-Z0-9\s]*$'
 _COMMUNITY_PATTERN = r'^[!\$%&()\+\-_={}\[\]<>,\.\?a-zA-Z0-9\s]*$'
-_V3SecretString = Annotated[SingleLineString, StringConstraints(pattern=r'^[^"]*$')]
+_V3SecretString = Annotated[str, StringConstraints(pattern=r'^[^"]*$')]
 
 
 class SNMPEntry(BaseModel):
@@ -78,10 +77,10 @@ class SNMPUpdate(SNMPEntry, metaclass=ForUpdateMetaclass):
     The constraint is on this model rather than `SNMPEntry`, so a value stored before it existed stays readable.
     """
     id: Excluded = excluded_field()
-    location: SingleLineString
-    contact: EmailStr | Annotated[SingleLineString, StringConstraints(pattern=_CONTACT_PATTERN)]
-    community: SingleLineString = Field(pattern=_COMMUNITY_PATTERN)
-    v3_username: SingleLineString = Field(max_length=20)
+    location: str
+    contact: EmailStr | Annotated[str, StringConstraints(pattern=_CONTACT_PATTERN)]
+    community: str = Field(pattern=_COMMUNITY_PATTERN)
+    v3_username: str = Field(max_length=20)
     v3_password: Secret[_V3SecretString]
     v3_privpassphrase: Secret[_V3SecretString | None] = Field(default=None)
 

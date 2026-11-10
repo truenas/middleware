@@ -10,8 +10,6 @@ from middlewared.api.base import (
     LongString,
     Multiline,
     NonEmptyString,
-    SingleLineNonEmptyString,
-    SingleLineString,
     excluded_field,
 )
 
@@ -83,15 +81,15 @@ class UPSUpdate(UPSEntry, metaclass=ForUpdateMetaclass):
     """
     id: Excluded = excluded_field()
     complete_identifier: Excluded = excluded_field()
-    description: SingleLineString
-    driver: SingleLineString
-    identifier: SingleLineNonEmptyString
-    monpwd: SingleLineNonEmptyString = Field(
+    description: str
+    driver: str
+    identifier: NonEmptyString
+    monpwd: NonEmptyString = Field(
         description="Password for UPS monitoring authentication (required for updates).",
     )
-    monuser: SingleLineNonEmptyString
-    port: SingleLineString
-    remotehost: SingleLineString
+    monuser: NonEmptyString
+    port: str
+    remotehost: str
 
 
 class UPSUpdateArgs(BaseModel):

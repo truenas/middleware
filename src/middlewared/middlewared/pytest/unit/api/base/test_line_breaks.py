@@ -15,11 +15,18 @@ from middlewared.api.base import (
     Private,
 )
 from middlewared.api.base.handler.accept import validate_model
+from middlewared.api.base.handler.full_admin import full_admin_payload_fields
 from middlewared.api.base.line_breaks import add_line_break_validators
+from middlewared.api.v28_0_0.ups import UPSEntry, UPSUpdate, UPSUpdateArgs
 from middlewared.service_exception import ValidationErrors
 
 BREAKS = ("\n", "\r", "\r\n")
 MESSAGE = "Line breaks are not allowed"
+
+# Every UPS field that a template interpolates bare into `ups.conf`, `upsd.users` or `upsmon.conf`. A
+# line break in one lets the caller append directives of their own -- including the `SHUTDOWNCMD` that
+# `UPSEntry.shutdowncmd` is marked `FullAdmin` to protect.
+UPS_SINGLE_LINE_FIELDS = ("description", "driver", "identifier", "monpwd", "monuser", "port", "remotehost")
 
 
 class Checked(BaseModel):
@@ -144,9 +151,18 @@ class TestRejection:
 
 
 class TestMultiline:
-    @pytest.mark.parametrize("field", [
-        "marked", "non_empty", "long", "long_non_empty", "constrained", "optional", "not_required",
-    ])
+    @pytest.mark.parametrize(
+        "field",
+        [
+            "marked",
+            "non_empty",
+            "long",
+            "long_non_empty",
+            "constrained",
+            "optional",
+            "not_required",
+        ],
+    )
     @pytest.mark.parametrize("break_", BREAKS)
     def test_a_marked_string_keeps_its_breaks(self, field, break_):
         value = f"first{break_}second"
@@ -179,8 +195,9 @@ class TestMultiline:
 
 
 class TestTransform:
-    @pytest.mark.parametrize("name", ["cls", "choices", "config", "default", "fields", "metadata", "schema",
-                                      "serialization", "type"])
+    @pytest.mark.parametrize(
+        "name", ["cls", "choices", "config", "default", "fields", "metadata", "schema", "serialization", "type"]
+    )
     def test_a_field_named_after_a_schema_key_is_still_checked(self, name):
         """A field name is a key of the `fields` map, so reading it as a key of a schema skips the field."""
         model = create_model(f"Named{name}", __base__=Checked, **{name: (str, Field(default=""))})
@@ -193,6 +210,7 @@ class TestTransform:
 
     def test_it_leaves_a_default_value_alone(self):
         """A default holds a caller's value, and a dict that looks like a schema must not be rewritten."""
+
         class WithDictDefault(Checked):
             looks_like_a_schema: dict[str, Any] = Field(default_factory=lambda: {"type": "str"})
 
@@ -200,3 +218,61 @@ class TestTransform:
 
     def test_a_checked_model_still_publishes_a_json_schema(self):
         assert Everything.model_json_schema()["properties"]["plain"]["type"] == "string"
+
+
+class TestUPS:
+    """A UPS field that a NUT template interpolates bare is where the ban started, so it stays covered."""
+
+    @pytest.mark.parametrize("field", UPS_SINGLE_LINE_FIELDS)
+    def test_update_rejects_a_line_break(self, field):
+        with pytest.raises(ValueError, match=MESSAGE):
+            UPSUpdate(**{field: 'ups\nSHUTDOWNCMD "/bin/sh -c id"'})
+
+    @pytest.mark.parametrize("field", [f for f in UPS_SINGLE_LINE_FIELDS if f != "description"])
+    def test_the_entry_rejects_a_stored_line_break(self, field):
+        """Alembic revision `ede75214c588` replaces a stored break, so no entry has to read one back.
+
+        `description` is the exception: it is `Multiline` on the entry and constrained on `UPSUpdate`,
+        because what reaches `ups.conf` is the value a caller writes.
+        """
+        stored = {
+            "id": 1,
+            "complete_identifier": "ups",
+            "description": "",
+            "driver": "d",
+            "port": "p",
+            "monpwd": "pw",
+            "monuser": "u",
+            "identifier": "ups",
+            "remotehost": "h",
+            "mode": "MASTER",
+            "shutdown": "BATT",
+            "options": "",
+            "optionsupsd": "",
+            "extrausers": "",
+            "shutdowncmd": None,
+            "rmonitor": True,
+            "nocommwarntime": None,
+            "remoteport": 3493,
+            "shutdowntimer": 30,
+            "hostsync": 15,
+            "powerdown": True,
+        }
+
+        with pytest.raises(ValueError, match=MESSAGE):
+            UPSEntry.model_validate(stored | {field: "legacy\nvalue"})
+
+        assert UPSEntry.model_validate(stored | {"description": "legacy\nvalue"})
+
+    def test_a_clean_value_repairs_the_field(self):
+        assert UPSUpdate(description="clean").description == "clean"
+
+
+def test_the_marked_ups_fields_are_still_marked():
+    """The ban complements the `FullAdmin` markers; it does not replace them."""
+    assert {".".join(field.path) for field in full_admin_payload_fields(UPSUpdateArgs)[1]} == {
+        "extrausers",
+        "options",
+        "optionsupsd",
+        "shutdowncmd",
+    }
