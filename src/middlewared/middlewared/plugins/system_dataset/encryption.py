@@ -7,7 +7,7 @@ import errno
 from typing import Any
 
 from middlewared.plugins.zfs.create_impl import create_leaf
-from middlewared.plugins.zfs.encryption import check_key, load_key
+from middlewared.plugins.zfs.encryption import change_key, check_key, load_key
 from middlewared.plugins.zfs.utils import open_resource
 from middlewared.service_exception import CallError
 from middlewared.utils.pwenc import PWENC_KEY_LOCATION
@@ -23,8 +23,9 @@ def setup_pwenc_dataset(tls: Any, dataset: str, props: dict[str, Any], encryptio
     dataset was made with `props`.
 
     Raise `CallError` if the dataset is not encrypted, or if the pwenc secret does not unlock it. This function
-    destroys nothing. The second case occurs after the pwenc secret changes, for example after a configuration upload
-    from another system.
+    destroys nothing. The second case occurs after the pwenc secret changes without a configuration upload, for
+    example when a new installation imports the pool. A configuration upload wraps the key again with
+    `rekey_pwenc_dataset`.
     """
     if encryption is None:
         crypto = tls.lzh.resource_cryptography_config(keyformat="raw", keylocation=PWENC_KEY_LOCATION)
@@ -43,3 +44,13 @@ def setup_pwenc_dataset(tls: Any, dataset: str, props: dict[str, Any], encryptio
 
     load_key(tls, dataset, key_location=PWENC_KEY_LOCATION)
     return False
+
+
+def rekey_pwenc_dataset(tls: Any, dataset: str, secret_path: str) -> None:
+    """
+    Wrap the key of `dataset` with the pwenc secret at `secret_path`. ZFS reads the new key from that file. The key
+    location stays the pwenc secret file of this system, so the dataset unlocks after `secret_path` replaces that
+    file. The key of the dataset must be loaded.
+    """
+    change_key(tls, dataset, {"keyformat": "raw", "keylocation": f"file://{secret_path}"})
+    open_resource(tls, dataset).set_properties(properties={"keylocation": PWENC_KEY_LOCATION})

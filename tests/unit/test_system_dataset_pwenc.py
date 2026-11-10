@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+import middlewared.plugins.sysdataset as sysdataset_plugin
 from middlewared.plugins.sysdataset import SystemDatasetService
 from middlewared.plugins.system_dataset import encryption
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
@@ -98,11 +99,74 @@ def test_the_key_is_loaded_from_the_pwenc_secret(zfs):
 
 
 def test_a_dataset_that_the_pwenc_secret_does_not_unlock_is_refused(zfs):
-    # The pwenc secret changed, for example after a configuration upload from another system.
+    # The pwenc secret changed without a configuration upload, for example on a new installation that imports the
+    # pool.
     zfs.unlocks = False
     with pytest.raises(CallError, match="does not unlock"):
         zfs.setup("aes-256-gcm")
     assert (zfs.loaded_from, zfs.created) == ([], [])
+
+
+def test_a_rekey_wraps_the_key_with_the_new_secret_and_keeps_the_key_location(monkeypatch):
+    calls = []
+    monkeypatch.setattr(encryption, "change_key", lambda tls, name, properties: calls.append((name, properties)))
+    monkeypatch.setattr(
+        encryption,
+        "open_resource",
+        lambda tls, name: SimpleNamespace(set_properties=lambda properties: calls.append((name, properties))),
+    )
+    encryption.rekey_pwenc_dataset(None, INDEX_DATASET, "/data/pwenc_secret_uploaded")
+    assert calls == [
+        (INDEX_DATASET, {"keyformat": "raw", "keylocation": "file:///data/pwenc_secret_uploaded"}),
+        (INDEX_DATASET, {"keylocation": KEY_LOCATION}),
+    ]
+
+
+@pytest.mark.parametrize(
+    "uploaded,rekeyed",
+    [
+        (b"a" * 32, False),
+        (b"b" * 32, True),
+        # A configuration reset uploads no secret.
+        (None, False),
+    ],
+)
+def test_a_configuration_upload_with_another_secret_rekeys_the_index_dataset(monkeypatch, tmp_path, uploaded, rekeyed):
+    secret = tmp_path / "pwenc_secret"
+    secret.write_bytes(b"a" * 32)
+    upload = tmp_path / "pwenc_secret_uploaded"
+    if uploaded is not None:
+        upload.write_bytes(uploaded)
+    monkeypatch.setattr(sysdataset_plugin, "PWENC_FILE_SECRET", str(secret))
+    monkeypatch.setattr(sysdataset_plugin, "PWENC_UPLOADED", str(upload))
+    m = Middleware()
+    m["systemdataset.rekey_encrypted_datasets"] = Mock()
+    sysdataset_plugin.on_config_upload(m, "/data/uploaded.db")
+    calls = m["systemdataset.rekey_encrypted_datasets"].call_args_list
+    assert [c.args for c in calls] == ([(str(upload),)] if rekeyed else [])
+
+
+@pytest.mark.parametrize(
+    "pool,imported,rekeyed",
+    [
+        ("tank", ["boot-pool", "tank"], [INDEX_DATASET]),
+        # The standby controller has not imported the pool.
+        ("tank", ["boot-pool"], []),
+        # The datasets on the boot pool are not encrypted.
+        ("boot-pool", ["boot-pool"], []),
+    ],
+)
+def test_only_the_node_with_the_pool_rekeys_the_index_dataset(monkeypatch, pool, imported, rekeyed):
+    m = Middleware()
+    m["systemdataset.config"] = Mock(return_value={"pool": pool, "uuid": "uuid"})
+    m.services.boot.pool_name = Mock(return_value="boot-pool")
+    monkeypatch.setattr(
+        sysdataset_plugin, "query_imported_fast_impl", lambda: {name: {"name": name} for name in imported}
+    )
+    done = []
+    monkeypatch.setattr(sysdataset_plugin, "rekey_pwenc_dataset", lambda tls, name, secret_path: done.append(name))
+    SystemDatasetService(m).rekey_encrypted_datasets(None, "/data/pwenc_secret_uploaded")
+    assert done == rekeyed
 
 
 def sysdataset(pool="tank", passphrase=False, existing=None, setup=None):

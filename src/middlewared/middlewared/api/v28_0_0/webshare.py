@@ -25,13 +25,7 @@ class WebshareEntry(BaseModel):
     """TrueNAS Webshare server configuration. """
     id: int = Field(description="Unique identifier for the Webshare service configuration.")
     bindip: list[str] = Field(description="List of IP addresses used by the TrueNAS Webshare server.")
-    search: bool = Field(
-        description="Search indexing is enabled.\n\n"
-                    "WARNING: TrueSearch also indexes shares on encrypted datasets. This system keeps the key of "
-                    "the indexes. The index of a passphrase-encrypted dataset stays after the dataset is locked. "
-                    "Thus, a person with the boot device and the pool can read the names and metadata of files in a "
-                    "locked dataset.",
-    )
+    search: bool = Field(description="Search indexing is enabled.")
     passkey: Literal["ENABLED", "DISABLED", "REQUIRED"] = Field(description="Passkey authentication mode.")
     groups: list[str] = Field(
         description="A list of AD/LDAP group names whose members will be granted access to Webshare.",

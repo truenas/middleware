@@ -496,7 +496,6 @@ def generate_smb_conf_dict(
     }
 
     if SearchProtocol.SPOTLIGHT in smb_service_config['search_protocols']:
-        # The truesearch backend asks truesearchd on its default socket, /run/truesearchd/mdssvc.sock.
         smbconf.update({
             'spotlight backend': 'truesearch',
             'spotlight': True

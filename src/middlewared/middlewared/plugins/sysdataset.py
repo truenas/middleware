@@ -224,6 +224,7 @@ once over `failover.call_remote`.
 from contextlib import contextmanager, suppress
 import enum
 import errno
+import filecmp
 import os
 import shutil
 import stat
@@ -246,7 +247,8 @@ from middlewared.api.current import (
     ZFSResourceSetArgsData,
     ZFSResourceSetProperties,
 )
-from middlewared.plugins.system_dataset.encryption import setup_pwenc_dataset
+from middlewared.plugins.config import PWENC_UPLOADED
+from middlewared.plugins.system_dataset.encryption import rekey_pwenc_dataset, setup_pwenc_dataset
 from middlewared.plugins.system_dataset.hierarchy import SystemDatasetZfsProperties, get_system_dataset_spec
 from middlewared.plugins.system_dataset.mount import (
     mount_hierarchy,
@@ -259,6 +261,7 @@ from middlewared.service import CallError, ConfigService, ValidationError, Valid
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
+from middlewared.utils.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -842,6 +845,23 @@ class SystemDatasetService(ConfigService):
         return setup_pwenc_dataset(tls, dataset, props, encryption)
 
     @private
+    @pass_thread_local_storage
+    def rekey_encrypted_datasets(self, tls, secret_path):
+        """
+        Wrap the keys of the system datasets that the pwenc secret encrypts with the secret at `secret_path`. Only the
+        node that has imported the pool of the system dataset does this. The datasets on the boot pool are not
+        encrypted.
+        """
+        config = self.middleware.call_sync('systemdataset.config')
+        imported = {pool['name'] for pool in query_imported_fast_impl().values()}
+        if config['pool'] == self.call_sync2(self.s.boot.pool_name) or config['pool'] not in imported:
+            return
+
+        for ds in get_system_dataset_spec(config['pool'], config['uuid']):
+            if ds.get('pwenc_encrypted'):
+                rekey_pwenc_dataset(tls, ds['name'], secret_path)
+
+    @private
     def mount_system_dataset(self, datasets):
         """Mount the system dataset hierarchy at SYSDATASET_PATH."""
         target_fd = os.open(SYSDATASET_PATH, os.O_DIRECTORY)
@@ -1232,6 +1252,13 @@ async def pool_pre_export(middleware, pool, options, job):
             )
 
 
+def on_config_upload(middleware, path):
+    # The pwenc secret of an uploaded configuration replaces the secret of this system at the next boot. The index
+    # dataset must then unlock with the new secret.
+    if os.path.exists(PWENC_UPLOADED) and not filecmp.cmp(PWENC_UPLOADED, PWENC_FILE_SECRET, shallow=False):
+        middleware.call_sync('systemdataset.rekey_encrypted_datasets', PWENC_UPLOADED)
+
+
 async def setup(middleware):
     def setup_paths():
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
@@ -1248,6 +1275,7 @@ async def setup(middleware):
     # Reconfigure the system dataset first thing after a pool import.
     middleware.register_hook('pool.post_import', pool_post_import, order=-10000)
     middleware.register_hook('pool.pre_export', pool_pre_export, order=40, raise_error=True)
+    middleware.register_hook('config.on_upload', on_config_upload, sync=True)
 
     try:
         await middleware.run_in_thread(setup_paths)

@@ -28,8 +28,7 @@ class TruesearchQueryOptions(BaseModel):
     Options for the results of the query.
 
     A query finds at most 1000 entries.
-    TrueSearch returns the newest entries first and cannot sort them in a different order.
-    Thus, `order_by`, `offset`, `count` and the other options of other query methods are not available.
+    TrueSearch returns the newest entries first.
     """
 
     # The limit is RIX_MAX_RESULTS of truesearchd.
@@ -64,7 +63,7 @@ class TruesearchQuery(BaseModel):
     query_options: TruesearchQueryOptions = Field(
         alias="query-options",
         default=TruesearchQueryOptions(),
-        description="Options for the results of the query. They are not the options of other query methods.",
+        description="Options for the results of the query.",
     )
 
 
@@ -90,9 +89,8 @@ class TruesearchEntry(BaseModel):
     atime: datetime | None = Field(description="The last time that the file was read.")
     inode: int | None = Field(description="The inode number, as `st_ino` gives it.")
     handle: str | None = Field(
-        description="The file handle of the file, encoded in base64. It is a `struct file_handle` of ZFS: the size "
-        "and the type of the handle as 32-bit integers in host byte order, then the 12 bytes of the handle. Use it "
-        "with `open_by_handle_at`.",
+        description="A file handle, encoded in base64. Use it on the NAS to open the file in a race-free manner. It "
+        "identifies the file uniquely in its dataset for the lifetime of the file.",
     )
 
 
