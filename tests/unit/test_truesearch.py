@@ -851,7 +851,7 @@ def test_status(monkeypatch):
 
     one, missing, new = status.datasets
     assert (one.dataset, one.path, one.state, one.served) == ("tank/one", "/mnt/tank/one", "READY", True)
-    assert (one.entries, one.watching, one.index_size, one.queue_position) == (2, True, 94208, None)
+    assert (one.entries, one.watching, one.index_size) == (2, True, 94208)
     assert one.last_full_pass == datetime.fromtimestamp(1794142012, tz=timezone.utc)
     assert one.last_directory_pass is None
     assert (missing.state, missing.reason, missing.served, missing.entries) == (

@@ -220,18 +220,19 @@ class TruesearchDatasetStatus(BaseModel):
     last_directory_pass: datetime | None = Field(
         description="The time that the last pass over all directories ended.",
     )
-    queue_position: int | None = Field(
-        description="The position of the dataset in the queue for a pass. This is `null` if the dataset does not wait.",
-    )
-    index_size: int | None = Field(description="The size of the index on the system dataset, in bytes.")
+    index_size: int | None = Field(description="The size of the index of this dataset, in bytes.")
 
 
 class TruesearchStatusData(BaseModel):
     running: bool = Field(description="Whether the indexer responds.")
-    index_bytes: int | None = Field(description="The size of all indexes on the system dataset, in bytes.")
-    free_bytes: int | None = Field(description="The free space on the system dataset, in bytes.")
+    index_bytes: int | None = Field(
+        description="The size of all indexes, in bytes. The indexes are in the index dataset. It is the dataset "
+        "`.system/truesearchd` on the pool of the system dataset. Its mountpoint is `/var/db/system/truesearchd`.",
+    )
+    free_bytes: int | None = Field(description="The free space in the index dataset, in bytes.")
     space_low: bool | None = Field(
-        description="Whether the free space on the system dataset is less than the indexes may need.",
+        description="Whether the free space in the index dataset is less than twice the size of the largest index, or "
+        "less than a rebuild of that index needs.",
     )
     datasets: list[TruesearchDatasetStatus] = Field(description="The status of each dataset that TrueSearch indexes.")
 

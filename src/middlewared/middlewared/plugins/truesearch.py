@@ -695,7 +695,6 @@ def _dataset_status(row: TargetRow, indexer: IndexerStatus | None, served: set[s
         watching=None if counted is None else counted.watching,
         last_full_pass=None if counted is None else _when(counted.last_full),
         last_directory_pass=None if counted is None else _when(counted.last_dirs),
-        queue_position=None if counted is None else counted.queued or None,
         index_size=None if counted is None else counted.size,
     )
 
