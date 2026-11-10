@@ -3,9 +3,12 @@ Tests of the translation layer of `truesearch.query`. A user writes filters with
 check the Spotlight query that middleware sends to truesearchd for each filter. The API never shows this query.
 """
 
+import re
+
 import pytest
 
-from middlewared.utils.truesearch_filters import FIELDS, filters_doc, spotlight_query
+from middlewared.api.current import TruesearchQuery
+from middlewared.utils.truesearch_filters import FIELDS, spotlight_query
 
 
 @pytest.mark.parametrize(
@@ -101,12 +104,11 @@ def test_spotlight_query_refuses(filters, why):
 def test_every_choice_is_a_value_of_its_attribute(name):
     field = FIELDS[name]
     for choice, value in field.choices.items():
-        assert spotlight_query([[name, "=", choice]]) == f'{field.attribute} == "{value.value}"'
+        assert spotlight_query([[name, "=", choice]]) == f'{field.attribute} == "{value}"'
 
 
-def test_filters_doc_documents_every_field_and_choice():
-    doc = filters_doc()
-    for name, field in FIELDS.items():
-        assert f"* `{name}`: {field.description}" in doc
-        for choice, value in field.choices.items():
-            assert f"  * `{choice}`: {value.description}" in doc
+def test_the_api_documents_every_field_and_choice():
+    doc = TruesearchQuery.model_fields["query_filters"].description
+    assert set(re.findall(r"^\* `(\w+)`: ", doc, re.MULTILINE)) == set(FIELDS)
+    choices = {choice for field in FIELDS.values() for choice in field.choices}
+    assert set(re.findall(r"^  \* `(\w+)`: ", doc, re.MULTILINE)) == choices

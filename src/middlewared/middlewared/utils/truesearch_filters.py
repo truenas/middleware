@@ -9,7 +9,8 @@ Two tables control the translation:
 * `FIELDS` gives the Spotlight attribute of each field, and the type of its values.
 * `TEXT_OPERATORS` and the other operator tables give the Spotlight form of each operator.
 
-To add a field, add a row to `FIELDS`. The API documentation of the filters comes from the same tables.
+To add a field, add a row to `FIELDS`. Then document the field in the `query-filters` description of the current API
+version. A unit test checks that the description names each field and each choice.
 """
 
 from __future__ import annotations
@@ -21,8 +22,6 @@ from typing import Any
 
 from middlewared.api.base.validators.filters import TIMESTAMP_DESIGNATOR
 
-# The maximum number of entries that one search finds. This is RIX_MAX_RESULTS of truesearchd.
-MAX_RESULTS = 1000
 # A Spotlight query uses these characters as wildcards and quotes. A value must escape them.
 _SPECIAL = str.maketrans({char: "\\" + char for char in '\\"*?'})
 
@@ -66,89 +65,52 @@ _CASELESS = frozenset({FieldType.TEXT, FieldType.TAGS})
 
 
 @dataclass(frozen=True, slots=True)
-class Choice:
-    """One value of a choice field: the Spotlight value that it stands for, and its documentation."""
-
-    value: str
-    description: str
-
-
-@dataclass(frozen=True, slots=True)
 class QueryField:
-    """One field of `truesearch.query`: its Spotlight attribute, the type of its values, and its documentation."""
+    """One field of `truesearch.query`: its Spotlight attribute, the type of its values, and its choices."""
 
     attribute: str
     type: FieldType
-    description: str
-    choices: dict[str, Choice] = field(default_factory=dict)
+    # The Spotlight value of each choice of a choice field.
+    choices: dict[str, str] = field(default_factory=dict)
 
 
 FIELDS: dict[str, QueryField] = {
-    "name": QueryField("kMDItemFSName", FieldType.TEXT, "The name of the file or directory."),
+    "name": QueryField("kMDItemFSName", FieldType.TEXT),
     "type": QueryField(
         "kMDItemContentTypeTree",
         FieldType.CHOICE,
-        "The type of the entry.",
-        {
-            "DIRECTORY": Choice("public.directory", "A directory. A macOS package is also a directory."),
-            "FILE": Choice("public.data", "A file. FIFOs, sockets, and device files are also files here."),
-            "SYMLINK": Choice("public.symlink", "A symbolic link. TrueSearch does not follow links."),
-        },
+        {"DIRECTORY": "public.directory", "FILE": "public.data", "SYMLINK": "public.symlink"},
     ),
-    "size": QueryField(
-        "kMDItemFSSize",
-        FieldType.NUMBER,
-        "The size in bytes. For a directory, ZFS gives the number of entries in the directory.",
-    ),
-    "uid": QueryField("kMDItemFSOwnerUserID", FieldType.NUMBER, "The user ID of the owner."),
-    "gid": QueryField("kMDItemFSOwnerGroupID", FieldType.NUMBER, "The group ID of the owner group."),
-    "mtime": QueryField("kMDItemFSContentChangeDate", FieldType.DATE, "The last time that the data changed."),
-    "btime": QueryField("kMDItemFSCreationDate", FieldType.DATE, "The time that the file was created."),
-    "atime": QueryField("kMDItemLastUsedDate", FieldType.DATE, "The last time that the file was read."),
+    "size": QueryField("kMDItemFSSize", FieldType.NUMBER),
+    "uid": QueryField("kMDItemFSOwnerUserID", FieldType.NUMBER),
+    "gid": QueryField("kMDItemFSOwnerGroupID", FieldType.NUMBER),
+    "mtime": QueryField("kMDItemFSContentChangeDate", FieldType.DATE),
+    "btime": QueryField("kMDItemFSCreationDate", FieldType.DATE),
+    "atime": QueryField("kMDItemLastUsedDate", FieldType.DATE),
     "macos_kind": QueryField(
         "kMDItemKind",
         FieldType.CHOICE,
-        "The kind of file that the macOS Finder shows. TrueSearch gets the kind from the file name extension, not "
-        "from the content. A file with an unknown extension has no kind.",
         {
-            "FOLDER": Choice("Folder", "A directory that is not a macOS package."),
-            "PDF": Choice("PDF", "A PDF document with the `.pdf` extension."),
-            "IMAGE": Choice("Image", "An image, for example `.jpg`, `.png`, `.gif`, `.heic`, `.tiff`, or `.psd`."),
-            "MOVIE": Choice("Movie", "A video, for example `.mp4`, `.mov`, `.mkv`, or `.avi`."),
-            "AUDIO": Choice("Audio", "An audio file, for example `.mp3`, `.m4a`, `.flac`, or `.wav`."),
-            "TEXT": Choice("Text", "A text file, for example `.txt`, `.md`, `.csv`, `.html`, or source code."),
-            "DOCUMENT": Choice(
-                "Document",
-                "A word processor document: `.doc`, `.docx`, `.odt`, `.rtf`, or `.pages`.",
-            ),
-            "SPREADSHEET": Choice("Spreadsheet", "A spreadsheet: `.xls`, `.xlsx`, `.ods`, `.numbers`, or `.csv`."),
-            "PRESENTATION": Choice("Presentation", "A presentation: `.ppt`, `.pptx`, `.odp`, or `.key`."),
-            "ARCHIVE": Choice("Archive", "An archive: `.zip`, `.7z`, `.rar`, `.tar`, `.gz`, or `.xz`."),
-            "APPLICATION": Choice(
-                "Application",
-                "A macOS application with the `.app` extension, or a disk image. A Windows program "
-                "with the `.exe` extension is not an application here.",
-            ),
-            "DISK_IMAGE": Choice(
-                "Disk Image",
-                "A disk image: a `.dmg` file, or a `.sparsebundle` or `.backupbundle` package.",
-            ),
-            "PACKAGE": Choice(
-                "Package",
-                "A macOS package. A package is a directory that a Mac shows as one item, for example "
-                "`.app`, `.sparsebundle`, `.photoslibrary`, or `.rtfd`.",
-            ),
-            "FONT": Choice("Font", "A font: `.ttf`, `.otf`, `.woff`, or `.woff2`."),
-            "CONTACT": Choice("Contact", "A contact card with the `.vcf` extension."),
-            "MAIL": Choice("Mail", "An email message with the `.eml` extension."),
+            "FOLDER": "Folder",
+            "PDF": "PDF",
+            "IMAGE": "Image",
+            "MOVIE": "Movie",
+            "AUDIO": "Audio",
+            "TEXT": "Text",
+            "DOCUMENT": "Document",
+            "SPREADSHEET": "Spreadsheet",
+            "PRESENTATION": "Presentation",
+            "ARCHIVE": "Archive",
+            "APPLICATION": "Application",
+            "DISK_IMAGE": "Disk Image",
+            "PACKAGE": "Package",
+            "FONT": "Font",
+            "CONTACT": "Contact",
+            "MAIL": "Mail",
         },
     ),
-    "tags": QueryField("kMDItemUserTags", FieldType.TAGS, "The tags that a macOS user set on the file in the Finder."),
-    "comment": QueryField(
-        "kMDItemFinderComment",
-        FieldType.TEXT,
-        "The comment that a macOS user set on the file in the Finder.",
-    ),
+    "tags": QueryField("kMDItemUserTags", FieldType.TAGS),
+    "comment": QueryField("kMDItemFinderComment", FieldType.TEXT),
 }
 
 
@@ -255,7 +217,7 @@ def _single(field_name: str, query_field: QueryField, operator: str, value: Any,
             if not isinstance(value, str) or value not in query_field.choices:
                 raise ValueError(f"The value of {field_name!r} must be one of: {', '.join(query_field.choices)}.")
 
-            return f'{attribute} {COMPARISONS[operator]} "{query_field.choices[value].value}"'
+            return f'{attribute} {COMPARISONS[operator]} "{query_field.choices[value]}"'
 
     raise AssertionError(query_field.type)
 
@@ -278,70 +240,3 @@ def _iso(field_name: str, value: Any) -> str:
 
 def _operator_list(field_type: FieldType) -> str:
     return ", ".join(f"`{operator}`" for operator in OPERATORS[field_type])
-
-
-# The documentation of the operators of each type.
-_TYPE_DOC = {
-    FieldType.TEXT: [
-        "`=` and `!=` compare the full value.",
-        "`^` and `!^` compare the start of the value.",
-        "`$` and `!$` compare the end of the value.",
-        "`rin` finds the text anywhere in the value. `rnin` finds values that do not contain the text.",
-        "`in` and `nin` compare the full value with each value in a list.",
-        "Put `C` before an operator to ignore case and accents, for example `C=` or `Crin`.",
-    ],
-    FieldType.TAGS: [
-        "`rin` finds files that have the tag. `rnin` finds files that do not have the tag.",
-        "The tag must agree with the full value. Put `C` before the operator to ignore case and accents.",
-    ],
-    FieldType.NUMBER: [
-        "`=`, `!=`, `>`, `>=`, `<`, and `<=` compare the value.",
-        "`in` and `nin` compare the value with each value in a list.",
-    ],
-    FieldType.DATE: [
-        "`=`, `!=`, `>`, `>=`, `<`, and `<=` compare the date.",
-        "Write the date as an ISO-8601 string, for example `2026-01-31T09:00:00`. A date without a time zone is "
-        "in UTC. As in other query methods, you can add `.$date` to the field name.",
-    ],
-    FieldType.CHOICE: [
-        "`=` and `!=` compare the value.",
-        "`in` and `nin` compare the value with each value in a list.",
-    ],
-}
-
-
-def filters_doc() -> str:
-    """The API documentation of `query-filters`, made from `FIELDS` and the operator tables."""
-    lines = [
-        "The filters that select the files and directories. Write each filter as `[field, operator, value]`, as in "
-        "other query methods. All filters must match. To match one of several filters, use "
-        '`["OR", [filter, filter]]`. If you give no filters, the query returns all files and directories in `path` '
-        "and its subdirectories.",
-        "",
-        "TrueSearch uses the index that answers macOS Spotlight searches through SMB. Middleware converts the filters "
-        "into a Spotlight query. Thus, a query gets the same results as a Spotlight search from a Mac. TrueSearch "
-        "does not use regular expressions.",
-    ]
-    for field_type, sentences in _TYPE_DOC.items():
-        names = [name for name, query_field in FIELDS.items() if query_field.type is field_type]
-        if not names:
-            continue
-
-        lines += ["", f"{field_type.value} fields:", ""]
-        for name in names:
-            lines.append(f"* `{name}`: {FIELDS[name].description}")
-            lines += [f"  * `{choice}`: {value.description}" for choice, value in FIELDS[name].choices.items()]
-        lines += ["", f"{field_type.value} fields use these operators:", ""]
-        lines += [f"* {sentence}" for sentence in sentences]
-
-    lines += [
-        "",
-        "Examples:",
-        "",
-        '* `[["name", "Crin", "report"]]` finds names that contain "report", in any case.',
-        '* `[["macos_kind", "=", "PDF"], ["size", ">", 1048576]]` finds PDF documents that are larger than 1 MiB.',
-        '* `[["OR", [["name", "$", ".jpg"], ["name", "$", ".png"]]]]` finds names that end with `.jpg` or `.png`.',
-        '* `[["mtime", ">=", "2026-01-01T00:00:00"]]` finds files that changed in 2026 or later.',
-        '* `[["tags", "rin", "Important"]]` finds files that have the tag "Important".',
-    ]
-    return "\n".join(lines)
