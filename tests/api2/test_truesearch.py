@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import another_pool, dataset
@@ -300,7 +300,7 @@ EOF""")
     assert len(query(base, [])) == 4
     assert len(query(base, [], **{'query-options': {'limit': 1}})) == 1
 
-    with pytest.raises(ValidationErrors):
+    with pytest.raises(ValidationError):
         query(base, [['name', '~', 'rep.*']])
     for option in ({'order_by': ['size']}, {'offset': 1}, {'get': True}, {'select': ['name']}):
         with pytest.raises(ValidationErrors):
