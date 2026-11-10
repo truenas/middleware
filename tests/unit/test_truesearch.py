@@ -16,7 +16,7 @@ import middlewared.plugins.truesearch as truesearch_plugin
 from middlewared.plugins.truesearch import (
     DatasetInfo,
     TrueSearchFSAttachmentDelegate,
-    TrueSearchService,
+    TruesearchService,
     beneath,
     carried_rows,
 )
@@ -48,7 +48,7 @@ async def test_datasets_leave_out_a_legacy_mountpoint():
             *zfs_list(["tank/users"]),
         ]
     )
-    assert list(await TrueSearchService(middleware).datasets({"tank"})) == ["/mnt/tank/users"]
+    assert list(await TruesearchService(middleware).datasets({"tank"})) == ["/mnt/tank/users"]
 
 
 @pytest.mark.parametrize(
@@ -70,7 +70,7 @@ async def test_datasets_leave_out_a_legacy_mountpoint():
 )
 def test_processed_directories_for_directory(directory, datasets, result):
     mountpoints = {f"/mnt/{name}": DatasetInfo(name, "1") for name in datasets}
-    assert TrueSearchService(Mock())._processed_directories_for_directory(mountpoints, directory) == result
+    assert TruesearchService(Mock())._processed_directories_for_directory(mountpoints, directory) == result
 
 
 @pytest.mark.asyncio
@@ -84,7 +84,7 @@ def test_processed_directories_for_directory(directory, datasets, result):
     ],
 )
 async def test_enabled_when_a_share_is_in_a_dataset(directories, result):
-    svc = TrueSearchService(Mock())
+    svc = TruesearchService(Mock())
     svc.available = AsyncMock(return_value=True)
     svc.raw_directories = AsyncMock(return_value=directories)
     svc.datasets = AsyncMock(return_value={"/mnt/tank": DatasetInfo("tank", "1")})
@@ -98,7 +98,7 @@ async def test_unavailable_reasons_omits_licensing_reason_when_entitled(monkeypa
     m["systemdataset.is_boot_pool"] = lambda *args: False
     checked = install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "HW+K")
 
-    assert await create_service(m, TrueSearchService).unavailable_reasons() == []
+    assert await create_service(m, TruesearchService).unavailable_reasons() == []
     assert checked == [LicenseFeature.TRUESEARCH]
 
 
@@ -109,7 +109,7 @@ async def test_unavailable_reasons_reports_boot_pool_and_licensing_together(monk
     m["systemdataset.is_boot_pool"] = lambda *args: True
     install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "CE")
 
-    assert await create_service(m, TrueSearchService).unavailable_reasons() == [BOOT_POOL_REASON, NOT_LICENSED]
+    assert await create_service(m, TruesearchService).unavailable_reasons() == [BOOT_POOL_REASON, NOT_LICENSED]
 
 
 @pytest.mark.asyncio
@@ -119,17 +119,17 @@ async def test_unavailable_reasons_reports_an_index_dataset_that_is_not_mounted(
     m = Middleware()
     m["systemdataset.is_boot_pool"] = lambda *args: False
     m.services.truenas.entitlements.check = AsyncMock(return_value=SimpleNamespace(entitled=True, message=""))
-    assert await TrueSearchService(m).unavailable_reasons() == [
+    assert await TruesearchService(m).unavailable_reasons() == [
         "The TrueSearch index dataset is not mounted. The middleware log gives the reason.",
     ]
 
 
 @pytest.fixture
 def truesearch(monkeypatch):
-    monkeypatch.setattr(TrueSearchService, "MOUNT_CHECK_DELAY", 0.01)
+    monkeypatch.setattr(TruesearchService, "MOUNT_CHECK_DELAY", 0.01)
     m = Middleware()
     m.create_task = asyncio.create_task
-    svc = TrueSearchService(m)
+    svc = TruesearchService(m)
     svc.raw_directories = AsyncMock(return_value={"/mnt/tank/share"})
     svc.configure = AsyncMock()
     return svc
@@ -187,7 +187,7 @@ async def test_smb_home_shares_are_not_indexed():
             {"path": "/mnt/tank/private", "locked": False, "purpose": "PRIVATE_DATASETS_SHARE", "options": {}},
         ]
     )
-    svc = TrueSearchService(m)
+    svc = TruesearchService(m)
     assert await svc.smb_directories() == {"/mnt/tank/data"}
     assert await svc.smb_directories(enabled_only=False) == {"/mnt/tank/data"}
 
@@ -208,7 +208,7 @@ async def test_a_legacy_time_machine_share_is_not_indexed():
             },
         ]
     )
-    svc = TrueSearchService(m)
+    svc = TruesearchService(m)
     assert await svc.smb_directories() == {"/mnt/tank/data"}
     # It is excluded from the row of its dataset.
     assert await svc.timemachine_directories() == {"/mnt/tank/data/tm"}
@@ -225,7 +225,7 @@ async def test_the_webshare_home_base_is_not_indexed():
             SimpleNamespace(path="/mnt/tank/homes", locked=False, is_home_base=True),
         ]
     )
-    svc = TrueSearchService(m)
+    svc = TruesearchService(m)
     assert await svc.webshare_directories() == {"/mnt/tank/data"}
     assert await svc.webshare_directories(enabled_only=False) == {"/mnt/tank/data"}
 
@@ -236,7 +236,7 @@ async def test_service_state_is_not_queried_when_search_is_off():
     m["smb.config"] = Mock(return_value={"search_protocols": []})
     m.services.webshare.config = AsyncMock(return_value=Mock(search=False))
     m.services.service.started_or_enabled = AsyncMock(return_value=True)
-    assert await TrueSearchService(m).raw_directories() == set()
+    assert await TruesearchService(m).raw_directories() == set()
     m.services.service.started_or_enabled.assert_not_awaited()
 
 
@@ -255,7 +255,7 @@ def target_service(monkeypatch, indexed, shared=None, old=None, imported=("tank"
     m = Middleware()
     # zfs.resource.path_is_locked answers True for the datasets of `locked`.
     m.services.zfs.resource.path_is_locked = AsyncMock(side_effect=lambda name: name in locked)
-    svc = TrueSearchService(m)
+    svc = TruesearchService(m)
     svc.raw_directories = AsyncMock(
         side_effect=lambda enabled_only=True: indexed if enabled_only or shared is None else shared,
     )
@@ -366,7 +366,7 @@ def configured(monkeypatch, enabled, running, files):
     m = Middleware()
     m.services.service.started = AsyncMock(return_value=running)
     m.services.service.control = AsyncMock(return_value=FakeJob())
-    svc = TrueSearchService(m)
+    svc = TruesearchService(m)
     svc.enabled = AsyncMock(return_value=enabled)
     files = iter(files)
     monkeypatch.setattr(truesearch_plugin, "read_config", lambda: next(files))
@@ -429,7 +429,7 @@ async def test_configure_waits_for_nothing_when_it_starts(monkeypatch):
 def releasing_service(monkeypatch, running=True):
     m = Middleware()
     m.services.service.started = AsyncMock(return_value=running)
-    svc = TrueSearchService(m)
+    svc = TruesearchService(m)
     monkeypatch.setattr(truesearch_plugin, "read_config", lambda: rows("ds1", "ds2", disabled={"ds2"}))
     seen = []
 
@@ -557,7 +557,7 @@ def search_service():
         )
     )
     m["filesystem.can_access_as_cred_errors"] = Mock(return_value=[])
-    return m, TrueSearchService(m)
+    return m, TruesearchService(m)
 
 
 def query(svc, path="/mnt/tank/data/shares", filters=(), options=None, **fields):
@@ -841,7 +841,7 @@ def status_service(monkeypatch, indexer, served):
 
     monkeypatch.setattr(truesearch_plugin, "indexer_status", answer(indexer))
     monkeypatch.setattr(truesearch_plugin, "served_ids", answer(served))
-    return TrueSearchService(m)
+    return TruesearchService(m)
 
 
 def test_status(monkeypatch):

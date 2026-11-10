@@ -73,7 +73,7 @@ class DatasetInfo:
     guid: str | None
 
 
-class TrueSearchService(Service):
+class TruesearchService(Service):
     class Config:
         namespace = 'truesearch'
         cli_namespace = 'system.truesearch'
