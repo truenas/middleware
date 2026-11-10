@@ -166,11 +166,7 @@ def torture_cmd(server_ip, phase, state, *options):
 
 @pytest.fixture(scope="module", autouse=True)
 def ha_pair():
-    """Skip if truenas_smbhad is not installed. Wait until the HA pair is ready, and
-    fail back to the original active controller at the end."""
-    if not ssh(f"test -x {SMBHAD_BIN}", check=False, complete_response=True)["result"]:
-        pytest.skip(f"{SMBHAD_BIN} is not installed: this Samba does not replicate durable handles")
-
+    """Wait until the HA pair is ready, and fail back to the original active controller at the end."""
     wait_ha_ready()
     original = call("failover.node")
     yield
@@ -334,8 +330,8 @@ def test_durable_handles_survive_failover(durable_client):
     crashes. truenas.durable.restore checks which handles must come back and which must
     not."""
     c = durable_client
-    if TORTURE_TEST not in ssh(f"smbtorture --list {TORTURE_TEST}", ip=c.standby, check=False):
-        pytest.skip(f"smbtorture on the controllers does not have {TORTURE_TEST}")
+
+    assert TORTURE_TEST in ssh(f"smbtorture --list {TORTURE_TEST}", ip=c.standby, check=False)
 
     assert not call("failover.call_remote", "service.started", ["cifs"])
 
