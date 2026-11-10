@@ -2,6 +2,7 @@ import errno
 import itertools
 import os
 import re
+import shlex
 import uuid
 
 from truenas_pylibvirt import DomainDoesNotExistError
@@ -27,7 +28,9 @@ from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt
 from middlewared.service import CallError, CRUDService, job, private, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.cpu import online_cpus
 from middlewared.utils.libvirt.utils import same_uuid
+from middlewared.utils.memory import get_memory_info
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .nsenter import CAPABILITIES
@@ -47,6 +50,20 @@ RE_NAME = re.compile(
     r"\Z",
     re.IGNORECASE,
 )
+
+
+def cpuset_error(cpuset: str, online: frozenset[int]) -> str | None:
+    if '_' in cpuset:
+        return 'Underscores are not allowed in CPU set values'
+    if any(c.isspace() for c in cpuset):
+        return 'Whitespace is not allowed in CPU set values'
+    try:
+        cpus = parse_numeric_set(cpuset)
+    except ValueError as e:
+        return f'Invalid cpuset format: {e}'
+    if offline := set(cpus) - online:
+        return f'CPU(s) {", ".join(map(str, sorted(offline)))} are not online'
+    return None
 
 
 class ContainerModel(sa.Model):
@@ -199,18 +216,23 @@ class ContainerService(CRUDService):
                 f'Invalid capabilities: {", ".join(sorted(invalid_caps))}'
             )
 
-        # Validate cpuset format if provided
-        if data.get('cpuset'):
-            if '_' in data['cpuset']:
-                verrors.add(f'{schema_name}.cpuset', 'Underscores are not allowed in CPU set values')
-            else:
-                try:
-                    parse_numeric_set(data['cpuset'])
-                except ValueError as e:
-                    verrors.add(
-                        f'{schema_name}.cpuset',
-                        f'Invalid cpuset format: {e}'
-                    )
+        try:
+            init = shlex.split(data['init'])
+        except ValueError as e:
+            verrors.add(f'{schema_name}.init', f'Parse error: {e.args[0]}')
+        else:
+            if not init:
+                verrors.add(f'{schema_name}.init', 'Must not be empty')
+
+        # Only rechecked on change, so a host that has since lost CPUs or memory does not block unrelated edits.
+        if data['cpuset'] and (old is None or data['cpuset'] != old['cpuset']):
+            if error := cpuset_error(data['cpuset'], await self.middleware.run_in_thread(online_cpus)):
+                verrors.add(f'{schema_name}.cpuset', error)
+
+        if data['memory'] is not None and (old is None or data['memory'] != old['memory']):
+            host_memory = (await self.middleware.run_in_thread(get_memory_info))['total'] // 1024 ** 2
+            if data['memory'] > host_memory:
+                verrors.add(f'{schema_name}.memory', f"Cannot exceed the host's physical memory ({host_memory} MiB)")
 
         filters = [('name', '=', data['name'])]
         if old:
