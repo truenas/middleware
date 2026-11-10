@@ -496,7 +496,8 @@ class Job:
             except Exception:
                 logger.warning('Failed to run on progress callback', exc_info=True)
 
-        if changed:
+        # `run` sends the single event that reports the final state of a finished job.
+        if changed and self.state not in (State.SUCCESS, State.FAILED, State.ABORTED):
             send_job_event(self.middleware, 'CHANGED', self, encoded)
 
         for wrapped in self.wrapped:
