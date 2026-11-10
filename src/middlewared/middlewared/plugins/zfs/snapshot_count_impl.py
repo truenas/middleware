@@ -1,9 +1,9 @@
 import dataclasses
 import logging
+import os
 import time
 from typing import Any
 
-import truenas_os
 from truenas_pylibzfs import ZFSProperty, ZFSType
 
 from middlewared.api.current import ZFSResourceSnapshotCountQuery
@@ -84,19 +84,16 @@ def __try_count_via_nlink(ds_hdl: Any) -> int | None:
     if not mountpoint or mountpoint in ("none", "legacy", "-"):
         return None
 
+    # Try to stat the .zfs/snapshot directory
     try:
-        stx = truenas_os.statx(
-            f"{mountpoint}/.zfs/snapshot",
-            mask=truenas_os.STATX_BASIC_STATS | truenas_os.STATX_MNT_ID_UNIQUE,
-        )
-        if stx.stx_ino != ZFSCTL.INO_SNAPDIR.value:
-            return None
-        # the mountpoint property says where the dataset would mount, not which dataset is mounted there
-        if truenas_os.statmount(stx.stx_mnt_id, mask=truenas_os.STATMOUNT_SB_SOURCE).sb_source != ds_hdl.name:
-            return None
-        return stx.stx_nlink - 2
+        st = os.stat(f"{mountpoint}/.zfs/snapshot")
+        # Verify it's actually the ZFS snapshot control directory
+        if st.st_ino == ZFSCTL.INO_SNAPDIR.value:
+            return st.st_nlink - 2
     except Exception:
-        return None
+        pass
+
+    return None
 
 
 def __count_dataset_snapshots_uncached(ds_hdl: Any) -> int:
