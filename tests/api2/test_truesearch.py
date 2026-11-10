@@ -1,4 +1,5 @@
 import base64
+import contextlib
 import os
 import time
 
@@ -43,6 +44,16 @@ def share(make_available):
                     'dataset': ds,
                     'share': smb,
                 }
+
+
+@contextlib.contextmanager
+def another_share(path: str, name: str):
+    # smb_share stops the SMB service when it exits. The tests that follow need the service.
+    share_id = call('sharing.smb.create', {'path': path, 'name': name})['id']
+    try:
+        yield
+    finally:
+        call('sharing.smb.delete', share_id)
 
 
 def expect_search_result(expected: list[str]):
@@ -157,7 +168,7 @@ def test_destroying_an_indexed_dataset_keeps_the_others_served(share):
 
 def test_a_disabled_share_keeps_its_index(share):
     with dataset('truesearch_other', data={'share_type': 'SMB'}) as other:
-        with smb_share(os.path.join('/mnt', other), 'truesearch_other'):
+        with another_share(os.path.join('/mnt', other), 'truesearch_other'):
             expect_status(other)
             expect_status(share['dataset'])
             kept, pids = environments(), daemon_pids()
@@ -181,7 +192,7 @@ def test_export_and_import_keep_the_index(share):
     with another_pool() as pool:
         with dataset('indexed', data={'share_type': 'SMB'}, pool=pool['name']) as ds:
             ssh(f"touch /mnt/{ds}/exportedtest.txt")
-            with smb_share(os.path.join('/mnt', ds), 'truesearch_export'):
+            with another_share(os.path.join('/mnt', ds), 'truesearch_export'):
                 expect_api_query(f"/mnt/{ds}", [['name', '^', 'exportedtest']], [f"/mnt/{ds}/exportedtest.txt"])
                 kept, pids = environments(), daemon_pids()
 
