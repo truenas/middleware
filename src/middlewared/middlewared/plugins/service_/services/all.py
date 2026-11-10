@@ -1,5 +1,4 @@
 from .cifs import CIFSService
-from .ctdb import CTDBService
 from .discovery import DiscoveryService
 from .docker import DockerService
 from .ftp import FTPService
@@ -43,11 +42,11 @@ from .pseudo.misc import (
     TimeservicesService,
     UserService,
 )
+from .truenas_smbhad import TruenasSmbhadService
 from .truenas_zfstierd import TruenasZfstierdService
 
 all_services = [
     CIFSService,
-    CTDBService,
     DiscoveryService,
     DockerService,
     FTPService,
@@ -86,6 +85,7 @@ all_services = [
     TimeservicesService,
     TruecommandService,
     TruesearchService,
+    TruenasSmbhadService,
     TruenasZfstierdService,
     UserService,
     TrueNASS3Service,
