@@ -42,6 +42,13 @@ class TrueNASConnectEntry(BaseModel):
     heartbeat_url: HttpsOnlyURL = Field(
         description="URL endpoint for sending heartbeat signals to maintain connection status.",
     )
+    allowed_origins: list[str] = Field(
+        description=(
+            "Origins, besides the TrueNAS Connect web app, that may read `/api/versions` across origins, such as an "
+            "ephemeral TrueNAS Connect environment or a local copy of a TrueNAS Connect client. Set with the private "
+            "`tn_connect.update_environment`."
+        ),
+    )
     tier: Literal['FOUNDATION', 'PLUS', 'BUSINESS'] | None = Field(description="TrueNAS Connect tier.")
     last_heartbeat_failure_datetime: str | None = Field(
         description=(

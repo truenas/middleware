@@ -7,6 +7,7 @@ class TrueNASConnectUpdateEnvironment(BaseModel, metaclass=ForUpdateMetaclass):
     leca_service_base_url: HttpsOnlyURL
     tnc_base_url: HttpsOnlyURL
     heartbeat_url: HttpsOnlyURL
+    allowed_origins: list[str]
 
 
 class TrueNASConnectUpdateEnvironmentArgs(BaseModel):

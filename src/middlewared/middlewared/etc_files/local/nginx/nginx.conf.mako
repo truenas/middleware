@@ -1,10 +1,12 @@
 <%
     import ipaddress
     import os
+    import re
 
     from middlewared.alert.source.certificates import WebUiCertificateSetupFailedAlert
     from middlewared.logger import NGINX_LOG_PATH
     from middlewared.plugins.certificate.dhparam import DHPARAM_PEM_PATH
+    from middlewared.plugins.truenas_connect.utils import ALLOWED_ORIGIN_RE
 
     # Let's ensure that /var/log/nginx directory exists
     os.makedirs(NGINX_LOG_PATH, exist_ok=True)
@@ -84,6 +86,8 @@
 
     tn_connect_config = middleware.call_sync2(middleware.services.tn_connect.config)
     has_tn_connect = tn_connect_config.certificate is not None
+    # Validated when set; checked again so nothing else can reach the configuration.
+    tnc_allowed_origins = [o for o in tn_connect_config.allowed_origins if ALLOWED_ORIGIN_RE.fullmatch(o)]
     try:
         tnc_basename = middleware.call_sync2(middleware.services.tn_connect.hostname.basename_from_cert)
         tnc_cert = middleware.call_sync2(
@@ -184,13 +188,24 @@ http {
     }
 
     map $http_origin $allow_origin {
-        ~^${str(tn_connect_config.tnc_base_url).rstrip("/")}$ $http_origin;
+        # Escaped: an unescaped `.` matches any character, so look-alike hosts would match too.
+        ~^${re.escape(str(tn_connect_config.tnc_base_url).rstrip("/"))}$ $http_origin;
 % if str(tn_connect_config.account_service_base_url).split('.')[1] in ('dev', 'staging'):
         # Make CORS exception for localhost:4200 for internal development environments
         ~^http://localhost:4200$ $http_origin;
         ~^http://127\.0\.0\.1:4200$ $http_origin;
 % endif
         default "";
+    }
+
+    # /api/versions also answers tn_connect.allowed_origins, for TNC clients run against this system from
+    # elsewhere (an ephemeral TNC stack, local development, CI). /_download keeps $allow_origin alone.
+    # Regex entries, like those above, because exact keys would have to fit map_hash_bucket_size.
+    map $http_origin $tnc_versions_allow_origin {
+% for origin in tnc_allowed_origins:
+        ~^${re.escape(origin)}$ $http_origin;
+% endfor
+        default $allow_origin;
     }
 
 % if fips_enabled:
@@ -330,10 +345,11 @@ ${spaces}gzip off;
         location /api/versions {
             allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
                         # won't allow us to understand that connection error was due to client IP not being allowlisted.
-% if has_tn_connect:
+% if has_tn_connect or tnc_allowed_origins:
             # Allow all internal origins.
-            add_header Access-Control-Allow-Origin $allow_origin always;
+            add_header Access-Control-Allow-Origin $tnc_versions_allow_origin always;
             add_header Access-Control-Allow-Headers "*" always;
+            add_header Vary Origin always;
 % endif
             proxy_pass http://middlewared/api/versions;
             proxy_http_version 1.1;
