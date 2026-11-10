@@ -38,7 +38,7 @@ def _bridge_impl(
             # only create if doesn't already exist
             configure_bridge(
                 sock,
-                BridgeConfig(name=BRIDGE_NAME, members=[]),
+                BridgeConfig(name=BRIDGE_NAME, members=[], stp=False),
             )
             was_created = True
             link = get_link(sock, BRIDGE_NAME)
