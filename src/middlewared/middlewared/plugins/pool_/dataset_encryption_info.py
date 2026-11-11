@@ -12,11 +12,12 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetEncryptionSummaryArgs, PoolDatasetEncryptionSummaryResult, PoolDatasetExportKeysArgs,
     PoolDatasetExportKeysResult, PoolDatasetExportKeysForReplicationArgs, PoolDatasetExportKeysForReplicationResult,
-    PoolDatasetExportKeyArgs, PoolDatasetExportKeyResult
+    PoolDatasetExportKeyArgs, PoolDatasetExportKeyResult, ZFSResourceQuery
 )
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.pwenc import PWENC_KEY_LOCATION
 from middlewared.plugins.pool_.utils import get_dataset_parents
 from middlewared.plugins.zfs.encryption import check_key
 
@@ -313,7 +314,7 @@ class PoolDatasetService(Service):
         def check_key(ds):
             return options.get('all') or (ds['key_loaded'] and key_loaded) or (not ds['key_loaded'] and not key_loaded)
 
-        return dict(map(
+        datasets = dict(map(
             normalize,
             filter(
                 lambda d: (
@@ -324,6 +325,15 @@ class PoolDatasetService(Service):
                 self.middleware.call_sync('pool.dataset.query', [], {'extra': {'exclude_internal_datasets': False}})
             )
         ))
+        if datasets:
+            for ds in self.call_sync2(
+                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=list(datasets), properties=['keylocation']),
+            ):
+                if ds['properties']['keylocation']['raw'] == PWENC_KEY_LOCATION:
+                    # The system dataset setup loads this key from the pwenc secret. No user key unlocks it.
+                    del datasets[ds['name']]
+
+        return datasets
 
     @api_method(
         PoolDatasetExportKeysArgs,

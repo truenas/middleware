@@ -72,6 +72,7 @@ Build-Depends: alembic,
                sqlite3,
                truenas-samba,
                truenas-sssd,
+               truenas-truesearch,
                truenas-files
 Standards-Version: 4.4.0
 Homepage: https://github.com/truenas/middleware
@@ -171,6 +172,7 @@ Depends: alembic,
          rsync,
          truenas-samba,
          truenas-sssd,
+         truenas-truesearch,
          scst,
          scstadmin,
          sedutil,
