@@ -104,7 +104,7 @@ from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_s3 import S3Service, SharingS3Service
-from middlewared.plugins.truesearch import TrueSearchService
+from middlewared.plugins.truesearch import TruesearchService
 from middlewared.plugins.webshare.config import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
@@ -197,7 +197,7 @@ class ServiceContainer(BaseServiceContainer):
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
         self.truenas = TrueNASService(middleware)
-        self.truesearch = TrueSearchService(middleware)
+        self.truesearch = TruesearchService(middleware)
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)
         self.webshare = WebshareService(middleware)
