@@ -94,9 +94,8 @@ class DiskService(Service):
         if not sysfs.exists():
             raise CallError(f'Unable to retrieve disk details for {disk!r}')
 
-        is_dif = next(sysfs.glob('device/scsi_disk/*/protection_type'), None)
-        if is_dif is not None and is_dif.read_text().strip() != '0':
-            # 0 == disabled, > 0 enabled
+        infos = list(self.middleware.call_sync('disk.get_disks', [disk]))
+        if any(info.dif for info in infos):
             raise CallError(f'Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).')
 
         # wipe the disk (quickly) of any existing filesystems
@@ -106,7 +105,7 @@ class DiskService(Service):
         if size is None:
             size = self.get_data_partition_size(disk)
 
-        for info in self.middleware.call_sync('disk.get_disks', [disk]):
+        for info in infos:
             # Old TrueNAS systems:
             # * Used the entire disk for the data partition
             # * Used smaller partition alignment

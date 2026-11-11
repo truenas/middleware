@@ -15,8 +15,6 @@ from middlewared.api.current import (
     ZpoolListRemovedEvent,
     ZpoolListResult,
     ZpoolQuery,
-    ZpoolQueryArgs,
-    ZpoolQueryResult,
 )
 from middlewared.service import Service, job, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -111,20 +109,6 @@ class ZpoolService(Service):
                 "features": true,
                 "properties": ["size", "capacity", "health"]
             }
-        """
-        return _list.list_pools(self.context, data)
-
-    @api_method(
-        ZpoolQueryArgs,
-        ZpoolQueryResult,
-        roles=["POOL_READ"],
-        check_annotations=True,
-        removed_in="v28",
-    )
-    def query(self, data: ZpoolQuery) -> builtins.list[ZpoolEntry]:
-        """
-        List ZFS pools with flexible options for properties, topology, scan, and features; superseded by
-        :method:`zpool.list`.
         """
         return _list.list_pools(self.context, data)
 

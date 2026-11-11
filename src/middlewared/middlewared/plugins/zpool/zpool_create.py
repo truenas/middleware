@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import errno
-import fcntl
-import glob
 import os
 import time
 from typing import TYPE_CHECKING, Any, Iterable
@@ -36,6 +34,7 @@ from .exceptions import ZpoolCreateRejected, ZpoolException
 if TYPE_CHECKING:
     from middlewared.job import Job
     from middlewared.service import ServiceContext
+    from middlewared.utils.disks_.disk_class import DiskEntry
 
 __all__ = ("create", "finish", "format_disks", "prepare_disks", "register", "rollback")
 
@@ -57,31 +56,11 @@ def _start_fenced(context: ServiceContext) -> None:
     raise CallError(err)
 
 
-def _dif_formatted(disk: str) -> bool:
-    """Whether a SCSI disk is formatted with T10 Protection Information, which ZFS cannot use."""
-    for path in glob.glob(f"/sys/class/block/{disk}/device/scsi_disk/*/protection_type"):
-        with open(path) as f:
-            return f.read().strip() != "0"
-    return False
-
-
-def _reread_partition_table(disk: str) -> None:
-    """Have the kernel read the disk's partition table again; EBUSY means something holds the disk open."""
-    BLKRRPART = 0x125F
-    try:
-        fd = os.open(f"/dev/{disk}", os.O_RDONLY)
-        try:
-            fcntl.ioctl(fd, BLKRRPART)
-        finally:
-            os.close(fd)
-    except OSError as e:
-        if e.errno != errno.EBUSY:
-            raise CallError(f"Failed to read the partition table of {disk!r} again: {e}") from e
-
-
-def _kernel_sees_partition(disk: str) -> bool:
-    suffix = "p1" if disk[-1].isdigit() else "1"
-    return os.path.exists(f"/sys/class/block/{disk}/{disk}{suffix}")
+def _format_disk(context: ServiceContext, entry: DiskEntry) -> str:
+    """Unlock a self-encrypting disk, write its GPT and return the path of the ZFS partition."""
+    if context.middleware.call_sync("disk.sed_unlock_impl", entry.name, True) is False:
+        raise CallError(f"Failed to unlock {entry.name!r}. Check /var/log/middlewared.log")
+    return f"/dev/disk/by-partuuid/{entry.format()}"
 
 
 def format_disks(
@@ -100,24 +79,13 @@ def format_disks(
     for disk in disks:
         if disk not in entries:
             raise CallError(f"Unable to retrieve disk details for {disk!r}")
-        if _dif_formatted(disk):
+        if entries[disk].dif:
             raise CallError(f"Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).")
-
-    def format_disk(disk: str) -> str:
-        if context.middleware.call_sync("disk.sed_unlock_impl", disk, True) is False:
-            raise CallError(f"Failed to unlock {disk!r}. Check /var/log/middlewared.log")
-        entry = entries[disk]
-        # The format only wipes a disk that has a partition table. Whole-disk ZFS labels or other
-        # signatures would otherwise survive outside the new table and show up as a phantom pool.
-        entry.wipe_quick()
-        partition = entry.format()
-        _reread_partition_table(disk)
-        return f"/dev/disk/by-partuuid/{partition}"
 
     partitions: dict[str, str] = {}
     step = (upper_percentage - base_percentage) / len(disks)
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-        futures = {executor.submit(format_disk, disk): disk for disk in disks}
+        futures = {executor.submit(_format_disk, context, entries[disk]): disk for disk in disks}
         for done, future in enumerate(concurrent.futures.as_completed(futures), start=1):
             disk = futures[future]
             try:
@@ -129,16 +97,14 @@ def format_disks(
                 raise CallError(f"Failed formatting disk {disk!r}: {e}") from e
             job.set_progress(base_percentage + step * done, f"Formatting disks ({done}/{len(disks)})")
 
-    # The by-partuuid link appears once udev has handled the kernel's partition events. Reading the
-    # table again while udev is merely behind would remove and re-add the very link being waited for.
+    # The kernel knows every partition by now; udev still has to process its events before the
+    # by-partuuid links exist.
     context.middleware.call_sync("device.settle_udev_events")
     for disk, path in partitions.items():
         for _ in range(20):
             if os.path.exists(path):
                 break
             time.sleep(0.5)
-            if not _kernel_sees_partition(disk):
-                _reread_partition_table(disk)
             context.middleware.call_sync("device.settle_udev_events")
         else:
             raise CallError(f"Partition {path} of {disk!r} did not appear after formatting")

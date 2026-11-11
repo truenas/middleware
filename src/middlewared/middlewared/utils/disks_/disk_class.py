@@ -4,7 +4,9 @@ import collections
 import contextlib
 import dataclasses
 import errno
+import fcntl
 import functools
+import glob
 import hashlib
 import json
 import logging
@@ -12,12 +14,13 @@ import os
 import re
 import string
 import subprocess
+import time
 import typing
 import uuid
 
 import truenas_pylibsed as sed
 
-from .disk_io import create_gpt_partition, read_gpt, wipe_disk_quick
+from .disk_io import BLKRRPART, create_gpt_partition, read_gpt, wipe_disk_quick
 from .gpt_parts import PART_TYPES, GptPartEntry
 from .identifier import build_identifier, join_serial_lunid
 from .udev import udev_fallback_identity
@@ -140,6 +143,13 @@ class DiskEntry:
         except Exception:
             # fallback to 512 always
             return 512
+
+    @functools.cached_property
+    def dif(self) -> bool:
+        """Whether a SCSI disk is formatted with T10 Protection Information (DIF), which ZFS cannot use"""
+        for path in glob.glob(f"/sys/block/{self.name}/device/scsi_disk/*/protection_type"):
+            return self.__opener(absolute_path=path) not in (None, "0")
+        return False
 
     @functools.cached_property
     def size_sectors(self) -> int:
@@ -511,9 +521,11 @@ class DiskEntry:
         including protective MBR, primary and secondary GPT headers, and partition entries.
         The partition is configured for ZFS use with proper alignment and sizing.
 
-        This method automatically wipes any existing partitions before creating the new
-        GPT structure. It opens the device once and reuses the file descriptor for all
-        operations to optimize performance.
+        This method wipes the first and last 32MiB of the disk before creating the new
+        GPT structure, so neither a previous partition table nor a whole-disk ZFS label
+        survives it. It opens the device once and reuses the file descriptor for all
+        operations to optimize performance, and the kernel knows the new partition when
+        it returns.
 
         Returns:
             uuid.UUID: The unique identifier (GUID) of the created partition
@@ -526,26 +538,39 @@ class DiskEntry:
         Note:
             - The device must not be mounted or in use
             - Requires root privileges to access block devices
-            - Automatically wipes existing partitions if present
+            - Wipes the first and last 32MiB of the disk, partitioned or not
             - Creates a single partition spanning most of the disk with proper alignment
             - Reserves space at the end of the disk for resilience (up to 2GB or 1% of disk)
             - Uses 1MB alignment for optimal performance
             - For 4K native disks, uses sector 2048 as the first usable sector
             - Opens device only once for optimal performance
+            - Flushes the writes and has the kernel read the new table before closing
         """
         dev_fd = os.open(self.devpath, os.O_RDWR | os.O_EXCL)
         try:
-            if self.partitions(dev_fd):
-                # existing partitions detected
-                # so we need to wipe them before
-                # we format the disk with new ones
-                self.wipe_quick(dev_fd)
-            return create_gpt_partition(
+            # A whole-disk ZFS label or another signature outside a previous partition
+            # table would otherwise survive and show up as a phantom pool.
+            self.wipe_quick(dev_fd)
+            part_uuid = create_gpt_partition(
                 dev_fd,
                 ts_512=self.size_sectors,
                 lbs=self.lbs,
                 pbs=self.pbs,
             )
+            os.fsync(dev_fd)
+            # udev reads the table again when the device is closed after writing, but that attempt
+            # runs while the close is still flushing and holding this exclusive claim, so it fails
+            # with EBUSY and the partition never appears. The exclusive fd itself may ask. EBUSY
+            # here means a partition of the old table is still open, normally by udev for a moment.
+            for attempt in range(20):
+                try:
+                    fcntl.ioctl(dev_fd, BLKRRPART)
+                    break
+                except OSError as e:
+                    if e.errno != errno.EBUSY or attempt == 19:
+                        raise
+                    time.sleep(0.1)
+            return part_uuid
         finally:
             os.close(dev_fd)
 

@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.test.integration.utils import call, client, pool
+from middlewared.test.integration.utils import call, pool
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +26,7 @@ def zpool_full():
     return results[0]
 
 
-class TestZpoolQueryMinimal:
+class TestZpoolListMinimal:
     """Test default query returns required fields with correct types."""
 
     def test_name(self, zpool_minimal):
@@ -61,7 +61,7 @@ class TestZpoolQueryMinimal:
         assert zpool_minimal["features"] is None
 
 
-class TestZpoolQueryFull:
+class TestZpoolListFull:
     """Test query with all optional sections enabled."""
 
     def test_properties(self, zpool_full):
@@ -112,7 +112,7 @@ class TestZpoolQueryFull:
         assert "state" in feat
 
 
-class TestZpoolQueryAll:
+class TestZpoolListAll:
     """Test query-all mode (pool_names=None)."""
 
     def test_returns_all_pools(self):
@@ -127,7 +127,7 @@ class TestZpoolQueryAll:
         assert boot_pool_name not in names
 
 
-class TestZpoolQueryBootPool:
+class TestZpoolListBootPool:
     """Test explicit boot pool querying."""
 
     def test_boot_pool_by_name(self):
@@ -144,27 +144,10 @@ class TestZpoolQueryBootPool:
         assert int(results[0]["guid"]) != 0
 
 
-class TestZpoolQueryNonexistent:
+class TestZpoolListNonexistent:
     """Test querying pools that don't exist."""
 
     def test_nonexistent_pool_returns_empty(self):
         results = call("zpool.list", {"pool_names": ["nonexistent_pool_xyz"]})
         assert results == []
 
-
-def _guids(vdevs):
-    for vdev in vdevs:
-        yield vdev["guid"]
-        if vdev["top_guid"] is not None:
-            yield vdev["top_guid"]
-        yield from _guids(vdev["children"])
-
-
-def test_guids_are_integers_on_the_previous_api_version(zpool_full):
-    """Clients on 27.0 still get the integers that 28.0 turned into strings."""
-    with client(version="v27.0.0") as c:
-        [entry] = c.call("zpool.query", {"pool_names": [pool], "topology": True})
-    current = [zpool_full["guid"], *_guids(zpool_full["topology"]["data"])]
-    previous = [entry["guid"], *_guids(entry["topology"]["data"])]
-    assert all(isinstance(guid, int) for guid in previous)
-    assert previous == [int(guid) for guid in current]

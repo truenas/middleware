@@ -18,8 +18,6 @@ __all__ = (
     "ZpoolQuery",
     "ZpoolListArgs",
     "ZpoolListResult",
-    "ZpoolQueryArgs",
-    "ZpoolQueryResult",
     "ZpoolListAddedEvent",
     "ZpoolListChangedEvent",
     "ZpoolListRemovedEvent",
@@ -225,14 +223,6 @@ class ZpoolListArgs(BaseModel):
 
 class ZpoolListResult(BaseModel):
     result: list[ZpoolEntry]
-
-
-class ZpoolQueryArgs(ZpoolListArgs):
-    pass
-
-
-class ZpoolQueryResult(ZpoolListResult):
-    pass
 
 
 class ZpoolListAddedEvent(BaseModel):

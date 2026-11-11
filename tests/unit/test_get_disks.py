@@ -100,7 +100,7 @@ def test__format_disk():
             assert False, "Failed to find an unused disk"
 
     # Format the disk with GPT partition table
-    # Note: format() automatically wipes existing partitions if present
+    # Note: format() wipes the disk before writing the new table
     partition_guid = disk.format()
 
     # Verify the partition GUID is valid UUID
