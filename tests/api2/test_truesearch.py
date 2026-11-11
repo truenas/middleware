@@ -4,7 +4,6 @@
 import base64
 import contextlib
 import errno
-import json
 import os
 import time
 
@@ -137,13 +136,14 @@ def environments() -> set[str]:
     return set(ssh("ls /var/db/system/truesearchd").split())
 
 
-def configuration_rows() -> dict[str, dict]:
-    # truesearch_client reads the configuration file as both daemons do.
-    rows = json.loads(ssh(
-        "python3 -c 'import dataclasses, json; from truesearch_client.config import read_config; "
-        "print(json.dumps([dataclasses.asdict(row) for row in read_config() or []]))'"
-    ))
-    return {row['dataset']: row for row in rows}
+def configuration_rows() -> dict[str, dict[str, str]]:
+    # The settings of each row of the configuration file, by dataset. A row is a comment that names its dataset, a
+    # header, then the settings. truesearch_client does not read the exclusions of a row, so the test reads the file.
+    rows = {}
+    for row in ssh('cat /etc/truesearchd/truesearch.conf').split('\n\n')[1:]:
+        comment, _header, *settings = row.splitlines()
+        rows[comment.removeprefix('# ')] = dict(setting.split(' = ', 1) for setting in settings)
+    return rows
 
 
 def test_status(share):
@@ -200,7 +200,7 @@ def test_time_machine_and_home_shares_are_not_indexed(share):
         ):
             call('truesearch.configure')
             rows = configuration_rows()
-            assert rows[ds]['exclude'] == ['timemachine']
+            assert rows[ds].get('exclude') == '"timemachine"'
             # The dataset of a Time Machine share gets no row, and a home share is not indexed.
             assert backups not in rows
             assert homes not in rows
