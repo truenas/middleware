@@ -333,7 +333,7 @@ class PoolProcess(BaseModel):
     pid: int = Field(description="Process ID of the process using the pool.")
     name: str = Field(description="Name of the process using the pool.")
     service: str | None = Field(description="Name of the service if this process belongs to a system service.")
-    cmdline: LongString | None = Field(description="Full command line of the process.")
+    cmdline: Multiline[LongString] | None = Field(description="Full command line of the process.")
 
 
 class PoolReplace(BaseModel):

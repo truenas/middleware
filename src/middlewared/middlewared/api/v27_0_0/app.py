@@ -141,7 +141,7 @@ class AppCreateArgs(BaseModel):
         default_factory=dict,
         description="Docker Compose configuration as a structured object for custom applications.",
     )
-    custom_compose_config_string: Secret[LongString] = Field(
+    custom_compose_config_string: Secret[Multiline[LongString]] = Field(
         default='',
         description="Docker Compose configuration as a YAML string for custom applications.",
     )
@@ -184,7 +184,7 @@ class AppUpdate(BaseModel):
         default_factory=dict,
         description="Updated Docker Compose configuration as a structured object.",
     )
-    custom_compose_config_string: Secret[LongString] = Field(
+    custom_compose_config_string: Secret[Multiline[LongString]] = Field(
         default='',
         description="Updated Docker Compose configuration as a YAML string.",
     )

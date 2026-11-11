@@ -79,7 +79,9 @@ class CredentialsVerifyResult(BaseModel):
         default=None,
         description="Error message if credential verification failed or `null` on success.",
     )
-    excerpt: LongString | None = Field(default=None, description="Logs excerpt (or `null` if no error occurred).")
+    excerpt: Multiline[LongString] | None = Field(
+        default=None, description="Logs excerpt (or `null` if no error occurred).",
+    )
 
 
 class CredentialsS3ProviderChoicesArgs(BaseModel):

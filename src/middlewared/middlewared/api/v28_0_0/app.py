@@ -169,7 +169,7 @@ class AppCreate(BaseModel):
         validate_default=True,
         description="Docker Compose configuration as a structured object for custom applications.",
     )
-    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
+    custom_compose_config_string: FullAdmin[Secret[Multiline[LongString]]] = Field(
         default='',
         validate_default=True,
         description="Docker Compose configuration as a YAML string for custom applications.",
@@ -222,7 +222,7 @@ class AppUpdate(BaseModel):
         validate_default=True,
         description="Updated Docker Compose configuration as a structured object.",
     )
-    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
+    custom_compose_config_string: FullAdmin[Secret[Multiline[LongString]]] = Field(
         default='',
         validate_default=True,
         description="Updated Docker Compose configuration as a YAML string.",

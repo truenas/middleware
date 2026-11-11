@@ -22,7 +22,7 @@ class MailEntryOAuth(BaseModel):
     provider: str = Field(description="An email provider, e.g. \"gmail\", \"outlook\".")
     client_id: str = Field(description="OAuth client ID provided by the email provider.")
     client_secret: str = Field(description="OAuth client secret provided by the email provider.")
-    refresh_token: LongString = Field(
+    refresh_token: Multiline[LongString] = Field(
         description="OAuth refresh token used to obtain new access tokens for email authentication.",
     )
 

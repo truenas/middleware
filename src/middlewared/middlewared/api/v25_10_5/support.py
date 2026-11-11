@@ -50,7 +50,7 @@ class SupportNewTicketEnterprise(BaseModel):
     category: str = Field(description="Category or classification of the support issue.")
     attach_debug: bool = Field(default=False, description="Whether to attach debug information to the ticket.")
     criticality: str = Field(description="Priority or criticality level of the issue.")
-    environment: LongString = Field(description="Description of the environment where the issue occurs.")
+    environment: Multiline[LongString] = Field(description="Description of the environment where the issue occurs.")
     phone: str = Field(description="Contact phone number for this ticket.")
     name: str = Field(description="Contact name for this ticket.")
     email: EmailString = Field(description="Contact email address for this ticket.")

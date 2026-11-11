@@ -250,7 +250,7 @@ class CloudSyncProviderTaskSchemaItem(BaseModel):
 class CloudSyncOneDriveListDrivesArgs(BaseModel):
     client_id: Secret[str] = Field(default="", description="OAuth client ID for OneDrive API access.")
     client_secret: Secret[str] = Field(default="", description="OAuth client secret for OneDrive API access.")
-    token: Secret[LongNonEmptyString] = Field(description="OAuth access token for OneDrive authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(description="OAuth access token for OneDrive authentication.")
 
 
 class CloudSyncOneDriveListDrivesResult(BaseModel):

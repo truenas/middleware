@@ -76,7 +76,7 @@ class CoreGetJobsItemProgress(BaseModel):
 
 
 class CoreGetJobsItemExcInfo(BaseModel):
-    repr: LongString | None = Field(
+    repr: Multiline[LongString] | None = Field(
         description="String representation of the exception. `null` if no exception occurred.",
     )
     type: str | None = Field(description="Exception type name. `null` if no exception occurred.")

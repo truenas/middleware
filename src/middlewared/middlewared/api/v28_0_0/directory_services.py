@@ -50,7 +50,7 @@ class DirectoryServicesStatus(BaseModel):
             "services are disabled."
         ),
     )
-    status_msg: LongNonEmptyString | None = Field(
+    status_msg: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description=(
             "This field shows the reason why the directory service is FAULTED after a failed health check. If the "
