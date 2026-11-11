@@ -187,6 +187,8 @@ http {
         '' close;
     }
 
+    absolute_redirect off;
+
     map $http_origin $allow_origin {
         # Escaped: an unescaped `.` matches any character, so look-alike hosts would match too.
         ~^${re.escape(str(tn_connect_config.tnc_base_url).rstrip("/"))}$ $http_origin;
