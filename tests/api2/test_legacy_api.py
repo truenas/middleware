@@ -79,6 +79,10 @@ def misc_method_names(misc_methods) -> list[str]:
 
 def test_query_method(legacy_api_client, query_method, misc_method_names):
     client, version = legacy_api_client
+    if query_method == "truesearch.query":
+        # It is not the query method of a CRUD service. It requires a path that TrueSearch indexes.
+        return
+
     # Methods that do not exist in the previous API versions
     _startswith = ("zfs.resource.",)
     if (

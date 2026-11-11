@@ -157,6 +157,13 @@ log {
   flags(final);
 };
 
+log {
+  source(s_src);
+  filter(f_truesearch);
+  destination { file("/var/log/truesearchd.log"); };
+  flags(final);
+};
+
 #######################
 # Middlewared-related log files
 ########################

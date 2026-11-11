@@ -97,6 +97,16 @@ def tls_cert(erase_syslogservers):
         'msg': 'ZZZZ: random truenas_smbhad test',
         'path': '/var/log/truenas_smbhad.log',
     },
+    {
+        'ident': 'truesearchd',
+        'msg': 'ZZZZ: random truesearchd test',
+        'path': '/var/log/truesearchd.log',
+    },
+    {
+        'ident': 'truesearch-indexer',
+        'msg': 'ZZZZ: random truesearch-indexer test',
+        'path': '/var/log/truesearchd.log',
+    },
 ])
 def test_local_syslog_filter(params):
     """
