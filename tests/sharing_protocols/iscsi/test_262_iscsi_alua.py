@@ -4,28 +4,21 @@ import random
 import string
 from time import sleep
 
-import iscsi
 import pytest
 from assets.websocket.iscsi import (alua_enabled, initiator_portal, target, target_extent_associate, verify_capacity,
                                     verify_ha_inquiry, verify_luns, zvol_extent)
 from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled
-from auto_config import extended_tests, ha, pool_name
+from auto_config import pool_name
 from protocols import iscsi_scsi_connection
 from pyscsi.pyscsi.scsi_command import SCSICommand
 
 from middlewared.test.integration.assets.hostkvm import get_kvm_domain, poweroff_vm, reset_vm, start_vm
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, settle_ha, ssh
+from middlewared.test.integration.utils import call, extended_test, ha_test, settle_ha, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
-pytestmark = pytest.mark.skipif(not ha, reason='Tests applicable to HA only')
-skip_extended_tests = pytest.mark.skipif(not extended_tests, reason="Skip extended tests")
-
-# See: https://github.com/python-scsi/cython-iscsi/pull/8
-pyscsi_supports_check_condition = hasattr(iscsi.Task, 'raw_sense')
-skip_no_check_condition = pytest.mark.skipif(not pyscsi_supports_check_condition,
-                                             reason="PYSCSI does not support CHECK CONDITION")
+pytestmark = ha_test
 
 SERVICE_NAME = 'iscsitarget'
 MB = 1024 * 1024
@@ -306,7 +299,7 @@ class TestFixtureConfiguredALUA:
             case _:
                 return 5
 
-    @skip_extended_tests
+    @extended_test
     @pytest.mark.timeout(1200)
     def test_alua_target_create(self, alua_configured):
         """
@@ -790,7 +783,7 @@ class TestFixtureConfiguredALUA:
         self.wait_for_settle()
         _debug("lun-replace: (recovery) cluster recovered")
 
-    @skip_extended_tests
+    @extended_test
     @pytest.mark.timeout(1200)
     def test_failover_lun_replace(
         self, fix_lun_replace_config, fix_lun_replace_recovery
@@ -942,7 +935,6 @@ class TestFixtureConfiguredALUA:
                     raise
         raise AssertionError('Unit Attentions did not drain')
 
-    @skip_no_check_condition
     @pytest.mark.timeout(900)
     def test_standby_compare_and_write_backend_ua(self, alua_configured):
         """COMPARE AND WRITE on the standby path must survive a backend CHECK CONDITION."""

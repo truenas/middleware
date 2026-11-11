@@ -23,8 +23,8 @@
 %>\
 root ALL=(ALL:ALL) ALL
 % for user in users:
-% if user['sudo_commands'] or user['sudo_commands_nopasswd']:
-${user['username']} ALL=(ALL) ${sudo_entry(user['sudo_commands'], user['sudo_commands_nopasswd'])}
+% if user.sudo_commands or user.sudo_commands_nopasswd:
+${user.username} ALL=(ALL) ${sudo_entry(user.sudo_commands, user.sudo_commands_nopasswd)}
 % endif
 % endfor
 % for group in groups:

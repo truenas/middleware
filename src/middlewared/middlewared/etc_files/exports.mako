@@ -5,7 +5,7 @@
     from pathlib import Path
     from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
     from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
-    from middlewared.api.current import GroupGetGroupObj, NFSEntry, SharingNFSEntry
+    from middlewared.api.current import GroupGetGroupObj, NFSEntry, SharingNFSEntry, UserGetUserObj
     from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
 
     def do_map(share: SharingNFSEntry, map_type: str, map_ids: dict[str, int | str], alert_shares: dict[str, list[str]]) -> list[str]:
@@ -14,7 +14,9 @@
 
         if usrname := getattr(share, f'{map_type}_user'):
             try:
-                uid = middleware.call_sync('user.get_user_obj', {'username': usrname})['pw_uid']
+                uid = middleware.call_sync2(
+                    middleware.services.user.get_user_obj, UserGetUserObj(username=usrname),
+                ).pw_uid
                 map_ids[f'{map_type}_user'] = uid
                 output.append(f'anonuid={uid}')
             except KeyError:

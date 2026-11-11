@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 from typing import Any, TypeVar
 
-from middlewared.api.current import CronJobCreate, CronJobEntry, CronJobUpdate
+from middlewared.api.current import CronJobCreate, CronJobEntry, CronJobUpdate, UserGetUserObj
 from middlewared.service import CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -31,6 +31,7 @@ class CronJobModel(sa.Model):
 class CronJobServicePart(CRUDServicePart[CronJobEntry]):
     _datastore = 'tasks.cronjob'
     _datastore_prefix = 'cron_'
+    _datastore_sql_filters = frozenset(('id', 'user', 'command', 'description', 'enabled', 'stdout', 'stderr'))
     _entry = CronJobEntry
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
@@ -73,17 +74,17 @@ class CronJobServicePart(CRUDServicePart[CronJobEntry]):
         else:
             user_data = None
             with contextlib.suppress(KeyError):
-                user_data = await self.middleware.call('user.get_user_obj', {'username': data.user})
+                user_data = await self.call2(self.s.user.get_user_obj, UserGetUserObj(username=data.user))
 
             if not user_data:
                 verrors.add(
                     f'{schema}.user',
                     'Specified user does not exist'
                 )
-            elif user_data['pw_name'] != data.user:
+            elif user_data.pw_name != data.user:
                 # Normalize to the canonical name from NSS to avoid
                 # issues with backends that accept multiple name formats.
-                data = data.model_copy(update={'user': user_data['pw_name']})
+                data = data.model_copy(update={'user': user_data.pw_name})
 
         if not data.command:
             verrors.add(

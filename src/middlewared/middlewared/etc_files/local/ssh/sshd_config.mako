@@ -43,8 +43,8 @@
 	twofactor_auth = middleware.call_sync('auth.twofactor.config')
 	password_method = 'no' if twofactor_auth['enabled'] and twofactor_auth['services']['ssh'] else 'yes'
 
-	users = middleware.call_sync('user.query', [['local', '=', True]])
-	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
+	users = middleware.call_sync2(middleware.services.user.query, [['local', '=', True]])
+	root_user = next(user for user in users if user.username == 'root')
 	login_banner = render_ctx['system.advanced.login_banner']
 %>\
 Subsystem	sftp	internal-sftp -l ${sftp_log_level} -f ${sftp_log_facility}
@@ -77,7 +77,7 @@ Port ${ssh_config.tcpport}
 % for ip in bind_ifaces:
 ListenAddress ${ip}
 % endfor
-% if root_user['ssh_password_enabled']:
+% if root_user.ssh_password_enabled:
 PermitRootLogin yes
 % else:
 PermitRootLogin without-password
@@ -105,8 +105,8 @@ PrintMotd no
 SetEnv LC_ALL=C.UTF-8
 
 % if ssh_config.passwordauth:
-% for user in filter_list(users, [['ssh_password_enabled', '=', True]]):
-Match User "${user['username']}"
+% for user in [user for user in users if user.ssh_password_enabled]:
+Match User "${user.username}"
 	PasswordAuthentication ${password_method}
 	KbdInteractiveAuthentication yes
 % endfor

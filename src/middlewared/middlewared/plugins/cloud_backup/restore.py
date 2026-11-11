@@ -29,7 +29,9 @@ def do_restore(
         check_path_resides_within_volume(verrors, context.middleware, "destination_path", destination_path)
     )
     context.middleware.run_coroutine(
-        check_path_service_write_allowed(verrors, context.middleware, "destination_path", destination_path)
+        check_path_service_write_allowed(
+            verrors, context.middleware, "destination_path", destination_path, beneath=True
+        )
     )
     verrors.check()
 

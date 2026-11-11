@@ -38,7 +38,7 @@ def __kinit_with_principal(kerberos_principal: str, ccache: str, lifetime: int |
         raise CallError(f'{kerberos_principal}: not a valid kerberos principal name.', errno.EINVAL)
     except gssapi.exceptions.MissingCredentialsError as exc:
         if exc.min_code & 0xFF:
-            # Kerberos error wrapped up in GSSAPI error
+            # GSSAPI minor code set. It is not always a krb5 error code, so krb5_code may be None.
             raise KRB5Error(gss_major=exc.maj_code, gss_minor=exc.min_code, errmsg=exc.gen_message())
 
         # A more unfortunate GSSAPI error
@@ -54,7 +54,7 @@ def __kinit_with_user(username: str, password: str, ccache: str, lifetime: int |
         raise CallError(f'{username}: not a valid kerberos principal name.', errno.EINVAL)
     except gssapi.exceptions.MissingCredentialsError as exc:
         if exc.min_code & 0xFF:
-            # Kerberos error wrapped up in GSSAPI error
+            # GSSAPI minor code set. It is not always a krb5 error code, so krb5_code may be None.
             raise KRB5Error(gss_major=exc.maj_code, gss_minor=exc.min_code, errmsg=exc.gen_message())
 
         # A more unfortunate GSSAPI error
@@ -142,9 +142,9 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
     match ds_type:
         case DSType.AD:
             # Force domain to upper case
-            new['configuration']['domain'] = new['configuration']['domain'].upper()
+            domain = new['configuration']['domain'].upper()
             try:
-                domain_info = get_domain_info(new['configuration']['domain'], retry=True)
+                domain_info = get_domain_info(domain, retry=True)
             except CallError as e:
                 verrors.add(f'{schema}.configuration.domain', e.errmsg)
                 return False
@@ -160,14 +160,18 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
                 kdc.append(domain_info['kdc_server'])
 
             saf_ip = domain_info['kdc_server']
-            saf_host = lookup_dc(
-                new['configuration']['domain'], server=saf_ip
-            ).get('domain_controller') or None
+            saf_host = lookup_dc(domain, server=saf_ip).get('domain_controller') or None
 
             if not realm:
-                realm = new['configuration']['domain']
+                realm = domain
 
-            new['configuration']['idmap']['idmap_domain']['name'] = domain_info['workgroup']
+            # `new['configuration']` can be the same dictionary as the saved configuration that the caller compares
+            # against and restores on failure, so it is replaced rather than written to.
+            idmap = new['configuration']['idmap']
+            new['configuration'] = new['configuration'] | {
+                'domain': domain,
+                'idmap': idmap | {'idmap_domain': idmap['idmap_domain'] | {'name': domain_info['workgroup']}},
+            }
             new['kerberos_realm'] = realm
 
         case DSType.IPA:

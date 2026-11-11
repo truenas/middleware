@@ -104,6 +104,15 @@ class ReplicationPeriodicSnapshotTaskModel(sa.Model):
 class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
     _datastore = "storage.replication"
     _datastore_prefix = "repl_"
+    _datastore_sql_filters = frozenset((
+        "id", "name", "target_dataset", "recursive", "compression", "speed_limit", "enabled", "direction",
+        "transport", "sudo", "netcat_active_side", "netcat_active_side_port_min", "netcat_active_side_port_max",
+        "netcat_active_side_listen_address", "netcat_passive_side_connect_address", "name_regex", "auto",
+        "only_matching_schedule", "readonly", "allow_from_scratch", "hold_pending_snapshots", "retention_policy",
+        "lifetime_unit", "lifetime_value", "large_block", "embed", "compressed", "retries", "logging_level",
+        "properties", "replicate", "encryption", "encryption_inherit", "encryption_key_format",
+        "encryption_key_location",
+    ))
     _entry = ReplicationEntry
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:

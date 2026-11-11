@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Set as AbstractSet
 import enum
 from string import punctuation
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from .time_utils import datetime_to_epoch_days
 
 if TYPE_CHECKING:
-    from middlewared.api.current import SystemSecurityEntry
+    from middlewared.api.current import SystemSecurityEntry, UserEntry
 
 # WARNING: Changes to MAX_PASSWORD_HISTORY may impact API schemas
 # This value was chosen to be 2x beyond what is technically required
@@ -89,7 +90,7 @@ def system_security_config_to_stig_type(config: SystemSecurityEntry) -> STIGType
 
 
 def shadow_parse_aging(
-    user: dict[str, Any],
+    user: UserEntry,
     security: SystemSecurityEntry,
     max_age_overrides: set[str] | None = None
 ) -> str:
@@ -102,7 +103,7 @@ def shadow_parse_aging(
 
     params:
     -------
-    user: dict, required
+    user: UserEntry, required
         user.query entry for shadow entry
 
     security: SystemSecurityEntry, required
@@ -116,7 +117,7 @@ def shadow_parse_aging(
     outstr = ''
 
     # Special cases
-    if user['password_disabled'] or user['username'] == 'root':
+    if user.password_disabled or user.username == 'root':
         # NAS-135872, NAS-135863: Prevent a password disabled account from being
         # disabled due to password change requirements.
         #
@@ -133,8 +134,8 @@ def shadow_parse_aging(
     #
     # An empty field (for example if password has never been changed) means that
     # password aging is disabled for the account.
-    if user['last_password_change'] is not None:
-        outstr += str(datetime_to_epoch_days(user['last_password_change']))
+    if user.last_password_change is not None:
+        outstr += str(datetime_to_epoch_days(user.last_password_change))
     else:
         # We set timestamp on UI / API initiated password changes
         # unexpected None here should result in forcing password change
@@ -143,7 +144,7 @@ def shadow_parse_aging(
         #
         # NAS-135623 -- this check was relaxed to only set zero here if
         # password authentication is not disabled.
-        if user['username'] != 'root' and not user['password_disabled']:
+        if user.username != 'root' and not user.password_disabled:
             outstr += '0'
 
     outstr += SHADOW_SEPARATOR
@@ -153,7 +154,7 @@ def shadow_parse_aging(
 
     outstr += SHADOW_SEPARATOR
 
-    if security.max_password_age and user['username'] not in max_age_skip_users:
+    if security.max_password_age and user.username not in max_age_skip_users:
         outstr += str(security.max_password_age)
 
     outstr += SHADOW_SEPARATOR
@@ -174,7 +175,7 @@ def shadow_parse_aging(
     return outstr
 
 
-def check_password_complexity(ruleset: set[str], password: str) -> set[PasswordComplexity]:
+def check_password_complexity(ruleset: AbstractSet[str], password: str) -> set[PasswordComplexity]:
     unmet: set[PasswordComplexity] = set()
 
     if not isinstance(password, str):

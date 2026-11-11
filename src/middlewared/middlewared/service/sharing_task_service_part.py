@@ -54,6 +54,8 @@ async def validate_path_service_write(
     path: str,
     data: Any,
     local_path_info: LocalPathInfo | None,
+    *,
+    beneath: bool,
 ) -> None:
     """Ask `check_path_service_write_allowed` about a share or task's local path, where it is the one writing there.
     A path whose writes belong to another service is refused wherever on that service's dataset it points.
@@ -68,7 +70,9 @@ async def validate_path_service_write(
     if not writes:
         return
     dataset, relative_path = dataset_split(data)
-    await check_path_service_write_allowed(verrors, middleware, f"{schema}.{field}", path, dataset, relative_path)
+    await check_path_service_write_allowed(
+        verrors, middleware, f"{schema}.{field}", path, dataset, relative_path, beneath=beneath
+    )
 
 
 async def validate_path_service_share(
@@ -116,6 +120,8 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     readonly_field: str | None = None
     """The flag that makes the share or task read-only for its local path, or None where nothing does: what
     `local_path_info` reads unless overridden."""
+    crosses_mounts: bool = True
+    """Whether a write through the local path reaches the datasets mounted beneath it."""
 
     async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
         """Per-row transform for this specific service (replaces legacy ``datastore_extend``).
@@ -201,7 +207,8 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
         resolves the path to its ZFS dataset components. A local path whose writes belong to another
-        service is refused unless `local_path_info` says this share or task only reads it."""
+        service is refused unless `local_path_info` says this share or task only reads it. A disabled entry is not
+        checked for buckets below its path; it is checked when enabled."""
         name = f"{schema}.{self.path_field}"
         path = data[self.path_field]
         await self.validate_zvol_path(verrors, name, path)
@@ -221,7 +228,14 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
                 ds, rel_path = await self.middleware.run_in_thread(resolve_dataset_path, path, self.middleware)
                 data.update(dataset=ds, relative_path=rel_path)
             await validate_path_service_write(
-                self.middleware, verrors, schema, self.path_field, path, data, await self.local_path_info(data)
+                self.middleware,
+                verrors,
+                schema,
+                self.path_field,
+                path,
+                data,
+                await self.local_path_info(data),
+                beneath=self.crosses_mounts and bool(data[self.enabled_field]),
             )
 
         else:

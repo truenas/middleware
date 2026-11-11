@@ -79,6 +79,11 @@ class CloudProviderRemovedAlert(OneShotAlertClass):
 
 class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate, CloudSyncUpdate]):
     _datastore = "tasks.cloudsync"
+    _datastore_sql_filters = frozenset((
+        "id", "description", "path", "dataset", "relative_path", "pre_script", "post_script", "snapshot", "args",
+        "enabled", "direction", "transfer_mode", "transfers", "encryption", "filename_encryption",
+        "create_empty_src_dirs", "follow_symlinks",
+    ))
     _entry = CloudSyncEntry
     schema_prefix = "cloud_sync"
 

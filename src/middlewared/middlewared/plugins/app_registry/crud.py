@@ -22,6 +22,7 @@ class AppRegistryModel(sa.Model):
 
 class AppRegistryServicePart(CRUDServicePart[AppRegistryEntry]):
     _datastore = 'app.registry'
+    _datastore_sql_filters = frozenset(('id', 'name', 'description', 'uri'))
     _entry = AppRegistryEntry
 
     async def do_create(self, data: AppRegistryCreate) -> AppRegistryEntry:

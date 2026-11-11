@@ -22,7 +22,7 @@ def test_unconfigure_apps():
 
 @pytest.mark.dependency(depends=['unconfigure_apps'])
 def test_catalog_sync():
-    call('catalog.sync', job=True)
+    sync_catalog()
     assert call('catalog.synced') is True
 
 

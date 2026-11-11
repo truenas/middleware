@@ -4,7 +4,6 @@ import os.path
 from typing import TYPE_CHECKING, Any, Iterable
 
 from middlewared.api.current import (
-    QueryOptions,
     VMCDROMDevice,
     VMDeviceEntry,
     VMDiskDevice,
@@ -130,7 +129,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
     async def start_autostart_on_paths(self, paths: set[str]) -> None:
         # (Re)start the autostart VMs whose disks live on `paths`, now that those paths have become
         # available again.
-        vms = await self.call2(self.s.vm.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True))
+        vms = await self.call2(self.s.vm.query, [('autostart', '=', True)])
         for vm in vms:
             if not await self.vm_on_paths(vm, paths):
                 continue

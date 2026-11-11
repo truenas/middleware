@@ -90,9 +90,9 @@ def SSH_TEST(command, username, passwrd, host=None, timeout=120, key_path=None):
     }
 
 
-def async_SSH_start(command, username="root", passwrd=password, host=None):
+def async_SSH_start(command, username="root", passwrd=None, host=None):
     target = host or get_host_ip(SRVTarget.DEFAULT)
-    cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
+    cmd = ["sshpass", "-p", passwrd or password()]
     cmd += [
         "ssh",
         "-o",

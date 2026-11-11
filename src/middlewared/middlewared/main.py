@@ -16,6 +16,7 @@ import re
 import shutil
 import signal
 import sys
+import syslog
 import textwrap
 import threading
 import time
@@ -61,7 +62,7 @@ from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.lang import undefined
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
-from .utils.mock import coerce_mock_result, get_mock_return_model
+from .utils.mock import coerce_mock_result, get_mock_return_model, mock_args_match
 from .utils.nss.pwd import getpwnam
 from .utils.plugins import LoadPluginsMixin
 from .utils.prctl import set_cmdline, set_name
@@ -98,8 +99,9 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
-from middlewared.plugins.account_.group import GroupService
-from middlewared.plugins.account_.privilege import PrivilegeService
+from middlewared.plugins.account.group import GroupService
+from middlewared.plugins.account.privilege import PrivilegeService
+from middlewared.plugins.account.user import UserService
 from middlewared.plugins.acme_dns_authenticator import DNSAuthenticatorService as ACMEDNSAuthenticatorService
 from middlewared.plugins.acme_protocol import ACMEProtocolService
 from middlewared.plugins.acme_registration import ACMERegistrationService
@@ -325,6 +327,7 @@ class ServiceContainer(BaseServiceContainer):
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)
         self.usage = UsageService(middleware)
+        self.user = UserService(middleware)
         self.vm = VMService(middleware)
         self.webshare = WebshareService(middleware)
         self.zettarepl = ZettareplService(middleware)
@@ -688,7 +691,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 'catalog',
             ]
             try:
-                return beginning.index(plugin)
+                return beginning.index(plugin.split('.')[0])
             except ValueError:
                 return len(beginning)
         setup_funcs = sorted(setup_funcs, key=sort_key)
@@ -1092,7 +1095,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         if prepared_call.is_coroutine:
             self.logger.trace('Calling %r in current IO loop', name)
-            return await methodobj(*prepared_call.args)
+            return await methodobj(*prepared_call.args, **prepared_call.kwargs)
 
         self.logger.trace('Calling %r in executor %r', name, prepared_call.executor)
         return await self.run_in_executor(
@@ -1714,7 +1717,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def _mock_method(self, name: str, params: typing.Iterable) -> typing.Callable | None:
         if mocks := self.mocks.get(name):
             for args, mock in mocks:
-                if args == list(params):
+                if mock_args_match(args, list(params)):
                     return mock
             for args, mock in mocks:
                 if args is None:
@@ -2179,6 +2182,8 @@ def main():
 
     set_name('middlewared')
     set_cmdline('middlewared')
+    # In-process PAM modules log through libc syslog(); set_cmdline() broke its default tag.
+    syslog.openlog('middlewared', syslog.LOG_PID)
 
     if args.pidfile:
         with open(pidpath, "w") as _pidfile:

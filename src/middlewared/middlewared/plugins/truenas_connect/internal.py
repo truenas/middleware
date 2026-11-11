@@ -103,6 +103,13 @@ async def delete_cert(context: ServiceContext, cert_id: int) -> None:
         logger.error("Failed to delete TNC certificate: %s", delete_job.error)
 
 
+async def remove_tnc_license(context: ServiceContext) -> None:
+    try:
+        await context.call2(context.s.truenas.license.remove_tnc_license)
+    except Exception:
+        logger.error("TNC: failed to remove the TrueNAS Connect license", exc_info=True)
+
+
 async def handle_tnc_deregistration(context: ServiceContext) -> None:
     # Canonical handler for "TNC told us we are deregistered" (HTTP 401). This is the only path
     # that auto-unsets TNC and removes its certificate, so both the heartbeat (on a 401 response)
@@ -123,12 +130,15 @@ async def handle_tnc_deregistration(context: ServiceContext) -> None:
     await context.middleware.call("datastore.update", DATASTORE, tnc_config["id"], {
         "enabled": False,
     } | get_unset_payload())
+    await remove_tnc_license(context)
     new_entry = await context.call2(context.s.tn_connect.config)
     context.middleware.send_event("tn_connect.config", "CHANGED", fields=new_entry.model_dump())
     await context.call2(context.s.alert.oneshot_create, TNCDisabledAutoUnconfiguredAlert())
 
     if tnc_config["certificate"] is not None:
         await delete_cert(context, tnc_config["certificate"])
+
+    await context.middleware.call_hook("tn_connect.certificate.changed")
 
 
 async def ha_vips(context: ServiceContext) -> list[str]:

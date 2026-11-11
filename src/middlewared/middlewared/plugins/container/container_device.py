@@ -26,6 +26,7 @@ from middlewared.api.current import (
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service import GenericCRUDService, ValidationErrors, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
+from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.types import AuditCallback
 
 from .container_device_choices import gpu_choices, nic_attach_choices, usb_choices
@@ -113,3 +114,4 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
         self, verrors: ValidationErrors, schema: str, path: str,
     ) -> None:
         await check_path_resides_within_volume(verrors, self.middleware, schema, path)
+        await check_path_service_write_allowed(verrors, self.middleware, schema, path, beneath=False)

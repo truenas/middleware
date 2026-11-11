@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping
+from dataclasses import replace
 import errno
 import ipaddress
 import os
@@ -36,12 +37,15 @@ from middlewared.api.current import (
     SharingS3Update,
     SharingS3UpdateArgs,
     SharingS3UpdateResult,
+    UserGetUserObj,
     ZFSResourceCreateArgsData,
     ZFSResourceCreateProperties,
     ZFSResourceQuery,
+    ZFSResourceRenameArgsData,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.attachment import LocalPathWriter, LockableFSAttachmentDelegate
+from middlewared.plugins.zfs import resource_attachments
 from middlewared.plugins.zfs.exceptions import (
     ZFSDestroyFailedException,
     ZFSPathAlreadyExistsException,
@@ -66,6 +70,8 @@ from .on_disk import (
 )
 
 if TYPE_CHECKING:
+    import logging
+
     from middlewared.main import Middleware
 
 __all__ = ("SharingS3Service", "S3FSAttachmentDelegate")
@@ -97,6 +103,67 @@ class BucketPath(typing.NamedTuple):
     dataset: str
     within: str
     """The path within the bucket's dataset, empty at its mount point."""
+
+    @property
+    def in_share_root(self) -> bool:
+        return self.within == SHARE_ROOT or self.within.startswith(f"{SHARE_ROOT}/")
+
+
+def at_or_under(name: str, root: str) -> bool:
+    return name == root or name.startswith(f"{root}/")
+
+
+def path_within(bucket: str, real: str, dataset: str | None, relative_path: str | None) -> str | None:
+    """Return the part of a path inside `bucket`, or None if the path is outside it. Use `dataset` and
+    `relative_path` when they place the path in the bucket. Otherwise use the resolved path `real`, which also
+    catches a directory that the bucket's dataset is mounted over."""
+    if dataset is not None and at_or_under(dataset, bucket):
+        # a child dataset of the bucket mounts at <bucket>/<its leaf path>
+        return "/".join(part for part in (dataset[len(bucket) + 1:], relative_path) if part)
+    mountpoint = f"/mnt/{bucket}"
+    if not at_or_under(real, mountpoint):
+        return None
+    return real[len(mountpoint) + 1:]
+
+
+def bucket_at(
+    rows: list[dict[str, Any]], real: str, dataset: str | None, relative_path: str | None
+) -> BucketPath | None:
+    found: BucketPath | None = None
+    for row in rows:
+        rel = path_within(row["dataset"], real, dataset, relative_path)
+        if rel is not None and (found is None or len(row["dataset"]) > len(found.dataset)):
+            found = BucketPath(row["name"], row["dataset"], rel)
+    return found
+
+
+def is_above(dataset: str, real: str) -> bool:
+    return f"/mnt/{dataset}".startswith(f"{real}/")
+
+
+def reaches(dataset: str, writer: LocalPathWriter) -> bool:
+    return path_within(dataset, writer.path, writer.dataset, writer.relative_path) is not None or (
+        writer.crosses_mounts and is_above(dataset, writer.path)
+    )
+
+
+WRITERS_REACH_BUCKET = (
+    "A writable share, task, home directory or anonymous FTP root would reach an S3 bucket here. Only the S3 "
+    "service may write to a bucket."
+)
+
+
+def is_written(logger: logging.Logger, dataset: str, writers: list[LocalPathWriter]) -> bool:
+    """Return whether a writer reaches `dataset`, and log which writers do. The error raised by the caller does not
+    name them because the S3 service passes it on to S3 clients."""
+    if names := [writer.name for writer in writers if reaches(dataset, writer)]:
+        logger.warning("%s: an S3 bucket here would be written by %s", dataset, ", ".join(names))
+        return True
+    return False
+
+
+def realpaths(writers: list[LocalPathWriter]) -> list[LocalPathWriter]:
+    return [replace(w, path=os.path.realpath(w.path)) for w in writers]
 
 
 def bucket_dataset_properties() -> ZFSResourceCreateProperties:
@@ -228,6 +295,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     include_tier_info = True
     share_task_type = "S3"
     allowed_path_types = [FSLocation.LOCAL]
+    crosses_mounts = False
 
     class Config:
         namespace = "sharing.s3"
@@ -337,36 +405,25 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
 
     @private
+    async def bucket_rows(self) -> list[dict[str, Any]]:
+        """Every BUCKET bucket, including disabled ones, because enabling a bucket runs no checks."""
+        return [row for row in await self.all_bucket_rows() if row["layout"] == "BUCKET"]
+
+    @private
+    async def all_bucket_rows(self) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = await self.middleware.call(
+            "datastore.query", self._config.datastore, [], {"select": ["name", "dataset", "layout"]}
+        )
+        return rows
+
+    @private
     async def bucket_of_path(
         self, path: str, dataset: str | None = None, relative_path: str | None = None
     ) -> BucketPath | None:
         """Internal check for whether a given path is inside a BUCKET layout S3 share."""
-        real = path if dataset is not None else await self.middleware.run_in_thread(os.path.realpath, path)
-
-        def within(bucket: str) -> str | None:
-            """The path within `bucket` that `path` names, or None when it
-            is not in it."""
-            if dataset is not None:
-                if dataset != bucket and not dataset.startswith(f"{bucket}/"):
-                    return None
-                # a child dataset of the bucket mounts at <bucket>/<its leaf path>
-                return "/".join(part for part in (dataset[len(bucket) + 1:], relative_path) if part)
-            mountpoint = f"/mnt/{bucket}"
-            if real != mountpoint and not real.startswith(f"{mountpoint}/"):
-                return None
-            return real[len(mountpoint) + 1:]
-
-        rows = await self.middleware.call(
-            "datastore.query", self._config.datastore, [], {"select": ["name", "dataset", "layout"]}
-        )
-        found: BucketPath | None = None
-        for row in rows:
-            if row["layout"] == "DATASET":
-                continue
-            rel = within(row["dataset"])
-            if rel is not None and (found is None or len(row["dataset"]) > len(found.dataset)):
-                found = BucketPath(row["name"], row["dataset"], rel)
-        return found
+        if not (rows := await self.bucket_rows()):
+            return None
+        return bucket_at(rows, await self.middleware.run_in_thread(os.path.realpath, path), dataset, relative_path)
 
     @private
     async def validate_writable_path(
@@ -376,16 +433,26 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         path: str,
         dataset: str | None = None,
         relative_path: str | None = None,
+        *,
+        beneath: bool,
     ) -> None:
         """Validation for whether the given path is OK for writes from a non-S3 service."""
-        if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
+        if not (rows := await self.bucket_rows()):
             return
-        verrors.add(
-            field,
-            f"{path} is on the dataset of S3 bucket {bucket.name!r}. Only the S3 service may write to a bucket. "
-            f"Bucket contents must be accessed through the /mnt/{bucket.dataset}/{SHARE_ROOT} directory in a "
-            "read-only manner.",
-        )
+        real = await self.middleware.run_in_thread(os.path.realpath, path)
+        if (bucket := bucket_at(rows, real, dataset, relative_path)) is not None:
+            verrors.add(
+                field,
+                f"{path} is on the dataset of S3 bucket {bucket.name!r}. Only the S3 service may write to a bucket. "
+                f"Bucket contents must be accessed through the /mnt/{bucket.dataset}/{SHARE_ROOT} directory in a "
+                "read-only manner.",
+            )
+        elif beneath and (names := ", ".join(repr(row["name"]) for row in rows if is_above(row["dataset"], real))):
+            verrors.add(
+                field,
+                f"{path} is above the dataset of S3 bucket(s) {names}, so writes here would reach it. Only the S3 "
+                "service may write to a bucket.",
+            )
 
     @private
     async def validate_objects_path(
@@ -400,11 +467,43 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         directory or under it."""
         if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
             return
-        if bucket.within != SHARE_ROOT and not bucket.within.startswith(f"{SHARE_ROOT}/"):
+        if not bucket.in_share_root:
             verrors.add(
                 field,
                 f"{path} exposes private state of S3 bucket {bucket.name!r}. Bucket contents must be accessed "
                 f"through the /mnt/{bucket.dataset}/{SHARE_ROOT} directory in a read-only manner.",
+            )
+
+    @private
+    async def writers(self) -> list[LocalPathWriter]:
+        """Every writer that may reach a bucket, with its path resolved."""
+        found: list[LocalPathWriter] = []
+        for delegate in resource_attachments.DELEGATES:
+            if not isinstance(delegate, LockableFSAttachmentDelegate) or isinstance(delegate, S3FSAttachmentDelegate):
+                continue
+            for writer in await delegate.local_path_writers():
+                found.append(replace(writer, name=f"{delegate.title} {writer.name!r}"))
+        ftp = await self.call2(self.s.ftp.config)
+        if ftp.onlyanonymous and ftp.anonpath:
+            found.append(LocalPathWriter(
+                name="the anonymous FTP root", path=ftp.anonpath, dataset=None, relative_path=None, crosses_mounts=True,
+            ))
+        for user in await self.call2(self.s.user.query, [["local", "=", True], ["home", "^", "/mnt/"]]):
+            found.append(LocalPathWriter(
+                name=f"the home directory of {user.username!r}", path=user.home, dataset=None, relative_path=None,
+                crosses_mounts=True,
+            ))
+        return await self.middleware.run_in_thread(realpaths, found)
+
+    @private
+    async def validate_rename(self, current: str) -> None:
+        """Refuse renaming a dataset that holds a bucket of either layout, enabled or not: the running service pins a
+        bucket's mount, and the bucket's row would keep the old name."""
+        if names := [row["name"] for row in await self.all_bucket_rows() if at_or_under(row["dataset"], current)]:
+            raise ValidationError(
+                "zfs.resource.rename.current_name",
+                f"{current!r} holds S3 bucket(s) {', '.join(map(repr, names))}. Delete them before renaming and add "
+                "them again afterwards. sharing.s3.recover restores a BUCKET layout bucket from its dataset.",
             )
 
     @private
@@ -419,11 +518,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def resolve_owner(self, schema: str, username: str, verrors: ValidationErrors) -> int | None:
         """Resolve the owner's uid. Root is refused."""
         try:
-            user = await self.middleware.call("user.get_user_obj", {"username": username})
+            user = await self.call2(self.s.user.get_user_obj, UserGetUserObj(username=username))
         except KeyError:
             verrors.add(f"{schema}.owner", f"User {username!r} does not exist.")
             return None
-        uid: int = user["pw_uid"]
+        uid = user.pw_uid
         if uid == 0:
             verrors.add(f"{schema}.owner", "A bucket may not be owned by root.")
             return None
@@ -450,7 +549,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def owner_of_uid(self, schema: str, uid: int, verrors: ValidationErrors) -> str | None:
         """The account a backed-up owner uid belongs to."""
         try:
-            user = await self.middleware.call("user.get_user_obj", {"uid": uid})
+            user = await self.call2(self.s.user.get_user_obj, UserGetUserObj(uid=uid))
         except KeyError:
             verrors.add(
                 f"{schema}.dataset",
@@ -458,8 +557,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 f"holds. Create that account, or state owner.",
             )
             return None
-        pw_name: str = user["pw_name"]
-        return pw_name
+        return user.pw_name
 
     @private
     def config_backup_row(self, entry: SharingS3Entry) -> dict[str, Any]:
@@ -625,12 +723,13 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         Create an S3 bucket.
 
         With the ``BUCKET`` layout, the dataset is created with the properties
-        the S3 service requires and must not exist beforehand. If ``dataset``
-        is omitted, it is created under the S3 service's
-        ``managed_root_dataset`` with the name of the bucket, plus a ``_N``
-        suffix if that name is in use. Buckets created through the S3 protocol
-        always use that default. Use :method:`sharing.s3.recover` for a
-        dataset that already holds a bucket.
+        the S3 service requires and must not exist beforehand. It may not be
+        where a writable share, task, home directory or anonymous FTP root
+        could write to it. If ``dataset`` is omitted, it is created under the
+        S3 service's ``managed_root_dataset`` with the name of the bucket, plus
+        a ``_N`` suffix if that name is in use. Buckets created through the S3
+        protocol always use that default. Use :method:`sharing.s3.recover` for
+        a dataset that already holds a bucket.
 
         With the ``DATASET`` layout, ``dataset`` is required and must be an
         existing mounted dataset that is not a system dataset, is not used by
@@ -655,6 +754,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
             elif dataset_layout:
                 await self.validate_existing_dataset("sharing_s3_create", data.dataset, verrors)
+            if (
+                not dataset_layout
+                and data.dataset is not None
+                and is_written(self.logger, data.dataset, await self.writers())
+            ):
+                verrors.add("sharing_s3_create.dataset", WRITERS_REACH_BUCKET)
             verrors.check()
             assert owner_uid is not None
             assert data.dataset is not None
@@ -835,8 +940,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         This method registers such a dataset again from the configuration backup
         middleware keeps in ``.truenas_s3/config_backup.json``.
         :method:`sharing.s3.recoverable_buckets` lists what can be recovered. A
-        dataset with no backup is refused. A ``DATASET`` bucket has no backup.
-        Create it again instead.
+        dataset with no backup is refused. So is one where a writable share,
+        task, home directory or anonymous FTP root could write to it. A
+        ``DATASET`` bucket has no backup. Create it again instead.
 
         ``name_override`` and ``owner_override`` replace the stored name and
         owner. Change anything else with :method:`sharing.s3.update` after
@@ -855,11 +961,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             claimed_datasets: set[str] = set()
             rows: list[dict[str, Any] | None] = []
             failures: list[str | None] = []
+            writers = await self.writers()
             for i, wanted in enumerate(buckets):
                 verrors = ValidationErrors()
                 rows.append(
                     await self.recovered_row(
-                        f"sharing_s3_recover.buckets.{i}", wanted, claimed_names, claimed_datasets, verrors
+                        f"sharing_s3_recover.buckets.{i}", wanted, claimed_names, claimed_datasets, writers, verrors
                     )
                 )
                 # one reason per dataset, so several read as one sentence
@@ -898,6 +1005,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         wanted: SharingS3RecoverBucket,
         claimed_names: set[str],
         claimed_datasets: set[str],
+        writers: list[LocalPathWriter],
         verrors: ValidationErrors,
     ) -> dict[str, Any] | None:
         """The datastore row for one dataset, or None with the errors on `verrors`."""
@@ -946,6 +1054,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         ]
         for blocker in recovery_blockers(properties, beneath):
             verrors.add(f"{schema}.dataset", blocker)
+        if is_written(self.logger, dataset, writers):
+            verrors.add(f"{schema}.dataset", WRITERS_REACH_BUCKET)
 
         new = await self.row_from_backup(schema, dataset, backup, wanted, verrors)
         if new is None:
@@ -1097,6 +1207,9 @@ class S3FSAttachmentDelegate(LockableFSAttachmentDelegate[SharingS3Entry]):
     async def restart_reload_services(self, attachments: list[SharingS3Entry]) -> None:
         # the daemon pins a registered dataset's mount, so the restart must land before the ZFS operation
         await render_and_apply(self.middleware, force_restart=True)
+
+    def validate_rename(self, data: ZFSResourceRenameArgsData) -> None:
+        self.call_sync2(self.s.sharing.s3.validate_rename, data.current_name)
 
 
 async def setup(middleware: Middleware) -> None:

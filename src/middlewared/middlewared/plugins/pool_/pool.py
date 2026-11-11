@@ -306,6 +306,30 @@ class PoolService(CRUDService):
 
         return disks, vdevs
 
+    async def __spare_partition_size(self, old_topology, new_topology):
+        # A spare can replace a member of any data vdev, and ZFS sizes each vdev by its smallest member.
+        # Members created by older releases can be larger than the default partition, which reserves space.
+        # Only ONLINE members count: the device of an UNAVAIL member can now be an unrelated disk.
+        vdev_sizes = []
+        for vdev in old_topology['data']:
+            member_sizes = []
+            for leaf in await self.middleware.call('pool.flatten_topology', {'data': [vdev]}):
+                if leaf['type'] != 'DISK' or leaf['status'] != 'ONLINE' or not leaf.get('device'):
+                    continue
+
+                if (size := await self.middleware.call('disk.get_dev_size', leaf['device'])) is not None:
+                    member_sizes.append(size)
+
+            if member_sizes:
+                vdev_sizes.append(min(member_sizes))
+
+        for vdev in new_topology.get('data') or []:
+            vdev_sizes.append(min([
+                await self.middleware.call('disk.get_data_partition_size', disk) for disk in vdev['disks']
+            ]))
+
+        return max(vdev_sizes, default=None)
+
     @private
     async def restart_services(self):
         # regenerate crontab because of scrub
@@ -711,6 +735,11 @@ class PoolService(CRUDService):
             disks, vdevs = await self._process_topology('pool_update', data, pool, pool['all_sed'])
 
         if disks and vdevs:
+            if spares := data['topology'].get('spares'):
+                spare_size = await self.__spare_partition_size(pool['topology'], data['topology'])
+                for spare in spares:
+                    disks[spare]['size'] = spare_size
+
             await self.middleware.call('pool.format_disks', job, disks, 0, 80)
 
             job.set_progress(90, 'Extending ZFS Pool')

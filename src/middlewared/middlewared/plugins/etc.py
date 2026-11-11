@@ -9,7 +9,7 @@ from mako import exceptions
 from mako.template import Template
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
+from middlewared.plugins.account.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, Service
 from middlewared.utils.io import FileChanges, write_if_changed
 from middlewared.utils.mako import get_template
@@ -188,15 +188,6 @@ class EtcService(Service):
         'app_registry': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='docker/config.json'),
         )),
-        'ctdb': EtcGroup(
-            ctx=(
-                CtxMethod(method='failover.licensed'),
-            ),
-            entries=(
-                EtcEntry(renderer_type=RendererType.MAKO, path='ctdb/nodes'),
-                EtcEntry(renderer_type=RendererType.MAKO, path='ctdb/ctdb.conf'),
-            ),
-        ),
         'docker': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='docker/daemon.json'),
         )),
@@ -348,7 +339,7 @@ class EtcService(Service):
         )),
         'nfsd': EtcGroup(
             ctx=(
-                CtxMethod(method='sharing.nfs.query', args=[[('enabled', '=', True)], {'force_sql_filters': True}]),
+                CtxMethod(method='sharing.nfs.query', args=[[('enabled', '=', True)]]),
                 CtxMethod(method='nfs.config'),
             ),
             entries=(
@@ -569,6 +560,15 @@ class EtcService(Service):
                 EtcEntry(renderer_type=RendererType.MAKO, path='local/smb4.conf'),
             ),
         ),
+        'truenas_smbhad': EtcGroup(
+            ctx=(
+                CtxMethod(method='failover.licensed'),
+                CtxMethod(method='failover.node'),
+            ),
+            entries=(
+                EtcEntry(renderer_type=RendererType.MAKO, path='truenas_smbhad.conf'),
+            ),
+        ),
         'snmpd': EtcGroup(entries=(
             EtcEntry(
                 renderer_type=RendererType.MAKO, path='snmp/snmpd.conf',
@@ -652,7 +652,11 @@ class EtcService(Service):
         return rv
 
     def get_perms_and_ownership(self, entry: EtcEntry) -> dict:
-        uid = self.middleware.call_sync('user.get_builtin_user_id', entry.owner) if entry.owner else DEFAULT_ETC_XID
+        if entry.owner:
+            uid = self.call_sync2(self.s.user.get_builtin_user_id, entry.owner)
+        else:
+            uid = DEFAULT_ETC_XID
+
         if entry.group:
             gid = self.call_sync2(self.s.group.get_builtin_group_id, entry.group)
         else:

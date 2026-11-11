@@ -148,6 +148,10 @@ class PoolService(Service):
 
         await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
 
+        if pool['status'] != 'OFFLINE':
+            # NFS clients' locks and state keep files open after their shares are gone
+            await self.call2(self.s.nfs.release_dataset_filesystems, pool['name'])
+
         # Whether the pool's data is really gone by the end of this job. `options['destroy']` alone
         # does not answer that: an OFFLINE pool is not imported, so it is neither destroyed nor
         # wiped and its contents survive on the disks. This is what gates

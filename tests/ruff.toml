@@ -1,0 +1,9 @@
+line-length = 120
+target-version = "py313"
+
+[lint]
+select = ["TID"]
+
+[lint.flake8-tidy-imports.banned-api]
+"pytest.mark.skipif".msg = "Use one of the predefined marks from middlewared.test.integration.utils.pytest"
+"pytest.skip".msg = "Dynamic test skipping is not accepted. Use pytest marks to skip tests based on CI configuration"

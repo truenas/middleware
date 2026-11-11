@@ -15,24 +15,23 @@ from middlewared.api.base import (
     NonEmptyString,
     RemoteUsername,
     excluded_field,
-    single_argument_args,
-    single_argument_result,
 )
-from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
+from middlewared.plugins.account.constants import DEFAULT_HOME_PATH
 
-__all__ = ["UserEntry",
+__all__ = ["UserEntry", "UserCreate", "UserUpdate", "UserCreateUpdateResult",
            "UserCreateArgs", "UserCreateResult",
            "UserUpdateArgs", "UserUpdateResult",
-           "UserDeleteArgs", "UserDeleteResult",
+           "UserDeleteArgs", "UserDeleteOptions", "UserDeleteResult",
            "UserShellChoicesArgs", "UserShellChoicesResult",
-           "UserGetUserObjArgs", "UserGetUserObjResult", "UserGetUserObj",
+           "UserGetUserObj", "UserGetUserObjArgs", "UserGetUserObjData", "UserGetUserObjResult",
            "UserGetNextUidArgs", "UserGetNextUidResult",
            "UserHasLocalAdministratorSetUpArgs", "UserHasLocalAdministratorSetUpResult",
-           "UserSetupLocalAdministratorArgs", "UserSetupLocalAdministratorResult",
-           "UserSetPasswordArgs", "UserSetPasswordResult",
+           "UserSetupLocalAdministratorArgs", "UserSetupLocalAdministratorOptions",
+           "UserSetupLocalAdministratorResult",
+           "UserSetPassword", "UserSetPasswordArgs", "UserSetPasswordResult",
            "UserTwofactorConfigEntry",
            "UserUnset2faSecretArgs", "UserUnset2faSecretResult",
-           "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
+           "TwofactorOptions", "UserRenew2faSecret", "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
 
 
 class UserEntry(BaseModel):
@@ -295,7 +294,7 @@ class UserCreate(UserEntry):
     random_password: bool = Field(default=False, description="Generate a random 20 character password for the user.")
 
 
-class UserGetUserObj(BaseModel):
+class UserGetUserObjData(BaseModel):
     pw_name: str = Field(description="Name of the user.")
     pw_gecos: str = Field(description="Full username or comment field.")
     pw_dir: str = Field(description="User home directory.")
@@ -364,7 +363,7 @@ class UserShellChoicesArgs(BaseModel):
 
 
 class UserShellChoicesResult(BaseModel):
-    result: dict = Field(examples=[
+    result: dict[str, str] = Field(examples=[
         {
             '/usr/bin/bash': 'bash',
             '/usr/bin/rbash': 'rbash',
@@ -378,8 +377,7 @@ class UserShellChoicesResult(BaseModel):
         description="Object of available shell paths and their descriptive names.")
 
 
-@single_argument_args("get_user_obj")
-class UserGetUserObjArgs(BaseModel):
+class UserGetUserObj(BaseModel):
     username: str | None = Field(
         default=None,
         description="Username to lookup. Either `username` or `uid` must be specified.",
@@ -392,8 +390,15 @@ class UserGetUserObjArgs(BaseModel):
     sid_info: bool = Field(default=False, description="Retrieve SID and domain information for the user.")
 
 
+class UserGetUserObjArgs(BaseModel):
+    get_user_obj: UserGetUserObj = Field(
+        default_factory=UserGetUserObj,
+        description="UserGetUserObj parameters.",
+    )
+
+
 class UserGetUserObjResult(BaseModel):
-    result: UserGetUserObj = Field(description="User account information in Unix passwd format.")
+    result: UserGetUserObjData = Field(description="User account information in Unix passwd format.")
 
 
 class UserGetNextUidArgs(BaseModel):
@@ -436,14 +441,17 @@ class UserSetupLocalAdministratorResult(BaseModel):
     result: None = Field(description="Returns `null` on successful administrator account setup.")
 
 
-@single_argument_args("set_password_data")
-class UserSetPasswordArgs(BaseModel):
+class UserSetPassword(BaseModel):
     username: str = Field(description="Username of the account to change password for.")
     old_password: Secret[str | None] = Field(
         default=None,
         description="Current password for verification. `null` if changing password as administrator.",
     )
     new_password: Secret[NonEmptyString] = Field(description="New password to set for the user account.")
+
+
+class UserSetPasswordArgs(BaseModel):
+    set_password_data: UserSetPassword = Field(description="UserSetPassword parameters.")
 
 
 class UserSetPasswordResult(BaseModel):
@@ -490,8 +498,11 @@ class UserRenew2faSecretArgs(BaseModel):
     force: bool = Field(default=False, description="Allow updating security settings even if HA standby node is down.")
 
 
-@single_argument_result
-class UserRenew2faSecretResult(UserEntry):
+class UserRenew2faSecret(UserEntry):
     twofactor_config: UserTwofactorConfigEntry = Field(
         description="New two-factor authentication configuration with provisioning details.",
     )
+
+
+class UserRenew2faSecretResult(BaseModel):
+    result: UserRenew2faSecret = Field(description="The user account with its new two-factor configuration.")

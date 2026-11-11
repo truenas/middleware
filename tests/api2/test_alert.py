@@ -8,7 +8,7 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils import call, fault_vdev, mock, ssh
 from middlewared.test.integration.utils.alert import (
     COREDUMPS_SOURCE,
     MOCK_ALERT_CLASS,
@@ -42,7 +42,7 @@ def wait_for_alert(timeout=120):
 def degraded_pool_gptid():
     get_pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
     gptid = get_pool["topology"]["data"][0]["path"].replace(ID_PATH, "")
-    ssh(f"zinject -d {gptid} -A fault {pool_name}")
+    fault_vdev(pool_name, gptid)
     return gptid
 
 

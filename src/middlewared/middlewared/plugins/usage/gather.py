@@ -49,40 +49,45 @@ def gather_stat(func: GatherFunc) -> GatherFunc:
 
 
 def get_gather_context(service: Service) -> GatherContext:
+    counts = service.call_sync2(service.s.zfs.resource.count_impl)
     context: GatherContext = {
         "network": service.middleware.call_sync("interface.query"),
         "root_datasets": {},
         "total_capacity": 0,
         "datasets_total_size": 0,
-        "datasets_total_size_recursive": 0,
-        "zvols_total_size": 0,
-        "zvols": [],
-        "datasets": {},
-        "total_datasets": 0,
-        "total_zvols": 0,
+        "zvols_total_size": counts.zvols_used,
+        "total_datasets": counts.datasets,
+        "total_zvols": counts.zvols,
         "services": [],
     }
     for i in service.middleware.call_sync("datastore.query", "services.services", [], {"prefix": "srv_"}):
         context["services"].append({"name": i["service"], "enabled": i["enable"]})
 
-    qry_ops = ZFSResourceQuery(get_children=True, exclude_internal_paths=False)
+    qry_ops = ZFSResourceQuery(
+        properties=["used", "available", "usedbydataset", "usedbysnapshots", "usedbychildren", "usedbyrefreservation"],
+        exclude_internal_paths=False,
+    )
     for ds in service.call_sync2(service.s.zfs.resource.list_impl, qry_ops):
         if ds["name"] == ds["pool"]:
             context["root_datasets"][ds["pool"]] = ds
-            context["total_datasets"] += 1
             context["datasets_total_size"] += ds["properties"]["used"]["value"]
             context["total_capacity"] += ds["properties"]["used"]["value"] + ds["properties"]["available"]["value"]
-        elif ds["type"] == "VOLUME":
-            context["zvols"].append(ds)
-            context["total_zvols"] += 1
-            context["zvols_total_size"] += ds["properties"]["used"]["value"]
-        elif ds["type"] == "FILESYSTEM":
-            context["total_datasets"] += 1
-
-        context["datasets_total_size_recursive"] += ds["properties"]["used"]["value"]
-        context["datasets"][ds["name"]] = ds
 
     return context
+
+
+def get_dataset_used(service: Service, name: str) -> int | None:
+    # A task path under .zfs/snapshot resolves to a snapshot, which the query rejects
+    if "@" in name:
+        return None
+    try:
+        for ds in service.call_sync2(
+            service.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[name], properties=["used"])
+        ):
+            return int(ds["properties"]["used"]["value"])
+    except Exception:
+        logger.warning("%s: failed to query used space", name, exc_info=True)
+    return None
 
 
 def gather(service: Service, restrict_usage: list[str] | None = None) -> dict[str, Any]:
@@ -127,9 +132,12 @@ def gather_backup_data(service: Service, context: GatherContext) -> dict[str, An
             except Exception:
                 logger.error("Failed mapping path %r to dataset", path, exc_info=True)
             else:
-                if (task_ds and task_ds in context["datasets"]) and (task_ds not in tasks_found[namespace]):
+                if (
+                    task_ds
+                    and task_ds not in tasks_found[namespace]
+                    and (size := get_dataset_used(service, task_ds)) is not None
+                ):
                     # dataset for the task was found, and exists and hasn't already been calculated
-                    size = context["datasets"][task_ds]["properties"]["used"]["value"]
                     backed[namespace] += size
                     if task_ds not in tasks_found[opposite_namespace]:
                         # a "task" (cloudsync, rsync, replication) can be backing up the same dataset
@@ -143,8 +151,9 @@ def gather_backup_data(service: Service, context: GatherContext) -> dict[str, An
     repls_found: set[str] = set()
     filters = [["enabled", "=", True], ["transport", "!=", "LOCAL"], ["direction", "=", "PUSH"]]
     for task in service.call_sync2(service.s.replication.query, filters):
-        for source in filter(lambda s: s in context["datasets"] and s not in repls_found, task.source_datasets):
-            size = context["datasets"][source]["properties"]["used"]["value"]
+        for source in filter(lambda s: s not in repls_found, task.source_datasets):
+            if (size := get_dataset_used(service, source)) is None:
+                continue
             backed["zfs_replication"] += size
             repls_found.add(source)
             if source not in tasks_found["cloudsync"] and source not in tasks_found["rsynctask"]:
@@ -156,7 +165,7 @@ def gather_backup_data(service: Service, context: GatherContext) -> dict[str, An
 
     return {
         "data_backup_stats": backed,
-        "data_without_backup_size": context["datasets_total_size_recursive"] - backed["total_size"],
+        "data_without_backup_size": max(context["datasets_total_size"] - backed["total_size"], 0),
     }
 
 
@@ -289,7 +298,9 @@ async def gather_system(service: Service, context: GatherContext) -> dict[str, A
         "usage_version": 1,
         "system": [
             {
-                "users": await service.middleware.call("user.query", [["local", "=", True]], {"count": True}),
+                "users": await service.call2(
+                    service.s.user.query, [["local", "=", True]], QueryOptions(count=True),
+                ),
                 "zvols": context["total_zvols"],
                 "datasets": context["total_datasets"],
             }
@@ -301,8 +312,15 @@ async def gather_system(service: Service, context: GatherContext) -> dict[str, A
 async def gather_pools(service: Service, context: GatherContext) -> dict[str, Any]:
     total_raw_capacity = 0  # zpool list -p -o size summed together of all zpools
     pool_list = []
-    for p in filter(lambda x: x["status"] != "OFFLINE", await service.middleware.call("pool.query")):
-        total_raw_capacity += p["size"]
+    db_pools = [
+        p["name"] for p in await service.middleware.call("datastore.query", "storage.volume", [], {"prefix": "vol_"})
+    ]
+    for p in await service.middleware.call(
+        "zpool.query_impl",
+        {"pool_names": db_pools, "properties": ["size"], "topology": True},
+    ):
+        props = p["properties"]
+        total_raw_capacity += props["size"]["value"]
         disks = vdevs = 0
         _type = "UNKNOWN"
         if (pd := context["root_datasets"].get(p["name"])) is None:
@@ -314,7 +332,8 @@ async def gather_pools(service: Service, context: GatherContext) -> dict[str, An
         for d in p["topology"]["data"]:
             if not d.get("path"):
                 vdevs += 1
-                _type = d["type"]
+                # dRAID vdev types carry their layout (e.g. "draid1:1d:3c:1s")
+                _type = "draid" if d["vdev_type"].startswith("draid") else d["vdev_type"]
                 disks += len(d["children"])
             else:
                 disks += 1
@@ -323,6 +342,8 @@ async def gather_pools(service: Service, context: GatherContext) -> dict[str, An
         pool_list.append(
             {
                 "capacity": pd["used"]["value"] + pd["available"]["value"],
+                "used": pd["used"]["value"],
+                "available": pd["available"]["value"],
                 "disks": disks,
                 "l2arc": bool(p["topology"]["cache"]),
                 "type": _type.lower(),

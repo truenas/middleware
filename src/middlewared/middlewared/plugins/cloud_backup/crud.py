@@ -13,6 +13,7 @@ from middlewared.service import CallError, LocalPathInfo, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 from .init import IncorrectPassword
 from .utils import resolve_credentials
@@ -48,6 +49,10 @@ class CloudBackupTaskFailedAlert(OneShotAlertClass):
 
 class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackupCreate, CloudBackupUpdate]):
     _datastore = "tasks.cloud_backup"
+    _datastore_sql_filters = frozenset((
+        "id", "description", "path", "dataset", "relative_path", "pre_script", "post_script", "snapshot", "args",
+        "enabled", "keep_last", "transfer_setting", "absolute_paths", "cache_path", "rate_limit",
+    ))
     _entry = CloudBackupEntry
     schema_prefix = "cloud_backup"
 
@@ -102,6 +107,11 @@ class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackup
             self.middleware.run_coroutine(
                 check_path_resides_within_volume(
                     verrors, self.middleware, f"{name}.cache_path", entry.cache_path, True,
+                )
+            )
+            self.middleware.run_coroutine(
+                check_path_service_write_allowed(
+                    verrors, self.middleware, f"{name}.cache_path", entry.cache_path, beneath=False
                 )
             )
             if not verrors:

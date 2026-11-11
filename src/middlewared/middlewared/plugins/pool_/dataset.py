@@ -481,10 +481,10 @@ class PoolDatasetService(CRUDService):
 
         .. warning::
 
-            No safety checks are performed when renaming ZFS resources. If the resource is in use by services
-            such as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or
-            service failures. Proceed only if you are certain the resource is not in use and fully understand
-            the risks; set ``force`` to continue.
+            Except for S3 buckets, which must be deleted before the dataset holding them is renamed, no check is
+            made whether the resource is in use. If the resource is in use by services such as SMB, iSCSI, snapshot
+            tasks, replication, or cloud sync, renaming may cause disruptions or service failures. Proceed only if
+            you are certain the resource is not in use and fully understand the risks; set ``force`` to continue.
 
         The ``recursive`` option is only valid for renaming snapshots. If ``true``, and a snapshot is given, the
         snapshot is renamed recursively for all children -- for example, ``dozer/a@now`` and ``dozer/a/b@now``

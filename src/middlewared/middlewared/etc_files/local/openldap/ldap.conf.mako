@@ -5,7 +5,7 @@
 
     ds_config = render_ctx['directoryservices.config']
     if not ds_config['enable']:
-        raise FileShouldNotExist
+        raise FileShouldNotExist()
 
     uri = None
     credential = ds_config['credential']
@@ -14,7 +14,7 @@
         case DSType.AD.value:
             idmap = ds_config['configuration']['idmap']['idmap_domain']
             if idmap['idmap_backend'] not in ('LDAP', 'RFC2307'):
-                raise FileShouldNotExist
+                raise FileShouldNotExist()
 
             uri = idmap['ldap_url']
             basedn = idmap['ldap_base_dn']
@@ -36,11 +36,11 @@
 
         case _:
             middleware.logger.error('%s: unexpected service type', ds_config['service_type'])
-            raise FileShouldNotExist
+            raise FileShouldNotExist()
 
     if not uri:
         middleware.logger.error('Directory serivce does not have a configured LDAP URI')
-        raise FileShouldNotExist
+        raise FileShouldNotExist()
 
     if credential['credential_type'] == DSCredType.LDAP_MTLS:
         cert = middleware.call_sync2(

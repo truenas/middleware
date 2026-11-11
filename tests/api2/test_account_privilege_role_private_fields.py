@@ -20,9 +20,30 @@ def readonly_client():
         yield c
 
 
+@pytest.fixture
+def allow_result_serialization_fallback():
+    # `conftest.init_test_environment` turns the fallback off so that tests see validation errors.
+    # The tests that use this fixture cover the fallback itself.
+    call("test.set_dump_result_allow_fallback", True)
+    try:
+        yield
+    finally:
+        call("test.set_dump_result_allow_fallback", False)
+
+
 @contextlib.contextmanager
 def wrap(id):
     yield id
+
+
+@contextlib.contextmanager
+def replace_datastore_field_value(datastore, filters, field, value):
+    old = call("datastore.query", datastore, filters, {"get": True})[field]
+    call("datastore.update", datastore, filters, {field: value})
+    try:
+        yield
+    finally:
+        call("datastore.update", datastore, filters, {field: old})
 
 
 @contextlib.contextmanager
@@ -57,6 +78,19 @@ def cloudsync():
 def disk():
     disks = call("disk.query")
     yield disks[0]["identifier"]
+
+
+def test_disk_redacts_the_password_of_an_invalid_row(readonly_client, allow_result_serialization_fallback):
+    with disk() as identifier:
+        with replace_datastore_field_value(
+            "storage.disk", [["disk_identifier", "=", identifier]], "disk_hddstandby", "BROKEN",
+        ):
+            result = readonly_client.call(
+                "disk.query", [["identifier", "=", identifier]], {"extra": {"passwords": True}},
+            )
+
+    assert len(result) == 1
+    assert result[0]["passwd"] == REDACTED
 
 
 @contextlib.contextmanager
@@ -103,18 +137,58 @@ def vm_device():
 
 
 @contextlib.contextmanager
-def iscsi_auth():
+def iscsi_auth(tag=1, user="test", peeruser="peeruser"):
     auth = call("iscsi.auth.create", {
-        "tag": 1,
-        "user": "test",
+        "tag": tag,
+        "user": user,
         "secret": "secretsecret",
-        "peeruser": "peeruser",
+        "peeruser": peeruser,
         "peersecret": "peersecretsecret",
     })
     try:
         yield auth["id"]
     finally:
         call("iscsi.auth.delete", auth["id"])
+
+
+def test_iscsi_auth_redacts_secrets_of_an_invalid_row(readonly_client, allow_result_serialization_fallback):
+    with iscsi_auth(tag=31, user="broken", peeruser="brokenpeer") as id_:
+        with replace_datastore_field_value(
+            "services.iscsitargetauthcredential",
+            [["id", "=", id_]],
+            "iscsi_target_auth_discovery_auth",
+            "BROKEN",
+        ):
+            result = readonly_client.call("iscsi.auth.query", [["id", "=", id_]], {"get": True})
+
+    assert result == {
+        "id": id_,
+        "tag": 31,
+        "user": "broken",
+        "secret": REDACTED,
+        "peeruser": "brokenpeer",
+        "peersecret": REDACTED,
+        "discovery_auth": "BROKEN",
+    }
+
+
+def test_iscsi_auth_redacts_secrets_of_the_rows_around_an_invalid_one(
+    readonly_client, allow_result_serialization_fallback,
+):
+    with iscsi_auth(tag=31, user="valid", peeruser="validpeer") as valid_id:
+        with iscsi_auth(tag=32, user="broken", peeruser="brokenpeer") as broken_id:
+            with replace_datastore_field_value(
+                "services.iscsitargetauthcredential",
+                [["id", "=", broken_id]],
+                "iscsi_target_auth_discovery_auth",
+                "BROKEN",
+            ):
+                result = readonly_client.call("iscsi.auth.query", [["id", "in", [valid_id, broken_id]]])
+
+    assert len(result) == 2
+    for auth in result:
+        assert auth["secret"] == REDACTED, auth
+        assert auth["peersecret"] == REDACTED, auth
 
 
 @contextlib.contextmanager
@@ -132,6 +206,17 @@ def vmware():
         },
     ) as id:
         yield id
+
+
+def test_vmware_redacts_the_password_of_an_invalid_row(readonly_client, allow_result_serialization_fallback):
+    with vmware() as id:
+        with replace_datastore_field_value(
+            "storage.vmwareplugin", [["id", "=", id]], "state", {"state": "BROKEN"},
+        ):
+            result = readonly_client.call("vmware.query", [["id", "=", id]])
+
+    assert len(result) == 1
+    assert result[0]["password"] == REDACTED
 
 
 @pytest.mark.parametrize("how", ["multiple", "single", "get_instance"])
@@ -180,6 +265,54 @@ def test_config(readonly_client, service, redacted_fields):
 
     for k in redacted_fields:
         assert result[k] == REDACTED
+
+
+def test_system_general_redacts_the_ui_certificate_of_an_invalid_row(
+    readonly_client, allow_result_serialization_fallback,
+):
+    with replace_datastore_field_value(
+        "system.settings", [["id", "=", 1]], "stg_guix_frame_options", "BROKEN",
+    ):
+        result = readonly_client.call("system.general.config")
+
+    assert result["ui_certificate"] == REDACTED
+    assert result["ui_x_frame_options"] == "BROKEN"
+
+
+@contextlib.contextmanager
+def active_directory_with_ldap_trusted_domain():
+    config = call("datastore.config", "directoryservices")
+    restore = {k: config[k] for k in ("service_type", "ad_domain", "ad_enable_trusted_domains", "ad_trusted_domains")}
+    call("datastore.update", "directoryservices", config["id"], {
+        "service_type": "ACTIVEDIRECTORY",
+        "ad_domain": "ACME.INTERNAL",
+        "ad_enable_trusted_domains": True,
+        "ad_trusted_domains": [{
+            "idmap_backend": "LDAP",
+            "name": "ACME",
+            "range_low": 100000,
+            "range_high": 200000,
+            "ldap_base_dn": "dc=acme,dc=internal",
+            "ldap_user_dn": "cn=admin,dc=acme,dc=internal",
+            "ldap_user_dn_password": "canary",
+            "ldap_url": "ldap://ldap.acme.internal",
+        }],
+    })
+    try:
+        yield config["id"]
+    finally:
+        call("datastore.update", "directoryservices", config["id"], restore)
+
+
+def test_directoryservices_redacts_an_idmap_secret_of_an_invalid_row(
+    readonly_client, allow_result_serialization_fallback,
+):
+    with active_directory_with_ldap_trusted_domain() as id_:
+        with replace_datastore_field_value("directoryservices", [["id", "=", id_]], "timeout", 1):
+            result = readonly_client.call("directoryservices.config")
+
+    assert result["timeout"] == 1
+    assert result["configuration"]["trusted_domains"][0]["ldap_user_dn_password"] == REDACTED
 
 
 def test_fields_are_visible_if_has_write_access():

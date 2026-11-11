@@ -22,6 +22,7 @@ class NTPModel(sa.Model):
 class NTPServerServicePart(CRUDServicePart[NTPServerEntry]):
     _datastore = 'system.ntpserver'
     _datastore_prefix = 'ntp_'
+    _datastore_sql_filters = frozenset(('id', 'address', 'burst', 'iburst', 'prefer', 'minpoll', 'maxpoll'))
     _entry = NTPServerEntry
 
     async def do_create(self, data: NTPServerCreate) -> NTPServerEntry:

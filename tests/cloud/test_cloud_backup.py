@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 import types
 
@@ -120,7 +121,12 @@ def test_cloud_backup(cloud_backup_task):
     assert len(snapshots) == 1
     first_snapshot = snapshots[0]
     assert (first_snapshot["time"] - call("system.info")["datetime"]).total_seconds() < 300
-    if not task_["snapshot"]:
+    if task_["snapshot"]:
+        assert re.fullmatch(
+            rf"{re.escape(f'/mnt/{local_dataset_}')}/\.zfs/snapshot/cloud_backup-{task_id_}-\d{{14}}",
+            first_snapshot["paths"][0],
+        ), first_snapshot["paths"]
+    else:
         assert first_snapshot["paths"] == [f"/mnt/{local_dataset_}"]
 
     ssh(f"mkdir /mnt/{local_dataset_}/dir1")
@@ -128,8 +134,7 @@ def test_cloud_backup(cloud_backup_task):
 
     run_task(task_)
 
-    if not task_["snapshot"]:
-        validate_log(task_id_, files_new=1, files_changed=0, files_unmodified=1)
+    validate_log(task_id_, files_new=1, files_changed=0, files_unmodified=1)
 
     snapshots = call("cloud_backup.list_snapshots", task_id_)
     assert len(snapshots) == 2

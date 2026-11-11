@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import QueryOptions, ZFSResourceQuery
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.service import Service
 from middlewared.utils.path import EXTERNAL_PATH
@@ -165,9 +165,7 @@ class TrueSearchService(Service):
         if not await self.call2(self.s.service.started_or_enabled, 'webshare'):
             return set()
 
-        shares = await self.call2(
-            self.s.sharing.webshare.query, [['enabled', '=', True]], QueryOptions(force_sql_filters=True),
-        )
+        shares = await self.call2(self.s.sharing.webshare.query, [['enabled', '=', True]])
         assert isinstance(shares, list)
 
         return {share.path for share in shares if share.locked is False}

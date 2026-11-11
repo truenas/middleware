@@ -18,14 +18,14 @@ import pytest
 
 from nvmeof_client import NVMeoFClient
 from assets.websocket.pool import zvol
-from auto_config import ha, pool_name
+from auto_config import pool_name
 from middlewared.test.integration.assets.nvmet import (
     nvmet_namespace,
     nvmet_port,
     nvmet_port_subsys,
     nvmet_subsys,
 )
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ha_test
 from middlewared.test.integration.utils.client import truenas_server
 
 # Import shared utilities
@@ -42,7 +42,7 @@ from nvmet_ha_utils import (
     double_settle_ha,
 )
 
-pytestmark = pytest.mark.skipif(not ha, reason='Failover tests require HA')
+pytestmark = ha_test
 
 # ============================================================================
 # Fixtures

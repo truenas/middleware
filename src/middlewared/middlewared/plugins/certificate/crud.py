@@ -63,6 +63,9 @@ class CertificateModel(sa.Model):
 class CertificateServicePart(CRUDServicePart[CertificateEntry]):
     _datastore = "system.certificate"
     _datastore_prefix = "cert_"
+    _datastore_sql_filters = frozenset((
+        "id", "type", "name", "certificate", "CSR", "acme_uri", "renew_days", "add_to_trusted_store",
+    ))
     _entry = CertificateEntry
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

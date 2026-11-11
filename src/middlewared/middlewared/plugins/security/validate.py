@@ -114,8 +114,9 @@ async def validate_stig(context: ServiceContext, current_cred: Any) -> None:
 
     # We want to make sure that at least one local user account is usable
     # and has 2fa auth configured.
-    two_factor_users = await context.middleware.call(
-        "user.query", [["twofactor_auth_configured", "=", True], ["locked", "=", False], ["local", "=", True]]
+    two_factor_users = await context.call2(
+        context.s.user.query,
+        [["twofactor_auth_configured", "=", True], ["locked", "=", False], ["local", "=", True]],
     )
 
     if not two_factor_users:
@@ -125,7 +126,7 @@ async def validate_stig(context: ServiceContext, current_cred: Any) -> None:
             "prior to enabling General Purpose OS STIG compatibility mode.",
         )
 
-    if not any([user for user in two_factor_users if "FULL_ADMIN" in user["roles"]]):
+    if not any("FULL_ADMIN" in user.roles for user in two_factor_users):
         raise ValidationError(
             "system_security_update.enable_gpos_stig",
             "At least one local user with full admin privileges must be "
@@ -144,9 +145,9 @@ async def validate_stig(context: ServiceContext, current_cred: Any) -> None:
         )
 
     excluded_admins = [
-        user["username"]
-        for user in await context.middleware.call(
-            "user.query",
+        user.username
+        for user in await context.call2(
+            context.s.user.query,
             [
                 ["immutable", "=", True],
                 ["password_disabled", "=", False],

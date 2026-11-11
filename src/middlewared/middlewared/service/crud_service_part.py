@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Sequence
 from typing import TYPE_CHECKING, Any, cast, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
-from middlewared.utils.filter_list import filter_list, select_with_query_fields
+from middlewared.utils.filter_list import filter_getattrs_and_ops, filter_list, select_with_query_fields
 
 from .part import ServicePart
 
@@ -18,6 +18,19 @@ if TYPE_CHECKING:
 
 __all__ = ('CRUDServicePart',)
 
+# The rest disagree: `~`, `^`, `$` and `rin` are case-insensitive in SQL, and `!=`, `<`, `<=`,
+# `>` and `>=` drop rows where the column is NULL.
+SQL_ONLY_FILTER_OPERATORS = frozenset(('=', 'in', 'nin'))
+
+
+def filters_are_sql_only(filters: Sequence[Any], fields: frozenset[str]) -> bool:
+    try:
+        attrs, ops = filter_getattrs_and_ops(filters)
+    except ValueError:
+        return False
+
+    return attrs <= fields and ops <= SQL_ONLY_FILTER_OPERATORS
+
 
 class CRUDServicePart[E, PK = int](ServicePart):
     __slots__ = ()
@@ -25,6 +38,7 @@ class CRUDServicePart[E, PK = int](ServicePart):
     _datastore: str
     _datastore_prefix: str = ''
     _datastore_primary_key: str = 'id'
+    _datastore_sql_filters: frozenset[str] = frozenset()
     _entry: type[E]
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
@@ -79,6 +93,11 @@ class CRUDServicePart[E, PK = int](ServicePart):
             filters = []
         if options is None:
             options = QueryOptions()
+
+        caller_forced_sql_filters = options.force_sql_filters
+        if filters and filters_are_sql_only(filters, self._datastore_sql_filters):
+            options = options.model_copy(update={'force_sql_filters': True})
+
         opts = options.model_dump()
         extra = opts.get('extra', {}) or {}
         # Surface `select` to extend_context so services can skip expensive per-row work
@@ -88,8 +107,7 @@ class CRUDServicePart[E, PK = int](ServicePart):
         rows = await self._query_rows(filters, options, extra)
 
         post_filters = filters
-        if options.force_sql_filters:
-            # `_query_rows` already handed them to the datastore.
+        if caller_forced_sql_filters:
             post_filters = []
 
         result: Any = filter_list(rows, post_filters, opts)

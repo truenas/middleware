@@ -15,10 +15,11 @@ from .internal import (
     delete_cert,
     get_effective_ips,
     ha_vips,
+    remove_tnc_license,
     unset_registration_details,
 )
 from .private_models import TrueNASConnectUpdateEnvironment
-from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload
+from .utils import ALLOWED_ORIGIN_RE, CLAIM_TOKEN_CACHE_KEY, get_unset_payload
 
 logger = logging.getLogger("truenas_connect")
 
@@ -51,6 +52,7 @@ class TrueNASConnectModel(sa.Model):
         sa.String(255), nullable=False, default="https://heartbeat-service.tys1.truenasconnect.net/"
     )
     last_heartbeat_failure_datetime = sa.Column(sa.String(255), nullable=True, default=None)
+    allowed_origins = sa.Column(sa.JSON(list), default=[])
 
 
 class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
@@ -98,12 +100,15 @@ class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
         await self.middleware.call("datastore.update", DATASTORE, old.id, db_payload)
 
         if tnc_disabled:
+            await remove_tnc_license(self)
             # If TNC is disabled and was enabled earlier, we will like to restart UI and delete TNC cert
             logger.debug("Restarting nginx to not use TNC certificate anymore")
             await self.middleware.call("system.general.ui_restart", 4)
 
             if old.certificate is not None:
                 await delete_cert(self, old.certificate)
+
+            await self.middleware.call_hook("tn_connect.certificate.changed")
 
         new_config = await self.config()
         self.middleware.send_event("tn_connect.config", "CHANGED", fields=new_config.model_dump())
@@ -155,10 +160,25 @@ class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
                         "This field cannot be changed when TrueNAS Connect is enabled",
                     )
 
+        # Unlike the endpoints, the origins do not touch registration, so they may change while TNC is enabled.
+        for i, origin in enumerate(data.allowed_origins if "allowed_origins" in data.model_fields_set else []):
+            if not ALLOWED_ORIGIN_RE.fullmatch(origin):
+                verrors.add(
+                    f"tn_connect_update_environment.allowed_origins.{i}",
+                    f"{origin!r} is not an origin as a browser sends it, such as https://tnc.example or "
+                    "http://localhost:4300 (http only for localhost and 127.0.0.1, no path or trailing slash)",
+                )
+
         verrors.check()
 
         # Coerce HttpsOnlyURL fields to str before datastore write — SQLite stores strings.
-        db_payload = {k: str(v) for k, v in data.model_dump(exclude_unset=True).items()}
-        await self.middleware.call("datastore.update", DATASTORE, config.id, db_payload)
+        db_payload: dict[str, Any] = {
+            k: list(dict.fromkeys(v)) if k == "allowed_origins" else str(v)
+            for k, v in data.model_dump(exclude_unset=True).items()
+        }
+        if db_payload:
+            await self.middleware.call("datastore.update", DATASTORE, config.id, db_payload)
+            # The endpoints and the origins all reach nginx's CORS maps.
+            await (await self.call2(self.s.service.control, "RELOAD", "http")).wait(raise_error=True)
 
         return await self.config()

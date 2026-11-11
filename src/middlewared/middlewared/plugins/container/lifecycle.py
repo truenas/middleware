@@ -16,14 +16,15 @@ from truenas_pylibvirt import Error as PyLibvirtError
 
 from middlewared.api.current import (
     ContainerEntry,
+    ContainerFilesystemDevice,
     ContainerNICDevice,
     ContainerStopOptions,
-    QueryOptions,
     ZFSResourceQuery,
 )
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
+from middlewared.plugins.account.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
+from middlewared.utils.memory import get_memory_info
 
 from .bridge import BRIDGE_NAME, configure_container_bridge
 from .dataset import CONTAINER_DS_PARENT_DIR
@@ -93,13 +94,11 @@ def start_on_boot(context: ServiceContext) -> None:
     except Exception:
         context.logger.error('Failed to reconcile container runtime state', exc_info=True)
 
-    for container in context.call_sync2(
-        context.s.container.query, [("autostart", "=", True)], QueryOptions(force_sql_filters=True)
-    ):
+    for container in context.call_sync2(context.s.container.query, [("autostart", "=", True)]):
         try:
             start(context, container.id)
-        except Exception as e:
-            context.logger.error(f"Failed to start {container.name!r} container: {e}")
+        except Exception:
+            context.logger.error('Failed to start %r container', container.name, exc_info=True)
 
 
 async def _stop_one_container(context: ServiceContext, container: typing.Any) -> None:
@@ -128,7 +127,17 @@ def start(context: ServiceContext, id_: int) -> None:
     ):
         configure_container_bridge(context)
 
+    if container.memory is None:
+        # LXC requires <memory> and shows it as MemTotal, so "no limit" has to be the host's RAM.
+        container = container.model_copy(update={"memory": get_memory_info()["total"] // 1024 ** 2})
+
     pylibvirt_obj = pylibvirt_container(context, container, True)
+
+    if container.initdir:
+        _check_initdir(pylibvirt_obj.configuration.root, container.initdir, [
+            device.attributes.target for device in container.devices
+            if isinstance(device.attributes, ContainerFilesystemDevice)
+        ])
 
     # Configure hostname files before start so init reads correct values
     try:
@@ -141,6 +150,35 @@ def start(context: ServiceContext, id_: int) -> None:
         context.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
     except PyLibvirtError as e:
         raise CallError(str(e))
+
+
+def _check_initdir(root: str, initdir: str, mount_targets: list[str]) -> None:
+    # Filesystem devices are mounted by libvirt inside the container, so what lies under them is not in the rootfs.
+    path = os.path.normpath(os.path.join("/", initdir))
+    for target in mount_targets:
+        target = os.path.normpath(os.path.join("/", target))
+        if os.path.commonpath([path, target]) == target:
+            return
+
+    try:
+        root_fd = os.open(root, os.O_PATH | os.O_DIRECTORY)
+    except OSError:
+        return
+
+    try:
+        # initdir is a path inside the container, so absolute paths, '..' and symlinks must not escape its root.
+        os.close(truenas_os.openat2(
+            initdir, flags=os.O_PATH | os.O_DIRECTORY, dir_fd=root_fd, resolve=truenas_os.RESOLVE_IN_ROOT,
+        ))
+    except FileNotFoundError:
+        raise CallError(f"Invalid initdir {initdir!r}: no such directory in the container", errno.ENOENT) from None
+    except NotADirectoryError:
+        raise CallError(f"Invalid initdir {initdir!r}: not a directory in the container", errno.ENOTDIR) from None
+    except (OSError, ValueError):
+        # Only a definitely missing or non-directory initdir is reported here; libvirt reports anything else at start.
+        pass
+    finally:
+        os.close(root_fd)
 
 
 def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> None:
@@ -218,15 +256,7 @@ def pylibvirt_container(
 
     # We add this to configuration because for cpu related attrs, we need them if cpuset on
     # container is actually set
-    # For memory, lxc does not respect it but libvirt requires it in the xml to be defined
-    data.update(
-        {
-            "vcpus": None,
-            "cores": None,
-            "threads": None,
-            "memory": None,
-        }
-    )
+    data.update({"vcpus": None, "cores": None, "threads": None})
 
     return ContainerDomain(ContainerDomainConfiguration(**data))
 
@@ -239,10 +269,10 @@ def _build_default_idmap_items(
         ['userns_idmap', 'nin', [0, None]],
         ['roles', '=', []],
     ]
-    users = context.middleware.call_sync('user.query', idmap_filters)
+    users = context.call_sync2(context.s.user.query, idmap_filters)
     groups = context.call_sync2(context.s.group.query, idmap_filters)
 
-    uid_passthroughs = [_resolve_target(u['uid'], u['userns_idmap']) for u in users]
+    uid_passthroughs = [_resolve_target(u.uid, u.userns_idmap) for u in users]
     gid_passthroughs = [_resolve_target(g.gid, g.userns_idmap) for g in groups]
 
     return _build_idmap_items(uid_passthroughs), _build_idmap_items(gid_passthroughs)

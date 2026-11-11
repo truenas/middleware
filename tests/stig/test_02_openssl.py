@@ -1,8 +1,7 @@
 import pytest
 import time
 
-from middlewared.test.integration.utils import call, ssh
-from auto_config import ha
+from middlewared.test.integration.utils import call, ha_test, ssh
 
 
 retry = 5
@@ -10,7 +9,7 @@ fips_version = "3.1.2"
 
 
 @pytest.mark.timeout(1200)
-@pytest.mark.skipif(not ha, reason='Test only valid for HA')
+@ha_test
 def test_fips_version():
     # First check that HA is in good state
     for i in range(10):

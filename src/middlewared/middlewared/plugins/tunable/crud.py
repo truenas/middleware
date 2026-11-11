@@ -45,6 +45,7 @@ class TunableModel(sa.Model):
 class TunableServicePart(CRUDServicePart[TunableEntry]):
     _datastore = 'system.tunable'
     _datastore_prefix = 'tun_'
+    _datastore_sql_filters = frozenset(('id', 'type', 'var', 'value', 'orig_value', 'comment', 'enabled'))
     _entry = TunableEntry
 
     def compress(self, data: dict[str, Any]) -> dict[str, Any]:

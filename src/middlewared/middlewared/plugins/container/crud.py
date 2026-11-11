@@ -4,6 +4,7 @@ import errno
 import itertools
 import os
 import re
+import shlex
 from typing import TYPE_CHECKING, Any, TypeVar
 import uuid
 
@@ -29,7 +30,9 @@ from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.cpu import online_cpus
 from middlewared.utils.libvirt.utils import ACTIVE_STATES, retrieve_status, same_uuid
+from middlewared.utils.memory import get_memory_info
 
 from .dataset import ensure_datasets
 from .info import license_active, pool_choices
@@ -60,6 +63,20 @@ RE_NAME = re.compile(
 )
 
 
+def cpuset_error(cpuset: str, online: frozenset[int]) -> str | None:
+    if '_' in cpuset:
+        return 'Underscores are not allowed in CPU set values'
+    if any(c.isspace() for c in cpuset):
+        return 'Whitespace is not allowed in CPU set values'
+    try:
+        cpus = parse_numeric_set(cpuset)
+    except ValueError as e:
+        return f'Invalid cpuset format: {e}'
+    if offline := set(cpus) - online:
+        return f'CPU(s) {", ".join(map(str, sorted(offline)))} are not online'
+    return None
+
+
 class ContainerCreateWithDataset(ContainerCreate):
     pool: Excluded = excluded_field()
     image: Excluded = excluded_field()
@@ -85,6 +102,7 @@ class ContainerModel(sa.Model):
     autostart = sa.Column(sa.Boolean())
     time = sa.Column(sa.Text())
     cpuset = sa.Column(sa.Text(), nullable=True)
+    memory = sa.Column(sa.Integer(), nullable=True)
     shutdown_timeout = sa.Column(sa.Integer())
     dataset = sa.Column(sa.Text())
     init = sa.Column(sa.Text())
@@ -99,6 +117,10 @@ class ContainerModel(sa.Model):
 
 class ContainerServicePart(CRUDServicePart[ContainerEntry]):
     _datastore = 'container.container'
+    _datastore_sql_filters = frozenset((
+        'id', 'uuid', 'name', 'description', 'autostart', 'time', 'cpuset', 'shutdown_timeout', 'dataset', 'init',
+        'initdir', 'inituser', 'initgroup', 'capabilities_policy', 'memory',
+    ))
     _entry = ContainerEntry
 
     def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
@@ -120,7 +142,6 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         for device in self.call_sync2(
             self.s.container.device.query,
             [['container', 'in', [row['id'] for row in rows]]],
-            QueryOptions(force_sql_filters=True),
         ):
             devices_by_container.setdefault(device.container, []).append(device)
 
@@ -395,17 +416,23 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
                 f'Invalid capabilities: {", ".join(sorted(invalid_caps))}'
             )
 
-        if data.cpuset:
-            if '_' in data.cpuset:
-                verrors.add(f'{schema_name}.cpuset', 'Underscores are not allowed in CPU set values')
-            else:
-                try:
-                    parse_numeric_set(data.cpuset)
-                except ValueError as e:
-                    verrors.add(
-                        f'{schema_name}.cpuset',
-                        f'Invalid cpuset format: {e}'
-                    )
+        try:
+            init = shlex.split(data.init)
+        except ValueError as e:
+            verrors.add(f'{schema_name}.init', f'Parse error: {e.args[0]}')
+        else:
+            if not init:
+                verrors.add(f'{schema_name}.init', 'Must not be empty')
+
+        # Only rechecked on change, so a host that has since lost CPUs or memory does not block unrelated edits.
+        if data.cpuset and (old is None or data.cpuset != old.cpuset):
+            if error := cpuset_error(data.cpuset, await self.to_thread(online_cpus)):
+                verrors.add(f'{schema_name}.cpuset', error)
+
+        if data.memory is not None and (old is None or data.memory != old.memory):
+            host_memory = (await self.to_thread(get_memory_info))['total'] // 1024 ** 2
+            if data.memory > host_memory:
+                verrors.add(f'{schema_name}.memory', f"Cannot exceed the host's physical memory ({host_memory} MiB)")
 
         filters: list[tuple[str, str, Any]] = [('name', '=', data.name)]
         if old:

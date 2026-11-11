@@ -201,24 +201,43 @@ def compile_options(
     )
 
 
-def filter_getattrs(filters: list[Sequence[Any]]) -> set[str]:
+def filter_getattrs_and_ops(filters: Sequence[Any]) -> tuple[set[str], set[str]]:
+    """
+    Get the attributes a filter list reads and the operators it applies to them.
+
+    A group of filters nested in an `OR` reports the operator `AND`.
+    """
+    attrs: set[str] = set()
+    ops: set[str] = set()
+    for f in filters:
+        if not isinstance(f, (list, tuple)):
+            raise ValueError('Invalid filter.')
+
+        if len(f) == 2 and f[0] == 'OR':
+            if not isinstance(f[1], (list, tuple)) or not f[1]:
+                raise ValueError('Invalid filter.')
+            nested_attrs, nested_ops = filter_getattrs_and_ops(f[1])
+        elif f and isinstance(f[0], (list, tuple)):
+            nested_attrs, nested_ops = filter_getattrs_and_ops(f)
+            nested_ops.add('AND')
+        elif len(f) == 3:
+            attrs.add(f[0])
+            ops.add(f[1])
+            continue
+        else:
+            raise ValueError('Invalid filter.')
+
+        attrs |= nested_attrs
+        ops |= nested_ops
+
+    return attrs, ops
+
+
+def filter_getattrs(filters: Sequence[Any]) -> set[str]:
     """
     Get a set of attributes in a filter list.
     """
-    attrs: set[str] = set()
-    if not filters:
-        return attrs
-
-    f = filters.copy()
-    while f:
-        filter_ = f.pop()
-        if len(filter_) == 2:
-            f.append(filter_[1])
-        elif len(filter_) == 3:
-            attrs.add(filter_[0])
-        else:
-            raise ValueError('Invalid filter.')
-    return attrs
+    return filter_getattrs_and_ops(filters)[0]
 
 
 def _filter_fields(filters: Sequence[Any]) -> Iterable[str]:

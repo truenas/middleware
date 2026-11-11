@@ -49,7 +49,7 @@ changes using `write_if_changed()`. Scripts that write files directly (returning
 To signal that a file should not exist:
 ```python
 from middlewared.plugins.etc import FileShouldNotExist
-raise FileShouldNotExist
+raise FileShouldNotExist()
 ```
 
 ## Render Context
@@ -107,7 +107,7 @@ until some unrelated event happens to regenerate the group or the system reboots
 
 Delegates live in the plugin that owns the subsystem and are registered from its `setup()`; see
 `middlewared/common/license_reconcile/` for the base class and
-`middlewared/plugins/failover.py::CtdbLicenseReconcileDelegate` for a worked example.
+`middlewared/plugins/failover.py::TruenasSmbhadLicenseReconcileDelegate` for a worked example.
 
 ## File Registration
 

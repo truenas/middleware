@@ -7,7 +7,7 @@ import typing
 from truenas_pylibvirt import Error as PyLibvirtError
 from truenas_pylibvirt import Time, VmBootloader, VmCpuMode, VmVideoModel
 
-from middlewared.api.current import QueryOptions, VMEntry, VMStartOptions, VMStopOptions
+from middlewared.api.current import VMEntry, VMStartOptions, VMStopOptions
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
@@ -159,7 +159,7 @@ def suspend_vms(context: ServiceContext, vm_ids: list[int]) -> None:
 
 
 async def start_on_boot(context: ServiceContext) -> None:
-    for vm in await context.call2(context.s.vm.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True)):
+    for vm in await context.call2(context.s.vm.query, [('autostart', '=', True)]):
         try:
             await context.to_thread(start_vm, context, vm.id, VMStartOptions())
         except Exception as e:

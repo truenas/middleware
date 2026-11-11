@@ -25,7 +25,6 @@ from middlewared.api.current import (
     ContainerUpdate,
     ContainerUpdateArgs,
     ContainerUpdateResult,
-    QueryOptions,
     ZFSResourceQuery,
 )
 from middlewared.service import GenericCRUDService, job, private
@@ -273,9 +272,7 @@ async def pool_post_import(middleware: Middleware, pool: dict[str, Any] | None =
 
 
 def domain_event_callback(middleware: Middleware, event: DomainEvent) -> None:
-    containers = middleware.call_sync2(
-        middleware.services.container.query, [['uuid', '=', event.uuid]], QueryOptions(force_sql_filters=True)
-    )
+    containers = middleware.call_sync2(middleware.services.container.query, [['uuid', '=', event.uuid]])
     if containers:
         container = containers[0]
         middleware.send_event('container.query', 'CHANGED', id=container.id, fields=container.model_dump())

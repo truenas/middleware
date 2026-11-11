@@ -258,6 +258,9 @@ class NetworkConfigurationService(ConfigService):
         # and doesn't exist in the database
         new_config.pop('hostname_local', None)
 
+        hosts_table_changed = new_config['hosts'] != config['hosts']
+        dnssearch_changed = new_config['domains'] != config['domains']
+
         new_config['domains'] = ' '.join(new_config.get('domains', []))
         new_config['hosts'] = '\n'.join(new_config.get('hosts', []))
 
@@ -279,7 +282,6 @@ class NetworkConfigurationService(ConfigService):
 
         # dns domain name changed or /etc/hosts table changed
         licensed = await self.middleware.call('failover.licensed')
-        hosts_table_changed = new_config['hosts'] != config['hosts']
         if domainname_changed or hosts_table_changed:
             await self.middleware.call('etc.generate', 'hosts')
             service_actions.add(('nscd', 'RELOAD'))
@@ -293,7 +295,6 @@ class NetworkConfigurationService(ConfigService):
                     )
 
         # anything related to resolv.conf changed
-        dnssearch_changed = new_config['domains'] != config['domains']
         dns1_changed = new_config['nameserver1'] != config['nameserver1']
         dns2_changed = new_config['nameserver2'] != config['nameserver2']
         dns3_changed = new_config['nameserver3'] != config['nameserver3']

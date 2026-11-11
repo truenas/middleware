@@ -1,16 +1,10 @@
 import time
 
-import pytest
-
-from middlewared.test.integration.utils import call
-
-from auto_config import ha
+from middlewared.test.integration.utils import call, non_ha_test
 
 
-@pytest.mark.skipif(
-    ha,
-    reason="Cannot be tested on a HA system since rebooting this node will just fail over to another node",
-)
+# Rebooting this node on HA just fails over to the other node.
+@non_ha_test
 def test_system_reboot():
     boot_id = call("system.boot_id")
 

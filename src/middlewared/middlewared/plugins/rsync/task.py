@@ -9,7 +9,9 @@ import tempfile
 from typing import TYPE_CHECKING
 
 from middlewared.alert.source.rsync import RsyncFailedAlert, RsyncSuccessAlert
+from middlewared.api.current import UserGetUserObj
 from middlewared.service import CallError, ServiceContext
+from middlewared.utils.service.path import require_task_path_writable
 from middlewared.utils.user_context import run_command_with_user_context
 
 from .utils import get_host_key_file_contents_from_ssh_credentials, quote_extra_args
@@ -113,17 +115,17 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
                 if private_key is None:
                     raise CallError(f"SSH key pair {credentials.private_key} has no private key")
 
-                user = context.middleware.call_sync("user.get_user_obj", {"username": rsync.user})
+                user = context.call_sync2(context.s.user.get_user_obj, UserGetUserObj(username=rsync.user))
 
                 private_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile("w"))
                 os.fchmod(private_key_file.fileno(), 0o600)
-                os.fchown(private_key_file.fileno(), user["pw_uid"], user["pw_gid"])
+                os.fchown(private_key_file.fileno(), user.pw_uid, user.pw_gid)
                 private_key_file.write(private_key)
                 private_key_file.flush()
 
                 host_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile("w"))
                 os.fchmod(host_key_file.fileno(), 0o600)
-                os.fchown(host_key_file.fileno(), user["pw_uid"], user["pw_gid"])
+                os.fchown(host_key_file.fileno(), user.pw_uid, user.pw_gid)
                 host_key_file.write(get_host_key_file_contents_from_ssh_credentials(credentials))
                 host_key_file.flush()
 
@@ -157,6 +159,9 @@ def execute_rsync_task(context: ServiceContext, job: Job, id_: int) -> None:
     if rsync.locked:
         context.call_sync2(context.s.rsynctask.generate_locked_alert, id_)
         return
+
+    if rsync.direction == "PULL":
+        require_task_path_writable(context.middleware, rsync.path)
 
     with build_commandline(context, id_) as commandline:
         cp = run_command_with_user_context(

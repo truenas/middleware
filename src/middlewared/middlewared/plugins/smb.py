@@ -37,6 +37,7 @@ from middlewared.api.current import (
     SMBUnixcharsetChoicesResult,
     SMBUpdateArgs,
     SMBUpdateResult,
+    UserGetUserObj,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
@@ -401,15 +402,6 @@ class SMBService(ConfigService):
 
         config_job.set_progress(40, 'Synchronizing passdb and groupmap.')
         await self.middleware.call('etc.generate', 'user')
-
-        # If samba is clustered, we only want the cluster leader doing the
-        # synchronization between the DB and ctdb files.
-        clustered = (await self.middleware.call('smb.config'))['stateful_failover']
-        if clustered and not await self.middleware.call('failover.is_single_master_node'):
-            await self.middleware.call('smb.set_configured')
-            config_job.set_progress(100, 'Finished configuring SMB.')
-            return
-
         await self.reconcile_local_accounts(bypass_sentinel_check=True)
 
         # share_info.tdb is node-local state on the boot pool. It does not exist on a freshly
@@ -466,11 +458,6 @@ class SMBService(ConfigService):
         and one queued push rather than one per account.
         """
         if not self.middleware.call_sync('failover.licensed'):
-            return
-
-        if self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']:
-            # ctdbd replicates the persistent databases, and only the master node
-            # is permitted to write them
             return
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
@@ -541,7 +528,7 @@ class SMBService(ConfigService):
                 verrors.add('smb_update.guest', '"root" is not a permitted guest account')
 
             try:
-                await self.middleware.call("user.get_user_obj", {"username": new["guest"]})
+                await self.call2(self.s.user.get_user_obj, UserGetUserObj(username=new["guest"]))
             except KeyError:
                 verrors.add('smb_update.guest', f'{new["guest"]}: user does not exist')
 
@@ -728,35 +715,6 @@ class SMBService(ConfigService):
             (SearchProtocol.SPOTLIGHT in new['search_protocols'])
         ):
             await self.call2(self.s.truesearch.configure)
-
-        if old['stateful_failover'] != new['stateful_failover']:
-            # Forcibly regenerate smb.conf on standby controller so shell utilities behave
-            # same on both nodes.
-            try:
-                await self.middleware.call('failover.call_remote', 'etc.generate', ['smb'])
-            except Exception:
-                pass
-
-            if new['stateful_failover']:
-                # We need to move our secrets.tdb file to ctdb.
-                try:
-                    await self.middleware.call('directoryservices.secrets.sync_to_ctdb')
-                except Exception:
-                    self.logger.exception('Failed to sync local directory services secrets')
-            else:
-                # There's not a clean equivalent for CTDB -> TDB and so we just have
-                # to rely on restoring from our DB
-                try:
-                    await self.middleware.call('directoryservices.secrets.restore')
-                except Exception:
-                    self.logger.exception('Failed to restore local directory services secrets')
-
-            # We need winbindd to reopen its tdb files as ctdb or vice-versa
-            wb_restart = await self.call2(self.s.service.control, 'RESTART', 'idmap')
-            await wb_restart.wait()
-
-            config_job = await self.middleware.call('smb.configure')
-            await config_job.wait()
 
         await self._service_change(self._config.service, 'restart')
         return new_config
@@ -1159,9 +1117,8 @@ class SharingSMBService(SharingService):
 
     @private
     async def delete_share_acl(self, share_name):
-        cluster = (await self.middleware.call('datastore.config', 'services.cifs'))['cifs_srv_stateful_failover']
         try:
-            await self.middleware.run_in_thread(remove_share_acl, share_name, cluster)
+            await self.middleware.run_in_thread(remove_share_acl, share_name)
         except RuntimeError as e:
             # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
             if e.args[0] != TDBError.NOEXIST:
@@ -1297,14 +1254,6 @@ class SharingSMBService(SharingService):
             if '@' in mnt['mount_source']:
                 return
 
-            child_acltype = get_acl_type(mnt['super_opts'])
-            if child_acltype != current_acltype:
-                verrors.add(
-                    schema,
-                    f'ACL type mismatch with child mountpoint at {mnt["mountpoint"]}: '
-                    f'{this_mnt["mount_source"]} - {current_acltype}, {mnt["mount_source"]} - {child_acltype}'
-                )
-
             if mnt['fs_type'] != 'zfs':
                 verrors.add(
                     schema, f'{mnt["mountpoint"]}: child mount is not a ZFS dataset.'
@@ -1314,15 +1263,6 @@ class SharingSMBService(SharingService):
                 verrors.add(
                     schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
                 )
-
-        def get_acl_type(sb_info):
-            if 'NFS4ACL' in sb_info:
-                return 'NFSV4'
-
-            if 'POSIXACL' in sb_info:
-                return 'POSIX'
-
-            return 'OFF'
 
         st = self.middleware.call_sync('filesystem.stat', path)
         if st.type == 'SYMLINK':
@@ -1343,8 +1283,6 @@ class SharingSMBService(SharingService):
 
         if 'XATTR' not in this_mnt['super_opts']:
             verrors.add(schema, 'Extended attribute support is required for SMB shares')
-
-        current_acltype = get_acl_type(this_mnt['super_opts'])
 
         for child in iter_mountinfo(target_mnt_id=this_mnt['mount_id']):
             # The child filesystem may or may not be mounted under the SMB share. Two relevant
@@ -1526,10 +1464,10 @@ class SharingSMBService(SharingService):
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
         if not ds_enabled:
-            local_smb_user_cnt = await self.middleware.call(
-                'user.query',
+            local_smb_user_cnt = await self.call2(
+                self.s.user.query,
                 [['smb', '=', True], ['local', '=', True]],
-                {'count': True}
+                QueryOptions(count=True),
             )
             if local_smb_user_cnt == 0:
                 verrors.add(
@@ -1755,9 +1693,9 @@ class SharingSMBService(SharingService):
 
             match entry['ae_who_id']['id_type']:
                 case 'USER':
-                    sid = (await self.middleware.call(
-                        'user.query', [['uid', '=', entry['ae_who_id']['id']]], {'get': True},
-                    ))['sid']
+                    sid = (await self.call2(
+                        self.s.user.query, [['uid', '=', entry['ae_who_id']['id']]], QueryOptions(get=True),
+                    )).sid
                 case 'GROUP' | 'BOTH':
                     sid = (await self.call2(
                         self.s.group.query, [['gid', '=', entry['ae_who_id']['id']]], QueryOptions(get=True),
@@ -1799,9 +1737,8 @@ class SharingSMBService(SharingService):
 
         verrors.check()
         if not normalized_acl:
-            clustered = (await self.middleware.call('smb.config'))['stateful_failover']
             try:
-                await self.middleware.run_in_thread(remove_share_acl, data['share_name'], clustered)
+                await self.middleware.run_in_thread(remove_share_acl, data['share_name'])
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:

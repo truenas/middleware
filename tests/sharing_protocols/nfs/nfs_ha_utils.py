@@ -13,7 +13,7 @@ import time
 from xdrdef.nfs4_const import FATTR4_FSID, NFS4_OK
 
 from middlewared.service_exception import InstanceNotFound
-from middlewared.test.integration.utils import call, pool, ssh
+from middlewared.test.integration.utils import call, pool, ssh, wait_ha_ready
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.failover import do_failover
 from protocols.pynfs_proto import PynfsClient
@@ -97,30 +97,6 @@ def clear_nfsdcld_tracking():
     call("service.control", "STOP", "nfs", job=True)
     ssh(f"rm -f {NFSDCLD_DB}*")
     call("service.control", "START", "nfs", job=True)
-
-
-def wait_ha_ready(timeout=480, poll=5):
-    """Block until the pair is ready to fail over: peer reachable and
-    BACKUP, no failover.disabled.reasons.  The session bootstrap reboots
-    the standby, so a fresh session can still be settling when a test
-    starts and do_failover's precondition would trip."""
-    deadline = time.monotonic() + timeout
-    last = None
-    while True:
-        try:
-            reasons = call("failover.disabled.reasons")
-            connected = call("failover.remote_connected")
-            peer = None
-            if connected:
-                peer = call("failover.call_remote", "failover.status")
-            last = {"reasons": reasons, "connected": connected, "peer": peer}
-            if not reasons and connected and peer == "BACKUP":
-                return
-        except Exception as exc:  # transient while the peer is rebooting
-            last = repr(exc)
-        if time.monotonic() > deadline:
-            raise TimeoutError(f"HA pair not ready after {timeout}s: {last}")
-        time.sleep(poll)
 
 
 def call_remote_with_retry(method, attempts=15, delay=4):

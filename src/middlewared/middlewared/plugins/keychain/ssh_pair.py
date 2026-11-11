@@ -24,7 +24,7 @@ from middlewared.api.current import (
     SSHCredentialsEntry,
     SSHKeyPairEntry,
 )
-from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
+from middlewared.plugins.account.constants import NO_LOGIN_SHELL
 from middlewared.service import ServiceContext, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -54,14 +54,16 @@ def ssh_pair(context: ServiceContext, data: KeychainCredentialSSHPairArg) -> Key
     service = context.call_sync2(context.s.service.query, [("service", "=", "ssh")], QueryOptions(get=True))
     ssh = context.call_sync2(context.s.ssh.config)
     try:
-        user = context.middleware.call_sync(
-            "user.query", [("username", "=", data.username), ("local", "=", True)], {"get": True}
+        user = context.call_sync2(
+            context.s.user.query,
+            [("username", "=", data.username), ("local", "=", True)],
+            QueryOptions(get=True),
         )
     except MatchNotFound:
         raise CallError(f"User {data.username} does not exist")
 
-    if user["home"].startswith("/var/empty") or not os.path.exists(user["home"]):
-        raise CallError(f"Home directory {user['home']} does not exist", errno.ENOENT)
+    if user.home.startswith("/var/empty") or not os.path.exists(user.home):
+        raise CallError(f"Home directory {user.home} does not exist", errno.ENOENT)
 
     # Make sure SSH is enabled
     if not service.enable:
@@ -84,10 +86,10 @@ def ssh_pair(context: ServiceContext, data: KeychainCredentialSSHPairArg) -> Key
         raise CallError("Host ED25519 key not configured")
 
     # Write public key in user authorized_keys for SSH
-    pubkey = (user["sshpubkey"] or "").strip()
+    pubkey = (user.sshpubkey or "").strip()
     if data.public_key not in pubkey:
         pubkey += "\n" + data.public_key + "\n"
-        context.middleware.call_sync("user.update", user["id"], {"sshpubkey": pubkey})
+        context.call_sync2(context.s.user.update, user.id, {"sshpubkey": pubkey})
 
     ssh_hostkey = "{0} {1}\n{0} {2}\n{0} {3}\n".format(
         data.remote_hostname,

@@ -17,10 +17,15 @@ from .config import WebshareConfigPart
 from .utils import (
     bindip_choices,
     get_urls,
+    system_ready,
+    tn_connect_certificate_changed,
     tn_connect_hostname_updated,
 )
 from .utils import (
     setup_directories as _setup_directories,
+)
+from .utils import (
+    start_blocker as _start_blocker,
 )
 
 if TYPE_CHECKING:
@@ -73,6 +78,12 @@ class WebshareService(GenericConfigService[WebshareEntry]):
     async def urls(self) -> list[str]:
         return await get_urls(self.context)
 
+    @private
+    async def start_blocker(self) -> str | None:
+        return await _start_blocker(self.context)
+
 
 async def setup(middleware: Middleware) -> None:
     middleware.register_hook("tn_connect.hostname.updated", tn_connect_hostname_updated)
+    middleware.register_hook("tn_connect.certificate.changed", tn_connect_certificate_changed)
+    middleware.event_subscribe("system.ready", system_ready)

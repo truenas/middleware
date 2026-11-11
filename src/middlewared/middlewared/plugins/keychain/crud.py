@@ -25,6 +25,7 @@ class KeychainCredentialModel(sa.Model):
 
 class KeychainCredentialServicePart(CRUDServicePart[KeychainCredentialEntry]):
     _datastore = "system.keychaincredential"
+    _datastore_sql_filters = frozenset(("id", "name", "type"))
     _entry = KeychainCredentialEntry
 
     async def do_create(self, data: KeychainCredentialCreate) -> KeychainCredentialEntry:

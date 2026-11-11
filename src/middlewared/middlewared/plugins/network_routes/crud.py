@@ -27,6 +27,7 @@ class StaticRouteModel(sa.Model):
 class StaticRouteServicePart(CRUDServicePart[StaticRouteEntry]):
     _datastore = "network.staticroute"
     _datastore_prefix = "sr_"
+    _datastore_sql_filters = frozenset(("id", "destination", "gateway", "description"))
     _entry = StaticRouteEntry
 
     async def do_create(self, data: StaticRouteCreate) -> StaticRouteEntry:

@@ -45,7 +45,7 @@
         ipa_hostname = ds_config_to_fqdn(ds_config)
 
     else:
-        raise FileShouldNotExist
+        raise FileShouldNotExist()
 
     os.makedirs('/var/run/sssd-cache/mc', mode=0o755, exist_ok=True)
     os.makedirs('/var/run/sssd-cache/db', mode=0o755, exist_ok=True)

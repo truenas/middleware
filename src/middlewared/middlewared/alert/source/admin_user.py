@@ -11,7 +11,8 @@ from middlewared.alert.base import (
     AlertSource,
     IntervalSchedule,
 )
-from middlewared.plugins.account_.constants import ADMIN_UID
+from middlewared.api.current import UserGetUserObj
+from middlewared.plugins.account.constants import ADMIN_UID
 from middlewared.service_exception import MatchNotFound
 
 
@@ -48,13 +49,15 @@ class AdminUserAlertSource(AlertSource):
         except MatchNotFound:
             return None
 
-        user_obj = await self.middleware.call("user.get_user_obj", {"uid": ADMIN_UID})
+        user_obj = await self.middleware.call2(
+            self.middleware.services.user.get_user_obj, UserGetUserObj(uid=ADMIN_UID),
+        )
 
         if (
-                (user_obj["pw_name"] != admin["username"]) or
-                (user_obj["pw_gid"] != admin["group"]["bsdgrp_gid"]) or
-                (user_obj["pw_gecos"] != admin["full_name"]) or
-                (user_obj["pw_dir"] != admin["home"])
+                (user_obj.pw_name != admin["username"]) or
+                (user_obj.pw_gid != admin["group"]["bsdgrp_gid"]) or
+                (user_obj.pw_gecos != admin["full_name"]) or
+                (user_obj.pw_dir != admin["home"])
         ):
             return Alert(AdminUserIsOverriddenAlert(username=admin["username"]))
 

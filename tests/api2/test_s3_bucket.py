@@ -24,6 +24,7 @@ from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from truenas_api_client import ClientException
 from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 SERVICE = "s3"
@@ -32,6 +33,7 @@ POLICIES_CONF = "/etc/truenas_s3/policies.conf"
 OWNER = "s3bucketowner"
 DATASET = f"{pool}/s3-bucket-test"
 CONFIG_BACKUP = ".truenas_s3/config_backup.json"
+RSYNC = {"user": "root", "mode": "MODULE", "remotehost": "127.0.0.1", "remotemodule": "test"}
 
 
 def parse(path):
@@ -226,24 +228,24 @@ def managed_root(value):
 
 
 @contextlib.contextmanager
-def deregistered_bucket(**overrides):
+def deregistered_bucket(dataset=DATASET, **overrides):
     """A dataset holding a bucket's objects that no bucket row uses.
 
     The service starts once so the bucket is one that really served:
     `s3data/` is registration's to make, and the object below is what a
     recovery has to hand back.
     """
-    entry = call("sharing.s3.create", {"name": "recover-me", "dataset": DATASET, "owner": OWNER, **overrides})
+    entry = call("sharing.s3.create", {"name": "recover-me", "dataset": dataset, "owner": OWNER, **overrides})
     try:
         with running_service():
-            ssh(f"touch /mnt/{DATASET}/s3data/marker")
+            ssh(f"touch /mnt/{dataset}/s3data/marker")
         call("sharing.s3.delete", entry["id"])
         yield entry
     finally:
-        for row in call("sharing.s3.query", [["dataset", "=", DATASET]]):
+        for row in call("sharing.s3.query", [["dataset", "=", dataset]]):
             with contextlib.suppress(Exception):
                 call("sharing.s3.delete", row["id"])
-        call("zfs.resource.destroy", {"path": DATASET, "recursive": True})
+        call("zfs.resource.destroy", {"path": dataset, "recursive": True})
 
 
 def test_create_and_update_back_up_the_row_on_the_dataset(owner):
@@ -840,8 +842,9 @@ def permissions_change(method, path, uid=0, **options):
 
 def test_recursive_permissions_changes_stop_at_the_bucket(owner):
     """A recursive change over the whole bucket is refused, whether it targets
-    the mountpoint of the bucket's dataset or traverses into it from above,
-    and points at the bucket's `s3data` directory instead. The same change on
+    the mountpoint of the bucket's dataset or traverses into it from above, as
+    is one on a path in the bucket outside `s3data`, and each points at the
+    bucket's `s3data` directory instead. The same change on
     that directory, and a non-recursive one on the mountpoint, go through."""
     with dataset("s3-perm-parent", {"share_type": "SMB"}) as parent, bucket(dataset=f"{parent}/inner") as b:
         mountpoint = f"/mnt/{b['dataset']}"
@@ -859,6 +862,12 @@ def test_recursive_permissions_changes_stop_at_the_bucket(owner):
             assert error.attribute == f"{method}.options.traverse", method
             assert b["name"] in error.errmsg, method
             assert "s3data" in error.errmsg, method
+
+            with pytest.raises(ClientValidationErrors) as ve:
+                permissions_change(method, f"{mountpoint}/.truenas_s3", recursive=True)
+            (error,) = ve.value.errors
+            assert error.attribute == f"{method}.path", method
+            assert b["name"] in error.errmsg, method
 
         with running_service():
             permissions_change("filesystem.chown", f"{mountpoint}/s3data", uid=owner["uid"], recursive=True)
@@ -883,38 +892,35 @@ def test_another_protocol_exports_the_share_root_read_only(owner):
     is refused on its path, one of `s3data` that is not read-only on its
     read-only flag, one that is both at once on both, and a read-only one of
     `s3data` or of a prefix under it goes through, on an update as on a
-    create. Webshare has no read-only mode and may not export a bucket at
-    all."""
+    create."""
     with bucket() as b:
         mountpoint = f"/mnt/{b['dataset']}"
         share_root = f"{mountpoint}/s3data"
         ssh(f"mkdir -p {share_root}/prefix")
 
-        for api, schema, ro, data in (
-            ("sharing.smb", "sharingsmb", "readonly", {"name": "s3-export"}),
-            ("sharing.nfs", "sharingnfs", "ro", {}),
-        ):
-            assert refused(f"{api}.create", {**data, "path": mountpoint, ro: True}) == [f"{schema}_create.path"]
-            assert refused(f"{api}.create", {**data, "path": share_root, ro: False}) == [f"{schema}_create.{ro}"]
-            # the two rules are independent: a share that breaks both is told both
-            assert refused(f"{api}.create", {**data, "path": mountpoint, ro: False}) == [
-                f"{schema}_create.{ro}",
-                f"{schema}_create.path",
-            ]
-            share = call(f"{api}.create", {**data, "path": share_root, ro: True})
-            try:
-                assert refused(f"{api}.update", share["id"], {"path": mountpoint}) == [f"{schema}_update.path"]
-                assert refused(f"{api}.update", share["id"], {ro: False}) == [f"{schema}_update.{ro}"]
-                prefix = f"{share_root}/prefix"
-                assert call(f"{api}.update", share["id"], {"path": prefix})["path"] == prefix
-            finally:
-                call(f"{api}.delete", share["id"])
-
         with entitled("WEBSHARE"):
-            assert (
-                refused("sharing.webshare.create", {"name": "s3-export", "path": share_root})
-                == ["sharing_webshare_create.path"]
-            )
+            for api, schema, ro, data in (
+                ("sharing.smb", "sharingsmb", "readonly", {"name": "s3-export"}),
+                ("sharing.nfs", "sharingnfs", "ro", {}),
+                ("sharing.webshare", "sharing_webshare", "readonly", {"name": "s3-export"}),
+            ):
+                assert refused(f"{api}.create", {**data, "path": mountpoint, ro: True}) == [f"{schema}_create.path"]
+                assert refused(f"{api}.create", {**data, "path": share_root, ro: False}) == [
+                    f"{schema}_create.{ro}"
+                ]
+                # the two rules are independent: a share that breaks both is told both
+                assert refused(f"{api}.create", {**data, "path": mountpoint, ro: False}) == [
+                    f"{schema}_create.{ro}",
+                    f"{schema}_create.path",
+                ]
+                share = call(f"{api}.create", {**data, "path": share_root, ro: True})
+                try:
+                    assert refused(f"{api}.update", share["id"], {"path": mountpoint}) == [f"{schema}_update.path"]
+                    assert refused(f"{api}.update", share["id"], {ro: False}) == [f"{schema}_update.{ro}"]
+                    prefix = f"{share_root}/prefix"
+                    assert call(f"{api}.update", share["id"], {"path": prefix})["path"] == prefix
+                finally:
+                    call(f"{api}.delete", share["id"])
 
 
 def test_nothing_beside_the_service_writes_a_bucket(owner):
@@ -929,12 +935,11 @@ def test_nothing_beside_the_service_writes_a_bucket(owner):
         share_root = f"{mountpoint}/s3data"
         ssh(f"mkdir -p {share_root}")
 
-        rsync = {"user": "root", "mode": "MODULE", "remotehost": "127.0.0.1", "remotemodule": "test"}
-        assert refused("rsynctask.create", {**rsync, "path": share_root, "direction": "PULL"}) == [
+        assert refused("rsynctask.create", {**RSYNC, "path": share_root, "direction": "PULL"}) == [
             "rsync_task_create.direction"
         ]
         # a push only reads, so it may take the whole dataset
-        task = call("rsynctask.create", {**rsync, "path": mountpoint, "direction": "PUSH"})
+        task = call("rsynctask.create", {**RSYNC, "path": mountpoint, "direction": "PUSH"})
         try:
             assert refused("rsynctask.update", task["id"], {"direction": "PULL"}) == ["rsync_task_update.direction"]
         finally:
@@ -974,6 +979,75 @@ def test_nothing_beside_the_service_writes_a_bucket(owner):
             assert refused("ftp.update", {"onlyanonymous": True, "anonpath": share_root}) == ["ftp_update.anonpath"]
         finally:
             call("ftp.update", {"onlyanonymous": ftp["onlyanonymous"], "anonpath": ftp["anonpath"]})
+
+
+def test_a_writer_above_a_bucket_is_refused(owner):
+    """A share or task whose writes reach the datasets beneath its path is refused above a bucket, on the field that
+    would make it read-only, and a disabled one when it is enabled. A read-only share and an NFS export, which stops
+    at the bucket's mount, go through."""
+    # must match the ACL type of the BUCKET dataset mounted under it, or SMB refuses the export share
+    with (
+        dataset("s3-above", {"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}) as parent,
+        bucket(dataset=f"{parent}/inner"),
+    ):
+        path = f"/mnt/{parent}"
+        assert refused("sharing.smb.create", {"name": "s3-above", "path": path}) == ["sharingsmb_create.readonly"]
+        share = call("sharing.smb.create", {"name": "s3-above", "path": path, "readonly": True})
+        call("sharing.smb.delete", share["id"])
+        share = call("sharing.nfs.create", {"path": path})
+        call("sharing.nfs.delete", share["id"])
+
+        task = call("rsynctask.create", {**RSYNC, "path": path, "direction": "PULL", "enabled": False})
+        try:
+            assert refused("rsynctask.update", task["id"], {"enabled": True}) == ["rsync_task_update.direction"]
+        finally:
+            call("rsynctask.delete", task["id"])
+
+
+def test_a_bucket_never_lands_under_a_writer(owner):
+    """A bucket is not created or recovered where a writable share or task above would reach it, and the refusal
+    names no writer."""
+    with dataset("s3-under") as parent:
+        share = call("sharing.smb.create", {"name": "s3-under", "path": f"/mnt/{parent}"})
+        try:
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.s3.create", {"name": "test-bucket", "dataset": f"{parent}/inner", "owner": OWNER})
+            assert [e.attribute for e in ve.value.errors] == ["sharing_s3_create.dataset"]
+            assert "s3-under" not in ve.value.errors[0].errmsg
+            assert zfs_props(f"{parent}/inner", ["mountpoint"]) is None
+        finally:
+            call("sharing.smb.delete", share["id"])
+
+        with deregistered_bucket(dataset=f"{parent}/inner"):
+            task = call("rsynctask.create", {**RSYNC, "path": f"/mnt/{parent}", "direction": "PULL"})
+            try:
+                assert refuse(f"{parent}/inner")
+            finally:
+                call("rsynctask.delete", task["id"])
+
+
+def test_a_task_saved_before_the_bucket_cannot_write_it(owner):
+    """A task saved before a bucket appeared beneath its path is refused when it runs, before it writes anything."""
+    with dataset("s3-before") as parent:
+        task = call("rsynctask.create", {**RSYNC, "path": f"/mnt/{parent}", "direction": "PULL", "enabled": False})
+        try:
+            with bucket(dataset=f"{parent}/inner"):
+                with pytest.raises(ClientException) as ve:
+                    call("rsynctask.run", task["id"], job=True)
+                assert "test-bucket" in str(ve.value)
+                assert "Nothing was written" in str(ve.value)
+        finally:
+            call("rsynctask.delete", task["id"])
+
+
+def test_a_dataset_holding_a_bucket_is_not_renamed(owner):
+    """Neither a bucket's dataset nor one above it is renamed while the bucket is configured."""
+    with dataset("s3-rename") as parent, bucket(dataset=f"{parent}/inner") as b:
+        for current in (parent, b["dataset"]):
+            with pytest.raises(ValidationError) as ve:
+                call("zfs.resource.rename", {"current_name": current, "new_name": f"{pool}/s3-renamed", "force": True})
+            assert ve.value.attribute == "zfs.resource.rename.current_name"
+        assert call("sharing.s3.get_instance", b["id"])["dataset"] == f"{parent}/inner"
 
 
 def test_registry_changes_reload_and_consumed_fields_restart(owner):

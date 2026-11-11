@@ -2,7 +2,7 @@ from time import sleep
 
 import pytest
 from auto_config import ha, password, user
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ha_test, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.assets.system import standby_syslog_to_remote_syslog
 
@@ -92,6 +92,11 @@ def tls_cert(erase_syslogservers):
         'msg': 'ZZZZ: random scst test',
         'path': '/var/log/scst.log',  # This is just to make sure our exclude filter works as intended
     },
+    {
+        'ident': 'truenas_smbhad',
+        'msg': 'ZZZZ: random truenas_smbhad test',
+        'path': '/var/log/truenas_smbhad.log',
+    },
 ])
 def test_local_syslog_filter(params):
     """
@@ -157,7 +162,7 @@ def test_set_multiple_remote_syslog(erase_syslogservers):
 
 
 @pytest.mark.skip(reason="Test is unstable running from Jenkins")
-@pytest.mark.skipif(not ha, reason='Test only valid for HA')
+@ha_test
 def test_remote_syslog_function(erase_syslogservers):
     """
     End to end validation of remote syslog using temporary

@@ -2,8 +2,8 @@ import contextlib
 import json
 
 import pytest
-from auto_config import ha, pool_name
-from middlewared.test.integration.utils import call, mock, ssh
+from auto_config import pool_name
+from middlewared.test.integration.utils import call, ha_test, mock, ssh
 from middlewared.test.integration.utils.alert import (
     alert_classes,
     get_alerts_by_class,
@@ -12,7 +12,8 @@ from middlewared.test.integration.utils.alert import (
     wait_for_alerts_by_class,
 )
 
-pytestmark = pytest.mark.skipif(not ha, reason="Proactive Support is only available on Enterprise HA systems")
+# Proactive Support is only available on Enterprise HA systems.
+pytestmark = ha_test
 
 # `ZpoolCapacityNoticeAlert` opts into proactive support and is the cheapest alert to provoke: its
 # source only reads the pool capacity, so a single mocked `zpool.list_impl` raises and clears it.

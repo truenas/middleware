@@ -333,10 +333,14 @@ class BaseModel(DumpableModel, metaclass=_BaseModelMetaclass):
                 v.description = parent_field.description
 
     @classmethod
+    def model_fields_by_alias(cls) -> dict[str, FieldInfo]:
+        return {field.alias or name: field for name, field in cls.model_fields.items()}
+
+    @classmethod
     def schema_model_fields(cls) -> dict[str, FieldInfo]:
         return {
-            field.alias or name: field
-            for name, field in cls.model_fields.items()
+            key: field
+            for key, field in cls.model_fields_by_alias().items()
             if not any(isinstance(metadata, SkipJsonSchema) for metadata in field.metadata)  # type: ignore[misc]
         }
 

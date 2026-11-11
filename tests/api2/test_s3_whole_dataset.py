@@ -81,7 +81,7 @@ def owner():
 
 @contextlib.contextmanager
 def filled_dataset(leaf="s3-export", data=None):
-    """A dataset with default properties and a few files, readable by
+    """A dataset with the given properties and a few files, readable by
     everyone."""
     with dataset(leaf, data) as ds:
         mount = f"/mnt/{ds}"
@@ -222,12 +222,13 @@ def test_a_dataset_the_service_would_exclude_is_refused(owner):
             assert "not mounted" in refusal(ds)
         finally:
             ssh(f"zfs mount {ds}")
-        moved = f"/mnt/{pool}/s3-export-moved"
+        # The pool's altroot of /mnt is prepended, so this mounts at /mnt/{pool}/s3-export-moved.
+        moved = f"/{pool}/s3-export-moved"
         ssh(f"zfs set mountpoint={moved} {ds}")
         try:
             assert "is mounted at" in refusal(ds)
         finally:
-            ssh(f"zfs inherit mountpoint {ds} && rmdir {moved}")
+            ssh(f"zfs inherit mountpoint {ds} && rmdir /mnt{moved}")
         was = zfs_props(ds, ["xattr"])["xattr"]
         ssh(f"zfs set xattr=off {ds}")
         try:
@@ -241,7 +242,7 @@ def test_a_dataset_the_service_would_exclude_is_refused(owner):
     locked = {
         "encryption": True,
         "inherit_encryption": False,
-        "encryption_options": {"generate_key": False, "pbkdf2iters": 100000, "passphrase": "s3export-passphrase"},
+        "encryption_options": {"generate_key": False, "passphrase": "s3export-passphrase"},
     }
     with dataset("s3-export-locked", locked) as ds:
         call("pool.dataset.lock", ds, job=True)
@@ -279,16 +280,20 @@ def test_a_bucket_layout_is_refused_by_name(owner):
 
 
 def test_a_bucket_may_be_created_under_an_export(owner):
-    """A BUCKET bucket can be created under a DATASET bucket. Only
-    the inner bucket's mountpoint refuses a share."""
-    with filled_dataset() as ds, export(ds):
+    """A BUCKET bucket can be created under a DATASET bucket. The inner bucket's mountpoint refuses even a read-only
+    share, and the export refuses a writable one."""
+    # must match the ACL type of the BUCKET dataset mounted under it, or SMB refuses the export share
+    with filled_dataset(data={"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}) as ds, export(ds):
         inner = call("sharing.s3.create", {"name": "inner", "dataset": f"{ds}/inner", "owner": OWNER})
         try:
             with pytest.raises(ValidationErrors) as ve:
-                call("sharing.smb.create", {"name": "s3-inner", "path": f"/mnt/{inner['dataset']}"})
-            assert ve.value.errors[0].attribute == "sharingsmb_create.path"
+                call("sharing.smb.create", {"name": "s3-inner", "path": f"/mnt/{inner['dataset']}", "readonly": True})
+            assert [e.attribute for e in ve.value.errors] == ["sharingsmb_create.path"]
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.smb.create", {"name": "s3-export", "path": f"/mnt/{ds}"})
+            assert [e.attribute for e in ve.value.errors] == ["sharingsmb_create.readonly"]
             assert "inner" in ve.value.errors[0].errmsg
-            share = call("sharing.smb.create", {"name": "s3-export", "path": f"/mnt/{ds}"})
+            share = call("sharing.smb.create", {"name": "s3-export", "path": f"/mnt/{ds}", "readonly": True})
             call("sharing.smb.delete", share["id"])
         finally:
             call("sharing.s3.delete", inner["id"])

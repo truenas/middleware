@@ -43,6 +43,9 @@ class ACMERegistrationBodyModel(sa.Model):
 
 class ACMERegistrationServicePart(CRUDServicePart[ACMERegistrationEntry]):
     _datastore = 'system.acmeregistration'
+    _datastore_sql_filters = frozenset((
+        'id', 'uri', 'directory', 'tos', 'new_account_uri', 'new_nonce_uri', 'new_order_uri', 'revoke_cert_uri',
+    ))
     _entry = ACMERegistrationEntry
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

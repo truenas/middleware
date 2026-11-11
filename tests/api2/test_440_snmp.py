@@ -1,5 +1,4 @@
 import contextlib
-import os
 import time
 import subprocess
 
@@ -9,16 +8,15 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.assets.filesystem import directory, mkfile
-from middlewared.test.integration.utils import call, poll, ssh
+from middlewared.test.integration.utils import call, ha_test, poll, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.legacy_functions import async_SSH_done, async_SSH_start
-from auto_config import ha, hostname, interface, password, user, pool_name
+from auto_config import hostname, interface, password, user, pool_name
 
 
 # Alias
 pp = pytest.param
 
-skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
 TRAPS = False
 CONTACT = 'root@localhost.com'
@@ -337,7 +335,7 @@ class TestSNMP:
     def test_sysname_reply_uses_same_ip(self, init_and_start):
         validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
 
-    @skip_ha_tests
+    @ha_test
     def test_ha_sysname_reply_uses_same_ip(self):
         validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
         validate_snmp_get_sysname_uses_same_ip(truenas_server.nodea_ip)

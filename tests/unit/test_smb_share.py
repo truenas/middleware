@@ -116,7 +116,7 @@ def posixacl_dataset(create_dataset):
     create_dataset.set_properties(properties={'acltype': 'posix'})
     vfs_objects = set()
     __parse_share_fs_acl(create_dataset.get_mountpoint(), vfs_objects)
-    assert not vfs_objects
+    assert vfs_objects == {TrueNASVfsObjects.IXNAS}
     yield create_dataset.get_mountpoint()
 
 
@@ -179,6 +179,7 @@ def test__base_smb_posixacl(posixacl_dataset):
     assert conf['vfs objects'] == [
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
+        TrueNASVfsObjects.IXNAS,
         TrueNASVfsObjects.ZFS_CORE,
         TrueNASVfsObjects.IO_URING
     ]

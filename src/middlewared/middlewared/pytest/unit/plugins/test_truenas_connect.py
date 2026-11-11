@@ -1,4 +1,6 @@
-from datetime import date
+from datetime import date, timedelta
+import importlib
+import pathlib
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -6,12 +8,16 @@ import pytest
 from truenas_connect_utils.status import Status
 from truenas_pylicensed import LicenseType
 
+import middlewared.api
+from middlewared.api.base import BaseModel
+from middlewared.api.base.handler.result import serialize_result
 from middlewared.api.current import TrueNASConnectEntry
 from middlewared.plugins.truenas_connect.config import TrueNASConnectConfigServicePart
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 from middlewared.plugins.truenas_connect.utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
+from middlewared.utils.time_utils import utc_now
 
 
 def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
@@ -27,6 +33,7 @@ def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
         leca_service_base_url='https://leca.example/',
         tnc_base_url='https://tnc.example/',
         heartbeat_url='https://hb.example/',
+        allowed_origins=[],
         tier=None,
         last_heartbeat_failure_datetime=None,
     )
@@ -621,6 +628,7 @@ async def test_handle_deregistration_unsets_and_deletes_cert():
     ctx.middleware = MagicMock()
     ctx.middleware.call = AsyncMock()
     ctx.middleware.send_event = MagicMock()
+    ctx.middleware.call_hook = AsyncMock()
     ctx.call2 = AsyncMock(return_value=MagicMock(model_dump=MagicMock(return_value={})))
 
     with patch.object(
@@ -633,6 +641,7 @@ async def test_handle_deregistration_unsets_and_deletes_cert():
     unset.assert_awaited_once_with(ctx, False)
     delete_cert.assert_awaited_once_with(ctx, 15)
     ctx.middleware.send_event.assert_called_once()
+    ctx.middleware.call_hook.assert_awaited_once_with('tn_connect.certificate.changed')
     # datastore.update flips enabled off and applies the unset payload
     update_call = next(
         c for c in ctx.middleware.call.call_args_list if c.args[0] == 'datastore.update'
@@ -665,7 +674,11 @@ async def test_handle_deregistration_noop_when_already_unset():
     ctx.middleware.call.assert_not_called()
 
 
-def _make_acme_service(acme_cfg):
+def _cert_date(days_from_now):
+    return (utc_now() + timedelta(days=days_from_now)).strftime('%a %b %d %H:%M:%S %Y')
+
+
+def _make_acme_service(acme_cfg, issued_days_ago=30, expires_in_days=60):
     """Build a TNCACMEService whose call_sync2 dispatches by service-shortcut identity.
 
     Returns (service, dereg_calls); dereg_calls records when handle_deregistration is invoked.
@@ -673,7 +686,10 @@ def _make_acme_service(acme_cfg):
     from middlewared.plugins.truenas_connect.acme import TNCACMEService
 
     service = TNCACMEService(MagicMock())
-    service.middleware.call_sync2 = MagicMock(return_value=MagicMock(certificate='PEM'))
+    service.middleware.call_sync2 = MagicMock(return_value=MagicMock(
+        certificate='PEM', from_=_cert_date(-issued_days_ago), until=_cert_date(expires_in_days),
+        expired=False, renew_days=10,
+    ))
     dereg_calls = []
 
     def dispatch(target, *args, **kwargs):
@@ -719,6 +735,30 @@ def test_check_renewal_error_without_status_code_does_not_deregister():
         result = service.check_renewal_needed()
     assert result == (False, None)
     assert dereg_calls == []
+
+
+@pytest.mark.parametrize('renewal_info, issued_days_ago, expires_in_days, expected', [
+    ({'error': 'ARI request failed: HTTP 404', 'status_code': 404}, 30, 60, (True, None)),
+    ({'error': 'ARI request failed: HTTP 400', 'status_code': 400}, 30, 60, (True, None)),
+    ({'error': 'ARI request failed: HTTP 404', 'status_code': 404}, 1, 60, (False, None)),
+    ({'error': 'ARI request failed: HTTP 429', 'status_code': 429}, 30, 60, (False, None)),
+    ({'error': 'ARI server error after 4 attempts: HTTP 503'}, 80, 5, (True, None)),
+    (
+        {'error': None, 'suggested_window': {'start': utc_now(naive=False) + timedelta(days=30),
+                                             'end': utc_now(naive=False) + timedelta(days=32)}},
+        80, 5, (True, 'cid'),
+    ),
+])
+def test_check_renewal_ari_outcome(renewal_info, issued_days_ago, expires_in_days, expected):
+    service, _ = _make_acme_service(
+        {'error': None, 'acme_details': {'renewal_info': 'https://ari.example/'}},
+        issued_days_ago=issued_days_ago, expires_in_days=expires_in_days,
+    )
+    with (
+        patch('middlewared.plugins.truenas_connect.acme.get_cert_id', return_value='cid'),
+        patch('middlewared.plugins.truenas_connect.acme.fetch_renewal_info', return_value=renewal_info),
+    ):
+        assert service.check_renewal_needed() == expected
 
 
 @pytest.mark.asyncio
@@ -1002,3 +1042,13 @@ async def test_handle_heartbeat_response_202_pending_without_pem_is_quiet():
 
     install.assert_not_called()
     warn.assert_not_called()
+
+
+@pytest.mark.parametrize('api_version', sorted(
+    p.parent.name for p in pathlib.Path(middlewared.api.__file__).parent.glob('v*/tn_connect.py')
+))
+def test_registration_uri_result_allows_uris_over_the_default_string_limit(api_version):
+    # The URI carries the PEM license, which takes it past the default string limit.
+    uri = 'https://tnc.example/?license=' + 'A' * BaseModel.model_config['str_max_length']
+    model = importlib.import_module(f'middlewared.api.{api_version}.tn_connect').TrueNASConnectGetRegistrationUriResult
+    assert serialize_result(model, uri, expose_secrets=False, allow_fallback=False) == uri

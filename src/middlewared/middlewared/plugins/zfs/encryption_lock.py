@@ -35,6 +35,7 @@ from .encryption_info import (
 )
 from .encryption_keys import retrieve_keys_from_file, store_key, stored_keys
 from .resource_ops import unload_key
+from .resource_processes_utils import processes_using_dataset_tree
 from .utils import ancestor_chain, secret_value
 
 if TYPE_CHECKING:
@@ -84,6 +85,16 @@ def lock(context: ServiceContext, tls: Any, data: ZFSResourceEncryptionLockArgsD
         # actually unloaded.
         context.middleware.call_sync("cache.put", "about_to_lock_dataset", path)
         context.run_coroutine(_attachments.stop_all(dataset_mountpoint(ds)))
+        # NFS clients' locks and state keep files open after their shares are stopped. Not with a local holder: the
+        # unmount fails anyway, and the share comes back. Nor when that cannot be told.
+        if ds["type"] != "VOLUME":
+            try:
+                held_locally = bool(processes_using_dataset_tree(context, path))
+            except Exception:
+                context.logger.warning("%s: failed to look for local holders of the dataset", path, exc_info=True)
+                held_locally = True
+            if not held_locally:
+                context.call_sync2(context.s.nfs.release_dataset_filesystems, path)
         unload_key(tls, path, recursive=ds["type"] != "VOLUME", force_unmount=data.force_unmount)
     finally:
         context.middleware.call_sync("cache.pop", "about_to_lock_dataset")

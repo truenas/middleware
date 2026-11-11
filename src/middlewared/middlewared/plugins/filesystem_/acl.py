@@ -173,13 +173,19 @@ class FilesystemService(Service):
 
     def _validate_s3_bucket_recursion(self, schema, st, traverse, verrors):
         """
-        Refuse a recursive change over the whole of an S3 bucket, whether the target is the mountpoint of a
-        bucket's dataset or a traverse from above would descend into one. Only the bucket's ``s3data``
-        directory is the administrator's to manage; the rest of the dataset is the S3 service's, and a
-        change over all of it may leave the bucket in a state the service does not expect. ``DATASET``
-        buckets are read-only to the S3 service and are not checked.
+        Refuse a recursive permissions change that would cover an S3 bucket: the target is a bucket dataset's
+        mount point, a traverse from above would enter one, or the target is inside a bucket but outside
+        ``s3data``. Administrators manage only ``s3data``; the rest of the dataset belongs to the S3 service.
+        ``DATASET`` buckets are not checked.
         """
         path = os.path.realpath(st.realpath)
+        bucket = self.call_sync2(self.s.sharing.s3.bucket_of_path, path)
+        if bucket is not None and bucket.within and not bucket.in_share_root:
+            verrors.add(
+                f'{schema}.path',
+                f'{path} is inside S3 bucket {bucket.name!r}, outside its s3data directory. Recursive permissions '
+                f'changes are not supported there. Apply the change to /mnt/{bucket.dataset}/s3data instead.',
+            )
         # dataset -> mountpoint of every mount the change covers in full: the target's own when it is a
         # mount root, and each one beneath it when the recursion crosses mounts
         covered = {}
@@ -264,9 +270,9 @@ class FilesystemService(Service):
         options = data['options']
 
         if data['user']:
-            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+            user = self.call_sync2(self.s.user.query, [['username', '=', data['user']]])
             if user:
-                uid = user[0]['uid']
+                uid = user[0].uid
             else:
                 verrors.add('filesystem.chown.user', f'{data["user"]}: user does not exist')
 
@@ -327,9 +333,9 @@ class FilesystemService(Service):
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
         if data['user']:
-            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+            user = self.call_sync2(self.s.user.query, [['username', '=', data['user']]])
             if user:
-                uid = user[0]['uid']
+                uid = user[0].uid
             else:
                 verrors.add('filesystem.setperm.user', f'{data["user"]}: user does not exist')
 
@@ -471,8 +477,8 @@ class FilesystemService(Service):
         ret.update({'user': None, 'group': None})
 
         if resolve_ids:
-            if user := self.middleware.call_sync('user.query', [['uid', '=', ret['uid']]]):
-                ret['user'] = user[0]['username']
+            if user := self.call_sync2(self.s.user.query, [['uid', '=', ret['uid']]]):
+                ret['user'] = user[0].username
 
             if group := self.call_sync2(self.s.group.query, [['gid', '=', ret['gid']]]):
                 ret['group'] = group[0].group
@@ -730,8 +736,8 @@ class FilesystemService(Service):
             )
 
         if data['user']:
-            if user := self.middleware.call_sync('user.query', [['username', '=', data['user']]]):
-                data['uid'] = user[0]['uid']
+            if user := self.call_sync2(self.s.user.query, [['username', '=', data['user']]]):
+                data['uid'] = user[0].uid
             else:
                 verrors.add(
                     'filesystem.setacl.user',
@@ -799,7 +805,9 @@ class FilesystemService(Service):
                         self.s.group.query, who_filters, QueryOptions(get=True),
                     ).gid
                 else:
-                    entry['id'] = self.middleware.call_sync('user.query', who_filters, {'get': True})['uid']
+                    entry['id'] = self.call_sync2(
+                        self.s.user.query, who_filters, QueryOptions(get=True),
+                    ).uid
 
                 entry['who'] = None
             except MatchNotFound:

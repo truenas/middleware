@@ -361,7 +361,8 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         Controls whether tiering is enabled, how many rewrite jobs may run concurrently, the filesystem usage
         threshold at which rewrites are aborted, and the percentage of PERFORMANCE tier space reserved for
         metadata. Applying the new configuration regenerates the ``truenas_zfstierd`` daemon configuration and
-        reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
+        reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon. Enabling or disabling tiering also
+        reloads WebShare, whose shares stop at child dataset boundaries while tiering is enabled.
 
         ZFS tiering requires a license carrying the ZFSTIER feature. The call fails when the system is not
         entitled to this feature.
@@ -385,6 +386,9 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         else:
             verb = "RELOAD"
         await self.call2(self.s.service.control, verb, "truenas_zfstierd")
+        if new.enabled != old.enabled:
+            # WebShare stops share roots at child dataset boundaries while tiering is enabled.
+            await (await self.call2(self.s.service.control, "RELOAD", "webshare")).wait()
         return new
 
     @api_method(

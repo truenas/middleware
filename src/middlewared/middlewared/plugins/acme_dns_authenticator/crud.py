@@ -29,6 +29,7 @@ class ACMEDNSAuthenticatorModel(sa.Model):
 
 class DNSAuthenticatorServicePart(CRUDServicePart[DNSAuthenticatorEntry]):
     _datastore = 'system.acmednsauthenticator'
+    _datastore_sql_filters = frozenset(('id', 'name'))
     _entry = DNSAuthenticatorEntry
     _schemas: dict[str, type[BaseModel]] | None = None
 
