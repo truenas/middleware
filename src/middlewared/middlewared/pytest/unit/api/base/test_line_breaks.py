@@ -228,13 +228,8 @@ class TestUPS:
         with pytest.raises(ValueError, match=MESSAGE):
             UPSUpdate(**{field: 'ups\nSHUTDOWNCMD "/bin/sh -c id"'})
 
-    @pytest.mark.parametrize("field", [f for f in UPS_SINGLE_LINE_FIELDS if f != "description"])
+    @pytest.mark.parametrize("field", UPS_SINGLE_LINE_FIELDS)
     def test_the_entry_rejects_a_stored_line_break(self, field):
-        """Alembic revision `ede75214c588` replaces a stored break, so no entry has to read one back.
-
-        `description` is the exception: it is `Multiline` on the entry and constrained on `UPSUpdate`,
-        because what reaches `ups.conf` is the value a caller writes.
-        """
         stored = {
             "id": 1,
             "complete_identifier": "ups",
@@ -261,8 +256,6 @@ class TestUPS:
 
         with pytest.raises(ValueError, match=MESSAGE):
             UPSEntry.model_validate(stored | {field: "legacy\nvalue"})
-
-        assert UPSEntry.model_validate(stored | {"description": "legacy\nvalue"})
 
     def test_a_clean_value_repairs_the_field(self):
         assert UPSUpdate(description="clean").description == "clean"

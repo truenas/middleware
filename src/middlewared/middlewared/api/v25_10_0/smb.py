@@ -159,7 +159,7 @@ class SMBEntry(BaseModel):
             "NetBIOS domain of the Active Directory domain."
         ),
     )
-    description: Multiline[str] = Field(
+    description: str = Field(
         description="Description of the SMB server. SMB clients may see this description during some operations.",
     )
     enable_smb1: bool = Field(
@@ -761,7 +761,7 @@ class SharingSMBEntry(BaseModel):
         ),
     )
     enabled: bool = Field(default=True, description="If unset, the SMB share is not available over the SMB protocol.")
-    comment: Multiline[str] = Field(
+    comment: str = Field(
         default='',
         examples=['Mammalian nurturable'],
         description=(

@@ -78,8 +78,7 @@ class SSHUpdate(SSHEntry, metaclass=ForUpdateMetaclass):
     """Changes to the SSH service configuration.
 
     Each of `password_login_groups` is quoted into a `Match Group` line of `sshd_config`.
-    A line break or a double quote in one would let the caller add directives that `options` is marked to deny.
-    The constraint is on this model rather than `SSHEntry`, so a value stored before it existed stays readable.
+    A double quote in one would let the caller add directives that `options` is marked to deny.
     """
     id: Excluded = excluded_field()
     password_login_groups: list[Annotated[str, StringConstraints(pattern=r'^[^"]*$')]]

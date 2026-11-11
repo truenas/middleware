@@ -71,10 +71,8 @@ class SNMPEntry(BaseModel):
 class SNMPUpdate(SNMPEntry, metaclass=ForUpdateMetaclass):
     """Changes to the SNMP service configuration.
 
-    Line breaks are rejected on every field interpolated bare into `snmpd.conf` or its persistent counterpart.
-    A double quote is rejected on the two secrets quoted into the `createUser` line of the latter.
-    Such a break would let the caller append directives, `rwcommunity` say, that `options` is marked to deny.
-    The constraint is on this model rather than `SNMPEntry`, so a value stored before it existed stays readable.
+    A double quote is rejected on the two secrets quoted into the `createUser` line of `snmpd.conf`.
+    It would otherwise let the caller append directives, `rwcommunity` say, that `options` is marked to deny.
     """
     id: Excluded = excluded_field()
     location: str

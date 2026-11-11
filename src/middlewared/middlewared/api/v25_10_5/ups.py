@@ -33,7 +33,7 @@ class UPSEntry(BaseModel):
     )
     shutdowntimer: int = Field(description="Seconds to wait after initiating shutdown before forcing power off.")
     hostsync: int = Field(ge=0, description="Maximum seconds to wait for other systems to shutdown before continuing.")
-    description: Multiline[str] = Field(description="Human-readable description of this UPS configuration.")
+    description: str = Field(description="Human-readable description of this UPS configuration.")
     driver: str = Field(description="UPS driver name that handles communication with the specific UPS hardware model.")
     extrausers: Multiline[LongString] = Field(description="Additional user configurations for UPS monitoring access.")
     identifier: NonEmptyString = Field(

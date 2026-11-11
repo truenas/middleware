@@ -149,7 +149,7 @@ COLUMNS = {
         'adv_anonstats_token', 'adv_kernel_extra_options', 'adv_kmip_uid', 'adv_sed_user', 'adv_serialport',
         'adv_serialspeed', 'adv_sysloglevel'
     ),
-    'system_alert': ('key', 'klass', 'node', 'source', 'text', 'uuid'),
+    'system_alert': ('key', 'klass', 'node', 'source', 'uuid'),
     'system_alertservice': ('level', 'name', 'type'),
     'system_certificate': ('cert_acme_uri', 'cert_name'),
     'system_cloudcredentials': ('name', 'provider'),
@@ -208,7 +208,7 @@ JSON_COLUMNS = {
     'account_bsdgroups': ('bsdgrp_sudo_commands', 'bsdgrp_sudo_commands_nopasswd'),
     'account_bsdusers': ('bsdusr_sudo_commands', 'bsdusr_sudo_commands_nopasswd'),
     'account_privilege': ('ds_groups', 'local_groups', 'roles'),
-    'container_container': ('capabilities_state', 'initenv'),
+    'container_container': ('capabilities_state',),
     'directoryservices': ('ipa_smb_domain', 'ldap_server_urls'),
     'filesystem_acltemplate': ('acltemplate_acl',),
     'network_bridge': ('members',),

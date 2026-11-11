@@ -188,15 +188,12 @@ Do not use it when:
   reaches ``ups.conf`` or ``smb.conf`` is not.
 * A validator already constrains the value fully (a ``Literal``, a port, an IP address, a ``TimeString``).
 
-A field constrained on the write model only
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Reading back what is already stored
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``config`` and ``update`` both start by reading the entry, so an entry model has to read back whatever is stored.
-Where a value reaches a line-oriented file but a stored break may predate the ban, mark the entry ``Multiline`` and
-leave the create or update model strict -- ``UPSEntry.description`` against ``UPSUpdate.description``, and
-``SharingSMBEntry.comment`` against ``SmbShareCreate.comment``, both do this. Alembic revision ``ede75214c588``
-replaces a stored line break, so this split is needed only where a value also arrives from somewhere other than
-the API.
+Mark the entry ``Multiline`` where a value also arrives from somewhere other than the API -- a kernel, a
+filesystem, a catalog, a remote server.
 
 Review with Claude
 ------------------
