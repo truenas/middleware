@@ -575,7 +575,7 @@ class AppContainerLogsFollowTailEventSourceArgs(BaseModel):
 
 @single_argument_result
 class AppContainerLogsFollowTailEventSourceEvent(BaseModel):
-    data: str = Field(description="The log line content.")
+    data: Multiline[str] = Field(description="The log line content.")
     timestamp: str | None = Field(description="Timestamp of the log entry. `null` if not available.")
 
 

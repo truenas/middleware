@@ -484,4 +484,4 @@ class FileFollowTailEventSourceArgs(BaseModel):
 
 @single_argument_result
 class FileFollowTailEventSourceEvent(BaseModel):
-    data: str = Field(description="New data appended to the file being followed.")
+    data: Multiline[str] = Field(description="New data appended to the file being followed.")

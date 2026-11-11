@@ -154,10 +154,11 @@ Multiline
 
 What it does:
 
-* Every ``str`` of every API model rejects ``\n`` and ``\r`` by default, wherever the string sits: a field, a
-  list item, a dict key, a dict value, a union member, the inside of a ``Secret``. The rejection is a
-  ``ValidationError`` on the exact position of the offending string, with the message
-  ``Line breaks are not allowed``.
+* Every ``str`` of a model that derives from ``BaseModel`` rejects ``\n`` and ``\r`` by default, wherever the
+  string sits within it: a field, a list item, a dict key, a dict value, a union member, the inside of a
+  ``Secret``. A nested model that also derives from ``BaseModel`` carries the same check on its own strings,
+  so the rule reaches through the whole tree of API models. The rejection is a ``ValidationError`` on the exact
+  position of the offending string, with the message ``Line breaks are not allowed``.
 * ``Multiline`` opts out exactly the string it wraps. ``list[Multiline[str]]`` allows a break inside an entry;
   ``Multiline[list[str]]`` is not a thing to write, because the ban is on the string and not on the list.
 * The default is a ban because a value interpolated bare into a line-oriented configuration file lets its caller
