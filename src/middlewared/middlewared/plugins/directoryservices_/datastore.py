@@ -30,6 +30,7 @@ from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
 from middlewared.utils.directoryservices.ad_constants import MACHINE_ACCOUNT_KT_NAME
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS, DomainJoinResponse, DSCredType, DSStatus, DSType
 from middlewared.utils.directoryservices.credential import (
+    get_time_advice,
     validate_credential,
     validate_ldap_credential,
 )
@@ -710,7 +711,7 @@ class DirectoryServices(ConfigService):
                 # validating credentials below
                 self.logger.debug('kdestroy failed while preparing initial credentials', exc_info=True)
 
-        validate_credential(SCHEMA, new, verrors, revert)
+        validate_credential(SCHEMA, new, verrors, revert, get_time_advice(self.middleware))
         # Validating a Kerberos credential replaces the primary domain's name with the one the domain controller reports
         self.validate_idmap_names(old, new, verrors)
         if verrors:
@@ -1057,7 +1058,9 @@ class DirectoryServices(ConfigService):
         # and we don't try to recover while leaving the domain.
         orig_state = self.middleware.call_sync('directoryservices.status')['status']
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
-        validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
+        validate_credential(
+            'directoryservices.leave_domain', ds_config, verrors, revert, get_time_advice(self.middleware)
+        )
         if verrors:
             self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, orig_state)
             self.__revert_changes(revert)
