@@ -122,30 +122,40 @@ def snapshot(dataset, name, **kwargs):
 
 
 @contextlib.contextmanager
-def oversize_pool():
-    # a mirror pool with vdevs that are slightly larger than they should be
-    with another_pool(topology=_2_disk_mirror_topology) as pool:
+def resized_partitions_pool(topology, partition_size_delta):
+    # Older releases created data partitions of other sizes, e.g. without the reserve at the end of the disk
+    with another_pool(topology=topology) as pool:
         vdevs = [vdev for vdev in call("pool.flatten_topology", pool["topology"]) if vdev["type"] == "DISK"]
 
-        assert len(vdevs) == 2
+        assert len(vdevs) == topology[0]
 
-        default_partitions_sizes = [
+        default_partitions_sizes = {
             retry_get_parts_on_disk(vdev["disk"])[-1]["size"]
             for vdev in vdevs
-        ]
-        assert default_partitions_sizes[0] == default_partitions_sizes[1]
-        default_partition_size = default_partitions_sizes[0]
+        }
+        assert len(default_partitions_sizes) == 1
+        default_partition_size = default_partitions_sizes.pop()
 
-        larger_size_k = int((default_partition_size + 10 * 1024 * 1024) / 1024.0)
+        size_k = int((default_partition_size + partition_size_delta) / 1024.0)
         ssh(f"zpool export {pool['name']}")
         devices = []
         for vdev in vdevs:
             ssh(f"sgdisk -d 1 /dev/{vdev['disk']}")
-            ssh(f"sgdisk -n 1:0:+{larger_size_k}k -t 1:BF01 /dev/{vdev['disk']}")
+            ssh(f"sgdisk -n 1:0:+{size_k}k -t 1:BF01 /dev/{vdev['disk']}")
             partition = retry_get_parts_on_disk(vdev["disk"])[-1]
-            assert partition["size"] == larger_size_k * 1024
+            assert partition["size"] == size_k * 1024
             devices.append("disk/by-partuuid/" + partition["partition_uuid"])
 
-        ssh(f"zpool create {pool['name']} -o altroot=/mnt -f mirror {' '.join(devices)}")
+        vdev_type = pool["topology"]["data"][0]["type"].lower()
+        if vdev_type == "disk":
+            vdev_type = ""
+
+        ssh(f"zpool create {pool['name']} -o altroot=/mnt -f {vdev_type} {' '.join(devices)}")
         pool = call("pool.get_instance", pool["id"])
+        yield pool
+
+
+@contextlib.contextmanager
+def oversize_pool():
+    with resized_partitions_pool(_2_disk_mirror_topology, 10 * 1024 * 1024) as pool:
         yield pool
