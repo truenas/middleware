@@ -3,7 +3,7 @@ from time import sleep
 import pytest
 
 from auto_config import pool_name
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, fault_vdev, ssh
 
 
 ID_PATH = "/dev/disk/by-partuuid/"
@@ -29,7 +29,7 @@ def wait_for_alert(timeout=120):
 def degraded_pool_gptid():
     get_pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
     gptid = get_pool["topology"]["data"][0]["path"].replace(ID_PATH, "")
-    ssh(f"zinject -d {gptid} -A fault {pool_name}")
+    fault_vdev(pool_name, gptid)
     return gptid
 
 
