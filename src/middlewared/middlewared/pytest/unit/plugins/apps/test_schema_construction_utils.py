@@ -252,14 +252,7 @@ def test_text_field_type():
     model = generate_pydantic_model(schema, 'TestText', NOT_PROVIDED)
     # Should accept long text
     long_text = 'x' * 10000  # 10KB text
-    m = model(content=long_text)
-    # LongString type returns a wrapper object, need to access its value
-    # Check that the content was set (it's a LongStringWrapper object)
-    assert hasattr(m.content, '__str__')
-    # Check field type is LongString
-    field_type = model.model_fields['content'].annotation
-    # The annotation might be wrapped, so check if LongString is in the string representation
-    assert 'LongString' in str(field_type)
+    model(content=long_text)
 
 
 def test_path_field_type():
@@ -2450,34 +2443,6 @@ def test_valid_chars_with_immutable_field():
     # Cannot change even to another valid pattern
     with pytest.raises(ValidationError):
         model_update(instance_id='i-5678efgh')
-
-
-def test_valid_chars_with_text_field_type():
-    """Test valid_chars with text (LongString) field type"""
-    # Note: valid_chars with text type currently has issues because LongString
-    # wraps the value and the validator expects a string
-    # This test documents the current limitation
-    schema = [
-        {
-            'variable': 'config_content',
-            'schema': {
-                'type': 'text',  # LongString type
-                'valid_chars': '^[A-Za-z0-9\n\r\t =]+$',  # Allow alphanumeric, newlines, tabs, spaces, equals
-                'required': True
-            }
-        }
-    ]
-
-    model = generate_pydantic_model(schema, 'TestTextValidChars', NOT_PROVIDED)
-
-    # Currently this fails because LongStringWrapper is not a string
-    # Documenting this as a known limitation
-    with pytest.raises(TypeError) as exc_info:
-        config = """key1=value1
-key2=value2
-section=data"""
-        model(config_content=config)
-    assert "expected string or bytes-like object, got 'LongStringWrapper'" in str(exc_info.value)
 
 
 def test_valid_chars_error_message():

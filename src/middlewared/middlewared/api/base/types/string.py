@@ -1,16 +1,12 @@
 import re
-from typing import Annotated, Any
+from typing import Annotated
 import uuid
 
-from annotated_types import MinLen
+from annotated_types import MaxLen, MinLen
 from pydantic import (
     AfterValidator,
-    BeforeValidator,
-    GetCoreSchemaHandler,
     HttpUrl as _HttpUrl,
-    PlainSerializer,
 )
-from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 
 from middlewared.api.base.types.json_schema import JsonSchemaExtra
 from middlewared.api.base.validators import time_validator, email_validator
@@ -39,48 +35,6 @@ def validate_single_line(value: str) -> str:
     return value
 
 
-class LongStringWrapper:
-    """
-    We have to box our long strings in this class to bypass the global limit for string length.
-    """
-
-    max_length = 2048000  # historic maximum length of string in filesystem.file_receive
-    __normalize_as__ = str
-
-    def __init__(self, value):
-        if isinstance(value, LongStringWrapper):
-            value = value.value
-
-        if not isinstance(value, str):
-            raise PydanticKnownError("string_type")
-
-        if len(value) > self.max_length:
-            raise PydanticKnownError("string_too_long", {"max_length": self.max_length})
-
-        self.value = value
-
-    def __len__(self):
-        return len(self.value)
-
-    def __eq__(self, other):
-        return isinstance(other, LongStringWrapper) and self.value == other.value
-
-    def __repr__(self):
-        return f"LongStringWrapper({self.value})"
-
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: GetCoreSchemaHandler
-    ) -> CoreSchema:
-        return core_schema.json_or_python_schema(
-            json_schema=core_schema.str_schema(),
-            python_schema=core_schema.no_info_after_validator_function(
-                cls,
-                core_schema.is_instance_schema(LongStringWrapper),
-            ),
-        )
-
-
 def normalize_libvirt_uuid(value: str) -> str:
     """Accept what libvirt accepts, and store it the way libvirt will report it.
 
@@ -103,11 +57,7 @@ def normalize_libvirt_uuid(value: str) -> str:
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 SingleLineString = Annotated[str, AfterValidator(validate_single_line)]
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
-LongString = Annotated[
-    LongStringWrapper,
-    BeforeValidator(LongStringWrapper),
-    PlainSerializer(lambda x: x.value if isinstance(x, LongStringWrapper) else x),
-]
+LongString = Annotated[str, MaxLen(2 ** 31 - 1)]
 NonEmptyString = Annotated[str, MinLen(1)]
 LongNonEmptyString = Annotated[LongString, MinLen(1)]
 TimeString = Annotated[
