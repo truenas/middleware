@@ -2,6 +2,7 @@ from enum import StrEnum
 import os
 
 from middlewared.plugins.vm.utils import LIBVIRT_QEMU_GID, LIBVIRT_QEMU_UID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
 from .utils import SYSDATASET_PATH
 
@@ -109,7 +110,7 @@ MDBSTORE_PROPS = {
 
 
 def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
-    return [
+    spec = [
         {
             'name': os.path.join(pool_name, '.system'),
             'props': {
@@ -290,3 +291,9 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             ]
         },
     ]
+    # The boot pool cannot hold an encrypted dataset. The installer makes it with compatibility=grub2, which leaves
+    # the encryption feature disabled. So a dataset that the pwenc secret encrypts is only on a data pool.
+    if pool_name in BOOT_POOL_NAME_VALID:
+        spec = [ds for ds in spec if not ds.get('pwenc_encrypted')]
+
+    return spec

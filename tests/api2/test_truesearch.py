@@ -1,11 +1,16 @@
+# Why SSH: the tests search through SMB with mdsearch, which runs on the system. The API also has no call to make
+# test files with Finder tags, to stop one daemon, to read the daemon PIDs, the index directory or the daemon
+# configuration file, or to read the datasets under .system.
 import base64
 import contextlib
+import errno
+import json
 import os
 import time
 
 import pytest
 
-from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import another_pool, dataset
@@ -50,9 +55,9 @@ def share(make_available):
 
 
 @contextlib.contextmanager
-def another_share(path: str, name: str):
+def another_share(path: str, name: str, **options):
     # smb_share stops the SMB service when it exits. The tests that follow need the service.
-    share_id = call('sharing.smb.create', {'path': path, 'name': name})['id']
+    share_id = call('sharing.smb.create', {'path': path, 'name': name, **options})['id']
     try:
         yield
     finally:
@@ -132,12 +137,76 @@ def environments() -> set[str]:
     return set(ssh("ls /var/db/system/truesearchd").split())
 
 
+def configuration_rows() -> dict[str, dict]:
+    # truesearch_client reads the configuration file as both daemons do.
+    rows = json.loads(ssh(
+        "python3 -c 'import dataclasses, json; from truesearch_client.config import read_config; "
+        "print(json.dumps([dataclasses.asdict(row) for row in read_config() or []]))'"
+    ))
+    return {row['dataset']: row for row in rows}
+
+
 def test_status(share):
     status, entry = expect_status(share['dataset'])
     assert status['running'] is True
     assert entry['path'] == f"/mnt/{share['dataset']}"
     assert entry['entries'] >= 1
     assert entry['last_full_pass'] is not None
+
+
+def test_a_daemon_that_runs_alone_restarts_with_the_other(share):
+    expect_status(share['dataset'])
+    ssh('systemctl stop truesearch-indexer')
+    # The service is stopped, because one daemon is down. truesearchd still runs, and it holds the datasets.
+    alone, stopped = daemon_pids()
+    assert alone != '0'
+    assert stopped == '0'
+
+    call('truesearch.configure')
+    # truesearchd reads the configuration file only when it starts. So both daemons start again.
+    pids = daemon_pids()
+    assert '0' not in pids
+    assert pids[0] != alone
+    expect_search_result(["mytest.txt"])
+
+
+def test_status_while_both_daemons_are_stopped(share):
+    expect_status(share['dataset'])
+    ssh('systemctl stop truesearchd truesearch-indexer')
+    try:
+        status = call('truesearch.status')
+        assert (status['running'], status['index_bytes'], status['space_low']) == (False, None, None)
+        entry = next(d for d in status['datasets'] if d['dataset'] == share['dataset'])
+        assert (entry['state'], entry['served'], entry['entries']) == ('STOPPED', False, None)
+    finally:
+        call('truesearch.configure')
+
+    expect_status(share['dataset'])
+
+
+def test_time_machine_and_home_shares_are_not_indexed(share):
+    ds = share['dataset']
+    aapl_extensions = call('smb.config')['aapl_extensions']
+    call('smb.update', {'aapl_extensions': True})
+    ssh(f"mkdir /mnt/{ds}/timemachine")
+    try:
+        with (
+            dataset('truesearch/backups', data={'share_type': 'SMB'}) as backups,
+            dataset('truesearch_homes', data={'share_type': 'SMB'}) as homes,
+            # A disabled Time Machine share keeps its backups. So its directory stays excluded.
+            another_share(f"/mnt/{ds}/timemachine", 'truesearch_tm', purpose='TIMEMACHINE_SHARE', enabled=False),
+            another_share(f"/mnt/{backups}", 'truesearch_backups', purpose='TIMEMACHINE_SHARE'),
+            another_share(f"/mnt/{homes}", 'truesearch_homes', purpose='LEGACY_SHARE', options={'home': True}),
+        ):
+            call('truesearch.configure')
+            rows = configuration_rows()
+            assert rows[ds]['exclude'] == ['timemachine']
+            # The dataset of a Time Machine share gets no row, and a home share is not indexed.
+            assert backups not in rows
+            assert homes not in rows
+    finally:
+        ssh(f"rm -r /mnt/{ds}/timemachine")
+        call('smb.update', {'aapl_extensions': aapl_extensions})
 
 
 def test_nested_dataset_has_its_own_index(share):
@@ -313,3 +382,24 @@ EOF""")
     for option in ({'order_by': ['size']}, {'offset': 1}, {'get': True}, {'select': ['name']}):
         with pytest.raises(ValidationErrors):
             query(base, [], **{'query-options': option})
+
+
+@pytest.mark.parametrize('path', [
+    '/mnt/tank/data/shares/../etc',
+    '/mnt/tank/data//shares',
+    '/mnt/./tank',
+    'mnt/tank/data',
+    '/etc/passwd',
+    # Each is /mnt once it is normalized.
+    '/mnt/',
+    '/mnt//',
+])
+def test_query_refuses_a_path_outside_mnt_or_with_dot_components(path):
+    with pytest.raises(ValidationError):
+        query(path, [])
+
+
+def test_query_of_a_path_that_no_index_holds_is_refused(share):
+    with pytest.raises(CallError) as e:
+        query(f"/mnt/{share['dataset'].split('/')[0]}", [])
+    assert e.value.errno == errno.ENOENT

@@ -765,9 +765,8 @@ class SystemDatasetService(ConfigService):
         failed = []
         for dataset, config in datasets.items():
             props = config['props']
-            # A dataset encrypted with the pwenc secret is its own encryption root. TrueSearch does not run on the
-            # boot pool, so this dataset is not encrypted there.
-            pwenc_encrypted = config.get('pwenc_encrypted', False) and pool != boot_pool
+            # A dataset encrypted with the pwenc secret is its own encryption root.
+            pwenc_encrypted = config.get('pwenc_encrypted', False)
             # Disable encryption for system managed datasets that are
             # configured on zpools that are passphrase-encrypted.
             if root_dataset_is_passphrase_encrypted and not pwenc_encrypted:
@@ -846,8 +845,7 @@ class SystemDatasetService(ConfigService):
     def rekey_encrypted_datasets(self, tls, secret_path):
         """
         Wrap the keys of the system datasets that the pwenc secret encrypts with the secret at `secret_path`. Only the
-        node that has imported the pool of the system dataset does this. The datasets on the boot pool are not
-        encrypted.
+        node that has imported the pool of the system dataset does this. The boot pool has no such dataset.
         """
         config = self.middleware.call_sync('systemdataset.config')
         imported = {pool['name'] for pool in query_imported_fast_impl().values()}

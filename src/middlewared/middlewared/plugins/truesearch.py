@@ -99,12 +99,11 @@ class TruesearchService(Service):
         """
         reasons = []
 
-        # Boot pool is usually too small to fit the search index
+        # The boot pool has no index dataset, because it cannot hold an encrypted dataset.
         if await self.middleware.call('systemdataset.is_boot_pool'):
             reasons.append('The system dataset must not reside on the boot pool.')
-
         # setup_datasets leaves the index dataset unmounted when it cannot use the dataset.
-        if not await self.middleware.run_in_thread(_index_dataset_mounted):
+        elif not await self.middleware.run_in_thread(_index_dataset_mounted):
             reasons.append('The TrueSearch index dataset is not mounted. The middleware log gives the reason.')
 
         entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.TRUESEARCH)

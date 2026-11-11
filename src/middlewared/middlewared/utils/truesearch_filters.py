@@ -15,15 +15,17 @@ version. A unit test checks that the description names each field and each choic
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import enum
+from types import MappingProxyType
 from typing import Any
 
 from middlewared.api.base.validators.filters import TIMESTAMP_DESIGNATOR
 
 # A Spotlight query uses these characters as wildcards and quotes. A value must escape them.
-_SPECIAL = str.maketrans({char: "\\" + char for char in '\\"*?'})
+_SPECIAL = MappingProxyType(str.maketrans({char: "\\" + char for char in '\\"*?'}))
 
 
 class FieldType(enum.Enum):
@@ -35,31 +37,37 @@ class FieldType(enum.Enum):
 
 
 # The Spotlight comparison of each text operator, and the pattern around the value. `*` matches any text.
-TEXT_OPERATORS = {
-    "=": ("==", "{}"),
-    "!=": ("!=", "{}"),
-    "^": ("==", "{}*"),
-    "!^": ("!=", "{}*"),
-    "$": ("==", "*{}"),
-    "!$": ("!=", "*{}"),
-    "rin": ("==", "*{}*"),
-    "rnin": ("!=", "*{}*"),
-}
+TEXT_OPERATORS = MappingProxyType(
+    {
+        "=": ("==", "{}"),
+        "!=": ("!=", "{}"),
+        "^": ("==", "{}*"),
+        "!^": ("!=", "{}*"),
+        "$": ("==", "*{}"),
+        "!$": ("!=", "*{}"),
+        "rin": ("==", "*{}*"),
+        "rnin": ("!=", "*{}*"),
+    }
+)
 # A tag must agree with the full value.
-TAG_OPERATORS = {
-    "rin": ("==", "{}"),
-    "rnin": ("!=", "{}"),
-}
+TAG_OPERATORS = MappingProxyType(
+    {
+        "rin": ("==", "{}"),
+        "rnin": ("!=", "{}"),
+    }
+)
 # The Spotlight comparison of each number, date or choice operator.
-COMPARISONS = {"=": "==", "!=": "!=", ">": ">", ">=": ">=", "<": "<", "<=": "<="}
+COMPARISONS = MappingProxyType({"=": "==", "!=": "!=", ">": ">", ">=": ">=", "<": "<", "<=": "<="})
 # The operators of each type. `in` and `nin` compare with each value of a list.
-OPERATORS = {
-    FieldType.TEXT: tuple(TEXT_OPERATORS) + ("in", "nin"),
-    FieldType.TAGS: tuple(TAG_OPERATORS),
-    FieldType.NUMBER: tuple(COMPARISONS) + ("in", "nin"),
-    FieldType.DATE: tuple(COMPARISONS),
-    FieldType.CHOICE: ("=", "!=", "in", "nin"),
-}
+OPERATORS = MappingProxyType(
+    {
+        FieldType.TEXT: tuple(TEXT_OPERATORS) + ("in", "nin"),
+        FieldType.TAGS: tuple(TAG_OPERATORS),
+        FieldType.NUMBER: tuple(COMPARISONS) + ("in", "nin"),
+        FieldType.DATE: tuple(COMPARISONS),
+        FieldType.CHOICE: ("=", "!=", "in", "nin"),
+    }
+)
 # These types also take each operator with `C` before it. `C` ignores case and accents.
 _CASELESS = frozenset({FieldType.TEXT, FieldType.TAGS})
 
@@ -71,47 +79,51 @@ class QueryField:
     attribute: str
     type: FieldType
     # The Spotlight value of each choice of a choice field.
-    choices: dict[str, str] = field(default_factory=dict)
+    choices: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
 
 
-FIELDS: dict[str, QueryField] = {
-    "name": QueryField("kMDItemFSName", FieldType.TEXT),
-    "type": QueryField(
-        "kMDItemContentTypeTree",
-        FieldType.CHOICE,
-        {"DIRECTORY": "public.directory", "FILE": "public.data", "SYMLINK": "public.symlink"},
-    ),
-    "size": QueryField("kMDItemFSSize", FieldType.NUMBER),
-    "uid": QueryField("kMDItemFSOwnerUserID", FieldType.NUMBER),
-    "gid": QueryField("kMDItemFSOwnerGroupID", FieldType.NUMBER),
-    "mtime": QueryField("kMDItemFSContentChangeDate", FieldType.DATE),
-    "btime": QueryField("kMDItemFSCreationDate", FieldType.DATE),
-    "atime": QueryField("kMDItemLastUsedDate", FieldType.DATE),
-    "macos_kind": QueryField(
-        "kMDItemKind",
-        FieldType.CHOICE,
-        {
-            "FOLDER": "Folder",
-            "PDF": "PDF",
-            "IMAGE": "Image",
-            "MOVIE": "Movie",
-            "AUDIO": "Audio",
-            "TEXT": "Text",
-            "DOCUMENT": "Document",
-            "SPREADSHEET": "Spreadsheet",
-            "PRESENTATION": "Presentation",
-            "ARCHIVE": "Archive",
-            "APPLICATION": "Application",
-            "DISK_IMAGE": "Disk Image",
-            "PACKAGE": "Package",
-            "FONT": "Font",
-            "CONTACT": "Contact",
-            "MAIL": "Mail",
-        },
-    ),
-    "tags": QueryField("kMDItemUserTags", FieldType.TAGS),
-    "comment": QueryField("kMDItemFinderComment", FieldType.TEXT),
-}
+FIELDS: Mapping[str, QueryField] = MappingProxyType(
+    {
+        "name": QueryField("kMDItemFSName", FieldType.TEXT),
+        "type": QueryField(
+            "kMDItemContentTypeTree",
+            FieldType.CHOICE,
+            MappingProxyType({"DIRECTORY": "public.directory", "FILE": "public.data", "SYMLINK": "public.symlink"}),
+        ),
+        "size": QueryField("kMDItemFSSize", FieldType.NUMBER),
+        "uid": QueryField("kMDItemFSOwnerUserID", FieldType.NUMBER),
+        "gid": QueryField("kMDItemFSOwnerGroupID", FieldType.NUMBER),
+        "mtime": QueryField("kMDItemFSContentChangeDate", FieldType.DATE),
+        "btime": QueryField("kMDItemFSCreationDate", FieldType.DATE),
+        "atime": QueryField("kMDItemLastUsedDate", FieldType.DATE),
+        "macos_kind": QueryField(
+            "kMDItemKind",
+            FieldType.CHOICE,
+            MappingProxyType(
+                {
+                    "FOLDER": "Folder",
+                    "PDF": "PDF",
+                    "IMAGE": "Image",
+                    "MOVIE": "Movie",
+                    "AUDIO": "Audio",
+                    "TEXT": "Text",
+                    "DOCUMENT": "Document",
+                    "SPREADSHEET": "Spreadsheet",
+                    "PRESENTATION": "Presentation",
+                    "ARCHIVE": "Archive",
+                    "APPLICATION": "Application",
+                    "DISK_IMAGE": "Disk Image",
+                    "PACKAGE": "Package",
+                    "FONT": "Font",
+                    "CONTACT": "Contact",
+                    "MAIL": "Mail",
+                }
+            ),
+        ),
+        "tags": QueryField("kMDItemUserTags", FieldType.TAGS),
+        "comment": QueryField("kMDItemFinderComment", FieldType.TEXT),
+    }
+)
 
 
 def spotlight_query(filters: list[Any]) -> str:
