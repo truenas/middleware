@@ -1,3 +1,4 @@
+import asyncio
 import errno
 import itertools
 import os
@@ -22,6 +23,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
+from middlewared.job import JobCancelledException, State
 from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
@@ -257,7 +259,7 @@ class ContainerService(CRUDService):
         audit='Container create',
         audit_extended=lambda data: data['name'],
     )
-    @job(lock=lambda args: f'container_create:{args[0].get("name")}')
+    @job(lock=lambda args: f'container_create:{args[0].get("name")}', abortable=True)
     async def do_create(self, job, data):
         """
         Create a Container.
@@ -277,11 +279,18 @@ class ContainerService(CRUDService):
         verrors.check()
 
         image = data.pop('image')
+        pull_job = await self.middleware.call('container.image.pull', pool, image)
         try:
-            image_snapshot = await job.wrap(await self.middleware.call('container.image.pull', pool, image))
+            image_snapshot = await job.wrap(pull_job)
+        except asyncio.CancelledError:
+            pull_job.abort()
+            raise
         except ValidationErrors as image_verrors:
             verrors.add_child('container_create.image', image_verrors)
             verrors.check()
+
+        if pull_job.state == State.ABORTED:
+            raise JobCancelledException()
 
         await self.middleware.call('container.ensure_datasets', pool)
         data['dataset'] = os.path.join(container_dataset(pool), f'containers/{data["name"]}')
