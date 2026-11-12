@@ -13,8 +13,6 @@ from middlewared.api.current import (
     KerberosKeytabDeleteArgs,
     KerberosKeytabDeleteResult,
     KerberosKeytabEntry,
-    KerberosKeytabKerberosPrincipalChoicesArgs,
-    KerberosKeytabKerberosPrincipalChoicesResult,
     KerberosKeytabUpdateArgs,
     KerberosKeytabUpdateResult,
     KerberosRealmCreateArgs,
@@ -496,11 +494,7 @@ class KerberosKeytabService(CRUDService):
 
         return []
 
-    @api_method(
-        KerberosKeytabKerberosPrincipalChoicesArgs,
-        KerberosKeytabKerberosPrincipalChoicesResult,
-        roles=['DIRECTORY_SERVICE_READ'],
-    )
+    @private
     async def kerberos_principal_choices(self):
         """
         Keytabs typically have multiple entries for same principal (differentiated by enc_type).
