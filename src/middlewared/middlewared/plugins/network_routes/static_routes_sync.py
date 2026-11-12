@@ -34,13 +34,9 @@ def sync_impl(ctx: ServiceContext) -> None:
 
         default_keys = set()
         if default_ipv4:
-            default_keys.add(
-                (default_ipv4.dst, default_ipv4.dst_len, default_ipv4.gateway)
-            )
+            default_keys.add((default_ipv4.dst, default_ipv4.dst_len, default_ipv4.gateway))
         if default_ipv6:
-            default_keys.add(
-                (default_ipv6.dst, default_ipv6.dst_len, default_ipv6.gateway)
-            )
+            default_keys.add((default_ipv6.dst, default_ipv6.dst_len, default_ipv6.gateway))
 
         for route in get_routes(sock):
             route_key = (route.dst, route.dst_len, route.gateway)

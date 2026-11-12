@@ -36,9 +36,7 @@ def _apply_route[**P](
         ctx.logger.error("%s: %r", msg, e)
 
 
-def _get_default_ip4_route_from_dhcpcd(
-    ctx: ServiceContext, sock: socket.socket
-) -> str | None:
+def _get_default_ip4_route_from_dhcpcd(ctx: ServiceContext, sock: socket.socket) -> str | None:
     """Return the IPv4 gateway from DHCP leases, or None if not found."""
     ifaces = ctx.middleware.call_sync("datastore.query", "network.interfaces")
     if ifaces:
@@ -180,9 +178,7 @@ def sync_impl(ctx: ServiceContext) -> None:
     # Generate dhcpcd.conf so we can ignore routes (def gw) option
     # in case there is one explicitly set in network config
     ctx.middleware.call_sync("etc.generate", "dhcpcd")
-    config = ctx.middleware.call_sync(
-        "datastore.query", "network.globalconfiguration", [], {"get": True}
-    )
+    config = ctx.middleware.call_sync("datastore.query", "network.globalconfiguration", [], {"get": True})
     with netlink_route() as sock:
         _sync_ip4_impl(ctx, sock, config["gc_ipv4gateway"])
         _sync_ip6_impl(ctx, sock, config["gc_ipv6gateway"])

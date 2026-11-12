@@ -227,9 +227,7 @@ async def _reconcile(middleware):
             try:
                 await middleware.call("failover.call_remote", "etc.generate", ["grub"])
             except Exception:
-                middleware.logger.error(
-                    "failed to render grub.cfg on remote node", exc_info=True
-                )
+                middleware.logger.error("failed to render grub.cfg on remote node", exc_info=True)
     except Exception:
         middleware.logger.error("Failed to reconcile grub config", exc_info=True)
 
