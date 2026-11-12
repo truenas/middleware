@@ -223,20 +223,32 @@ class ContainerService(Service):
     @api_method(ContainerStopArgs, ContainerStopResult, roles=["CONTAINER_WRITE"])
     @job(lock=lambda args: f'container_stop_{args[0]}')
     def stop(self, job, id_, options):
-        """Stop `id` container."""
+        """
+        Stop `id` container.
+
+        Unless `force` is set, the container is sent a shutdown request. If it is still running after
+        `shutdown_timeout` seconds, it is killed when `force_after_timeout` is set, otherwise the job fails and
+        the container keeps running.
+        """
         container = self.middleware.call_sync("container.get_instance", id_)
         pylibvirt_container = self.pylibvirt_container(container)
+        containers = self.middleware.libvirt_domains_manager.containers
+        try:
+            if options["force"]:
+                containers.destroy(pylibvirt_container)
+                return
 
-        if options["force"]:
-            self.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container)
-            return
-
-        self.middleware.libvirt_domains_manager.containers.shutdown(self.pylibvirt_container(container))
-        if (
-            options["force_after_timeout"] and
-            self.middleware.call_sync("container.get_instance", id_)["status"]["state"] == "RUNNING"
-        ):
-            self.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container)
+            containers.shutdown(pylibvirt_container)
+            if self.middleware.call_sync("container.get_instance", id_)["status"]["state"] != "STOPPED":
+                if options["force_after_timeout"]:
+                    containers.destroy(pylibvirt_container)
+                else:
+                    raise CallError(
+                        f"Container {container['name']!r} did not stop within {container['shutdown_timeout']} seconds",
+                        errno.ETIMEDOUT,
+                    )
+        except PyLibvirtError as e:
+            raise CallError(str(e))
 
     @private
     def pylibvirt_container(self, container, check_ds=False):

@@ -263,9 +263,11 @@ def test_container_stop_force_after_timeout(ubuntu_container):
     container = call("container.get_instance", container["id"])
     assert container["status"]["state"] == "RUNNING"
 
-    call("container.stop", container["id"], job=True)
+    # Process with PID=1 ignores SIGTERM if it is not init
+    with pytest.raises(ClientException, match="did not stop within 5 seconds"):
+        call("container.stop", container["id"], job=True)
     container = call("container.get_instance", container["id"])
-    assert container["status"]["state"] == "RUNNING"  # Process with PID=1 ignores SIGTERM if it is not init
+    assert container["status"]["state"] == "RUNNING"
 
     call("container.stop", container["id"], {"force_after_timeout": True}, job=True)
     container = call("container.get_instance", container["id"])
