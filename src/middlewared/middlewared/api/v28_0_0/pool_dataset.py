@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NonEmptyString,
     NotRequired,
     excluded_field,
@@ -57,10 +58,10 @@ class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
     parsed: Any = Field(
         description="The ZFS property value parsed into the appropriate type (string, boolean, integer, etc.).",
     )
-    rawvalue: str | None = Field(
+    rawvalue: Multiline[str] | None = Field(
         description="The raw string value of the ZFS property as stored in the pool. Can be null if not set.",
     )
-    value: str | None = Field(
+    value: Multiline[str] | None = Field(
         description="The current effective value of the ZFS property as a string. Can be null if inherited or not set.",
     )
     source: str | None = Field(
@@ -236,12 +237,12 @@ class PoolDatasetCreateUserProperty(BaseModel):
     key: Annotated[str, Field(examples=["custom:backup_policy", "org:created_by"], pattern=".*:.*")] = Field(
         description="User property key in namespace:property format.",
     )
-    value: str = Field(description="The value to assign to the user property.")
+    value: Multiline[str] = Field(description="The value to assign to the user property.")
 
 
 class PoolDatasetCreate(BaseModel):
     name: DATASET_NAME = Field(description="The name of the dataset to create.")
-    comments: str = Field(default="INHERIT", description="Comments or description for the dataset.")
+    comments: Multiline[str] = Field(default="INHERIT", description="Comments or description for the dataset.")
     sync: Literal["STANDARD", "ALWAYS", "DISABLED", "INHERIT"] = Field(
         default="INHERIT",
         description="Synchronous write behavior for the dataset.",
@@ -466,7 +467,7 @@ class PoolDatasetEncryptionSummary(BaseModel):
     )
     valid_key: bool = Field(description="Whether the provided key is valid for this dataset.")
     locked: bool = Field(description="Whether the dataset is currently locked.")
-    unlock_error: str | None = Field(
+    unlock_error: Multiline[str] | None = Field(
         description="Error message if unlock would fail, or `null` if unlock would succeed.",
     )
     unlock_successful: bool = Field(description="Whether an unlock operation would be successful.")
@@ -599,7 +600,7 @@ class PoolDatasetUnlock(BaseModel):
 
 
 class PoolDatasetUpdateUserProperty(PoolDatasetCreateUserProperty):
-    value: str = Field(
+    value: Multiline[str] = Field(
         default=NotRequired,
         description="New value for the user property. Not required if removing the property.",
     )

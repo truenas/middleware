@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, NonEmptyString
+from middlewared.api.base import BaseModel, Multiline, NonEmptyString
 
 __all__ = (
     "SystemFeatureEnabledArgs",
@@ -40,7 +40,7 @@ class SystemFeatureEnabledResult(BaseModel):
 
 
 class SystemLicenseUpdateArgs(BaseModel):
-    license: NonEmptyString = Field(description="License key to apply to the system.")
+    license: Multiline[NonEmptyString] = Field(description="License key to apply to the system.")
 
 
 class SystemLicenseUpdateResult(BaseModel):

@@ -12,6 +12,7 @@ from middlewared.api.base import (
     LocalUID,
     LocalUsername,
     LongString,
+    Multiline,
     NonEmptyString,
     RemoteUsername,
     excluded_field,
@@ -145,7 +146,7 @@ class UserEntry(BaseModel):
             "WARNING: The established best practice is to use only key-based authentication for SSH servers."
         ),
     )
-    sshpubkey: LongString | None = Field(
+    sshpubkey: Multiline[LongString] | None = Field(
         default=None,
         description=(
             "SSH public keys corresponding to private keys that authenticate this user to the TrueNAS SSH server."

@@ -8,7 +8,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     FullAdmin,
-    SingleLineString,
+    Multiline,
     excluded_field,
 )
 
@@ -16,7 +16,7 @@ __all__ = ["SNMPEntry", "SNMPUpdate", "SNMPUpdateArgs", "SNMPUpdateResult"]
 
 _CONTACT_PATTERN = r'^[-_a-zA-Z0-9\s]*$'
 _COMMUNITY_PATTERN = r'^[!\$%&()\+\-_={}\[\]<>,\.\?a-zA-Z0-9\s]*$'
-_V3SecretString = Annotated[SingleLineString, StringConstraints(pattern=r'^[^"]*$')]
+_V3SecretString = Annotated[str, StringConstraints(pattern=r'^[^"]*$')]
 
 
 class SNMPEntry(BaseModel):
@@ -54,7 +54,7 @@ class SNMPEntry(BaseModel):
         default=None,
         description="Privacy passphrase for SNMP version 3 encryption. This field is required when `privproto` is set.",
     )
-    options: FullAdmin[str] = Field(
+    options: FullAdmin[Multiline[str]] = Field(
         description=(
             "Additional SNMP daemon configuration options. Manual settings should be used with caution as they may "
             "render the SNMP service non-functional."
@@ -71,16 +71,14 @@ class SNMPEntry(BaseModel):
 class SNMPUpdate(SNMPEntry, metaclass=ForUpdateMetaclass):
     """Changes to the SNMP service configuration.
 
-    Line breaks are rejected on every field interpolated bare into `snmpd.conf` or its persistent counterpart.
-    A double quote is rejected on the two secrets quoted into the `createUser` line of the latter.
-    Such a break would let the caller append directives, `rwcommunity` say, that `options` is marked to deny.
-    The constraint is on this model rather than `SNMPEntry`, so a value stored before it existed stays readable.
+    A double quote is rejected on the two secrets quoted into the `createUser` line of `snmpd.conf`.
+    It would otherwise let the caller append directives, `rwcommunity` say, that `options` is marked to deny.
     """
     id: Excluded = excluded_field()
-    location: SingleLineString
-    contact: EmailStr | Annotated[SingleLineString, StringConstraints(pattern=_CONTACT_PATTERN)]
-    community: SingleLineString = Field(pattern=_COMMUNITY_PATTERN)
-    v3_username: SingleLineString = Field(max_length=20)
+    location: str
+    contact: EmailStr | Annotated[str, StringConstraints(pattern=_CONTACT_PATTERN)]
+    community: str = Field(pattern=_COMMUNITY_PATTERN)
+    v3_username: str = Field(max_length=20)
     v3_password: Secret[_V3SecretString]
     v3_privpassphrase: Secret[_V3SecretString | None] = Field(default=None)
 

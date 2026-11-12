@@ -10,6 +10,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     HttpUrl,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
@@ -125,7 +126,7 @@ class DockerStatusArgs(BaseModel):
 
 
 class DockerStatusInfo(BaseModel):
-    description: str = Field(description="Human-readable description of the current Docker service status.")
+    description: Multiline[str] = Field(description="Human-readable description of the current Docker service status.")
     status: Literal[
         'PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED',
         'FAILED', 'MIGRATING', 'MIGRATION_FAILED'

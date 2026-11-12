@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 from pydantic import EmailStr, Field
 
-from middlewared.api.base import BaseModel, LongNonEmptyString, NonEmptyString
+from middlewared.api.base import BaseModel, LongNonEmptyString, Multiline, NonEmptyString
 
 __all__ = (
     "CertificateCreateImportedCertificatePayload",
@@ -16,15 +16,15 @@ __all__ = (
 
 class CertificateCreateImportedCertificatePayload(BaseModel):
     name: NonEmptyString
-    certificate: LongNonEmptyString
-    privatekey: LongNonEmptyString | None = None
+    certificate: Multiline[LongNonEmptyString]
+    privatekey: Multiline[LongNonEmptyString] | None = None
     passphrase: NonEmptyString | None = None
 
 
 class CertificateCreateImportedCSRPayload(BaseModel):
     name: NonEmptyString
-    CSR: LongNonEmptyString
-    privatekey: LongNonEmptyString
+    CSR: Multiline[LongNonEmptyString]
+    privatekey: Multiline[LongNonEmptyString]
     passphrase: NonEmptyString | None = None
 
 

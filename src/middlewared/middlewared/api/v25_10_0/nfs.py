@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NonEmptyString,
     TcpPort,
     exclude_tcp_ports,
@@ -113,7 +114,7 @@ class SharingNFSEntry(BaseModel):
     id: int = Field(description="Unique identifier for the NFS share.")
     path: NonEmptyString = Field(description="Local path to be exported.")
     aliases: list[NonEmptyString] = Field(default=[], description="IGNORED for now.")
-    comment: str = Field(default="", description="User comment associated with share.")
+    comment: Multiline[str] = Field(default="", description="User comment associated with share.")
     networks: list[NonEmptyString] = Field(
         default=[],
         description=(

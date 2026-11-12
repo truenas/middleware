@@ -6,8 +6,10 @@ from pydantic import (
     AnyUrl,
     BeforeValidator,
     ConfigDict,
+    GetCoreSchemaHandler,
     PlainSerializer,
 )
+from pydantic_core import CoreSchema
 
 from middlewared.api.base import BaseModel as PydanticBaseModel
 from middlewared.api.base import IPvAnyAddress as IPvAnyAddress  # noqa: F401,I250
@@ -22,6 +24,15 @@ class BaseModel(PydanticBaseModel):
         extra='allow',
         strict=False,
     )
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source: Any, handler: GetCoreSchemaHandler) -> CoreSchema:
+        """Opt out of the line break check that `BaseModel` adds to every string.
+
+        A catalog question is not ours to mark `Multiline`, and its value is stored with the installed
+        app, where no migration can repair a line break.
+        """
+        return handler(source)
 
 
 def _validate_absolute_path(value: str) -> str:

@@ -28,7 +28,7 @@ class NetworkConfigurationModel(sa.Model):
     gc_nameserver2 = sa.Column(sa.String(45), default='')
     gc_nameserver3 = sa.Column(sa.String(45), default='')
     gc_httpproxy = sa.Column(sa.String(255))
-    gc_hosts = sa.Column(sa.Text(), default='')
+    gc_hosts = sa.Column(sa.JSON(list))
     gc_domains = sa.Column(sa.Text(), default='')
     gc_service_announcement = sa.Column(sa.JSON(dict), default={'mdns': True, 'wsdd': True, "netbios": False})
     gc_hostname_virtual = sa.Column(sa.String(120), nullable=True)
@@ -86,10 +86,6 @@ class NetworkConfigurationService(ConfigService):
                 data['hostname_local'] = data['hostname_b']
 
         data['domains'] = data['domains'].split()
-        if (hosts := data['hosts'].strip()):
-            data['hosts'] = hosts.split('\n')
-        else:
-            data['hosts'] = []
 
         data['state'] = {
             'ipv4gateway': '',
@@ -262,7 +258,6 @@ class NetworkConfigurationService(ConfigService):
         dnssearch_changed = new_config['domains'] != config['domains']
 
         new_config['domains'] = ' '.join(new_config.get('domains', []))
-        new_config['hosts'] = '\n'.join(new_config.get('hosts', []))
 
         # update the db
         await self.middleware.call(

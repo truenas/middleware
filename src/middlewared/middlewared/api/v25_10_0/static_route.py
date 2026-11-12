@@ -1,6 +1,6 @@
 from pydantic import Field, IPvAnyAddress, IPvAnyNetwork
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, NonEmptyString, excluded_field
 
 __all__ = [
     "StaticRouteEntry",
@@ -16,7 +16,7 @@ __all__ = [
 class StaticRouteEntry(BaseModel):
     destination: NonEmptyString = Field(description="Destination network or host for this static route.")
     gateway: NonEmptyString = Field(description="Gateway IP address for this static route.")
-    description: str = Field(default="", description="Optional description for this static route.")
+    description: Multiline[str] = Field(default="", description="Optional description for this static route.")
     id: int = Field(description="Unique identifier for this static route.")
 
 

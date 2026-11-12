@@ -7,6 +7,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LibvirtUUID,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
@@ -67,7 +68,7 @@ class ContainerEntry(BaseModel):
         ),
     )
     name: NonEmptyString = Field(description="Container name.")
-    description: str = Field(default="", description="Container description.")
+    description: Multiline[str] = Field(default="", description="Container description.")
     devices: list[ContainerDeviceEntry] = Field(default=[], description="Container's devices.")
     cpuset: str | None = Field(
         default=None,
@@ -96,7 +97,7 @@ class ContainerEntry(BaseModel):
     dataset: str = Field(description="Which dataset to use as the container root filesystem.")
     init: str = Field(default='/sbin/init', description="\"init\" process commandline.")
     initdir: str | None = Field(default=None, description="\"init\" process working dir.")
-    initenv: dict[str, str] = Field(default={}, description="\"init\" process environment variables.")
+    initenv: dict[str, Multiline[str]] = Field(default={}, description="\"init\" process environment variables.")
     inituser: str | None = Field(default=None, description="\"init\" process username.")
     initgroup: str | None = Field(default=None, description="\"init\" process group.")
     idmap: IdmapConfiguration | None = Field(

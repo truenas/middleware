@@ -4,7 +4,7 @@ from types import NoneType, new_class
 from typing import Annotated, Any, Literal, Self, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ConfigDict, Field, Secret, create_model, model_serializer
+from pydantic import ConfigDict, Field, GetCoreSchemaHandler, Secret, create_model, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.fields import FieldInfo
@@ -14,6 +14,7 @@ from pydantic.types import SecretType
 from pydantic_core import PydanticUndefined, SchemaSerializer, core_schema
 
 from middlewared.api.base.full_admin import FullAdminOnly, document_full_admin_fields
+from middlewared.api.base.line_breaks import add_line_break_validators
 from middlewared.api.base.private import guard_private_fields, is_private_guard
 from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import undefined
@@ -315,6 +316,20 @@ class BaseModel(DumpableModel, metaclass=_BaseModelMetaclass):
         # validate_by_alias=True,
         populate_by_name=True,
     )
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source: Any,
+        handler: GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        """Reject a line break in every string of the model that `Multiline` did not opt out.
+
+        A value interpolated bare into a line-oriented configuration file is not free-form, and
+        finding every such field is not something a reviewer can be relied on to do. The ban is the
+        default instead, and a field whose value is genuinely more than one line says so.
+        """
+        return add_line_break_validators(handler(source))
 
     @classmethod
     def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:

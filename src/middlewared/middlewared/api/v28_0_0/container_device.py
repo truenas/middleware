@@ -7,6 +7,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     MACAddress,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
@@ -190,10 +191,10 @@ class USBCapability(BaseModel):
 class USBPassthroughDevice(BaseModel):
     capability: USBCapability = Field(description="USB device capability and identification information.")
     available: bool = Field(description="Whether the USB device is available for passthrough to virtual machines.")
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         description="Error message if the device cannot be used for passthrough. `null` if no error.",
     )
-    description: str = Field(description="Human-readable description of the USB device.")
+    description: Multiline[str] = Field(description="Human-readable description of the USB device.")
 
 
 class ContainerDeviceUsbChoicesArgs(BaseModel):
