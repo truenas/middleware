@@ -1,11 +1,11 @@
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Multiline
 
 __all__ = ["EnclosureLabelSetArgs", "EnclosureLabelSetResult"]
 
 
 class EnclosureLabelSetArgs(BaseModel):
     id: str
-    label: str
+    label: Multiline[str]
 
 
 class EnclosureLabelSetResult(BaseModel):

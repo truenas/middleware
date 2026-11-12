@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, NonEmptyString
 
 from pydantic import IPvAnyAddress, IPvAnyNetwork
 
@@ -17,7 +17,7 @@ __all__ = [
 class StaticRouteEntry(BaseModel):
     destination: NonEmptyString
     gateway: NonEmptyString
-    description: str = ""
+    description: Multiline[str] = ""
     id: int
 
 

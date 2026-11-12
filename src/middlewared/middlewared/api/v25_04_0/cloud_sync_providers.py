@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import AfterValidator, Discriminator, Field, Secret
 
-from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, NonEmptyString
+from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, Multiline, NonEmptyString
 
 __all__ = ["CloudCredentialProvider"]
 
@@ -33,14 +33,14 @@ class BoxCredentialsModel(BaseModel):
     type: Literal["BOX"]
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
 
 
 class DropboxCredentialsModel(BaseModel):
     type: Literal["DROPBOX"]
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
 
 
 class FTPCredentialsModel(BaseModel):
@@ -53,14 +53,14 @@ class FTPCredentialsModel(BaseModel):
 
 class GoogleCloudStorageCredentialsModel(BaseModel):
     type: Literal["GOOGLE_CLOUD_STORAGE"]
-    service_account_credentials: Secret[LongNonEmptyString]
+    service_account_credentials: Secret[Multiline[LongNonEmptyString]]
 
 
 class GoogleDriveCredentialsModel(BaseModel):
     type: Literal["GOOGLE_DRIVE"]
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
     team_drive: Secret[str] = ""
 
 
@@ -68,7 +68,7 @@ class GooglePhotosCredentialsModel(BaseModel):
     type: Literal["GOOGLE_PHOTOS"]
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
 
 
 class HTTPCredentialsModel(BaseModel):
@@ -78,14 +78,14 @@ class HTTPCredentialsModel(BaseModel):
 
 class HubicCredentialsModel(BaseModel):
     type: Literal["HUBIC"]
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
 
 
 class OneDriveCredentialsModel(BaseModel):
     type: Literal["ONEDRIVE"]
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
     drive_type: Secret[Literal["PERSONAL", "BUSINESS", "DOCUMENT_LIBRARY"]]
     drive_id: Secret[str]
 
@@ -94,7 +94,7 @@ class PCloudCredentialsModel(BaseModel):
     type: Literal["PCLOUD"]
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
     hostname: Secret[str] = ""
 
 
@@ -156,7 +156,7 @@ class YandexCredentialsModel(BaseModel):
     type: Literal["YANDEX"]
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
 
 
 CloudCredentialProvider = Annotated[

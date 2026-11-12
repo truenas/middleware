@@ -10,6 +10,7 @@ from middlewared.api.base import (
     excluded_field,
     ForUpdateMetaclass,
     LocalUsername,
+    Multiline,
     RemoteUsername,
     LocalUID,
     LongString,
@@ -70,7 +71,7 @@ class UserEntry(BaseModel):
     )
     password_disabled: bool = False
     ssh_password_enabled: bool = Field(default=False, description="Required if `password_disabled` is false.")
-    sshpubkey: LongString | None = None
+    sshpubkey: Multiline[LongString] | None = None
     locked: bool = False
     sudo_commands: list[NonEmptyString] = Field(default_factory=list)
     sudo_commands_nopasswd: list[NonEmptyString] = Field(default_factory=list)

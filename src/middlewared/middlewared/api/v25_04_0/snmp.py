@@ -4,7 +4,7 @@ from pydantic.types import StringConstraints
 from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, single_argument_args
 )
 
 __all__ = ["SNMPEntry",
@@ -23,7 +23,7 @@ class SNMPEntry(BaseModel):
     v3_privproto: Literal[None, 'AES', 'DES'] | None
     v3_privpassphrase: Secret[str | None] = None
     loglevel: int = Field(ge=0, le=7)
-    options: str
+    options: Multiline[str]
     zilstat: bool
     id: int
 

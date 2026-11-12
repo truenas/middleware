@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import ConfigDict, Field, field_validator
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, NonEmptyString, single_argument_args,
     single_argument_result,
 )
 
@@ -43,7 +43,7 @@ class VMEntry(BaseModel):
     cpu_mode: Literal['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH'] = 'CUSTOM'
     cpu_model: str | None = None
     name: NonEmptyString
-    description: str = ''
+    description: Multiline[str] = ''
     vcpus: int = Field(ge=1, default=1)
     cores: int = Field(ge=1, default=1)
     threads: int = Field(ge=1, default=1)
@@ -222,7 +222,7 @@ class VMVirtualizationDetailsArgs(BaseModel):
 @single_argument_result
 class VMVirtualizationDetailsResult(BaseModel):
     supported: bool
-    error: str | None
+    error: Multiline[str] | None
 
 
 class VMMaximumSupportedVCPUsArgs(BaseModel):
@@ -316,7 +316,7 @@ class VMDisplayWebURIArgs(BaseModel):
 
 @single_argument_result
 class VMDisplayWebURIResult(BaseModel):
-    error: str | None
+    error: Multiline[str] | None
     uri: str | None
 
 

@@ -3,8 +3,10 @@ from typing import Annotated, Literal, Union
 
 from pydantic import Discriminator, Field, Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
-                                  NonEmptyString, single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString, Multiline, NonEmptyString,
+    single_argument_args, single_argument_result
+)
 
 __all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
            "KeychainCredentialCreateArgs", "KeychainCredentialCreateResult",
@@ -19,8 +21,8 @@ __all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
 
 class SSHKeyPair(BaseModel):
     """At least one of the two keys must be provided on creation."""
-    private_key: LongString | None = None
-    public_key: LongString | None = Field(
+    private_key: Multiline[LongString] | None = None
+    public_key: Multiline[LongString] | None = Field(
         default=None,
         description="Can be omitted and automatically derived from the private key.",
     )
@@ -31,7 +33,9 @@ class SSHCredentials(BaseModel):
     port: int = 22
     username: str = "root"
     private_key: int = Field(description="Keychain Credential ID.")
-    remote_host_key: str = Field(description="Can be discovered with keychaincredential.remote_ssh_host_key_scan.")
+    remote_host_key: Multiline[str] = Field(
+        description="Can be discovered with keychaincredential.remote_ssh_host_key_scan.",
+    )
     connect_timeout: int = 10
 
 
@@ -136,7 +140,7 @@ class KeychainCredentialRemoteSshHostKeyScanArgs(BaseModel):
 
 
 class KeychainCredentialRemoteSshHostKeyScanResult(BaseModel):
-    result: LongString
+    result: Multiline[LongString]
 
 
 class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):

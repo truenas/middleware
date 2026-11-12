@@ -2,7 +2,9 @@ from typing import Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import (
+    BaseModel, LongString, Multiline, NonEmptyString, single_argument_args, single_argument_result
+)
 
 from .catalog import CatalogAppInfo
 
@@ -83,7 +85,7 @@ class AppEntry(BaseModel):
     version: NonEmptyString
     metadata: dict
     active_workloads: AppActiveWorkloads
-    notes: LongString | None
+    notes: Multiline[LongString] | None
     portals: dict
     version_details: dict | None = None
     config: dict | None = None
@@ -94,7 +96,7 @@ class AppCreateArgs(BaseModel):
     custom_app: bool = False
     values: Secret[dict] = Field(default_factory=dict)
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[Multiline[LongString]] = ''
     catalog_app: str | None = None
     app_name: str = Field(
         pattern=r'^[a-z]([-a-z0-9]*[a-z0-9])?$',
@@ -119,7 +121,7 @@ class AppCreateResult(BaseModel):
 class AppUpdate(BaseModel):
     values: Secret[dict] = Field(default_factory=dict)
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
-    custom_compose_config_string: Secret[LongString] = ''
+    custom_compose_config_string: Secret[Multiline[LongString]] = ''
 
 
 class AppUpdateArgs(BaseModel):
@@ -291,8 +293,8 @@ class AppGpuChoicesArgs(BaseModel):
 
 class GPU(BaseModel):
     vendor: NonEmptyString | None
-    description: LongString | None
-    error: NonEmptyString | None
+    description: Multiline[LongString] | None
+    error: Multiline[NonEmptyString] | None
     vendor_specific_config: dict
     gpu_details: dict
     pci_slot: NonEmptyString | None
@@ -364,7 +366,7 @@ class AppUpgradeSummaryResult(BaseModel):
     upgrade_version: str = Field(description="Version user has requested to be upgraded at")
     upgrade_human_version: str = Field(description="Human readable version user has requested to be upgraded at")
     available_versions_for_upgrade: list[AppVersionInfo] = Field(description="List of available versions for upgrade")
-    changelog: LongString | None
+    changelog: Multiline[LongString] | None
 
 
 class AppAvailableItem(CatalogAppInfo):

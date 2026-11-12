@@ -1,7 +1,7 @@
 from pydantic import IPvAnyAddress
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, LongNonEmptyString, NonEmptyString, single_argument_args,
+    BaseModel, ForUpdateMetaclass, HttpsOnlyURL, LongNonEmptyString, Multiline, NonEmptyString, single_argument_args,
 )
 
 
@@ -18,7 +18,7 @@ class TrueNASConnectEntry(BaseModel):
     registration_details: dict
     ips: list[NonEmptyString]
     status: NonEmptyString
-    status_reason: NonEmptyString
+    status_reason: Multiline[NonEmptyString]
     certificate: int | None
     account_service_base_url: HttpsOnlyURL
     leca_service_base_url: HttpsOnlyURL

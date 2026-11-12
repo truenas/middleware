@@ -2,8 +2,10 @@ from typing import Literal
 
 from pydantic import Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString,
-                                  LongString, NonEmptyString, single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString, LongString, Multiline, NonEmptyString,
+    single_argument_args, single_argument_result
+)
 from .cloud_sync_providers import CloudCredentialProvider
 
 __all__ = ["CredentialsEntry",
@@ -60,15 +62,15 @@ class CredentialsVerifyArgs(BaseModel):
 @single_argument_result
 class CredentialsVerifyResult(BaseModel):
     valid: bool
-    error: LongString | None = None
-    excerpt: LongString | None = None
+    error: Multiline[LongString] | None = None
+    excerpt: Multiline[LongString] | None = None
 
 
 @single_argument_args("onedrive_list_drives")
 class CloudSyncOneDriveListDrivesArgs(BaseModel):
     client_id: Secret[str] = ""
     client_secret: Secret[str] = ""
-    token: Secret[LongNonEmptyString]
+    token: Secret[Multiline[LongNonEmptyString]]
 
 
 class CloudSyncOneDriveListDrivesResult(BaseModel):
@@ -79,4 +81,4 @@ class CloudSyncOneDriveListDrivesDrive(BaseModel):
     drive_id: str
     drive_type: Literal["PERSONAL", "BUSINESS", "DOCUMENT_LIBRARY"]
     name: str
-    description: str
+    description: Multiline[str]
