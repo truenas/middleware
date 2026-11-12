@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, excluded_field
 
 __all__ = [
     "TunableEntry", "TunableCreateArgs", "TunableCreateResult", "TunableDeleteArgs", "TunableDeleteResult",
@@ -23,8 +23,10 @@ class TunableCreate(BaseModel):
         ),
     )
     var: str = Field(description="Name or identifier of the system parameter to tune.")
-    value: str = Field(description="Value to assign to the tunable parameter.")
-    comment: str = Field(default='', description="Optional descriptive comment explaining the purpose of this tunable.")
+    value: Multiline[str] = Field(description="Value to assign to the tunable parameter.")
+    comment: Multiline[str] = Field(
+        default='', description="Optional descriptive comment explaining the purpose of this tunable.",
+    )
     enabled: bool = Field(default=True, description="Whether this tunable is active and should be applied.")
     update_initramfs: bool = Field(
         default=True,
@@ -37,7 +39,9 @@ class TunableCreate(BaseModel):
 
 class TunableEntry(TunableCreate):
     id: int = Field(description="Unique identifier for the tunable configuration.")
-    orig_value: str = Field(description="Original system value of the parameter before this tunable was applied.")
+    orig_value: Multiline[str] = Field(
+        description="Original system value of the parameter before this tunable was applied.",
+    )
 
 
 class TunableTunableTypeChoices(BaseModel):

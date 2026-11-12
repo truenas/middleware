@@ -7,17 +7,22 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     HttpsOnlyURL,
     LongNonEmptyString,
+    Multiline,
     NonEmptyString,
 )
 
 __all__ = [
-    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
-    'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdate', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
-    'TrueNASConnectGenerateClaimTokenArgs',
-    'TrueNASConnectGenerateClaimTokenResult',
-    'TrueNASConnectConfigChangedEvent',
-    'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
+    "TrueNASConnectEntry",
+    "TrueNASConnectGetRegistrationUriArgs",
+    "TrueNASConnectGetRegistrationUriResult",
+    "TrueNASConnectUpdate",
+    "TrueNASConnectUpdateArgs",
+    "TrueNASConnectUpdateResult",
+    "TrueNASConnectGenerateClaimTokenArgs",
+    "TrueNASConnectGenerateClaimTokenResult",
+    "TrueNASConnectConfigChangedEvent",
+    "TrueNASConnectIpsWithHostnamesArgs",
+    "TrueNASConnectIpsWithHostnamesResult",
 ]
 
 
@@ -28,7 +33,7 @@ class TrueNASConnectEntry(BaseModel):
         description="Object containing registration information and credentials for TrueNAS Connect.",
     )
     status: NonEmptyString = Field(description="Current operational status of the TrueNAS Connect service.")
-    status_reason: NonEmptyString = Field(
+    status_reason: Multiline[NonEmptyString] = Field(
         description="Detailed explanation of the current status, including any error conditions.",
     )
     certificate: int | None = Field(
@@ -49,7 +54,7 @@ class TrueNASConnectEntry(BaseModel):
             "`tn_connect.update_environment`."
         ),
     )
-    tier: Literal['FOUNDATION', 'PLUS', 'BUSINESS'] | None = Field(description="TrueNAS Connect tier.")
+    tier: Literal["FOUNDATION", "PLUS", "BUSINESS"] | None = Field(description="TrueNAS Connect tier.")
     last_heartbeat_failure_datetime: str | None = Field(
         description=(
             "Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."

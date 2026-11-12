@@ -9,14 +9,18 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     FullAdmin,
     LongString,
-    SingleLineString,
+    Multiline,
     TcpPort,
     excluded_field,
 )
 
 __all__ = [
-    'SSHEntry', 'SSHUpdate', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs',
-    'SSHUpdateResult',
+    "SSHEntry",
+    "SSHUpdate",
+    "SSHBindifaceChoicesArgs",
+    "SSHBindifaceChoicesResult",
+    "SSHUpdateArgs",
+    "SSHUpdateResult",
 ]
 
 
@@ -29,37 +33,47 @@ class SSHEntry(BaseModel):
     kerberosauth: bool = Field(description="Whether Kerberos authentication is enabled.")
     tcpfwd: bool = Field(description="Whether TCP forwarding is enabled.")
     compression: bool = Field(description="Whether compression is enabled for SSH connections.")
-    sftp_log_level: Literal['', 'QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE', 'DEBUG', 'DEBUG2', 'DEBUG3'] = Field(
+    sftp_log_level: Literal["", "QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG2", "DEBUG3"] = Field(
         description="Logging level for SFTP subsystem (empty string means default).",
     )
     sftp_log_facility: Literal[
-        '', 'DAEMON', 'USER', 'AUTH', 'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3', 'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7'
+        "", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4", "LOCAL5", "LOCAL6", "LOCAL7"
     ] = Field(description="Syslog facility for SFTP logging (empty string means default).")
-    weak_ciphers: list[Literal['AES128-CBC', 'NONE']] = Field(
+    weak_ciphers: list[Literal["AES128-CBC", "NONE"]] = Field(
         description="Array of weak ciphers to enable for compatibility with legacy clients.",
     )
-    options: FullAdmin[LongString] = Field(description="Additional SSH daemon configuration options.")
-    privatekey: LongString = Field(description="SSH host private key data.")
-    host_dsa_key: LongString | None = Field(description="DSA host private key. `null` if not configured.")
-    host_dsa_key_pub: LongString | None = Field(description="DSA host public key. `null` if not configured.")
-    host_dsa_key_cert_pub: LongString | None = Field(
+    options: FullAdmin[Multiline[LongString]] = Field(description="Additional SSH daemon configuration options.")
+    privatekey: Multiline[LongString] = Field(description="SSH host private key data.")
+    host_dsa_key: Multiline[LongString] | None = Field(description="DSA host private key. `null` if not configured.")
+    host_dsa_key_pub: Multiline[LongString] | None = Field(description="DSA host public key. `null` if not configured.")
+    host_dsa_key_cert_pub: Multiline[LongString] | None = Field(
         description="DSA host certificate public key. `null` if not configured.",
     )
-    host_ecdsa_key: LongString | None = Field(description="ECDSA host private key. `null` if not configured.")
-    host_ecdsa_key_pub: LongString | None = Field(description="ECDSA host public key. `null` if not configured.")
-    host_ecdsa_key_cert_pub: LongString | None = Field(
+    host_ecdsa_key: Multiline[LongString] | None = Field(
+        description="ECDSA host private key. `null` if not configured.",
+    )
+    host_ecdsa_key_pub: Multiline[LongString] | None = Field(
+        description="ECDSA host public key. `null` if not configured.",
+    )
+    host_ecdsa_key_cert_pub: Multiline[LongString] | None = Field(
         description="ECDSA host certificate public key. `null` if not configured.",
     )
-    host_ed25519_key: LongString | None = Field(description="Ed25519 host private key. `null` if not configured.")
-    host_ed25519_key_pub: LongString | None = Field(description="Ed25519 host public key. `null` if not configured.")
-    host_ed25519_key_cert_pub: LongString | None = Field(
+    host_ed25519_key: Multiline[LongString] | None = Field(
+        description="Ed25519 host private key. `null` if not configured.",
+    )
+    host_ed25519_key_pub: Multiline[LongString] | None = Field(
+        description="Ed25519 host public key. `null` if not configured.",
+    )
+    host_ed25519_key_cert_pub: Multiline[LongString] | None = Field(
         description="Ed25519 host certificate public key. `null` if not configured.",
     )
-    host_key: LongString | None = Field(description="Legacy SSH host private key. `null` if not configured.")
-    host_key_pub: LongString | None = Field(description="Legacy SSH host public key. `null` if not configured.")
-    host_rsa_key: LongString | None = Field(description="RSA host private key. `null` if not configured.")
-    host_rsa_key_pub: LongString | None = Field(description="RSA host public key. `null` if not configured.")
-    host_rsa_key_cert_pub: LongString | None = Field(
+    host_key: Multiline[LongString] | None = Field(description="Legacy SSH host private key. `null` if not configured.")
+    host_key_pub: Multiline[LongString] | None = Field(
+        description="Legacy SSH host public key. `null` if not configured.",
+    )
+    host_rsa_key: Multiline[LongString] | None = Field(description="RSA host private key. `null` if not configured.")
+    host_rsa_key_pub: Multiline[LongString] | None = Field(description="RSA host public key. `null` if not configured.")
+    host_rsa_key_cert_pub: Multiline[LongString] | None = Field(
         description="RSA host certificate public key. `null` if not configured.",
     )
 
@@ -68,11 +82,11 @@ class SSHUpdate(SSHEntry, metaclass=ForUpdateMetaclass):
     """Changes to the SSH service configuration.
 
     Each of `password_login_groups` is quoted into a `Match Group` line of `sshd_config`.
-    A line break or a double quote in one would let the caller add directives that `options` is marked to deny.
-    The constraint is on this model rather than `SSHEntry`, so a value stored before it existed stays readable.
+    A double quote in one would let the caller add directives that `options` is marked to deny.
     """
+
     id: Excluded = excluded_field()
-    password_login_groups: list[Annotated[SingleLineString, StringConstraints(pattern=r'^[^"]*$')]]
+    password_login_groups: list[Annotated[str, StringConstraints(pattern=r'^[^"]*$')]]
     privatekey: Excluded = excluded_field()
     host_dsa_key: Excluded = excluded_field()
     host_dsa_key_pub: Excluded = excluded_field()

@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, FullAdmin, LongString, NonEmptyString
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, FullAdmin, LongString, Multiline, NonEmptyString
 
 from .cloud_credential import CredentialsEntry
 from .common import CronModel
@@ -55,8 +55,8 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
         default=False,
         description=(
             "Valid only for GOOGLE_DRIVER provider. Allow files which return cannotDownloadAbusiveFile to be "
-            "downloaded. If downloading a file returns the error \"This file has been identified as malware or spam and"
-            " cannot be downloaded\" with the error code \"cannotDownloadAbusiveFile\" then enable this flag to "
+            'downloaded. If downloading a file returns the error "This file has been identified as malware or spam and'
+            ' cannot be downloaded" with the error code "cannotDownloadAbusiveFile" then enable this flag to '
             "indicate you acknowledge the risks of downloading the file and TrueNAS will download it anyway."
         ),
     )
@@ -65,8 +65,17 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
         default=None,
         description="Valid only for S3 provider. Server-Side Encryption.",
     )
-    storage_class: Literal["", "STANDARD", "REDUCED_REDUNDANCY", "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING",
-                           "GLACIER", "GLACIER_IR", "DEEP_ARCHIVE"] = Field(
+    storage_class: Literal[
+        "",
+        "STANDARD",
+        "REDUCED_REDUNDANCY",
+        "STANDARD_IA",
+        "ONEZONE_IA",
+        "INTELLIGENT_TIERING",
+        "GLACIER",
+        "GLACIER_IR",
+        "DEEP_ARCHIVE",
+    ] = Field(
         default="",
         description="Valid only for S3 provider. The storage class to use.",
     )
@@ -74,18 +83,18 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
 
 class BaseCloudEntry(BaseModel):
     id: int = Field(description="Unique identifier for this cloud storage configuration.")
-    description: str = Field(default="", description="The name of the task to display in the UI.")
+    description: Multiline[str] = Field(default="", description="The name of the task to display in the UI.")
     path: str = Field(description="The local path to back up beginning with `/mnt` or `/dev/zvol`.")
     dataset: str | None = Field(
         description=(
             "The ZFS dataset containing this path (e.g., 'tank/backup'). This is a read-only field automatically "
-            "resolved from \"path\". May be `null` if dataset is unavailable."
+            'resolved from "path". May be `null` if dataset is unavailable.'
         ),
     )
     relative_path: str | None = Field(
         description=(
             "The path relative to the dataset mountpoint (e.g., 'subdir/data'). This is a read-only field automatically"
-            " resolved from \"path\". May be `null` if dataset is unavailable."
+            ' resolved from "path". May be `null` if dataset is unavailable.'
         ),
     )
     credentials: CredentialsEntry = Field(description="Cloud credentials to use for each backup.")
@@ -94,11 +103,11 @@ class BaseCloudEntry(BaseModel):
         default_factory=CloudCron,
         description="Cron schedule dictating when the task should run.",
     )
-    pre_script: FullAdmin[LongString] = Field(
+    pre_script: FullAdmin[Multiline[LongString]] = Field(
         default="",
         description="A Bash script to run immediately before every backup.",
     )
-    post_script: FullAdmin[LongString] = Field(
+    post_script: FullAdmin[Multiline[LongString]] = Field(
         default="",
         description="A Bash script to run immediately after every backup if it succeeds.",
     )

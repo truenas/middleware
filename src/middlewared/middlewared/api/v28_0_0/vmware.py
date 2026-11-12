@@ -7,6 +7,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NotRequired,
     excluded_field,
     single_argument_args,
@@ -15,12 +16,18 @@ from middlewared.api.base import (
 
 __all__ = [
     "VMWareEntry",
-    "VMWareCreateArgs", "VMWareCreateResult",
-    "VMWareUpdateArgs", "VMWareUpdateResult",
-    "VMWareDeleteArgs", "VMWareDeleteResult",
-    "VMWareGetDatastoresArgs", "VMWareGetDatastoresResult",
-    "VMWareMatchDatastoresWithDatasetsArgs", "VMWareMatchDatastoresWithDatasetsResult",
-    "VMWareDatasetHasVmsArgs", "VMWareDatasetHasVmsResult",
+    "VMWareCreateArgs",
+    "VMWareCreateResult",
+    "VMWareUpdateArgs",
+    "VMWareUpdateResult",
+    "VMWareDeleteArgs",
+    "VMWareDeleteResult",
+    "VMWareGetDatastoresArgs",
+    "VMWareGetDatastoresResult",
+    "VMWareMatchDatastoresWithDatasetsArgs",
+    "VMWareMatchDatastoresWithDatasetsResult",
+    "VMWareDatasetHasVmsArgs",
+    "VMWareDatasetHasVmsResult",
 ]
 
 
@@ -36,7 +43,7 @@ class VMWareEntryState(BaseModel):
             "* `BLOCKED`: Network activity is blocked"
         ),
     )
-    error: str = Field(default=NotRequired, description="Error text (if any).")
+    error: Multiline[str] = Field(default=NotRequired, description="Error text (if any).")
     datetime_: datetime = Field(alias="datetime", default=NotRequired, description="State update datetime.")
 
 
@@ -118,7 +125,7 @@ class VMWareMatchDatastoresWithDatasetsResult(BaseModel):
 
 class VMWareMatchDatastoresWithDatasetsResultDatastore(BaseModel):
     name: str = Field(description="Name of the VMware datastore.")
-    description: str = Field(description="Human-readable description of the datastore.")
+    description: Multiline[str] = Field(description="Human-readable description of the datastore.")
     filesystems: list[str] = Field(
         description="Array of local filesystem names that can provide storage for this datastore.",
     )
@@ -129,7 +136,7 @@ class VMWareMatchDatastoresWithDatasetsResultFilesystem(BaseModel):
         description="Type of storage - FILESYSTEM for ZFS datasets, VOLUME for ZFS volumes.",
     )
     name: str = Field(description="Name of the local filesystem or volume.")
-    description: str = Field(description="Human-readable description of the filesystem or volume.")
+    description: Multiline[str] = Field(description="Human-readable description of the filesystem or volume.")
 
 
 class VMWareDatasetHasVmsArgs(BaseModel):

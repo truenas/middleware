@@ -11,20 +11,30 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'ReportingExportsEntry', 'ReportingExportsCreate', 'ReportingExportsCreateArgs', 'ReportingExportsCreateResult',
-    'GraphiteExporter', 'ReportingExporterUpdate', 'ReportingExportsUpdateArgs', 'ReportingExportsUpdateResult',
-    'ReportingExportsDeleteArgs', 'ReportingExportsDeleteResult', 'ReportingExportsExporterSchemasArgs',
-    'ReportingExportsExporterSchemasResult', 'ReportingExporterSchema',
+    "ReportingExportsEntry",
+    "ReportingExportsCreate",
+    "ReportingExportsCreateArgs",
+    "ReportingExportsCreateResult",
+    "GraphiteExporter",
+    "ReportingExporterUpdate",
+    "ReportingExportsUpdateArgs",
+    "ReportingExportsUpdateResult",
+    "ReportingExportsDeleteArgs",
+    "ReportingExportsDeleteResult",
+    "ReportingExportsExporterSchemasArgs",
+    "ReportingExportsExporterSchemasResult",
+    "ReportingExporterSchema",
 ]
 
 
 # Exporter models
 
+
 class GraphiteExporter(BaseModel):
-    exporter_type: Literal['GRAPHITE'] = Field(description="Type of exporter - Graphite.")
+    exporter_type: Literal["GRAPHITE"] = Field(description="Type of exporter - Graphite.")
     destination_ip: NonEmptyString = Field(description="IP address of the Graphite server.")
     destination_port: int = Field(ge=1, le=65535, description="Port number of the Graphite server.")
-    prefix: str = Field(default='scale', description="Prefix to prepend to all metric names.")
+    prefix: str = Field(default="scale", description="Prefix to prepend to all metric names.")
     namespace: NonEmptyString = Field(description="Namespace to organize metrics under.")
     update_every: int = Field(default=1, ge=1, description="Interval in seconds between metric updates.")
     buffer_on_failures: int = Field(
@@ -37,7 +47,7 @@ class GraphiteExporter(BaseModel):
         description="Whether to send human-readable names instead of internal IDs.",
     )
     matching_charts: NonEmptyString = Field(
-        default='*',
+        default="*",
         description="Pattern to match charts for export (supports wildcards).",
     )
 
@@ -46,6 +56,7 @@ ExporterType: TypeAlias = GraphiteExporter
 
 
 # Reporting Exporter Service
+
 
 class ReportingExportsEntry(BaseModel):
     id: int = Field(description="Unique identifier for the reporting exporter.")
@@ -96,20 +107,20 @@ class ReportingExportsExporterSchemasArgs(BaseModel):
 
 
 class ReportingExporterAttributeSchema(BaseModel):
-    name: str = Field(alias='_name_', description="Internal name of the exporter attribute.")
+    name: str = Field(alias="_name_", description="Internal name of the exporter attribute.")
     title: str = Field(description="Human-readable title for the attribute.")
     required: bool = Field(
-        alias='_required_',
+        alias="_required_",
         description="Whether this attribute is required for the exporter configuration.",
     )
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class ReportingExporterSchema(BaseModel):
     key: str = Field(description="Unique key identifying the exporter type.")
     schema_: list[ReportingExporterAttributeSchema] = Field(
-        alias='schema',
+        alias="schema",
         description="Array of attribute definitions for this exporter type.",
     )
 

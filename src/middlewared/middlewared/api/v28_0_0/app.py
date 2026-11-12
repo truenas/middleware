@@ -2,33 +2,91 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
-from middlewared.api.base import BaseModel, FullAdmin, LongString, NonEmptyString, single_argument_result
+from middlewared.api.base import BaseModel, FullAdmin, LongString, Multiline, NonEmptyString, single_argument_result
 
 from .catalog import CatalogAppInfo
 
 __all__ = [
-    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
-    'AppEntry', 'AppCreate', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
-    'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
-    'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
-    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult',
-    'AppPullImages', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppCertificate', 'AppCertificateChoices', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
-    'AppContainerIDOptions', 'AppContainerIdsArgs', 'AppContainerIdsResult',
-    'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult', 'AppContainerResponse',
-    'AppGPUResponse', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'ContainerDetails', 'GPU',
-    'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppRollbackOptions',
-    'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
-    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppUpgradeSummary', 'AppVersionInfo',
-    'AppRollbackArgs', 'AppDelete', 'AppUpdate', 'AppUpgradeBulkEntry', 'AppBulkUpgradeJobResult',
-    'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
-    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
-    'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
-    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult', 'AppUpgradeOptions', 'AppUpgradeSummaryOptions',
+    "AppCategoriesArgs",
+    "AppCategoriesResult",
+    "AppSimilarArgs",
+    "AppSimilarResult",
+    "AppAvailableItem",
+    "AppEntry",
+    "AppCreate",
+    "AppCreateArgs",
+    "AppCreateResult",
+    "AppUpdateArgs",
+    "AppUpdateResult",
+    "AppDeleteArgs",
+    "AppDeleteResult",
+    "AppConfigArgs",
+    "AppConfigResult",
+    "AppConvertToCustomArgs",
+    "AppConvertToCustomResult",
+    "AppStopArgs",
+    "AppStopResult",
+    "AppStartArgs",
+    "AppStartResult",
+    "AppRedeployArgs",
+    "AppRedeployResult",
+    "AppOutdatedDockerImagesArgs",
+    "AppOutdatedDockerImagesResult",
+    "AppPullImages",
+    "AppPullImagesArgs",
+    "AppPullImagesResult",
+    "AppCertificate",
+    "AppCertificateChoices",
+    "AppCertificateChoicesArgs",
+    "AppCertificateChoicesResult",
+    "AppContainerIDOptions",
+    "AppContainerIdsArgs",
+    "AppContainerIdsResult",
+    "AppContainerConsoleChoicesArgs",
+    "AppContainerConsoleChoicesResult",
+    "AppContainerResponse",
+    "AppGPUResponse",
+    "AppGpuChoicesArgs",
+    "AppGpuChoicesResult",
+    "ContainerDetails",
+    "GPU",
+    "AppIpChoices",
+    "AppIpChoicesArgs",
+    "AppIpChoicesResult",
+    "AppRollbackOptions",
+    "AppUsedPortsArgs",
+    "AppUsedPortsResult",
+    "AppUsedHostIpsArgs",
+    "AppUsedHostIpsResult",
+    "AppAvailableSpaceArgs",
+    "AppAvailableSpaceResult",
+    "AppUpgradeSummary",
+    "AppVersionInfo",
+    "AppRollbackArgs",
+    "AppDelete",
+    "AppUpdate",
+    "AppUpgradeBulkEntry",
+    "AppBulkUpgradeJobResult",
+    "AppRollbackResult",
+    "AppRollbackVersionsArgs",
+    "AppRollbackVersionsResult",
+    "AppUpgradeArgs",
+    "AppUpgradeResult",
+    "AppUpgradeSummaryArgs",
+    "AppUpgradeSummaryResult",
+    "AppContainerLogsFollowTailEventSourceArgs",
+    "AppContainerLogsFollowTailEventSourceEvent",
+    "AppStatsEventSourceArgs",
+    "AppStatsEventSourceEvent",
+    "AppLatestItem",
+    "AppUpgradeBulkArgs",
+    "AppUpgradeBulkResult",
+    "AppUpgradeOptions",
+    "AppUpgradeSummaryOptions",
 ]
 
 
-CONTAINER_STATES: TypeAlias = Literal['crashed', 'created', 'exited', 'running', 'starting']
+CONTAINER_STATES: TypeAlias = Literal["crashed", "created", "exited", "running", "starting"]
 
 
 class HostPorts(BaseModel):
@@ -38,7 +96,7 @@ class HostPorts(BaseModel):
 
 class UsedPorts(BaseModel):
     container_port: int = Field(description="The port number inside the container.")
-    protocol: str = Field(examples=['tcp', 'udp'], description="The network protocol used.")
+    protocol: str = Field(examples=["tcp", "udp"], description="The network protocol used.")
     host_ports: list[HostPorts] = Field(description="Array of host port mappings for this container port.")
 
 
@@ -46,7 +104,7 @@ class AppVolumes(BaseModel):
     source: str = Field(description="The source path or volume name on the host system.")
     destination: str = Field(description="The mount path inside the container.")
     mode: str = Field(description="The mount mode (e.g., 'rw' for read-write, 'ro' for read-only).")
-    type_: str = Field(alias='type', examples=['bind', 'volume'], description="The volume type.")
+    type_: str = Field(alias="type", examples=["bind", "volume"], description="The volume type.")
 
 
 class AppContainerDetails(BaseModel):
@@ -63,7 +121,7 @@ class AppNetworks(BaseModel):
     Id: str = Field(description="Unique identifier for the Docker network.")
     Labels: dict = Field(description="Key-value pairs of labels associated with the network.")
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class AppActiveWorkloads(BaseModel):
@@ -81,13 +139,13 @@ class AppActiveWorkloads(BaseModel):
 class AppEntry(BaseModel):
     name: NonEmptyString = Field(description="The display name of the application.")
     id: NonEmptyString = Field(description="Unique identifier for the application instance.")
-    state: Literal['CRASHED', 'DEPLOYING', 'ERROR', 'RUNNING', 'STOPPED', 'STOPPING'] = Field(
+    state: Literal["CRASHED", "DEPLOYING", "ERROR", "RUNNING", "STOPPED", "STOPPING"] = Field(
         description=(
             "Current operational state of the application. `ERROR` means the application's on-disk data could "
             "not be read, in which case the only operation it supports is deletion."
         ),
     )
-    error_reason: Literal['METADATA_MISSING', 'METADATA_UNREADABLE', 'METADATA_INCOMPLETE'] | None = Field(
+    error_reason: Literal["METADATA_MISSING", "METADATA_UNREADABLE", "METADATA_INCOMPLETE"] | None = Field(
         default=None,
         description=(
             "Why the application is in the `ERROR` state, or `null` if it is not. `METADATA_MISSING` means its "
@@ -122,7 +180,9 @@ class AppEntry(BaseModel):
     active_workloads: AppActiveWorkloads = Field(
         description="Information about the running containers, ports, and resources used by this application.",
     )
-    notes: LongString | None = Field(description="User-provided notes or comments about this application instance.")
+    notes: Multiline[LongString] | None = Field(
+        description="User-provided notes or comments about this application instance.",
+    )
     action_required: bool = Field(
         description=(
             "Whether this application requires user action (e.g., configuration migration or deprecation handling)."
@@ -167,8 +227,8 @@ class AppCreate(BaseModel):
         validate_default=True,
         description="Docker Compose configuration as a structured object for custom applications.",
     )
-    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
-        default='',
+    custom_compose_config_string: FullAdmin[Secret[Multiline[LongString]]] = Field(
+        default="",
         validate_default=True,
         description="Docker Compose configuration as a YAML string for custom applications.",
     )
@@ -177,8 +237,8 @@ class AppCreate(BaseModel):
         description="Name of the catalog application to install. Required when `custom_app` is `false`.",
     )
     app_name: str = Field(
-        examples=['abc123', 'abc', 'abcd-1232'],
-        pattern='^[a-z]([-a-z0-9]*[a-z0-9])?$',
+        examples=["abc123", "abc", "abcd-1232"],
+        pattern="^[a-z]([-a-z0-9]*[a-z0-9])?$",
         min_length=1,
         max_length=40,
         description=(
@@ -190,13 +250,13 @@ class AppCreate(BaseModel):
         ),
     )
     train: NonEmptyString = Field(
-        default='stable',
-        examples=['stable', 'enterprise'],
+        default="stable",
+        examples=["stable", "enterprise"],
         description="The catalog train to install from.",
     )
     version: NonEmptyString = Field(
-        default='latest',
-        examples=['latest', '1.2.3'],
+        default="latest",
+        examples=["latest", "1.2.3"],
         description="The version of the application to install.",
     )
 
@@ -220,8 +280,8 @@ class AppUpdate(BaseModel):
         validate_default=True,
         description="Updated Docker Compose configuration as a structured object.",
     )
-    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
-        default='',
+    custom_compose_config_string: FullAdmin[Secret[Multiline[LongString]]] = Field(
+        default="",
         validate_default=True,
         description="Updated Docker Compose configuration as a YAML string.",
     )
@@ -353,6 +413,7 @@ class ContainerDetails(BaseModel):
 
 class AppContainerResponse(RootModel[dict[str, ContainerDetails]]):
     """Object mapping container IDs to their detailed information."""
+
     pass
 
 
@@ -434,10 +495,10 @@ class GPU(BaseModel):
         examples=["NVIDIA", "AMD", "Intel"],
         description="GPU vendor name. `null` if not detected.",
     )
-    description: LongString | None = Field(
+    description: Multiline[LongString] | None = Field(
         description="Human-readable description of the GPU device. `null` if not available.",
     )
-    error: NonEmptyString | None = Field(
+    error: Multiline[NonEmptyString] | None = Field(
         description="Error message if the GPU cannot be accessed or configured. `null` if no errors.",
     )
     vendor_specific_config: dict = Field(description="Configuration options specific to the GPU vendor.")
@@ -482,7 +543,7 @@ class AppRollbackVersionsResult(BaseModel):
 
 class AppUpgradeOptions(BaseModel):
     app_version: NonEmptyString = Field(
-        default='latest',
+        default="latest",
         description="Target version to upgrade to. Use 'latest' for the newest available version.",
     )
     values: Secret[dict] = Field(
@@ -522,7 +583,9 @@ class AppUpgradeBulkArgs(BaseModel):
 
 class AppBulkUpgradeJobResult(BaseModel):
     app_name: NonEmptyString = Field(description="Name of the application.")
-    error: LongString | None = Field(description="Error message if the upgrade failed, or `null` on success.")
+    error: Multiline[LongString] | None = Field(
+        description="Error message if the upgrade failed, or `null` on success.",
+    )
     result: AppEntry | None = Field(description="The application entry after upgrade, or `null` if the upgrade failed.")
 
 
@@ -534,7 +597,7 @@ class AppUpgradeBulkResult(BaseModel):
 
 class AppUpgradeSummaryOptions(BaseModel):
     app_version: NonEmptyString = Field(
-        default='latest',
+        default="latest",
         description="Target version to generate upgrade summary for. Use 'latest' for the newest available version.",
     )
 
@@ -558,7 +621,7 @@ class AppUpgradeSummary(BaseModel):
     upgrade_version: str = Field(description="Version user has requested to be upgraded at.")
     upgrade_human_version: str = Field(description="Human-readable version user has requested to be upgraded at.")
     available_versions_for_upgrade: list[AppVersionInfo] = Field(description="List of available versions for upgrade.")
-    changelog: LongString | None = Field(
+    changelog: Multiline[LongString] | None = Field(
         description="Changelog or release notes for the upgrade version. `null` if not available.",
     )
 
@@ -571,7 +634,7 @@ class AppAvailableItem(CatalogAppInfo):
     catalog: NonEmptyString = Field(description="Name of the catalog this application comes from.")
     installed: bool = Field(description="Whether this application is currently installed on the system.")
     train: NonEmptyString = Field(
-        examples=['stable', 'enterprise'],
+        examples=["stable", "enterprise"],
         description="The catalog train this application version belongs to.",
     )
     popularity_rank: int | None = Field(
@@ -583,6 +646,7 @@ class AppAvailableItem(CatalogAppInfo):
 
 class AppLatestItem(AppAvailableItem):
     """Represents the latest version of an available application."""
+
     pass
 
 
@@ -596,7 +660,7 @@ class AppCategoriesResult(BaseModel):
 
 class AppSimilarArgs(BaseModel):
     app_name: NonEmptyString = Field(description="Name of the application to find similar apps for.")
-    train: NonEmptyString = Field(examples=['stable', 'enterprise'], description="The catalog train to search within.")
+    train: NonEmptyString = Field(examples=["stable", "enterprise"], description="The catalog train to search within.")
 
 
 class AppSimilarResult(BaseModel):
@@ -617,7 +681,7 @@ class AppContainerLogsFollowTailEventSourceArgs(BaseModel):
 
 @single_argument_result
 class AppContainerLogsFollowTailEventSourceEvent(BaseModel):
-    data: str = Field(description="The log line content.")
+    data: Multiline[str] = Field(description="The log line content.")
     timestamp: str | None = Field(description="Timestamp of the log entry. `null` if not available.")
 
 

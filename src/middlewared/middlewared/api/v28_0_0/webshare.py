@@ -13,16 +13,27 @@ from middlewared.api.base import (
 from .zfs_tier import TierInfo
 
 __all__ = [
-    "WebshareEntry", "WebshareUpdateArgs", "WebshareUpdate", "WebshareUpdateResult",
-    "WebshareBindipChoicesArgs", "WebshareBindipChoicesResult",
-    "SharingWebshareEntry", "SharingWebshareCreate", "SharingWebshareCreateArgs", "SharingWebshareCreateResult",
-    "SharingWebshareUpdate", "SharingWebshareUpdateArgs", "SharingWebshareUpdateResult",
-    "SharingWebshareDeleteArgs", "SharingWebshareDeleteResult",
+    "WebshareEntry",
+    "WebshareUpdateArgs",
+    "WebshareUpdate",
+    "WebshareUpdateResult",
+    "WebshareBindipChoicesArgs",
+    "WebshareBindipChoicesResult",
+    "SharingWebshareEntry",
+    "SharingWebshareCreate",
+    "SharingWebshareCreateArgs",
+    "SharingWebshareCreateResult",
+    "SharingWebshareUpdate",
+    "SharingWebshareUpdateArgs",
+    "SharingWebshareUpdateResult",
+    "SharingWebshareDeleteArgs",
+    "SharingWebshareDeleteResult",
 ]
 
 
 class WebshareEntry(BaseModel):
-    """TrueNAS Webshare server configuration. """
+    """TrueNAS Webshare server configuration."""
+
     id: int = Field(description="Unique identifier for the Webshare service configuration.")
     bindip: list[str] = Field(description="List of IP addresses used by the TrueNAS Webshare server.")
     search: bool = Field(description="Search indexing is enabled.")
@@ -72,7 +83,8 @@ class WebshareBindipChoicesResult(BaseModel):
 
 
 class SharingWebshareEntry(BaseModel):
-    """Webshare share entry on the TrueNAS server. """
+    """Webshare share entry on the TrueNAS server."""
+
     id: int = Field(description="Unique identifier for this Webshare share.")
     name: NonEmptyString = Field(description="Webshare share name.")
     path: NonEmptyString = Field(
@@ -92,9 +104,7 @@ class SharingWebshareEntry(BaseModel):
     enabled: bool = Field(default=True, description="If unset, the Webshare share is not available.")
     readonly: bool = Field(
         default=False,
-        description=(
-            "If set, Webshare users cannot create or change files and directories in the share."
-        ),
+        description=("If set, Webshare users cannot create or change files and directories in the share."),
     )
     is_home_base: bool = Field(
         default=False,

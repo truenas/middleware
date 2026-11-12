@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, excluded_field
 
 __all__ = [
     "iSCSITargetAuthorizedInitiatorEntry",
@@ -24,7 +24,10 @@ class iSCSITargetAuthorizedInitiatorEntry(BaseModel):
             "initiators."
         ),
     )
-    comment: str = Field(default='', description="Optional comment describing the authorized initiator group.")
+    comment: Multiline[str] = Field(
+        default="",
+        description="Optional comment describing the authorized initiator group.",
+    )
 
 
 class IscsiInitiatorCreate(iSCSITargetAuthorizedInitiatorEntry):

@@ -11,6 +11,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongNonEmptyString,
+    Multiline,
     NetbiosDomain,
     NonEmptyString,
     excluded_field,
@@ -21,19 +22,26 @@ from middlewared.utils.directoryservices.credential import DSCredType
 from middlewared.utils.lang import undefined
 
 __all__ = [
-    'DirectoryServicesCacheRefreshArgs', 'DirectoryServicesCacheRefreshResult',
-    'DirectoryServicesStatusArgs', 'DirectoryServicesStatusResult',
-    'DirectoryServicesEntry', 'DirectoryServicesUpdateArgs', 'DirectoryServicesUpdateResult',
-    'DirectoryServicesLeaveArgs', 'DirectoryServicesLeaveResult',
-    'DirectoryServicesCertificateChoicesArgs', 'DirectoryServicesCertificateChoicesResult',
-    'DirectoryServicesSyncKeytabArgs', 'DirectoryServicesSyncKeytabResult',
-    'DirectoryServicesStatusChangedEvent',
+    "DirectoryServicesCacheRefreshArgs",
+    "DirectoryServicesCacheRefreshResult",
+    "DirectoryServicesStatusArgs",
+    "DirectoryServicesStatusResult",
+    "DirectoryServicesEntry",
+    "DirectoryServicesUpdateArgs",
+    "DirectoryServicesUpdateResult",
+    "DirectoryServicesLeaveArgs",
+    "DirectoryServicesLeaveResult",
+    "DirectoryServicesCertificateChoicesArgs",
+    "DirectoryServicesCertificateChoicesResult",
+    "DirectoryServicesSyncKeytabArgs",
+    "DirectoryServicesSyncKeytabResult",
+    "DirectoryServicesStatusChangedEvent",
 ]
 
 IdmapId = Annotated[int, Ge(TRUENAS_IDMAP_MIN), Le(TRUENAS_IDMAP_MAX)]
 
-DSStatus = Literal['DISABLED', 'FAULTED', 'LEAVING', 'JOINING', 'HEALTHY']
-DSType = Literal['ACTIVEDIRECTORY', 'IPA', 'LDAP']
+DSStatus = Literal["DISABLED", "FAULTED", "LEAVING", "JOINING", "HEALTHY"]
+DSType = Literal["ACTIVEDIRECTORY", "IPA", "LDAP"]
 
 
 class DirectoryServicesStatusArgs(BaseModel):
@@ -41,7 +49,7 @@ class DirectoryServicesStatusArgs(BaseModel):
 
 
 class DirectoryServicesStatus(BaseModel):
-    dstype: DSType | None = Field(alias='type', description="The type of enabled directory service.")
+    dstype: DSType | None = Field(alias="type", description="The type of enabled directory service.")
     status: DSStatus | None = Field(
         default=None,
         description=(
@@ -49,7 +57,7 @@ class DirectoryServicesStatus(BaseModel):
             "services are disabled."
         ),
     )
-    status_msg: LongNonEmptyString | None = Field(
+    status_msg: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description=(
             "This field shows the reason why the directory service is FAULTED after a failed health check. If the "
@@ -74,10 +82,11 @@ class DirectoryServicesCacheRefreshResult(BaseModel):
 # The latter case is a special situation in which the IPA_SMBDomain is used as described in documentation
 # strings.
 
+
 class IdmapDomainBase(BaseModel):
     name: NetbiosDomain | None = Field(
         default=None,
-        examples=['IXDOM'],
+        examples=["IXDOM"],
         description=(
             "Short name for the domain. This should match the NetBIOS domain name for Active Directory domains. It may "
             "be null if the domain is configured as the base idmap for Active Directory."
@@ -92,7 +101,7 @@ class IdmapDomainBase(BaseModel):
         description="The highest UID or GID that the idmap backend can assign.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_ranges(self):
         if self.range_low >= self.range_high:
             raise ValueError("The low range must be less than high range")
@@ -106,19 +115,20 @@ class IdmapDomainBase(BaseModel):
 class IPA_SMBDomain(IdmapDomainBase):
     """ This is a special idmap backend used when TrueNAS joins an IPA domain. The remote IPA server provides the \
     configuration information during the domain join process."""
-    idmap_backend: Literal['SSS'] = Field(
+
+    idmap_backend: Literal["SSS"] = Field(
         description="Idmap backend type identifier for System Security Services Daemon integration.",
     )
     domain_name: NonEmptyString | None = Field(
         default=None,
-        examples=['IXDOM.INTERNAL'],
+        examples=["IXDOM.INTERNAL"],
         description=(
             "Name of the SMB domain as defined in the IPA configuration for the IPA domain to which TrueNAS is joined."
         ),
     )
     domain_sid: SID | None = Field(
         default=None,
-        examples=['S-1-5-21-3696504179-2855309571-923743039'],
+        examples=["S-1-5-21-3696504179-2855309571-923743039"],
         description="The domain SID for the IPA domain to which TrueNAS is joined.",
     )
 
@@ -128,10 +138,11 @@ class AD_Idmap(IdmapDomainBase):
     schema extensions. The administrator must add mappings for users and groups in Active Directory before use.
 
     NOTE: these schema extensions are not present by default in Active Directory."""
-    idmap_backend: Literal['AD'] = Field(
+
+    idmap_backend: Literal["AD"] = Field(
         description="Idmap backend type identifier for Active Directory RFC2307 schema integration.",
     )
-    schema_mode: Literal['RFC2307', 'SFU', 'SFU20'] = Field(
+    schema_mode: Literal["RFC2307", "SFU", "SFU20"] = Field(
         description=(
             "The schema mode the idmap backend uses to query Active Directory for user and group information. The "
             "RFC2307 schema applies to Windows Server 2003 R2 and newer. The Services for Unix (SFU) schema applies to "
@@ -156,8 +167,9 @@ class AD_Idmap(IdmapDomainBase):
 
 
 class LDAP_Idmap(IdmapDomainBase):
-    """ The LDAP backend reads and writes UID / GID mapping tables from an external LDAP server. """
-    idmap_backend: Literal['LDAP'] = Field(
+    """The LDAP backend reads and writes UID / GID mapping tables from an external LDAP server."""
+
+    idmap_backend: Literal["LDAP"] = Field(
         description="Idmap backend type identifier for external LDAP server mapping.",
     )
     ldap_base_dn: LDAP_DN = Field(description="Directory base suffix to use for mapping UIDs and GIDs to SIDs.")
@@ -182,7 +194,8 @@ class LDAP_Idmap(IdmapDomainBase):
 class RFC2307_Idmap(IdmapDomainBase):
     """ The RFC2307 backend reads ID mappings from RFC2307 attributes on a standalone LDAP server. This backend is \
     read-only. Use the `AD` idmap backend if the server is an Active Directory domain controller. """
-    idmap_backend: Literal['RFC2307'] = Field(
+
+    idmap_backend: Literal["RFC2307"] = Field(
         description="Idmap backend type identifier for RFC2307 LDAP attribute mapping.",
     )
     ldap_url: LDAP_URL = Field(description="The LDAP URL used to access the LDAP server.")
@@ -216,7 +229,8 @@ class RID_Idmap(IdmapDomainBase):
     RID values assigned by the RID master. One way to do this is to check the RID of a recently created account in \
     Active Directory. For example, if the RID is 500000, the range must include at least 500000 Unix IDs (for example, \
     1000000 to 2000000). """
-    idmap_backend: Literal['RID'] = Field(
+
+    idmap_backend: Literal["RID"] = Field(
         description="Idmap backend type identifier for RID-based algorithmic mapping.",
     )
     sssd_compat: bool = Field(
@@ -231,6 +245,7 @@ class RID_Idmap(IdmapDomainBase):
 class BuiltinDomainTdb(IdmapDomainBase):
     """ Idmap ranges and information for BUILTIN, system accounts, and other accounts not explicitly mapped to a known \
     domain. """
+
     range_low: IdmapId = Field(default=90000001, description="The lowest UID or GID that the idmap backend can assign.")
     range_high: IdmapId = Field(
         default=100000000,
@@ -238,10 +253,7 @@ class BuiltinDomainTdb(IdmapDomainBase):
     )
 
 
-DomainIdmap = Annotated[
-    AD_Idmap | LDAP_Idmap | RFC2307_Idmap | RID_Idmap,
-    Discriminator('idmap_backend')
-]
+DomainIdmap = Annotated[AD_Idmap | LDAP_Idmap | RFC2307_Idmap | RID_Idmap, Discriminator("idmap_backend")]
 
 
 class PrimaryDomainIdmap(BaseModel):
@@ -253,7 +265,7 @@ class PrimaryDomainIdmap(BaseModel):
         ),
     )
     idmap_domain: DomainIdmap = Field(
-        default=RID_Idmap(idmap_backend='RID'),
+        default=RID_Idmap(idmap_backend="RID"),
         description=(
             "This configuration defines how domain accounts joined to TrueNAS are mapped to Unix UIDs and GIDs on the "
             "TrueNAS server. Most TrueNAS deployments use the RID backend, which algorithmically assigns UIDs and GIDs "
@@ -314,38 +326,40 @@ class CredLDAPMTLS(BaseModel):
 
 
 DSCred = Annotated[
-    CredKRBUser | CredKRBPrincipal | CredLDAPPlain | CredLDAPAnonymous | CredLDAPMTLS,
-    Discriminator('credential_type')
+    CredKRBUser | CredKRBPrincipal | CredLDAPPlain | CredLDAPAnonymous | CredLDAPMTLS, Discriminator("credential_type")
 ]
 
 
 class ActiveDirectoryConfig(BaseModel):
-    service_type: Literal['ACTIVEDIRECTORY'] = Field(exclude=True, repr=False)
+    service_type: Literal["ACTIVEDIRECTORY"] = Field(exclude=True, repr=False)
     hostname: NonEmptyString = Field(
-        description="Hostname of TrueNAS server to register in Active Directory. Example: \"truenasnyc\".",
+        description='Hostname of TrueNAS server to register in Active Directory. Example: "truenasnyc".',
     )
     domain: NonEmptyString = Field(
         description=(
             "The full DNS domain name of the Active Directory domain. This must not be a domain controller. Example: "
-            "\"mydomain.internal\"."
+            '"mydomain.internal".'
         ),
     )
-    idmap: PrimaryDomainIdmap = Field(default=PrimaryDomainIdmap(), examples=[
-        {
-            'builtin': {'range_low': 90000001, 'range_high': 100000000},
-            'idmap_domain': {
-                'name': 'MYDOMAIN',
-                'idmap_backend': 'RID',
-                'range_low': 100000001,
-                'range_high': 200000000,
+    idmap: PrimaryDomainIdmap = Field(
+        default=PrimaryDomainIdmap(),
+        examples=[
+            {
+                "builtin": {"range_low": 90000001, "range_high": 100000000},
+                "idmap_domain": {
+                    "name": "MYDOMAIN",
+                    "idmap_backend": "RID",
+                    "range_low": 100000001,
+                    "range_high": 200000000,
+                },
             },
-        },
-    ],
+        ],
         description=(
             "Configuration for mapping Active Directory accounts to accounts on the TrueNAS server. The exact settings "
             "may vary based on other servers and Linux clients in the domain. Defaults are suitable for new deployments"
             " without existing support for unix-like operating systems."
-        ))
+        ),
+    )
     site: NonEmptyString | None = Field(
         default=None,
         description=(
@@ -355,7 +369,7 @@ class ActiveDirectoryConfig(BaseModel):
     )
     computer_account_ou: NonEmptyString | None = Field(
         default=None,
-        examples=['TRUENAS_SERVERS/NYC'],
+        examples=["TRUENAS_SERVERS/NYC"],
         description=(
             "Use this setting to override the default organizational unit (OU) in which the TrueNAS computer account is"
             " created during the domain join. Use it to set a custom location for TrueNAS computer accounts."
@@ -365,7 +379,7 @@ class ActiveDirectoryConfig(BaseModel):
         default=False,
         description=(
             "Controls if the system removes the domain prefix from Active Directory user and group names. If enabled, "
-            "users appear as \"administrator\" instead of \"EXAMPLE\\administrator\". In most cases, disable this "
+            'users appear as "administrator" instead of "EXAMPLE\\administrator". In most cases, disable this '
             "(default) to avoid name conflicts between Active Directory and local accounts."
         ),
     )
@@ -376,28 +390,21 @@ class ActiveDirectoryConfig(BaseModel):
             "all trusted domains."
         ),
     )
-    trusted_domains: list[DomainIdmap] = Field(default=[], examples=[
-        {
-            'name': 'BROOK',
-            'idmap_backend': 'RID',
-            'range_low': 200000001,
-            'range_high': 300000000
-        },
-        {
-            'name': 'DARVO',
-            'idmap_backend': 'RID',
-            'range_low': 300000001,
-            'range_high': 400000000
-        }
-    ],
-        description="Configuration for trusted domains.")
+    trusted_domains: list[DomainIdmap] = Field(
+        default=[],
+        examples=[
+            {"name": "BROOK", "idmap_backend": "RID", "range_low": 200000001, "range_high": 300000000},
+            {"name": "DARVO", "idmap_backend": "RID", "range_low": 300000001, "range_high": 400000000},
+        ],
+        description="Configuration for trusted domains.",
+    )
 
-    @field_validator('trusted_domains')
+    @field_validator("trusted_domains")
     @classmethod
     def validate_trusted_domains(cls, value):
         # Check for range overlaps between trusted domains
         if any([entry.name is None for entry in value]):
-            raise ValueError('Domain name is required for trusted domains')
+            raise ValueError("Domain name is required for trusted domains")
 
         for idx, entry in enumerate(value):
             for idx2, entry2 in enumerate(value.copy()):
@@ -406,16 +413,17 @@ class ActiveDirectoryConfig(BaseModel):
                     continue
 
                 if entry.range_low >= entry2.range_low and entry.range_low <= entry2.range_high:
-                    raise ValueError(f'Low range for {entry.name} conflicts with range for {entry2.name}.')
+                    raise ValueError(f"Low range for {entry.name} conflicts with range for {entry2.name}.")
 
                 if entry.range_high >= entry2.range_low and entry.range_high <= entry2.range_high:
-                    raise ValueError(f'High range for {entry.name} conflicts with range for {entry2.name}.')
+                    raise ValueError(f"High range for {entry.name} conflicts with range for {entry2.name}.")
 
         return value
 
 
 class LDAPSearchBases(BaseModel):
-    """ Optional search paths to limit LDAP searches for attribute types. """
+    """Optional search paths to limit LDAP searches for attribute types."""
+
     base_user: LDAP_DN | None = Field(
         default=None,
         description="Optional base DN to limit LDAP user searches. If null (default) then the `base_dn` is used.",
@@ -433,6 +441,7 @@ class LDAPSearchBases(BaseModel):
 class LDAPMapPasswd(BaseModel):
     """ Optional attribute mappings for non-compliant LDAP servers to generate passwd entries. \
     A value of null means to use the default according to the selected LDAP `schema`. """
+
     user_object_class: NonEmptyString | None = Field(default=None, description="The user entry object class in LDAP.")
     user_name: NonEmptyString | None = Field(default=None, description="The LDAP attribute for the user's login name.")
     user_uid: NonEmptyString | None = Field(default=None, description="The LDAP attribute for the user's id.")
@@ -457,6 +466,7 @@ class LDAPMapPasswd(BaseModel):
 class LDAPMapShadow(BaseModel):
     """ Optional attribute mappings for non-compliant LDAP servers to generate shadow entries. \
     A value of null means to use the default according to the selected LDAP `schema`. """
+
     shadow_last_change: NonEmptyString | None = Field(
         default=None,
         description=(
@@ -504,6 +514,7 @@ class LDAPMapShadow(BaseModel):
 class LDAPMapGroup(BaseModel):
     """ Optional attribute mappings for non-compliant LDAP servers to generate group entries. \
     A value of null means to use the default according to the selected LDAP `schema`. """
+
     group_object_class: NonEmptyString | None = Field(
         default=None,
         description="The LDAP object class for group entries.",
@@ -517,6 +528,7 @@ class LDAPMapGroup(BaseModel):
 
 class LDAPMapNetgroup(BaseModel):
     """Optional attribute mappings for non-compliant LDAP servers to generate netgroup entries."""
+
     netgroup_object_class: NonEmptyString | None = Field(
         default=None,
         description="The LDAP object class for netgroup entries.",
@@ -548,7 +560,7 @@ class LDAPAttributeMaps(BaseModel):
 
 
 class LDAPConfig(BaseModel):
-    service_type: Literal['LDAP'] = Field(exclude=True, repr=False)
+    service_type: Literal["LDAP"] = Field(exclude=True, repr=False)
     server_urls: list[LDAP_URL] = Field(
         description=(
             "List of LDAP server URIs used for LDAP binds. Each URI must begin with ldap:// or ldaps:// and may use "
@@ -556,7 +568,7 @@ class LDAPConfig(BaseModel):
         ),
     )
     basedn: LDAP_DN = Field(
-        description="The base DN to use when performing LDAP operations. Example: `\"dc=domain,dc=internal\"`.",
+        description='The base DN to use when performing LDAP operations. Example: `"dc=domain,dc=internal"`.',
     )
     starttls: bool = Field(default=False, description="Establish TLS by transmitting a StartTLS request to the server.")
     validate_certificates: bool = Field(
@@ -566,9 +578,9 @@ class LDAPConfig(BaseModel):
             "certificates or import them into the TrueNAS server's trusted certificate store."
         ),
     )
-    ldap_schema: Literal['RFC2307', 'RFC2307BIS'] = Field(
-        default='RFC2307',
-        alias='schema',
+    ldap_schema: Literal["RFC2307", "RFC2307BIS"] = Field(
+        default="RFC2307",
+        alias="schema",
         description="The type of LDAP attribute schema that the remote LDAP server uses.",
     )
     search_bases: LDAPSearchBases = Field(
@@ -587,7 +599,7 @@ class LDAPConfig(BaseModel):
             "if the LDAP server is non-standard."
         ),
     )
-    auxiliary_parameters: LongNonEmptyString | None = Field(
+    auxiliary_parameters: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description=(
             "Additional paramaters to add to the SSSD configuration.\n"
@@ -599,19 +611,19 @@ class LDAPConfig(BaseModel):
 
 
 class IPAConfig(BaseModel):
-    service_type: Literal['IPA'] = Field(exclude=True, repr=False)
+    service_type: Literal["IPA"] = Field(exclude=True, repr=False)
     target_server: NonEmptyString = Field(
         description=(
             "The name of the IPA server that TrueNAS uses to build URLs when it joins or leaves the IPA domain. "
-            "Example: \"ipa.example.internal\"."
+            'Example: "ipa.example.internal".'
         ),
     )
     hostname: NonEmptyString = Field(
-        description="Hostname of TrueNAS server to register in IPA during the join process. Example: \"truenasnyc\".",
+        description='Hostname of TrueNAS server to register in IPA during the join process. Example: "truenasnyc".',
     )
-    domain: NonEmptyString = Field(description="The domain of the IPA server. Example \"ipa.internal\".")
+    domain: NonEmptyString = Field(description='The domain of the IPA server. Example "ipa.internal".')
     basedn: LDAP_DN = Field(
-        description="The base DN to use when performing LDAP operations. Example: \"dc=example,dc=internal\".",
+        description='The base DN to use when performing LDAP operations. Example: "dc=example,dc=internal".',
     )
     smb_domain: IPA_SMBDomain | None = Field(
         default=None,
@@ -638,29 +650,18 @@ class DirectoryServicesEntry(BaseModel):
             "OpenLDAP-compatible servers."
         ),
     )
-    credential: DSCred | None = Field(examples=[
-        {
-            'credential_type': 'LDAP_PLAIN',
-            'binddn': 'uid=truenasserver,ou=Users,dc=ldap01,dc=internal',
-            'bindpw': 'Canary'
-        },
-        {
-            'credential_type': 'LDAP_ANONYMOUS'
-        },
-        {
-            'credential_type': 'LDAP_MTLS',
-            'client_certificate': 'ldap01_client_cert'
-        },
-        {
-            'credential_type': 'KERBEROS_USER',
-            'username': 'truenas_user',
-            'password': 'Canary'
-        },
-        {
-            'credential_type': 'KERBEROS_PRINCIPAL',
-            'principal': 'truenas@LDAP01.INTERNAL'
-        }
-    ],
+    credential: DSCred | None = Field(
+        examples=[
+            {
+                "credential_type": "LDAP_PLAIN",
+                "binddn": "uid=truenasserver,ou=Users,dc=ldap01,dc=internal",
+                "bindpw": "Canary",
+            },
+            {"credential_type": "LDAP_ANONYMOUS"},
+            {"credential_type": "LDAP_MTLS", "client_certificate": "ldap01_client_cert"},
+            {"credential_type": "KERBEROS_USER", "username": "truenas_user", "password": "Canary"},
+            {"credential_type": "KERBEROS_PRINCIPAL", "principal": "truenas@LDAP01.INTERNAL"},
+        ],
         description=(
             "Credential used to bind to the specified directory service. Kerberos credentials are required for Active "
             "Directory or IPA domains. Generic LDAP environments support various authentication methods. Available "
@@ -678,7 +679,8 @@ class DirectoryServicesEntry(BaseModel):
             "\n"
             "`IPA` service_type: `KERBEROS_USER` and `KERBEROS_PRINCIPAL`. NOTE: `KERBEROS_USER` should be used when "
             "initially joining an IPA domain."
-        ))
+        ),
+    )
     enable: bool = Field(
         description=(
             "Enable the directory service.\n"
@@ -720,26 +722,26 @@ class DirectoryServicesEntry(BaseModel):
             "first time, the realm is detected and configured automatically if not specified."
         ),
     )
-    configuration: ActiveDirectoryConfig | IPAConfig | LDAPConfig | None = Field(default=None, examples=[
-        {
-            'computer_account_ou': 'TRUENAS_SERVERS',
-            'domain': 'ACME.INTERNAL',
-            'hostname': 'TRUENASZ356'
-        },
-        {
-            'hostname': 'TRUENASZ345',
-            'target_server': 'ipasrv5.ipadom.internal',
-            'domain': 'ipadom.internal',
-            'basedn': 'dc=ipadom,dc=internal',
-        },
-        {
-            'server_urls': ['ldap.ipadom.internal'],
-            'basedn': 'dc=ipadom,dc=internal',
-        }
-    ], discriminator='service_type',
-        description="The service_type specific configuration for the directory sevices plugin.")
+    configuration: ActiveDirectoryConfig | IPAConfig | LDAPConfig | None = Field(
+        default=None,
+        examples=[
+            {"computer_account_ou": "TRUENAS_SERVERS", "domain": "ACME.INTERNAL", "hostname": "TRUENASZ356"},
+            {
+                "hostname": "TRUENASZ345",
+                "target_server": "ipasrv5.ipadom.internal",
+                "domain": "ipadom.internal",
+                "basedn": "dc=ipadom,dc=internal",
+            },
+            {
+                "server_urls": ["ldap.ipadom.internal"],
+                "basedn": "dc=ipadom,dc=internal",
+            },
+        ],
+        discriminator="service_type",
+        description="The service_type specific configuration for the directory sevices plugin.",
+    )
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def parse_configuration(cls, data_in: Any) -> Any:
         if not isinstance(data_in, dict):
@@ -747,16 +749,16 @@ class DirectoryServicesEntry(BaseModel):
 
         # insert the currently-configured service_type into the configuration
         # dict so that the discriminator works as expected.
-        if 'configuration' in data_in and isinstance(data_in['configuration'], dict):
-            if 'service_type' in data_in and data_in['service_type'] is not None:
-                data_in['configuration']['service_type'] = data_in['service_type']
+        if "configuration" in data_in and isinstance(data_in["configuration"], dict):
+            if "service_type" in data_in and data_in["service_type"] is not None:
+                data_in["configuration"]["service_type"] = data_in["service_type"]
             else:
                 raise ValueError('"service_type" field is required if "configuration" field is specified')
 
         return data_in
 
 
-@single_argument_args('directoryservices_update')
+@single_argument_args("directoryservices_update")
 class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMetaclass):
     """ Update the directory services configuration with the specified payload. If service_type is set to null and \
     enable is false, then the all existing directory service configuration will be cleared.
@@ -775,6 +777,7 @@ class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMet
     does not remove the TrueNAS computer account from an Active Directory or IPA domain. If the domain status \
     is `HEALTHY`, use `directoryservices.leave` to remove the account and clear the directory services \
     configuration. """
+
     id: Excluded = excluded_field()
     force: bool = Field(
         default=False,
@@ -785,53 +788,52 @@ class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMet
             " that rely on the existing server."
         ),
     )
+
     def __check_configuration_type(self, service_type, configuration):
         match service_type:
-            case 'ACTIVEDIRECTORY':
+            case "ACTIVEDIRECTORY":
                 if not isinstance(configuration, ActiveDirectoryConfig):
-                    raise ValueError('Active Directory configuration is required')
-            case 'IPA':
+                    raise ValueError("Active Directory configuration is required")
+            case "IPA":
                 if not isinstance(configuration, IPAConfig):
-                    raise ValueError('IPA configuration is required')
+                    raise ValueError("IPA configuration is required")
 
-            case 'LDAP':
+            case "LDAP":
                 if not isinstance(configuration, LDAPConfig):
-                    raise ValueError('LDAP configuration is required')
+                    raise ValueError("LDAP configuration is required")
 
             case None:
                 if configuration is not None:
-                    raise ValueError('configuration must be set to null when setting service type to null')
+                    raise ValueError("configuration must be set to null when setting service type to null")
             case _:
-                raise ValueError(f'{service_type}: unexpected service_type')
+                raise ValueError(f"{service_type}: unexpected service_type")
 
     def __check_credential_type(self, service_type, credential_type, has_realm):
         match service_type:
-            case 'LDAP':
-                if credential_type.startswith('KERBEROS') and not has_realm:
+            case "LDAP":
+                if credential_type.startswith("KERBEROS") and not has_realm:
                     raise ValueError(
-                        'Kerberos realm is required for using kerberos credentials with a plain LDAP server'
+                        "Kerberos realm is required for using kerberos credentials with a plain LDAP server"
                     )
 
             case _:
-                if credential_type.startswith('LDAP'):
-                    raise ValueError('LDAP authentication methods are only supported for the LDAP service type.')
+                if credential_type.startswith("LDAP"):
+                    raise ValueError("LDAP authentication methods are only supported for the LDAP service type.")
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_ds(self):
         if self.service_type == undefined and self.enable is not False:
-            raise ValueError('service_type is required in update payloads')
+            raise ValueError("service_type is required in update payloads")
 
         if self.service_type not in (None, undefined):
             if self.configuration in (None, undefined):
-                raise ValueError('Explicit configuration is required when service_type is specified')
+                raise ValueError("Explicit configuration is required when service_type is specified")
 
             if self.credential in (None, undefined):
-                raise ValueError('Explicit credential configuration is required when service_type is specified')
+                raise ValueError("Explicit credential configuration is required when service_type is specified")
 
             self.__check_credential_type(
-                self.service_type,
-                self.credential.credential_type,
-                self.kerberos_realm is not None
+                self.service_type, self.credential.credential_type, self.kerberos_realm is not None
             )
 
         if self.enable is True:
@@ -844,7 +846,7 @@ class DirectoryServicesUpdateResult(BaseModel):
     result: DirectoryServicesEntry = Field(description="The updated directory services configuration.")
 
 
-@single_argument_args('credential')
+@single_argument_args("credential")
 class DirectoryServicesLeaveArgs(BaseModel):
     credential: CredKRBUser = Field(
         description="Kerberos user credentials with administrative privileges to leave the domain.",

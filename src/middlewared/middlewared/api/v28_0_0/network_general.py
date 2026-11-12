@@ -2,7 +2,10 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, IPvAnyAddress, NotRequired, single_argument_result
 
-__all__ = ["NetworkGeneralSummaryArgs", "NetworkGeneralSummaryResult",]
+__all__ = [
+    "NetworkGeneralSummaryArgs",
+    "NetworkGeneralSummaryResult",
+]
 
 
 class NetworkGeneralSummaryIP(BaseModel):

@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NonEmptyString,
     TcpPort,
     exclude_tcp_ports,
@@ -39,9 +40,7 @@ __all__ = [
 NFS_protocols = Literal["NFSV3", "NFSV4"]
 NFS_RDMA_DEFAULT_PORT = 20049
 EXCLUDED_PORTS = [NFS_RDMA_DEFAULT_PORT]
-NfsTcpPort: TypeAlias = Annotated[
-    TcpPort | None, AfterValidator(exclude_tcp_ports(EXCLUDED_PORTS))
-]
+NfsTcpPort: TypeAlias = Annotated[TcpPort | None, AfterValidator(exclude_tcp_ports(EXCLUDED_PORTS))]
 
 
 class NFSGetNfs3ClientsEntry(BaseModel):
@@ -155,11 +154,11 @@ class SharingNFSEntry(BaseModel):
         ),
     )
     aliases: list[NonEmptyString] = Field(default=[], description="IGNORED for now.")
-    comment: str = Field(default="", description="User comment associated with share.")
+    comment: Multiline[str] = Field(default="", description="User comment associated with share.")
     networks: list[NonEmptyString] = Field(
         default=[],
         description=(
-            "List of authorized networks that are allowed to access the share having format \"network/mask\" CIDR "
+            'List of authorized networks that are allowed to access the share having format "network/mask" CIDR '
             "notation. Each entry must be unique. If empty, all networks are allowed. Excessively long lists should be "
             "avoided."
         ),

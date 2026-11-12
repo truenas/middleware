@@ -5,9 +5,17 @@ from pydantic import Discriminator, Field, Secret
 from middlewared.api.base import BaseModel, HttpUrl, NonEmptyString, TcpPort
 
 __all__ = [
-    "AlertServiceAttributes", "AWSSNSServiceModel", "InfluxDBServiceModel", "MailServiceModel",
-    "MattermostServiceModel", "OpsGenieServiceModel", "PagerDutyServiceModel", "SlackServiceModel",
-    "SNMPTrapServiceModel", "TelegramServiceModel", "VictorOpsServiceModel",
+    "AlertServiceAttributes",
+    "AWSSNSServiceModel",
+    "InfluxDBServiceModel",
+    "MailServiceModel",
+    "MattermostServiceModel",
+    "OpsGenieServiceModel",
+    "PagerDutyServiceModel",
+    "SlackServiceModel",
+    "SNMPTrapServiceModel",
+    "TelegramServiceModel",
+    "VictorOpsServiceModel",
 ]
 
 
@@ -94,8 +102,9 @@ class SNMPTrapServiceModel(BaseModel):
         default=None,
         description="SNMP v3 authentication protocol or `null` for no authentication.",
     )
-    v3_privprotocol: Literal[None, "DES", "3DESEDE", "AESCFB128", "AESCFB192", "AESCFB256", "AESBLUMENTHALCFB192",
-                             "AESBLUMENTHALCFB256"] = Field(
+    v3_privprotocol: Literal[
+        None, "DES", "3DESEDE", "AESCFB128", "AESCFB192", "AESCFB256", "AESBLUMENTHALCFB192", "AESBLUMENTHALCFB256"
+    ] = Field(
         default=None,
         description="SNMP v3 privacy protocol for encryption or `null` for no privacy.",
     )
@@ -129,7 +138,7 @@ AlertServiceAttributes = Annotated[
         SlackServiceModel,
         SNMPTrapServiceModel,
         TelegramServiceModel,
-        VictorOpsServiceModel
+        VictorOpsServiceModel,
     ],
     Discriminator("type"),
 ]

@@ -12,26 +12,49 @@ from middlewared.api.base import (
     LocalUID,
     LocalUsername,
     LongString,
+    Multiline,
     NonEmptyString,
     RemoteUsername,
     excluded_field,
 )
 from middlewared.plugins.account.constants import DEFAULT_HOME_PATH
 
-__all__ = ["UserEntry", "UserCreate", "UserUpdate", "UserCreateUpdateResult",
-           "UserCreateArgs", "UserCreateResult",
-           "UserUpdateArgs", "UserUpdateResult",
-           "UserDeleteArgs", "UserDeleteOptions", "UserDeleteResult",
-           "UserShellChoicesArgs", "UserShellChoicesResult",
-           "UserGetUserObj", "UserGetUserObjArgs", "UserGetUserObjData", "UserGetUserObjResult",
-           "UserGetNextUidArgs", "UserGetNextUidResult",
-           "UserHasLocalAdministratorSetUpArgs", "UserHasLocalAdministratorSetUpResult",
-           "UserSetupLocalAdministratorArgs", "UserSetupLocalAdministratorOptions",
-           "UserSetupLocalAdministratorResult",
-           "UserSetPassword", "UserSetPasswordArgs", "UserSetPasswordResult",
-           "UserTwofactorConfigEntry",
-           "UserUnset2faSecretArgs", "UserUnset2faSecretResult",
-           "TwofactorOptions", "UserRenew2faSecret", "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
+__all__ = [
+    "UserEntry",
+    "UserCreate",
+    "UserUpdate",
+    "UserCreateUpdateResult",
+    "UserCreateArgs",
+    "UserCreateResult",
+    "UserUpdateArgs",
+    "UserUpdateResult",
+    "UserDeleteArgs",
+    "UserDeleteOptions",
+    "UserDeleteResult",
+    "UserShellChoicesArgs",
+    "UserShellChoicesResult",
+    "UserGetUserObj",
+    "UserGetUserObjArgs",
+    "UserGetUserObjData",
+    "UserGetUserObjResult",
+    "UserGetNextUidArgs",
+    "UserGetNextUidResult",
+    "UserHasLocalAdministratorSetUpArgs",
+    "UserHasLocalAdministratorSetUpResult",
+    "UserSetupLocalAdministratorArgs",
+    "UserSetupLocalAdministratorOptions",
+    "UserSetupLocalAdministratorResult",
+    "UserSetPassword",
+    "UserSetPasswordArgs",
+    "UserSetPasswordResult",
+    "UserTwofactorConfigEntry",
+    "UserUnset2faSecretArgs",
+    "UserUnset2faSecretResult",
+    "TwofactorOptions",
+    "UserRenew2faSecret",
+    "UserRenew2faSecretArgs",
+    "UserRenew2faSecretResult",
+]
 
 
 class UserEntry(BaseModel):
@@ -108,7 +131,7 @@ class UserEntry(BaseModel):
             "to the `webshare` group."
         ),
     )
-    userns_idmap: Literal['DIRECT', None] | ContainerXID = Field(
+    userns_idmap: Literal["DIRECT", None] | ContainerXID = Field(
         default=None,
         description=(
             "Specifies the subuid mapping for this user. If DIRECT then the UID will be directly mapped to all "
@@ -145,7 +168,7 @@ class UserEntry(BaseModel):
             "WARNING: The established best practice is to use only key-based authentication for SSH servers."
         ),
     )
-    sshpubkey: LongString | None = Field(
+    sshpubkey: Multiline[LongString] | None = Field(
         default=None,
         description=(
             "SSH public keys corresponding to private keys that authenticate this user to the TrueNAS SSH server."
@@ -310,7 +333,7 @@ class UserGetUserObjData(BaseModel):
     sid: str | None = Field(
         description="Optional SID value for the account that is present if `sid_info` is specified in payload.",
     )
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP'] = Field(description="The source for the user account.")
+    source: Literal["LOCAL", "ACTIVEDIRECTORY", "LDAP"] = Field(description="The source for the user account.")
     local: bool = Field(description="The account is local to TrueNAS or provided by a directory service.")
 
 
@@ -363,18 +386,20 @@ class UserShellChoicesArgs(BaseModel):
 
 
 class UserShellChoicesResult(BaseModel):
-    result: dict[str, str] = Field(examples=[
-        {
-            '/usr/bin/bash': 'bash',
-            '/usr/bin/rbash': 'rbash',
-            '/usr/bin/dash': 'dash',
-            '/usr/bin/sh': 'sh',
-            '/usr/bin/zsh': 'zsh',
-            '/usr/bin/tmux': 'tmux',
-            '/usr/sbin/nologin': 'nologin'
-        },
-    ],
-        description="Object of available shell paths and their descriptive names.")
+    result: dict[str, str] = Field(
+        examples=[
+            {
+                "/usr/bin/bash": "bash",
+                "/usr/bin/rbash": "rbash",
+                "/usr/bin/dash": "dash",
+                "/usr/bin/sh": "sh",
+                "/usr/bin/zsh": "zsh",
+                "/usr/bin/tmux": "tmux",
+                "/usr/sbin/nologin": "nologin",
+            },
+        ],
+        description="Object of available shell paths and their descriptive names.",
+    )
 
 
 class UserGetUserObj(BaseModel):
@@ -429,7 +454,7 @@ class UserSetupLocalAdministratorOptions(BaseModel):
 
 
 class UserSetupLocalAdministratorArgs(BaseModel):
-    username: Literal['root', 'truenas_admin'] = Field(description="Administrator username to configure.")
+    username: Literal["root", "truenas_admin"] = Field(description="Administrator username to configure.")
     password: Secret[str] = Field(description="Password for the administrator account.")
     options: UserSetupLocalAdministratorOptions = Field(
         default_factory=UserSetupLocalAdministratorOptions,

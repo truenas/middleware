@@ -18,7 +18,7 @@ from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.smb import TRUESEARCH_ES_PATH, SearchProtocol, SMBSharePurpose
+from middlewared.utils.smb import SearchProtocol, SMBSharePurpose
 
 _GUESTOK_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]])
 _FSRVP_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]])
@@ -497,8 +497,7 @@ def generate_smb_conf_dict(
 
     if SearchProtocol.SPOTLIGHT in smb_service_config['search_protocols']:
         smbconf.update({
-            'spotlight backend': 'elasticsearch',
-            'elasticsearch:address': TRUESEARCH_ES_PATH,
+            'spotlight backend': 'truesearch',
             'spotlight': True
         })
 

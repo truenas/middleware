@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import errno
 import itertools
 import os
@@ -26,6 +27,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotDestroyArgsData,
 )
+from middlewared.job import JobCancelledException, State
 from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationError, ValidationErrors
@@ -220,13 +222,18 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         assert pool is not None
 
         image = data.image.model_dump()
+        pull_job = await self.call2(self.s.container.image.pull, pool, image)
         try:
-            image_snapshot = await job.wrap(await self.call2(
-                self.s.container.image.pull, pool, image,
-            ))
+            image_snapshot = await job.wrap(pull_job)
+        except asyncio.CancelledError:
+            pull_job.abort()
+            raise
         except ValidationErrors as image_verrors:
             verrors.add_child('container_create.image', image_verrors)
             verrors.check()
+
+        if pull_job.state == State.ABORTED:
+            raise JobCancelledException()
 
         await ensure_datasets(self, pool)
         dataset = os.path.join(container_dataset(pool), f'containers/{data.name}')

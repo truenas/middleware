@@ -113,6 +113,7 @@ from .systemdataset import *
 from .tn_connect import *
 from .truecommand import *
 from .truenas import *
+from .truesearch import *
 from .tunable import *
 from .update import *
 from .ups import *

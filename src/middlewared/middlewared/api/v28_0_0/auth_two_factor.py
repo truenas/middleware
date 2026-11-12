@@ -2,9 +2,7 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
-__all__ = [
-    'TwoFactorAuthEntry', 'TwoFactorAuthUpdateArgs', 'TwoFactorAuthUpdateResult'
-]
+__all__ = ["TwoFactorAuthEntry", "TwoFactorAuthUpdateArgs", "TwoFactorAuthUpdateResult"]
 
 
 class TwoFactorAuthServices(BaseModel):

@@ -8,19 +8,29 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NotRequired,
     excluded_field,
 )
 
-__all__ = ["MailEntry", "MailUpdate", "MailUpdateArgs", "MailUpdateResult", "MailSendMessage", "MailSendArgs",
-           "MailSendResult", "MailLocalAdministratorEmailArgs", "MailLocalAdministratorEmailResult"]
+__all__ = [
+    "MailEntry",
+    "MailUpdate",
+    "MailUpdateArgs",
+    "MailUpdateResult",
+    "MailSendMessage",
+    "MailSendArgs",
+    "MailSendResult",
+    "MailLocalAdministratorEmailArgs",
+    "MailLocalAdministratorEmailResult",
+]
 
 
 class MailEntryOAuth(BaseModel):
-    provider: str = Field(description="An email provider, e.g. \"gmail\", \"outlook\".")
+    provider: str = Field(description='An email provider, e.g. "gmail", "outlook".')
     client_id: str = Field(description="OAuth client ID provided by the email provider.")
     client_secret: str = Field(description="OAuth client secret provided by the email provider.")
-    refresh_token: LongString = Field(
+    refresh_token: Multiline[LongString] = Field(
         description="OAuth refresh token used to obtain new access tokens for email authentication.",
     )
 
@@ -46,11 +56,11 @@ class MailUpdate(MailEntry, metaclass=ForUpdateMetaclass):
 
 class MailSendMessage(BaseModel):
     subject: str = Field(description="Subject line for the email message.")
-    text: LongString = Field(
+    text: Multiline[LongString] = Field(
         default=NotRequired,
         description="Formatted to HTML using Markdown and rendered using default email template.",
     )
-    html: LongString | None = Field(
+    html: Multiline[LongString] | None = Field(
         default=NotRequired,
         description="Custom HTML (overrides `text`). If null, no HTML MIME part will be added to the email.",
     )
@@ -72,20 +82,20 @@ class MailSendMessage(BaseModel):
             "Example:\n"
             "[\n"
             "  {\n"
-            "    \"headers\": [\n"
+            '    "headers": [\n'
             "      {\n"
-            "        \"name\": \"Content-Transfer-Encoding\",\n"
-            "        \"value\": \"base64\"\n"
+            '        "name": "Content-Transfer-Encoding",\n'
+            '        "value": "base64"\n'
             "      },\n"
             "      {\n"
-            "        \"name\": \"Content-Type\",\n"
-            "        \"value\": \"application/octet-stream\",\n"
-            "        \"params\": {\n"
-            "          \"name\": \"test.txt\"\n"
+            '        "name": "Content-Type",\n'
+            '        "value": "application/octet-stream",\n'
+            '        "params": {\n'
+            '          "name": "test.txt"\n'
             "        }\n"
             "      }\n"
             "    ],\n"
-            "    \"content\": \"dGVzdAo=\"\n"
+            '    "content": "dGVzdAo="\n'
             "  }\n"
             "]"
         ),

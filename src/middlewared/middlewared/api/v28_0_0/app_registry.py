@@ -1,19 +1,24 @@
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, excluded_field
 
 __all__ = [
-    'AppRegistryEntry', 'AppRegistryCreate', 'AppRegistryUpdate',
-    'AppRegistryCreateArgs', 'AppRegistryCreateResult',
-    'AppRegistryUpdateArgs', 'AppRegistryUpdateResult',
-    'AppRegistryDeleteArgs', 'AppRegistryDeleteResult',
+    "AppRegistryEntry",
+    "AppRegistryCreate",
+    "AppRegistryUpdate",
+    "AppRegistryCreateArgs",
+    "AppRegistryCreateResult",
+    "AppRegistryUpdateArgs",
+    "AppRegistryUpdateResult",
+    "AppRegistryDeleteArgs",
+    "AppRegistryDeleteResult",
 ]
 
 
 class AppRegistryEntry(BaseModel):
     id: int = Field(description="Unique identifier for the container registry configuration.")
     name: str = Field(description="Human-readable name for the container registry.")
-    description: str | None = Field(
+    description: Multiline[str] | None = Field(
         default=None,
         description="Optional description of the container registry or `null`.",
     )
@@ -27,7 +32,7 @@ class AppRegistryEntry(BaseModel):
 class AppRegistryCreate(AppRegistryEntry):
     id: Excluded = excluded_field()
     uri: str = Field(
-        default='https://index.docker.io/v1/',
+        default="https://index.docker.io/v1/",
         description="Container registry URI endpoint (defaults to Docker Hub).",
     )
 

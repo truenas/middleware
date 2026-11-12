@@ -7,8 +7,16 @@ from middlewared.api.base import WWPN, BaseModel, Excluded, FibreChannelPortAlia
 from .common import QueryArgs, QueryOptions
 
 __all__ = [
-    "FCPortEntry", "FCPortCreateArgs", "FCPortCreateResult", "FCPortUpdateArgs", "FCPortUpdateResult",
-    "FCPortDeleteArgs", "FCPortDeleteResult", "FCPortPortChoicesArgs", "FCPortPortChoicesResult", "FCPortStatusArgs",
+    "FCPortEntry",
+    "FCPortCreateArgs",
+    "FCPortCreateResult",
+    "FCPortUpdateArgs",
+    "FCPortUpdateResult",
+    "FCPortDeleteArgs",
+    "FCPortDeleteResult",
+    "FCPortPortChoicesArgs",
+    "FCPortPortChoicesResult",
+    "FCPortStatusArgs",
     "FCPortStatusResult",
 ]
 
@@ -70,18 +78,14 @@ class FCPortPortChoicesArgs(BaseModel):
 
 
 class FCPortPortChoicesResult(BaseModel):
-    result: dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(examples=[
-        {
-            'fc0': {
-                'wwpn': 'naa.2100001122334455',
-                'wwpn_b': 'naa.210000AABBCCDDEEFF'
+    result: dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(
+        examples=[
+            {
+                "fc0": {"wwpn": "naa.2100001122334455", "wwpn_b": "naa.210000AABBCCDDEEFF"},
+                "fc0/1": {"wwpn": "naa.2200001122334455", "wwpn_b": "naa.220000AABBCCDDEEFF"},
             },
-            'fc0/1': {
-                'wwpn': 'naa.2200001122334455',
-                'wwpn_b': 'naa.220000AABBCCDDEEFF'
-            },
-        },
-    ])
+        ]
+    )
 
 
 class FCPortStatusOptionsExtra(BaseModel):

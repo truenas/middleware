@@ -155,7 +155,7 @@ from middlewared.plugins.truecommand import TruecommandService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
 from middlewared.plugins.truenas_s3 import S3Service, SharingS3Service
-from middlewared.plugins.truesearch import TrueSearchService
+from middlewared.plugins.truesearch import TruesearchService
 from middlewared.plugins.tunable import TunableService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
@@ -322,7 +322,7 @@ class ServiceContainer(BaseServiceContainer):
         self.tn_connect = TrueNASConnectService(middleware)
         self.truecommand = TruecommandService(middleware)
         self.truenas = TrueNASService(middleware)
-        self.truesearch = TrueSearchService(middleware)
+        self.truesearch = TruesearchService(middleware)
         self.tunable = TunableService(middleware)
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)

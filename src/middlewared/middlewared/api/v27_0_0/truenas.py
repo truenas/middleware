@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, LongNonEmptyString, LongString, NonEmptyString
+from middlewared.api.base import BaseModel, LongNonEmptyString, LongString, Multiline, NonEmptyString
 
 from .support import SupportNewTicket
 
@@ -57,7 +57,7 @@ class TrueNASGetEulaArgs(BaseModel):
 
 
 class TrueNASGetEulaResult(BaseModel):
-    result: LongString | None = Field(
+    result: Multiline[LongString] | None = Field(
         description="Full text of the End User License Agreement. `null` if no EULA is required.",
     )
 
@@ -105,7 +105,7 @@ class TrueNASLicenseUploadOptions(BaseModel):
 
 
 class TrueNASLicenseUploadArgs(BaseModel):
-    license: Secret[LongNonEmptyString] = Field(description="PEM-wrapped license to apply to the system.")
+    license: Secret[Multiline[LongNonEmptyString]] = Field(description="PEM-wrapped license to apply to the system.")
     options: TrueNASLicenseUploadOptions = Field(default=TrueNASLicenseUploadOptions(), description="Options.")
 
 
@@ -194,7 +194,7 @@ class EntitlementEntry(BaseModel):
             "New values may be added; treat an unrecognized value as a generic denial."
         )
     )
-    message: str = Field(description="Human-readable explanation of the decision. Empty when entitled.")
+    message: Multiline[str] = Field(description="Human-readable explanation of the decision. Empty when entitled.")
 
 
 class EntitlementsInfo(BaseModel):

@@ -4,10 +4,7 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel
 
-__all__ = [
-    "IpmiChassisIdentifyArgs", "IpmiChassisIdentifyResult",
-    "IpmiChassisInfoArgs", "IpmiChassisInfoResult"
-]
+__all__ = ["IpmiChassisIdentifyArgs", "IpmiChassisIdentifyResult", "IpmiChassisInfoArgs", "IpmiChassisInfoResult"]
 
 
 class IPMIChassisInfo(BaseModel):
@@ -48,7 +45,7 @@ class IpmiChassisIdentifyResult(BaseModel):
 
 class IpmiChassisInfoRequest(BaseModel):
     query_remote: bool = Field(
-        alias='query-remote',
+        alias="query-remote",
         default=False,
         description="Whether to query remote IPMI chassis information on HA systems.",
     )

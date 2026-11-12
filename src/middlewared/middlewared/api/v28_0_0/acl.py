@@ -8,6 +8,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LocalUsername,
+    Multiline,
     NonEmptyString,
     Private,
     RemoteUsername,
@@ -29,26 +30,30 @@ from middlewared.utils.filesystem.acl import (
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    'ACLTemplateEntry',
-    'ACLTemplateByPathArgs', 'ACLTemplateByPathResult',
-    'ACLTemplateCreateArgs', 'ACLTemplateCreateResult',
-    'ACLTemplateUpdateArgs', 'ACLTemplateUpdateResult',
-    'ACLTemplateDeleteArgs', 'ACLTemplateDeleteResult',
-    'FilesystemGetaclArgs', 'FilesystemGetaclResult',
-    'FilesystemSetAclOptions',
-    'FilesystemSetaclArgs', 'FilesystemSetaclResult',
-    'NFS4ACE', 'POSIXACE',
+    "ACLTemplateEntry",
+    "ACLTemplateByPathArgs",
+    "ACLTemplateByPathResult",
+    "ACLTemplateCreateArgs",
+    "ACLTemplateCreateResult",
+    "ACLTemplateUpdateArgs",
+    "ACLTemplateUpdateResult",
+    "ACLTemplateDeleteArgs",
+    "ACLTemplateDeleteResult",
+    "FilesystemGetaclArgs",
+    "FilesystemGetaclResult",
+    "FilesystemSetAclOptions",
+    "FilesystemSetaclArgs",
+    "FilesystemSetaclResult",
+    "NFS4ACE",
+    "POSIXACE",
 ]
 
-ACL_MAX_ID = 2 ** 32 // 2 - 1
+ACL_MAX_ID = 2**32 // 2 - 1
 
 AceWhoId = Annotated[int, Ge(ACL_UNDEFINED_ID), Le(ACL_MAX_ID)]
 
 NFS4ACE_BasicPermset = Literal[
-    NFS4ACE_MaskSimple.FULL_CONTROL,
-    NFS4ACE_MaskSimple.MODIFY,
-    NFS4ACE_MaskSimple.READ,
-    NFS4ACE_MaskSimple.TRAVERSE
+    NFS4ACE_MaskSimple.FULL_CONTROL, NFS4ACE_MaskSimple.MODIFY, NFS4ACE_MaskSimple.READ, NFS4ACE_MaskSimple.TRAVERSE
 ]
 
 NFS4ACE_BasicFlagset = Literal[
@@ -61,13 +66,10 @@ NFS4ACE_Tags = Literal[
     NFS4ACE_Tag.SPECIAL_GROUP,
     NFS4ACE_Tag.SPECIAL_EVERYONE,
     NFS4ACE_Tag.USER,
-    NFS4ACE_Tag.GROUP
+    NFS4ACE_Tag.GROUP,
 ]
 
-NFS4ACE_EntryTypes = Literal[
-    NFS4ACE_Type.ALLOW,
-    NFS4ACE_Type.DENY
-]
+NFS4ACE_EntryTypes = Literal[NFS4ACE_Type.ALLOW, NFS4ACE_Type.DENY]
 
 
 class NFS4ACE_AdvancedPerms(BaseModel):
@@ -122,15 +124,15 @@ class NFS4ACE_AdvancedFlags(BaseModel):
     INHERIT_ONLY: bool = Field(default=False, description="This ACE only affects inheritance, not the object itself.")
     INHERITED: bool = Field(default=False, description="This ACE was inherited from a parent directory.")
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_inherit_only(self) -> Self:
         if not self.INHERIT_ONLY:
             return self
 
         if not self.FILE_INHERIT and not self.DIRECTORY_INHERIT:
             raise ValueError(
-                'At least one of FILE_INHERIT or DIRECTORY_INHERIT must '
-                'be set if INHERIT_ONLY is present in the ACE flags'
+                "At least one of FILE_INHERIT or DIRECTORY_INHERIT must "
+                "be set if INHERIT_ONLY is present in the ACE flags"
             )
 
         return self
@@ -173,26 +175,24 @@ class NFS4ACE(BaseModel):
     )
     id: AceWhoId | None = Field(
         default=None,
-        description="UID or GID when `tag` is \"USER\" or \"GROUP\". `null` for special entries.",
+        description='UID or GID when `tag` is "USER" or "GROUP". `null` for special entries.',
     )
     who: LocalUsername | RemoteUsername | None = Field(
         default=None,
-        description="Username or group name when `tag` is \"USER\" or \"GROUP\". `null` for special entries.",
+        description='Username or group name when `tag` is "USER" or "GROUP". `null` for special entries.',
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_ace_valid(self) -> Self:
         if self.tag in NFS4_SPECIAL_ENTRIES:
             if self.id not in (-1, None):
                 raise ValueError(
-                    f'{self.id}: id may not be specified for the following ACL entry '
-                    f'tags: {", ".join([tag for tag in NFS4_SPECIAL_ENTRIES])}'
+                    f"{self.id}: id may not be specified for the following ACL entry "
+                    f"tags: {', '.join([tag for tag in NFS4_SPECIAL_ENTRIES])}"
                 )
         else:
             if not self.who and self.id in (None, -1):
-                raise ValueError(
-                    'Numeric ID "id" or account name "who" must be specified'
-                )
+                raise ValueError('Numeric ID "id" or account name "who" must be specified')
 
         return self
 
@@ -215,7 +215,7 @@ POSIXACE_Tags = Literal[
     POSIXACE_Tag.OTHER,
     POSIXACE_Tag.MASK,
     POSIXACE_Tag.USER,
-    POSIXACE_Tag.GROUP
+    POSIXACE_Tag.GROUP,
 ]
 
 
@@ -249,19 +249,17 @@ class POSIXACE(BaseModel):
         description="Username or group name when tag is `USER` or `GROUP`. `null` for object entries.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_ace_valid(self) -> Self:
         if self.tag in POSIX_SPECIAL_ENTRIES:
             if self.id not in (-1, None):
                 raise ValueError(
-                    f'{self.id}: id may not be specified for the following ACL entry '
-                    f'tags: {", ".join([tag for tag in POSIX_SPECIAL_ENTRIES])}'
+                    f"{self.id}: id may not be specified for the following ACL entry "
+                    f"tags: {', '.join([tag for tag in POSIX_SPECIAL_ENTRIES])}"
                 )
         else:
             if not self.who and self.id in (None, -1):
-                raise ValueError(
-                    'Numeric ID "id" or account name "who" must be specified'
-                )
+                raise ValueError('Numeric ID "id" or account name "who" must be specified')
 
         return self
 
@@ -367,7 +365,7 @@ class FilesystemSetAclOptions(BaseModel):
     )
 
 
-@single_argument_args('filesystem_acl')
+@single_argument_args("filesystem_acl")
 class FilesystemSetaclArgs(BaseModel):
     path: NonEmptyString = Field(description="Absolute filesystem path to set ACL on.")
     dacl: list[NFS4ACE] | list[POSIXACE] = Field(
@@ -393,9 +391,7 @@ class FilesystemSetaclArgs(BaseModel):
     )
     user: str | None = Field(
         default=None,
-        description=(
-            "Username to set as owner or `null` to preserve existing. Set one and only one of `uid`/`user`."
-        ),
+        description=("Username to set as owner or `null` to preserve existing. Set one and only one of `uid`/`user`."),
     )
     gid: AceWhoId | None = Field(
         default=ACL_UNDEFINED_ID,
@@ -417,12 +413,10 @@ class FilesystemSetaclArgs(BaseModel):
         description="ACL type to use or `null` to auto-detect from filesystem capabilities.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_setacl_valid(self) -> Self:
         if len(self.dacl) != 0 and self.options.stripacl:
-            raise ValueError(
-                'Simultaneosuly setting and removing ACL from path is not supported'
-            )
+            raise ValueError("Simultaneosuly setting and removing ACL from path is not supported")
 
         return self
 
@@ -437,7 +431,10 @@ class ACLTemplateEntry(BaseModel):
     name: str = Field(description="Human-readable name for the ACL template.")
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] = Field(description="ACL type this template provides.")
     acl: list[NFS4ACE] | list[POSIXACE] = Field(description="Array of Access Control Entries defined by this template.")
-    comment: str = Field(default='', description="Optional descriptive comment about the template's purpose.")
+    comment: Multiline[str] = Field(
+        default="",
+        description="Optional descriptive comment about the template's purpose.",
+    )
 
 
 class AclTemplateCreate(ACLTemplateEntry):
@@ -495,24 +492,24 @@ class ACLTemplateByPathQueryOptions(QueryOptions):
     get: Excluded = excluded_field()
 
 
-@single_argument_args('filesystem_acl')
+@single_argument_args("filesystem_acl")
 class ACLTemplateByPathArgs(BaseModel):
     path: str = Field(
         default="",
         description="Filesystem path to filter templates by compatibility or empty string for all.",
     )
     query_filters: QueryFilters = Field(
-        alias='query-filters',
+        alias="query-filters",
         default=[],
         description="Query filters to apply when selecting templates.",
     )
     query_options: ACLTemplateByPathQueryOptions = Field(
-        alias='query-options',
+        alias="query-options",
         default=ACLTemplateByPathQueryOptions(),
         description="Query options for pagination and ordering of results.",
     )
     format_options: AclTemplateFormatOptions = Field(
-        alias='format-options',
+        alias="format-options",
         default=AclTemplateFormatOptions(),
         description="Formatting options for how template data is returned.",
     )

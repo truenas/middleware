@@ -9,6 +9,7 @@ from middlewared.api.base import (
     IscsiExtentBlockSize,
     IscsiExtentRPM,
     IscsiExtentType,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
@@ -29,7 +30,7 @@ __all__ = [
 class iSCSITargetExtentEntry(BaseModel):
     id: int = Field(description="Unique identifier for the iSCSI extent.")
     name: Annotated[NonEmptyString, StringConstraints(max_length=64)] = Field(description="Name of the iSCSI extent.")
-    type: IscsiExtentType = Field(default='DISK', description="Type of the extent storage backend.")
+    type: IscsiExtentType = Field(default="DISK", description="Type of the extent storage backend.")
     disk: str | None = Field(default=None, description="Disk device to use for the extent or `null` if using a file.")
     serial: str | None = Field(default=None, description="Serial number for the extent or `null` to auto-generate.")
     path: str | None = Field(default=None, description="File path for file-based extents or `null` if using a disk.")
@@ -37,18 +38,18 @@ class iSCSITargetExtentEntry(BaseModel):
         description=(
             "The ZFS dataset containing the file-based extent (e.g., 'tank/iscsi'). Returns `null` for non-FILE extent "
             "types (DISK, ZVOL) or if the FILE path cannot be resolved yet (encrypted dataset not unlocked, etc.). This"
-            " is a read-only field automatically populated from \"path\"."
+            ' is a read-only field automatically populated from "path".'
         ),
     )
     relative_path: str | None = Field(
         description=(
             "The path of the file-based extent relative to the dataset mountpoint (e.g., 'extents/lun0.img'). An empty "
             "string indicates the file is at the dataset root. Returns `null` for non-FILE types or if the path cannot "
-            "be resolved yet. This is a read-only field automatically populated from \"path\"."
+            'be resolved yet. This is a read-only field automatically populated from "path".'
         ),
     )
     filesize: str | int = Field(
-        default='0',
+        default="0",
         description="Size of the file-based extent in bytes. If non-zero, must be a multiple of `blocksize`.",
     )
     blocksize: IscsiExtentBlockSize = Field(default=512, description="Block size for the extent in bytes.")
@@ -57,7 +58,7 @@ class iSCSITargetExtentEntry(BaseModel):
         default=None,
         description="Available space threshold percentage or `null` to disable.",
     )
-    comment: str = Field(default='', description="Optional comment describing the extent.")
+    comment: Multiline[str] = Field(default="", description="Optional comment describing the extent.")
     naa: str = Field(max_length=34, description="Network Address Authority (NAA) identifier for the extent.")
     insecure_tpc: bool = Field(
         default=True,
@@ -70,7 +71,7 @@ class iSCSITargetExtentEntry(BaseModel):
         default=False,
         description="Whether to enable Xen compatibility mode. Set to `true` when Xen is the iSCSI initiator.",
     )
-    rpm: IscsiExtentRPM = Field(default='SSD', description="Reported RPM type for the extent.")
+    rpm: IscsiExtentRPM = Field(default="SSD", description="Reported RPM type for the extent.")
     ro: bool = Field(default=False, description="Whether the extent is read-only.")
     enabled: bool = Field(default=True, description="Whether the extent is enabled and available for use.")
     vendor: str = Field(description="Vendor string reported by the extent.")

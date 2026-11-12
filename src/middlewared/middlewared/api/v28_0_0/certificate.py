@@ -10,32 +10,44 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     LongNonEmptyString,
     LongString,
+    Multiline,
     NonEmptyString,
     match_validator,
 )
 
 __all__ = [
-    'CertificateEntry', 'CertificateCreate', 'CertificateCreateArgs', 'CertificateCreateResult',
-    'CertificateUpdate', 'CertificateUpdateArgs', 'CertificateUpdateResult',
-    'CertificateDeleteArgs', 'CertificateDeleteResult',
-    'ECCurves', 'EKU_OID',
+    "CertificateEntry",
+    "CertificateCreate",
+    "CertificateCreateArgs",
+    "CertificateCreateResult",
+    "CertificateUpdate",
+    "CertificateUpdateArgs",
+    "CertificateUpdateResult",
+    "CertificateDeleteArgs",
+    "CertificateDeleteResult",
+    "ECCurves",
+    "EKU_OID",
 ]
 
 
-RE_CERTIFICATE_NAME = re.compile(r'^[a-z0-9_\-]+$', re.I)
-CERT_NAME = Annotated[NonEmptyString, AfterValidator(
-    match_validator(
-        RE_CERTIFICATE_NAME,
-        'Name can only contain alphanumeric characters plus dash (-), and underscore (_)',
-    )
-), StringConstraints(max_length=120)]
+RE_CERTIFICATE_NAME = re.compile(r"^[a-z0-9_\-]+$", re.I)
+CERT_NAME = Annotated[
+    NonEmptyString,
+    AfterValidator(
+        match_validator(
+            RE_CERTIFICATE_NAME,
+            "Name can only contain alphanumeric characters plus dash (-), and underscore (_)",
+        )
+    ),
+    StringConstraints(max_length=120),
+]
 
 
 class ECCurves(str, Enum):
-    SECP256R1 = 'SECP256R1'
-    SECP384R1 = 'SECP384R1'
-    SECP521R1 = 'SECP521R1'
-    ED25519 = 'ed25519'
+    SECP256R1 = "SECP256R1"
+    SECP384R1 = "SECP384R1"
+    SECP521R1 = "SECP521R1"
+    ED25519 = "ed25519"
 
 
 class CertificateEntry(BaseModel):
@@ -48,19 +60,19 @@ class CertificateEntry(BaseModel):
             " and underscores."
         ),
     )
-    certificate: LongString | None = Field(
+    certificate: Multiline[LongString] | None = Field(
         description=(
             "PEM-encoded X.509 certificate data. `null` for certificate signing requests (CSR) that have not yet been "
             "signed."
         ),
     )
-    privatekey: Secret[LongString | None] = Field(
+    privatekey: Secret[Multiline[LongString] | None] = Field(
         description=(
             "PEM-encoded private key corresponding to the certificate. `null` if no private key is available or for "
             "imported certificates without keys."
         ),
     )
-    CSR: LongString | None = Field(
+    CSR: Multiline[LongString] | None = Field(
         description=(
             "PEM-encoded Certificate Signing Request (CSR) data. `null` for imported certificates or completed ACME "
             "certificates."
@@ -113,7 +125,7 @@ class CertificateEntry(BaseModel):
         ),
     )
     cert_type_CA: bool = Field(description="Whether this certificate is a Certificate Authority (CA) certificate.")
-    chain_list: list[LongString] = Field(
+    chain_list: list[Multiline[LongString]] = Field(
         description="Array of PEM-encoded certificates in the certificate chain, starting with the leaf certificate.",
     )
     key_length: int | None = Field(
@@ -164,7 +176,7 @@ class CertificateEntry(BaseModel):
         description="Certificate validity period in seconds. `null` if certificate parsing failed.",
     )
     from_: str | None = Field(
-        alias='from',
+        alias="from",
         description="Certificate validity start date in ISO 8601 format. `null` if certificate parsing failed.",
     )
     until: str | None = Field(
@@ -304,33 +316,33 @@ class CertificateExtensions(BaseModel):
 class CertificateCreate(BaseModel):
     name: CERT_NAME = Field(description="Certificate name.")
     create_type: Literal[
-        'CERTIFICATE_CREATE_IMPORTED',
-        'CERTIFICATE_CREATE_CSR',
-        'CERTIFICATE_CREATE_IMPORTED_CSR',
-        'CERTIFICATE_CREATE_ACME',
+        "CERTIFICATE_CREATE_IMPORTED",
+        "CERTIFICATE_CREATE_CSR",
+        "CERTIFICATE_CREATE_IMPORTED_CSR",
+        "CERTIFICATE_CREATE_ACME",
     ] = Field(description="Type of certificate creation operation.")
     add_to_trusted_store: bool = Field(
         default=False,
         description="Whether to add this certificate to the trusted certificate store.",
     )
     # Fields for importing certs/CSRs
-    certificate: LongNonEmptyString | None = Field(
+    certificate: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description="PEM-encoded certificate to import or `null`.",
     )
-    privatekey: Secret[LongNonEmptyString | None] = Field(
+    privatekey: Secret[Multiline[LongNonEmptyString] | None] = Field(
         default=None,
         description="PEM-encoded private key to import or `null`.",
     )
-    CSR: LongNonEmptyString | None = Field(
+    CSR: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description="PEM-encoded certificate signing request to import or `null`.",
     )
     # Fields used for controlling what type of key is created
     key_length: Literal[2048, 4096] | None = Field(default=None, description="RSA key length in bits or `null`.")
-    key_type: Literal['RSA', 'EC'] = Field(default='RSA', description="Type of cryptographic key to generate.")
+    key_type: Literal["RSA", "EC"] = Field(default="RSA", description="Type of cryptographic key to generate.")
     ec_curve: Literal[tuple(s.value for s in ECCurves)] = Field(
-        default='SECP384R1',
+        default="SECP384R1",
         description="Elliptic curve to use for EC keys.",
     )
     passphrase: NonEmptyString | None = Field(
@@ -357,8 +369,8 @@ class CertificateCreate(BaseModel):
         default=None,
         description="State or province name for certificate subject or `null`.",
     )
-    digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512'] = Field(
-        default='SHA256',
+    digest_algorithm: Literal["SHA224", "SHA256", "SHA384", "SHA512"] = Field(
+        default="SHA256",
         description="Hash algorithm for certificate signing.",
     )
     san: list[NonEmptyString] = Field(

@@ -2,32 +2,42 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, excluded_field
 
 __all__ = [
-    "TunableCreate", "TunableEntry", "TunableUpdate",
-    "TunableCreateArgs", "TunableCreateResult",
-    "TunableDeleteArgs", "TunableDeleteResult",
-    "TunableUpdateArgs", "TunableUpdateResult",
-    "TunableTunableTypeChoices", "TunableTunableTypeChoicesArgs", "TunableTunableTypeChoicesResult",
+    "TunableCreate",
+    "TunableEntry",
+    "TunableUpdate",
+    "TunableCreateArgs",
+    "TunableCreateResult",
+    "TunableDeleteArgs",
+    "TunableDeleteResult",
+    "TunableUpdateArgs",
+    "TunableUpdateResult",
+    "TunableTunableTypeChoices",
+    "TunableTunableTypeChoicesArgs",
+    "TunableTunableTypeChoicesResult",
 ]
 
 
 class TunableCreate(BaseModel):
-    type: Literal['SYSCTL', 'UDEV', 'ZFS'] = Field(
-        default='SYSCTL',
+    type: Literal["SYSCTL", "UDEV", "ZFS"] = Field(
+        default="SYSCTL",
         description=(
             "* `SYSCTL`: `var` is a sysctl name (e.g. `kernel.watchdog`) and `value` is its corresponding value (e.g. "
             "`0`).\n"
             "* `UDEV`: `var` is a udev rules file name (e.g. `10-disable-usb`, `.rules` suffix will be appended "
-            "automatically) and `value` is its contents (e.g. `BUS==\"usb\", OPTIONS+=\"ignore_device\"`).\n"
+            'automatically) and `value` is its contents (e.g. `BUS=="usb", OPTIONS+="ignore_device"`).\n'
             "* `ZFS`: `var` is a ZFS kernel module parameter name (e.g. `zfs_dirty_data_max_max`) and `value` is its "
             "value (e.g. `783091712`)."
         ),
     )
     var: str = Field(description="Name or identifier of the system parameter to tune.")
-    value: str = Field(description="Value to assign to the tunable parameter.")
-    comment: str = Field(default='', description="Optional descriptive comment explaining the purpose of this tunable.")
+    value: Multiline[str] = Field(description="Value to assign to the tunable parameter.")
+    comment: Multiline[str] = Field(
+        default="",
+        description="Optional descriptive comment explaining the purpose of this tunable.",
+    )
     enabled: bool = Field(default=True, description="Whether this tunable is active and should be applied.")
     update_initramfs: bool = Field(
         default=True,
@@ -40,14 +50,16 @@ class TunableCreate(BaseModel):
 
 class TunableEntry(TunableCreate):
     id: int = Field(description="Unique identifier for the tunable configuration.")
-    orig_value: str = Field(description="Original system value of the parameter before this tunable was applied.")
+    orig_value: Multiline[str] = Field(
+        description="Original system value of the parameter before this tunable was applied.",
+    )
     update_initramfs: Excluded = excluded_field()
 
 
 class TunableTunableTypeChoices(BaseModel):
-    SYSCTL: Literal['SYSCTL'] = Field(description="System control parameters that affect kernel behavior.")
-    UDEV: Literal['UDEV'] = Field(description="Device management rules for hardware detection and configuration.")
-    ZFS: Literal['ZFS'] = Field(description="ZFS filesystem kernel module parameters.")
+    SYSCTL: Literal["SYSCTL"] = Field(description="System control parameters that affect kernel behavior.")
+    UDEV: Literal["UDEV"] = Field(description="Device management rules for hardware detection and configuration.")
+    ZFS: Literal["ZFS"] = Field(description="ZFS filesystem kernel module parameters.")
 
 
 class TunableUpdate(TunableCreate, metaclass=ForUpdateMetaclass):

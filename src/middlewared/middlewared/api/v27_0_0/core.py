@@ -7,6 +7,7 @@ from middlewared.api.base import (
     BaseModel,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     single_argument_args,
     single_argument_result,
 )
@@ -69,14 +70,14 @@ class CoreGetMethodsResult(BaseModel):
 
 class CoreGetJobsItemProgress(BaseModel):
     percent: int | None = Field(description="Completion percentage of the job. `null` if not available.")
-    description: LongString | None = Field(
+    description: Multiline[LongString] | None = Field(
         description="Human-readable description of the current progress. `null` if not available.",
     )
     extra: Any = Field(description="Additional progress information specific to the job type.")
 
 
 class CoreGetJobsItemExcInfo(BaseModel):
-    repr: LongString | None = Field(
+    repr: Multiline[LongString] | None = Field(
         description="String representation of the exception. `null` if no exception occurred.",
     )
     type: str | None = Field(description="Exception type name. `null` if no exception occurred.")
@@ -96,19 +97,21 @@ class CoreGetJobsItem(BaseModel):
     method: str = Field(description="Name of the method/service being executed by this job.")
     arguments: list = Field(description="Array of arguments passed to the job method.")
     transient: bool = Field(description="Whether this is a temporary job that will be automatically cleaned up.")
-    description: LongString | None = Field(
+    description: Multiline[LongString] | None = Field(
         description="Human-readable description of what this job does. `null` if not provided.",
     )
     abortable: bool = Field(description="Whether this job can be cancelled/aborted.")
     logs_path: str | None = Field(description="File system path to detailed job logs. `null` if no logs available.")
-    logs_excerpt: LongString | None = Field(
+    logs_excerpt: Multiline[LongString] | None = Field(
         description="Brief excerpt from job logs for quick preview. `null` if no logs available.",
     )
     progress: CoreGetJobsItemProgress = Field(description="Current progress information for the job.")
     result: Any = Field(description="The result data returned by the job upon successful completion.")
     result_encoding_error: Any = Field(description="Encoding error information if result serialization failed.")
-    error: LongString | None = Field(description="Error message if the job failed. `null` if no error occurred.")
-    exception: LongString | None = Field(
+    error: Multiline[LongString] | None = Field(
+        description="Error message if the job failed. `null` if no error occurred.",
+    )
+    exception: Multiline[LongString] | None = Field(
         description="Exception details if the job encountered an exception. `null` if no exception occurred.",
     )
     exc_info: CoreGetJobsItemExcInfo | None = Field(
@@ -266,7 +269,7 @@ class CoreDebugResult(BaseModel):
 class CoreBulkArgs(BaseModel):
     method: str = Field(description="Method name to execute for each parameter set.")
     params: list[list] = Field(description="Array of parameter arrays, each representing one method call.")
-    description: str | None = Field(
+    description: Multiline[str] | None = Field(
         default=None,
         description="Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\").",
     )
@@ -274,7 +277,7 @@ class CoreBulkArgs(BaseModel):
 
 class CoreBulkResultItem(BaseModel):
     job_id: int | None = Field(description="Job ID for this bulk operation item or `null` if it failed to start.")
-    error: LongString | None = Field(description="Error message if this item failed or `null` on success.")
+    error: Multiline[LongString] | None = Field(description="Error message if this item failed or `null` on success.")
     result: Any = Field(description="Result data returned by this bulk operation item.")
 
 

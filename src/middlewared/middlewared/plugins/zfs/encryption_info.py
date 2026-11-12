@@ -16,6 +16,7 @@ from middlewared.api.current import (
 )
 from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.utils.filesystem.directory import directory_is_empty
+from middlewared.utils.pwenc import PWENC_KEY_LOCATION
 
 from . import resource_query as _query
 from .encryption_keys import path_filters, stored_keys
@@ -93,6 +94,7 @@ def encryption_view(row: dict[str, Any]) -> dict[str, Any]:
         "key_loaded": enc.encrypted and not enc.locked,
         "encryption_root": encryption_root,
         "key_format": enc.encryption_type,
+        "key_location": enc.location,
     }
 
 
@@ -127,6 +129,9 @@ def encryption_roots(
     result = {}
     for name, ds in datasets.items():
         if name != ds["encryption_root"] or not ds["encrypted"]:
+            continue
+        if ds["key_location"] == PWENC_KEY_LOCATION:
+            # The system dataset setup loads this key from the pwenc secret. No user key unlocks it.
             continue
         if state == "locked" and ds["key_loaded"] or state == "unlocked" and not ds["key_loaded"]:
             continue

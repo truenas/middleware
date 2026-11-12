@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, Excluded, NonEmptyString, Private, excluded_field
+from middlewared.api.base import BaseModel, Excluded, Multiline, NonEmptyString, Private, excluded_field
 
 from .zfs_resource_crud import ZFSResourceCreateProperties
 
@@ -45,7 +45,7 @@ class ZpoolPropertyValue(BaseModel):
     source: str | None = Field(
         description="The source from where this property received its value (DEFAULT, LOCAL, NONE, etc.).",
     )
-    value: int | float | str | bool | None = Field(description="The native Python value of the property.")
+    value: int | float | Multiline[str] | bool | None = Field(description="The native Python value of the property.")
 
 
 class ZpoolVdevStats(BaseModel):
@@ -151,7 +151,7 @@ class ZpoolExpand(BaseModel):
 class ZpoolFeature(BaseModel):
     name: str = Field(description="Feature name.")
     guid: str = Field(description="Feature GUID.")
-    description: str = Field(description="Feature description.")
+    description: Multiline[str] = Field(description="Feature description.")
     state: str = Field(description="Feature state.")
 
 
@@ -170,7 +170,7 @@ class ZpoolEntry(BaseModel):
     status_code: str | None = Field(
         description="Detailed status code (e.g., OK, ERRATA, FEAT_DISABLED, LOCKED_SED_DISKS).",
     )
-    status_detail: str | None = Field(description="Human-readable status description.")
+    status_detail: Multiline[str] | None = Field(description="Human-readable status description.")
     is_upgraded: bool | None = Field(
         default=None,
         description="Whether every ZFS feature flag on the pool is enabled. `null` for OFFLINE pools.",

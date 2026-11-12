@@ -8,10 +8,10 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NetbiosDomain,
     NetbiosName,
     NonEmptyString,
-    SingleLineString,
     SmbShareName,
     UnixPerm,
     excluded_field,
@@ -26,57 +26,134 @@ from .common import QueryFilters, QueryOptions
 from .zfs_tier import TierInfo
 
 __all__ = [
-    'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
-    'SharingSMBSetaclArgs', 'SharingSMBSetaclResult',
-    'SMBEntry', 'SMBStatusArgs', 'SMBStatusResult',
-    'SMBUpdateArgs', 'SMBUpdateResult',
-    'SMBUnixcharsetChoicesArgs', 'SMBUnixcharsetChoicesResult',
-    'SMBBindipChoicesArgs', 'SMBBindipChoicesResult',
-    'SharingSMBPresetsArgs', 'SharingSMBPresetsResult',
-    'SharingSMBSharePrecheckArgs', 'SharingSMBSharePrecheckResult',
-    'SharingSMBEntry', 'SharingSMBCreateArgs', 'SharingSMBCreateResult',
-    'SharingSMBUpdateArgs', 'SharingSMBUpdateResult',
-    'SharingSMBDeleteArgs', 'SharingSMBDeleteResult',
+    "SharingSMBGetaclArgs",
+    "SharingSMBGetaclResult",
+    "SharingSMBSetaclArgs",
+    "SharingSMBSetaclResult",
+    "SMBEntry",
+    "SMBStatusArgs",
+    "SMBStatusResult",
+    "SMBUpdateArgs",
+    "SMBUpdateResult",
+    "SMBUnixcharsetChoicesArgs",
+    "SMBUnixcharsetChoicesResult",
+    "SMBBindipChoicesArgs",
+    "SMBBindipChoicesResult",
+    "SharingSMBPresetsArgs",
+    "SharingSMBPresetsResult",
+    "SharingSMBSharePrecheckArgs",
+    "SharingSMBSharePrecheckResult",
+    "SharingSMBEntry",
+    "SharingSMBCreateArgs",
+    "SharingSMBCreateResult",
+    "SharingSMBUpdateArgs",
+    "SharingSMBUpdateResult",
+    "SharingSMBDeleteArgs",
+    "SharingSMBDeleteResult",
 ]
 
-EMPTY_STRING = ''
+EMPTY_STRING = ""
 
 SMBCharsetType = Literal[
-    SMBUnixCharset.UTF_8, SMBUnixCharset.GB2312, SMBUnixCharset.HZ_GB_2312,
-    SMBUnixCharset.CP1361, SMBUnixCharset.BIG5, SMBUnixCharset.BIG5HKSCS, SMBUnixCharset.CP037,
-    SMBUnixCharset.CP273, SMBUnixCharset.CP424, SMBUnixCharset.CP437, SMBUnixCharset.CP500,
-    SMBUnixCharset.CP775, SMBUnixCharset.CP850, SMBUnixCharset.CP852, SMBUnixCharset.CP855,
-    SMBUnixCharset.CP857, SMBUnixCharset.CP858, SMBUnixCharset.CP860, SMBUnixCharset.CP861,
-    SMBUnixCharset.CP862, SMBUnixCharset.CP863, SMBUnixCharset.CP864, SMBUnixCharset.CP865,
-    SMBUnixCharset.CP866, SMBUnixCharset.CP869, SMBUnixCharset.CP932, SMBUnixCharset.CP949,
-    SMBUnixCharset.CP950, SMBUnixCharset.CP1026, SMBUnixCharset.CP1125, SMBUnixCharset.CP1140,
-    SMBUnixCharset.CP1250, SMBUnixCharset.CP1251, SMBUnixCharset.CP1252, SMBUnixCharset.CP1253,
-    SMBUnixCharset.CP1254, SMBUnixCharset.CP1255, SMBUnixCharset.CP1256, SMBUnixCharset.CP1257,
-    SMBUnixCharset.CP1258, SMBUnixCharset.EUC_JIS_2004, SMBUnixCharset.EUC_JISX0213, SMBUnixCharset.EUC_JP,
-    SMBUnixCharset.EUC_KR, SMBUnixCharset.GB18030, SMBUnixCharset.GBK, SMBUnixCharset.HZ, SMBUnixCharset.ISO2022_JP,
-    SMBUnixCharset.ISO2022_JP_1, SMBUnixCharset.ISO2022_JP_2, SMBUnixCharset.ISO2022_JP_2004,
-    SMBUnixCharset.ISO2022_JP_3, SMBUnixCharset.ISO2022_JP_EXT, SMBUnixCharset.ISO2022_KR, SMBUnixCharset.ISO8859_1,
-    SMBUnixCharset.ISO8859_2, SMBUnixCharset.ISO8859_3, SMBUnixCharset.ISO8859_4, SMBUnixCharset.ISO8859_5,
-    SMBUnixCharset.ISO8859_6, SMBUnixCharset.ISO8859_7, SMBUnixCharset.ISO8859_8, SMBUnixCharset.ISO8859_9,
-    SMBUnixCharset.ISO8859_10, SMBUnixCharset.ISO8859_11, SMBUnixCharset.ISO8859_13,
-    SMBUnixCharset.ISO8859_14, SMBUnixCharset.ISO8859_15, SMBUnixCharset.ISO8859_16, SMBUnixCharset.JOHAB,
-    SMBUnixCharset.KOI8_R, SMBUnixCharset.KZ1048, SMBUnixCharset.LATIN_1, SMBUnixCharset.MAC_CYRILLIC,
-    SMBUnixCharset.MAC_GREEK, SMBUnixCharset.MAC_ICELAND, SMBUnixCharset.MAC_LATIN2, SMBUnixCharset.MAC_ROMAN,
-    SMBUnixCharset.MAC_TURKISH, SMBUnixCharset.PTCP154, SMBUnixCharset.SHIFT_JIS,
-    SMBUnixCharset.SHIFT_JIS_2004, SMBUnixCharset.SHIFT_JISX0213, SMBUnixCharset.TIS_620, SMBUnixCharset.UTF_16,
-    SMBUnixCharset.UTF_16_BE, SMBUnixCharset.UTF_16_LE,
+    SMBUnixCharset.UTF_8,
+    SMBUnixCharset.GB2312,
+    SMBUnixCharset.HZ_GB_2312,
+    SMBUnixCharset.CP1361,
+    SMBUnixCharset.BIG5,
+    SMBUnixCharset.BIG5HKSCS,
+    SMBUnixCharset.CP037,
+    SMBUnixCharset.CP273,
+    SMBUnixCharset.CP424,
+    SMBUnixCharset.CP437,
+    SMBUnixCharset.CP500,
+    SMBUnixCharset.CP775,
+    SMBUnixCharset.CP850,
+    SMBUnixCharset.CP852,
+    SMBUnixCharset.CP855,
+    SMBUnixCharset.CP857,
+    SMBUnixCharset.CP858,
+    SMBUnixCharset.CP860,
+    SMBUnixCharset.CP861,
+    SMBUnixCharset.CP862,
+    SMBUnixCharset.CP863,
+    SMBUnixCharset.CP864,
+    SMBUnixCharset.CP865,
+    SMBUnixCharset.CP866,
+    SMBUnixCharset.CP869,
+    SMBUnixCharset.CP932,
+    SMBUnixCharset.CP949,
+    SMBUnixCharset.CP950,
+    SMBUnixCharset.CP1026,
+    SMBUnixCharset.CP1125,
+    SMBUnixCharset.CP1140,
+    SMBUnixCharset.CP1250,
+    SMBUnixCharset.CP1251,
+    SMBUnixCharset.CP1252,
+    SMBUnixCharset.CP1253,
+    SMBUnixCharset.CP1254,
+    SMBUnixCharset.CP1255,
+    SMBUnixCharset.CP1256,
+    SMBUnixCharset.CP1257,
+    SMBUnixCharset.CP1258,
+    SMBUnixCharset.EUC_JIS_2004,
+    SMBUnixCharset.EUC_JISX0213,
+    SMBUnixCharset.EUC_JP,
+    SMBUnixCharset.EUC_KR,
+    SMBUnixCharset.GB18030,
+    SMBUnixCharset.GBK,
+    SMBUnixCharset.HZ,
+    SMBUnixCharset.ISO2022_JP,
+    SMBUnixCharset.ISO2022_JP_1,
+    SMBUnixCharset.ISO2022_JP_2,
+    SMBUnixCharset.ISO2022_JP_2004,
+    SMBUnixCharset.ISO2022_JP_3,
+    SMBUnixCharset.ISO2022_JP_EXT,
+    SMBUnixCharset.ISO2022_KR,
+    SMBUnixCharset.ISO8859_1,
+    SMBUnixCharset.ISO8859_2,
+    SMBUnixCharset.ISO8859_3,
+    SMBUnixCharset.ISO8859_4,
+    SMBUnixCharset.ISO8859_5,
+    SMBUnixCharset.ISO8859_6,
+    SMBUnixCharset.ISO8859_7,
+    SMBUnixCharset.ISO8859_8,
+    SMBUnixCharset.ISO8859_9,
+    SMBUnixCharset.ISO8859_10,
+    SMBUnixCharset.ISO8859_11,
+    SMBUnixCharset.ISO8859_13,
+    SMBUnixCharset.ISO8859_14,
+    SMBUnixCharset.ISO8859_15,
+    SMBUnixCharset.ISO8859_16,
+    SMBUnixCharset.JOHAB,
+    SMBUnixCharset.KOI8_R,
+    SMBUnixCharset.KZ1048,
+    SMBUnixCharset.LATIN_1,
+    SMBUnixCharset.MAC_CYRILLIC,
+    SMBUnixCharset.MAC_GREEK,
+    SMBUnixCharset.MAC_ICELAND,
+    SMBUnixCharset.MAC_LATIN2,
+    SMBUnixCharset.MAC_ROMAN,
+    SMBUnixCharset.MAC_TURKISH,
+    SMBUnixCharset.PTCP154,
+    SMBUnixCharset.SHIFT_JIS,
+    SMBUnixCharset.SHIFT_JIS_2004,
+    SMBUnixCharset.SHIFT_JISX0213,
+    SMBUnixCharset.TIS_620,
+    SMBUnixCharset.UTF_16,
+    SMBUnixCharset.UTF_16_BE,
+    SMBUnixCharset.UTF_16_LE,
 ]
 
 
 class SMBShareAclEntryWhoId(BaseModel):
-    id_type: Literal['USER', 'GROUP'] = Field(
+    id_type: Literal["USER", "GROUP"] = Field(
         description=(
             "The type of Unix ID. If the type is `USER`, the `xid` value refers to a Unix UID. If the type is `GROUP`, "
             "the `xid` value refers to a Unix GID."
         ),
     )
     xid: int = Field(
-        alias='id',
+        alias="id",
         ge=0,
         le=2147483647,
         description="Unix user ID (UID) or group ID (GID) depending on the `id_type` field.",
@@ -84,9 +161,10 @@ class SMBShareAclEntryWhoId(BaseModel):
 
 
 class SMBShareAclEntry(BaseModel):
-    """ An SMB Share ACL Entry that grants or denies specific permissions to a principal.
-    You can identify the principal by a SID (`ae_who_sid`), or Unix ID (`ae_who_id`). """
-    ae_perm: Literal['FULL', 'CHANGE', 'READ', 'CUSTOM'] = Field(
+    """An SMB Share ACL Entry that grants or denies specific permissions to a principal.
+    You can identify the principal by a SID (`ae_who_sid`), or Unix ID (`ae_who_id`)."""
+
+    ae_perm: Literal["FULL", "CHANGE", "READ", "CUSTOM"] = Field(
         description=(
             "Permissions granted or denied to the principal: `FULL` grants read, write, execute, delete, write ACL, "
             "and change owner; `CHANGE` grants read, write, execute, and delete; `READ` grants read and execute. "
@@ -94,7 +172,7 @@ class SMBShareAclEntry(BaseModel):
             "means. In this case users will be required to set it to a supported value on update."
         ),
     )
-    ae_type: Literal['ALLOWED', 'DENIED'] = Field(
+    ae_type: Literal["ALLOWED", "DENIED"] = Field(
         description=(
             "The type of SMB share ACL entry. This value determines whether the permissions (ae_perm) are granted "
             "(ALLOWED) or denied (DENIED)."
@@ -110,11 +188,11 @@ class SMBShareAclEntry(BaseModel):
         description="The User or group name of the principal to whom this ACL entry applies.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_ae_who(self) -> Self:
         if self.ae_who_sid is None and self.ae_who_id is None and self.ae_who_str is None:
             raise ValueError(
-                'You must set one of the following fields to identify the user or group that this ACL entry '
+                "You must set one of the following fields to identify the user or group that this ACL entry "
                 'applies to: "ae_who_sid", "ae_who_str", or "ae_who_id"'
             )
 
@@ -122,17 +200,18 @@ class SMBShareAclEntry(BaseModel):
 
 
 class SMBShareAcl(BaseModel):
-    """ The ACL that applies to a specific SMB share.
+    """The ACL that applies to a specific SMB share.
 
-    NOTE: this is not the same as a filesystem ACL. It only affects access through the SMB protocol. """
+    NOTE: this is not the same as a filesystem ACL. It only affects access through the SMB protocol."""
+
     share_name: NonEmptyString = Field(description="Name of the SMB share.")
     share_acl: list[SMBShareAclEntry] = Field(
-        default=[SMBShareAclEntry(ae_who_sid='S-1-1-0', ae_perm='FULL', ae_type='ALLOWED')],
+        default=[SMBShareAclEntry(ae_who_sid="S-1-1-0", ae_perm="FULL", ae_type="ALLOWED")],
         description="List of SMB share ACL entries.",
     )
 
 
-@single_argument_args('smb_setacl')
+@single_argument_args("smb_setacl")
 class SharingSMBSetaclArgs(SMBShareAcl):
     pass
 
@@ -141,7 +220,7 @@ class SharingSMBSetaclResult(BaseModel):
     result: SMBShareAcl = Field(description="The updated SMB share ACL configuration.")
 
 
-@single_argument_args('smb_getacl')
+@single_argument_args("smb_getacl")
 class SharingSMBGetaclArgs(BaseModel):
     share_name: NonEmptyString = Field(description="Name of the SMB share to retrieve ACL for.")
 
@@ -150,13 +229,14 @@ class SharingSMBGetaclResult(SharingSMBSetaclResult):
     pass
 
 
-SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
-SMBMinProtocol = Literal['SMB1', 'SMB2', 'SMB3']
+SMBEncryption = Literal["DEFAULT", "NEGOTIATE", "DESIRED", "REQUIRED"]
+SMBMinProtocol = Literal["SMB1", "SMB2", "SMB3"]
 SMBSearchProtocol = Literal[SearchProtocol.SPOTLIGHT]
 
 
 class SMBEntry(BaseModel):
-    """ TrueNAS SMB server configuration. """
+    """TrueNAS SMB server configuration."""
+
     id: int = Field(description="Unique identifier for the SMB service configuration.")
     netbiosname: NetbiosName = Field(
         description="The NetBIOS name of this server. Defaults to the original hostname of the system."
@@ -228,13 +308,13 @@ class SMBEntry(BaseModel):
     guest: NonEmptyString = Field(
         description=(
             "SMB guest account username. This username provides access to legacy SMB shares with guest access enabled. "
-            "It must be a valid, existing local user account. Defaults to \"nobody\"."
+            'It must be a valid, existing local user account. Defaults to "nobody".'
         ),
     )
-    filemask: UnixPerm | Literal['DEFAULT'] = Field(
+    filemask: UnixPerm | Literal["DEFAULT"] = Field(
         description="`smb.conf` create mask. DEFAULT applies current server default which is 664.",
     )
-    dirmask: UnixPerm | Literal['DEFAULT'] = Field(
+    dirmask: UnixPerm | Literal["DEFAULT"] = Field(
         description="`smb.conf` directory mask. DEFAULT applies current server default which is 775.",
     )
     ntlmv1_auth: bool = Field(
@@ -266,7 +346,7 @@ class SMBEntry(BaseModel):
             "and group accounts."
         ),
     )
-    smb_options: str = Field(
+    smb_options: Multiline[str] = Field(
         description=(
             "Additional unvalidated and unsupported configuration options for the SMB server. WARNING: Using "
             "`smb_options` may produce unexpected server behavior."
@@ -286,7 +366,7 @@ class SMBEntry(BaseModel):
         ),
     )
 
-    @field_validator('bindip')
+    @field_validator("bindip")
     @classmethod
     def normalize_bindips(cls, values: list[IPvAnyInterface]) -> list[str]:
         """We'll be passed a list of IPvAnyInterface types, and we
@@ -309,8 +389,8 @@ class SMBStatusOptions(BaseModel):
             "of processes that died without cleaning up properly."
         ),
     )
-    restrict_user: str = Field(default='', description="Limit results to the specified user.")
-    restrict_session: str = Field(default='', description="Limit results to the specified SMB session ID.")
+    restrict_user: str = Field(default="", description="Limit results to the specified user.")
+    restrict_session: str = Field(default="", description="Limit results to the specified SMB session ID.")
     resolve_uids: bool = Field(
         default=True,
         description="Resolve Unix user IDs and group IDs to usernames and group names in the status output.",
@@ -318,9 +398,9 @@ class SMBStatusOptions(BaseModel):
 
 
 class SMBStatusArgs(BaseModel):
-    info_level: Literal['ALL', 'SESSIONS', 'SHARES', 'LOCKS', 'BYTERANGE', 'NOTIFICATIONS'] = Field(
-        default='ALL',
-        description="Type of information requests. Defaults to \"ALL\".",
+    info_level: Literal["ALL", "SESSIONS", "SHARES", "LOCKS", "BYTERANGE", "NOTIFICATIONS"] = Field(
+        default="ALL",
+        description='Type of information requests. Defaults to "ALL".',
     )
     filters: QueryFilters = Field(default=[], description="Query filters to apply to the status results.")
     options: QueryOptions = Field(
@@ -337,10 +417,10 @@ class SMBStatusResult(BaseModel):
     result: list[dict] | dict | int
 
 
-@single_argument_args('smb_update')
+@single_argument_args("smb_update")
 class SMBUpdateArgs(SMBEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
-    description: SingleLineString
+    description: str
 
 
 class SMBUpdateResult(BaseModel):
@@ -373,7 +453,7 @@ class SharingSMBPresetsResult(BaseModel):
     result: dict[str, dict] = Field(description="Available SMB share preset configurations by purpose.")
 
 
-@single_argument_args('smb_share_precheck')
+@single_argument_args("smb_share_precheck")
 class SharingSMBSharePrecheckArgs(BaseModel):
     name: SmbShareName | None = Field(default=None, description="Name of the SMB share to validate (optional).")
 
@@ -390,6 +470,7 @@ class SmbAuditConfig(BaseModel):
 
     NOTE: If a user is a member of groups in the `watch_list` and the `ignore_list`, the `watch_list` \
     has priority, and the SMB session is audited. """
+
     enable: bool = Field(
         default=False,
         description=(
@@ -399,18 +480,19 @@ class SmbAuditConfig(BaseModel):
     )
     watch_list: list[NonEmptyString] = Field(
         default=[],
-        examples=[['interns', 'contractors']],
+        examples=[["interns", "contractors"]],
         description="Only audit the listed group accounts. If the list is empty, all groups will be audited.",
     )
     ignore_list: list[NonEmptyString] = Field(
         default=[],
-        examples=[['automation', 'apps']],
+        examples=[["automation", "apps"]],
         description="List of groups that will not be audited.",
     )
 
 
 class DefaultOpt(BaseModel):
-    """ These configuration options apply to shares with the `DEFAULT_SHARE` purpose. """
+    """These configuration options apply to shares with the `DEFAULT_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.DEFAULT_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: bool = Field(
         default=False,
@@ -423,20 +505,19 @@ class DefaultOpt(BaseModel):
             "WARNING: This value should not be changed once data is written to the SMB share."
         ),
     )
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -445,7 +526,8 @@ class DefaultOpt(BaseModel):
 
 
 class LegacyOpt(BaseModel):
-    """ These configuration options apply to shares with the `LEGACY_SHARE` purpose. """
+    """These configuration options apply to shares with the `LEGACY_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.LEGACY_SHARE] = Field(exclude=True, repr=False)
     recyclebin: bool = Field(
         default=False,
@@ -468,20 +550,19 @@ class LegacyOpt(BaseModel):
             "(domain) and `%U` (username)."
         ),
     )
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -585,7 +666,7 @@ class LegacyOpt(BaseModel):
     )
     vuid: NonEmptyString | None = Field(
         default=None,
-        examples=['d12aafdc-a7ac-4e3c-8bbd-6001f7f19819'],
+        examples=["d12aafdc-a7ac-4e3c-8bbd-6001f7f19819"],
         description=(
             "This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the "
             "mDNS advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you "
@@ -593,8 +674,8 @@ class LegacyOpt(BaseModel):
             "share."
         ),
     )
-    auxsmbconf: LongString = Field(
-        default='',
+    auxsmbconf: Multiline[LongString] = Field(
+        default="",
         description=(
             "Additional parameters to set on the SMB share. Parameters must be separated by the new-line character.\n"
             "\n"
@@ -607,7 +688,8 @@ class LegacyOpt(BaseModel):
 
 
 class TimeMachineOpt(BaseModel):
-    """ These configuration options apply to shares with the `TIMEMACHINE_SHARE` purpose. """
+    """These configuration options apply to shares with the `TIMEMACHINE_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.TIMEMACHINE_SHARE] = Field(exclude=True, repr=False)
     timemachine_quota: int = Field(
         default=0,
@@ -652,7 +734,7 @@ class TimeMachineOpt(BaseModel):
     )
     vuid: NonEmptyString | None = Field(
         default=None,
-        examples=['d12aafdc-a7ac-4e3c-8bbd-6001f7f19819'],
+        examples=["d12aafdc-a7ac-4e3c-8bbd-6001f7f19819"],
         description=(
             "This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the "
             "mDNS advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you "
@@ -660,20 +742,19 @@ class TimeMachineOpt(BaseModel):
             "share."
         ),
     )
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -682,7 +763,8 @@ class TimeMachineOpt(BaseModel):
 
 
 class MultiprotocolOpt(BaseModel):
-    """ These configuration options apply to shares with the `MULTIPROTOCOL_SHARE` purpose. """
+    """These configuration options apply to shares with the `MULTIPROTOCOL_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.MULTIPROTOCOL_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: bool = Field(
         default=False,
@@ -695,20 +777,19 @@ class MultiprotocolOpt(BaseModel):
             "WARNING: This value should not be changed once data is written to the SMB share."
         ),
     )
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -717,7 +798,8 @@ class MultiprotocolOpt(BaseModel):
 
 
 class TimeLockedOpt(BaseModel):
-    """ These configuration options apply to shares with the `TIME_LOCKED_SHARE` purpose. """
+    """These configuration options apply to shares with the `TIME_LOCKED_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.TIME_LOCKED_SHARE] = Field(exclude=True, repr=False)
     grace_period: int = Field(
         default=900,
@@ -736,20 +818,19 @@ class TimeLockedOpt(BaseModel):
             "WARNING: This value should not be changed once data is written to the SMB share."
         ),
     )
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -758,7 +839,8 @@ class TimeLockedOpt(BaseModel):
 
 
 class PrivateDatasetOpt(BaseModel):
-    """ These configuration options apply to shares with the `PRIVATE_DATASETS_SHARE` purpose. """
+    """These configuration options apply to shares with the `PRIVATE_DATASETS_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.PRIVATE_DATASETS_SHARE] = Field(exclude=True, repr=False)
     dataset_naming_schema: SmbNamingSchema | None = Field(
         default=None,
@@ -790,20 +872,19 @@ class PrivateDatasetOpt(BaseModel):
             "WARNING: This value should not be changed once data is written to the SMB share."
         ),
     )
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -812,30 +893,33 @@ class PrivateDatasetOpt(BaseModel):
 
 
 class ExternalOpt(BaseModel):
-    """ These configuration options apply to shares with the `EXTERNAL_SHARE` purpose. """
+    """These configuration options apply to shares with the `EXTERNAL_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.EXTERNAL_SHARE] = Field(exclude=True, repr=False)
-    remote_path: list[NonEmptyString] = Field(examples=[
-        [r'192.168.0.200\SHARE'],
-        [r'SERVER1.MYDOM.INTERNAL\SHARE'],
-        [r'SERVER1.MYDOM.INTERNAL\SHARE, SERVER2.MYDOM.INTERNAL\SHARE']
-    ],
+    remote_path: list[NonEmptyString] = Field(
+        examples=[
+            [r"192.168.0.200\SHARE"],
+            [r"SERVER1.MYDOM.INTERNAL\SHARE"],
+            [r"SERVER1.MYDOM.INTERNAL\SHARE, SERVER2.MYDOM.INTERNAL\SHARE"],
+        ],
         description=(
             "This is the path to the external server and share. Each server entry must include a full domain name or IP"
             " address and share name. Separate the server and share with the `\\` character.\n"
             "\n"
             "WARNING: The SMB server and TrueNAS middleware do not check if external paths are reachable."
-        ))
+        ),
+    )
 
-    @field_validator('remote_path')
+    @field_validator("remote_path")
     @classmethod
     def validate_external_path(cls, remote_path: list[NonEmptyString]) -> list:
-        """ Validate that our proxy addresses are not malformed. """
+        """Validate that our proxy addresses are not malformed."""
         for proxy in remote_path:
-            if len(proxy.split('\\')) != 2:
-                raise ValueError(f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
+            if len(proxy.split("\\")) != 2:
+                raise ValueError(f"{proxy}: DFS proxy must be of format SERVER\\SHARE")
 
-            if proxy.startswith('\\') or proxy.endswith('\\'):
-                raise ValueError(f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
+            if proxy.startswith("\\") or proxy.endswith("\\"):
+                raise ValueError(f"{proxy}: DFS proxy must be of format SERVER\\SHARE")
 
         return remote_path
 
@@ -843,6 +927,7 @@ class ExternalOpt(BaseModel):
 class FCPStorageOpt(BaseModel):
     """ These configuration options apply to shares with the `FCP_SHARE` purpose as a storage location \
     for Final Cut Pro data. """
+
     purpose: Literal[SMBSharePurpose.FCP_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: Literal[True] = Field(
         default=True,
@@ -853,20 +938,19 @@ class FCPStorageOpt(BaseModel):
             "NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients."
         ),
     )  # This is just added for visibility of what feature actually does
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -875,22 +959,22 @@ class FCPStorageOpt(BaseModel):
 
 
 class VeeamRepositoryOpt(BaseModel):
-    """ These configuration options apply to shares with the `VEEAM_REPOSITORY_SHARE` purpose. """
+    """These configuration options apply to shares with the `VEEAM_REPOSITORY_SHARE` purpose."""
+
     purpose: Literal[SMBSharePurpose.VEEAM_REPOSITORY_SHARE] = Field(exclude=True, repr=False)
-    hostsallow: list[str] = Field(default=[], examples=[
-        ['192.168.0.200', '150.203.'],
-        ['150.203.15.0/255.255.255.0'],
-        ['150.203. EXCEPT 150.203.6.66']
-    ],
+    hostsallow: list[str] = Field(
+        default=[],
+        examples=[["192.168.0.200", "150.203."], ["150.203.15.0/255.255.255.0"], ["150.203. EXCEPT 150.203.6.66"]],
         description=(
             "A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword may be used"
             " to limit a wildcard list.\n"
             "\n"
             "NOTE: Hostname lookups are disabled on the SMB server for performance reasons."
-        ))
+        ),
+    )
     hostsdeny: list[str] = Field(
         default=[],
-        examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']],
+        examples=[["150.203.4."], ["ALL"], ["0.0.0.0/0"]],
         description=(
             "A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword `ALL` or the "
             "netmask `0.0.0.0/0` may be used to deny all by default."
@@ -900,15 +984,23 @@ class VeeamRepositoryOpt(BaseModel):
 
 SmbShareOptions = Annotated[
     Union[
-        LegacyOpt, DefaultOpt, TimeMachineOpt, MultiprotocolOpt, TimeLockedOpt, PrivateDatasetOpt, ExternalOpt,
-        VeeamRepositoryOpt, FCPStorageOpt,
+        LegacyOpt,
+        DefaultOpt,
+        TimeMachineOpt,
+        MultiprotocolOpt,
+        TimeLockedOpt,
+        PrivateDatasetOpt,
+        ExternalOpt,
+        VeeamRepositoryOpt,
+        FCPStorageOpt,
     ],
-    Discriminator('purpose')
+    Discriminator("purpose"),
 ]
 
 
 class SharingSMBEntry(BaseModel):
-    """ SMB share entry on the TrueNAS server. """
+    """SMB share entry on the TrueNAS server."""
+
     id: int = Field(description="Unique identifier for this SMB share.")
     purpose: Literal[
         SMBSharePurpose.DEFAULT_SHARE,
@@ -919,7 +1011,7 @@ class SharingSMBEntry(BaseModel):
         SMBSharePurpose.PRIVATE_DATASETS_SHARE,
         SMBSharePurpose.EXTERNAL_SHARE,
         SMBSharePurpose.VEEAM_REPOSITORY_SHARE,
-        SMBSharePurpose.FCP_SHARE
+        SMBSharePurpose.FCP_SHARE,
     ] = Field(
         default=SMBSharePurpose.DEFAULT_SHARE.value,
         description=(
@@ -965,22 +1057,22 @@ class SharingSMBEntry(BaseModel):
         ),
     )
     name: SmbShareName = Field(
-        examples=['SHARE', 'Macrodata_refinement'],
+        examples=["SHARE", "Macrodata_refinement"],
         description=(
             "SMB share name. SMB share names are case-insensitive and must be unique, and are subject to the following "
             "restrictions:\n"
             "\n"
             "* A share name must be no more than 80 characters in length.\n"
             "\n"
-            "* The following characters are illegal in a share name: `\\ / [ ] : | < > + = ; , * ? \"`\n"
+            '* The following characters are illegal in a share name: `\\ / [ ] : | < > + = ; , * ? "`\n'
             "\n"
             "* Unicode control characters are illegal in a share name.\n"
             "\n"
             "* The following share names are not allowed: global, printers, homes."
         ),
     )
-    path: NonEmptyString | Literal['EXTERNAL'] = Field(
-        examples=['/mnt/dozer/SHARE', 'EXTERNAL'],
+    path: NonEmptyString | Literal["EXTERNAL"] = Field(
+        examples=["/mnt/dozer/SHARE", "EXTERNAL"],
         description=(
             "Local server path to share by using the SMB protocol. The path must start with `/mnt/` and must be in a "
             "ZFS pool.\n"
@@ -991,24 +1083,24 @@ class SharingSMBEntry(BaseModel):
         ),
     )
     dataset: NonEmptyString | None = Field(
-        examples=['dozer/SHARE'],
+        examples=["dozer/SHARE"],
         description=(
             "The ZFS dataset containing this SMB share (e.g., 'tank/share'). Returns `null` for external shares or if "
             "the path cannot be resolved yet (encrypted dataset not unlocked, etc.). This is a read-only field "
-            "automatically populated from \"path\"."
+            'automatically populated from "path".'
         ),
     )
     relative_path: str | None = Field(
         description=(
             "The path of the share relative to the dataset mountpoint (e.g., 'subfolder/data'). An empty string "
             "indicates the share is at the dataset root. Returns `null` for external shares or if the path cannot be "
-            "resolved yet. This is a read-only field automatically populated from \"path\"."
+            'resolved yet. This is a read-only field automatically populated from "path".'
         ),
     )
     enabled: bool = Field(default=True, description="If unset, the SMB share is not available over the SMB protocol.")
     comment: str = Field(
-        default='',
-        examples=['Mammalian nurturable'],
+        default="",
+        examples=["Mammalian nurturable"],
         description=(
             "Text field that is seen next to a share when an SMB client requests a list of SMB shares on the TrueNAS "
             "server."
@@ -1045,19 +1137,25 @@ class SharingSMBEntry(BaseModel):
             "    - None: Lock status is not available because path locking information was not requested."
         ),
     )
-    audit: SmbAuditConfig = Field(default_factory=SmbAuditConfig, examples=[
-        {'enable': True, 'watch_list': ['interns'], 'ignore_list': []},
-        {'enable': True, 'watch_list': [], 'ignore_list': ['automation']}
-    ],
-        description="Audit configuration for monitoring SMB share access and operations.")
-    options: SmbShareOptions | None = Field(default=None, examples=[
-        {'auto_snapshot': True},
-        {'auto_quota': 100},
-    ],
+    audit: SmbAuditConfig = Field(
+        default_factory=SmbAuditConfig,
+        examples=[
+            {"enable": True, "watch_list": ["interns"], "ignore_list": []},
+            {"enable": True, "watch_list": [], "ignore_list": ["automation"]},
+        ],
+        description="Audit configuration for monitoring SMB share access and operations.",
+    )
+    options: SmbShareOptions | None = Field(
+        default=None,
+        examples=[
+            {"auto_snapshot": True},
+            {"auto_quota": 100},
+        ],
         description=(
             "Additional configuration related to the configured SMB share purpose. If null, then the default options "
             "related to the share purpose will be applied."
-        ))
+        ),
+    )
     tier: TierInfo | None = Field(
         default=None,
         description=(
@@ -1069,7 +1167,7 @@ class SharingSMBEntry(BaseModel):
 
     @classmethod
     def normalize_legacy_fields(cls, data_in: dict) -> dict:
-        """ TODO: remove this once UI has accomodated change """
+        """TODO: remove this once UI has accomodated change"""
         if share_field.PURPOSE not in data_in:
             return data_in
 
@@ -1077,30 +1175,27 @@ class SharingSMBEntry(BaseModel):
         opts = {}
 
         # First take care of fields that have been renamed to improve clarity
-        if 'ro' in new:
-            new[share_field.RO] = new.pop('ro')
+        if "ro" in new:
+            new[share_field.RO] = new.pop("ro")
 
-        if 'abe' in new:
-            new[share_field.ABE] = new.pop('abe')
+        if "abe" in new:
+            new[share_field.ABE] = new.pop("abe")
 
-        if (aapl_mangling := new.pop(share_field.AAPL_MANGLING, False)):
+        if aapl_mangling := new.pop(share_field.AAPL_MANGLING, False):
             opts[share_field.AAPL_MANGLING] = aapl_mangling
 
         match new.get(share_field.PURPOSE):
-            case 'NO_PRESET':
+            case "NO_PRESET":
                 opts = {}
                 for field in LEGACY_SHARE_FIELDS:
                     if field in new:
                         opts[field] = new.pop(field)
-            case 'ENHANCED_TIMEMACHINE':
+            case "ENHANCED_TIMEMACHINE":
                 new[share_field.PURPOSE] = SMBSharePurpose.TIMEMACHINE_SHARE
-                opts = {
-                    share_field.AUTO_DS: True,
-                    share_field.AUTO_SNAP: True
-                }
-            case 'TIMEMACHINE':
+                opts = {share_field.AUTO_DS: True, share_field.AUTO_SNAP: True}
+            case "TIMEMACHINE":
                 new[share_field.PURPOSE] = SMBSharePurpose.TIMEMACHINE_SHARE
-            case 'WORM_DROPBOX':
+            case "WORM_DROPBOX":
                 new[share_field.PURPOSE] = SMBSharePurpose.TIME_LOCKED_SHARE
             case _:
                 pass
@@ -1113,10 +1208,10 @@ class SharingSMBEntry(BaseModel):
 
         return new
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def parse_nested(cls, data_in: Any) -> Any:
-        """ Normalize share `purpose` and insert into hidden field in `options` for discriminator """
+        """Normalize share `purpose` and insert into hidden field in `options` for discriminator"""
         if not isinstance(data_in, dict):
             return data_in
 
@@ -1126,10 +1221,10 @@ class SharingSMBEntry(BaseModel):
             return new
 
         if share_field.OPTS not in new:
-            raise ValueError('You must set `options` if you set `purpose`.')
+            raise ValueError("You must set `options` if you set `purpose`.")
 
         if share_field.PURPOSE not in new:
-            raise ValueError('You must set `purpose` if you set `options`.')
+            raise ValueError("You must set `purpose` if you set `options`.")
 
         new[share_field.OPTS] = data_in.get(share_field.OPTS, {}).copy()
         new[share_field.OPTS][share_field.PURPOSE] = new[share_field.PURPOSE]
@@ -1142,24 +1237,24 @@ class SmbShareCreate(SharingSMBEntry):
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
     tier: Excluded = excluded_field()
-    comment: SingleLineString = Field(
-        default='',
-        examples=['Mammalian nurturable'],
+    comment: str = Field(
+        default="",
+        examples=["Mammalian nurturable"],
         description=(
             "Text field that is seen next to a share when an SMB client requests a list of SMB shares on the TrueNAS "
             "server."
         ),
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_purpose_options(self) -> Self:
-        """ Extra validation to perform after validating individual fields. Currently used to
-        ensure that path is consistent for external shares. """
+        """Extra validation to perform after validating individual fields. Currently used to
+        ensure that path is consistent for external shares."""
         if not isinstance(self, SmbShareCreate):
             return self
 
         if self.purpose == SMBSharePurpose.EXTERNAL_SHARE:
-            if self.path is undefined or self.path != 'EXTERNAL':
+            if self.path is undefined or self.path != "EXTERNAL":
                 raise ValueError('You must set `path` to "EXTERNAL" for external shares.')
 
         if self.options is None:
@@ -1167,7 +1262,7 @@ class SmbShareCreate(SharingSMBEntry):
             # case we apply purpose-related defaults
             if self.purpose is undefined:
                 # Explicit handling in case we're in update method and have wonky options
-                raise ValueError('purpose field is required if options are specified as null')
+                raise ValueError("purpose field is required if options are specified as null")
 
             match self.purpose:
                 case SMBSharePurpose.DEFAULT_SHARE:
@@ -1184,13 +1279,13 @@ class SmbShareCreate(SharingSMBEntry):
                     opt_model = PrivateDatasetOpt
                 case SMBSharePurpose.EXTERNAL_SHARE:
                     opt_model = ExternalOpt
-                    raise ValueError('External shares require explicit options configuration')
+                    raise ValueError("External shares require explicit options configuration")
                 case SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
                     opt_model = VeeamRepositoryOpt
                 case SMBSharePurpose.FCP_SHARE:
                     opt_model = FCPStorageOpt
                 case _:
-                    raise ValueError(f'{self.purpose}: unexpected share purpose')
+                    raise ValueError(f"{self.purpose}: unexpected share purpose")
 
             # We're running validation on basically empty dict here so that we can catch
             # case where potentially a share purpose actually has mandatory options fields

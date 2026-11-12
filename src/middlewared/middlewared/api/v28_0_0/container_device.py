@@ -7,51 +7,68 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     MACAddress,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
 
 __all__ = [
-    'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType',
-    'ContainerFilesystemDevice', 'ContainerGPUDevice',
-    'ContainerDeviceEntry', 'ContainerDeviceCreate', 'ContainerDeviceUpdate', 'ContainerDeviceDeleteOptions',
-    'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
-    'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
-    'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
-    'ContainerDeviceNicAttachChoices', 'ContainerDeviceNicAttachChoicesResult',
-    'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult', 'USBPassthroughDevice',
-    'ContainerDeviceGpuChoicesArgs', 'ContainerDeviceGpuChoicesResult',
+    "ContainerNICDevice",
+    "ContainerUSBDevice",
+    "ContainerDeviceType",
+    "ContainerFilesystemDevice",
+    "ContainerGPUDevice",
+    "ContainerDeviceEntry",
+    "ContainerDeviceCreate",
+    "ContainerDeviceUpdate",
+    "ContainerDeviceDeleteOptions",
+    "ContainerDeviceCreateArgs",
+    "ContainerDeviceCreateResult",
+    "ContainerDeviceUpdateArgs",
+    "ContainerDeviceUpdateResult",
+    "ContainerDeviceDeleteArgs",
+    "ContainerDeviceDeleteResult",
+    "ContainerDeviceDiskChoicesArgs",
+    "ContainerDeviceDiskChoicesResult",
+    "ContainerDeviceNicAttachChoicesArgs",
+    "ContainerDeviceNicAttachChoices",
+    "ContainerDeviceNicAttachChoicesResult",
+    "ContainerDeviceUsbChoicesArgs",
+    "ContainerDeviceUsbChoicesResult",
+    "USBPassthroughDevice",
+    "ContainerDeviceGpuChoicesArgs",
+    "ContainerDeviceGpuChoicesResult",
 ]
 
 
 class ContainerFilesystemDevice(BaseModel):
-    dtype: Literal['FILESYSTEM'] = Field(description="Device type identifier for FILESYSTEM devices.")
+    dtype: Literal["FILESYSTEM"] = Field(description="Device type identifier for FILESYSTEM devices.")
     target: NonEmptyString = Field(
-        pattern=r'^[^{}]*$',
+        pattern=r"^[^{}]*$",
         description="Path inside the container to mount the source at. Must not contain braces.",
     )
     source: NonEmptyString = Field(
-        pattern=r'^[^{}]*$',
+        pattern=r"^[^{}]*$",
         description="Host path to bind-mount into the container. Must reside within a pool (under "
         "`/mnt`) and must not contain braces.",
     )
 
 
 class ContainerGPUDevice(BaseModel):
-    dtype: Literal['GPU'] = Field(description="Device type identifier for GPU devices.")
-    gpu_type: Literal['AMD', 'INTEL', 'NVIDIA'] = Field(description="GPU device type.")
+    dtype: Literal["GPU"] = Field(description="Device type identifier for GPU devices.")
+    gpu_type: Literal["AMD", "INTEL", "NVIDIA"] = Field(description="GPU device type.")
     pci_address: NonEmptyString = Field(description="PCI address of the GPU device on the host system.")
 
 
 class ContainerNICDevice(BaseModel):
-    dtype: Literal['NIC'] = Field(description="Device type identifier for network interface cards.")
+    dtype: Literal["NIC"] = Field(description="Device type identifier for network interface cards.")
     trust_guest_rx_filters: bool = Field(
         default=False,
         description="Whether to trust guest OS receive filter settings for better performance.",
     )
-    type_: Literal['E1000', 'VIRTIO'] = Field(
-        alias='type',
-        default='E1000',
+    type_: Literal["E1000", "VIRTIO"] = Field(
+        alias="type",
+        default="E1000",
         description="Network interface controller type. `E1000` for Intel compatibility, `VIRTIO` for performance.",
     )
     nic_attach: str | None = Field(
@@ -71,17 +88,17 @@ class ContainerNICDevice(BaseModel):
 
 class USBAttributes(BaseModel):
     vendor_id: NonEmptyString = Field(
-        pattern='^0x.*',
+        pattern="^0x.*",
         description="USB vendor identifier in hexadecimal format (e.g., '0x1d6b' for Linux Foundation).",
     )
     product_id: NonEmptyString = Field(
-        pattern='^0x.*',
+        pattern="^0x.*",
         description="USB product identifier in hexadecimal format (e.g., '0x0002' for 2.0 root hub).",
     )
 
 
 class ContainerUSBDevice(BaseModel):
-    dtype: Literal['USB'] = Field(description="Device type identifier for USB devices.")
+    dtype: Literal["USB"] = Field(description="Device type identifier for USB devices.")
     usb: USBAttributes | None = Field(
         default=None,
         description="USB device attributes for identification. `null` for USB host controller only.",
@@ -93,8 +110,7 @@ class ContainerUSBDevice(BaseModel):
 
 
 ContainerDeviceType: TypeAlias = Annotated[
-    ContainerFilesystemDevice | ContainerGPUDevice | ContainerNICDevice | ContainerUSBDevice,
-    Discriminator('dtype')
+    ContainerFilesystemDevice | ContainerGPUDevice | ContainerNICDevice | ContainerUSBDevice, Discriminator("dtype")
 ]
 
 
@@ -156,7 +172,7 @@ class ContainerDeviceDiskChoicesArgs(BaseModel):
 
 
 class ContainerDeviceDiskChoices(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class ContainerDeviceDiskChoicesResult(BaseModel):
@@ -190,10 +206,10 @@ class USBCapability(BaseModel):
 class USBPassthroughDevice(BaseModel):
     capability: USBCapability = Field(description="USB device capability and identification information.")
     available: bool = Field(description="Whether the USB device is available for passthrough to virtual machines.")
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         description="Error message if the device cannot be used for passthrough. `null` if no error.",
     )
-    description: str = Field(description="Human-readable description of the USB device.")
+    description: Multiline[str] = Field(description="Human-readable description of the USB device.")
 
 
 class ContainerDeviceUsbChoicesArgs(BaseModel):

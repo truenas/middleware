@@ -67,6 +67,10 @@ filter f_truenas_s3 {
 filter f_truenas_smbhad {
   program("truenas_smbhad");
 };
+filter f_truesearch {
+  program("truesearchd") or
+  program("truesearch-indexer");
+};
 
 # TrueNAS middleware filters
 % for tnlog in ALL_LOG_FILES:
@@ -81,7 +85,8 @@ filter f_truenas_exclude {
   not filter(f_scst) and
   not filter(f_discovery) and
   not filter(f_truenas_s3) and
-  not filter(f_truenas_smbhad);
+  not filter(f_truenas_smbhad) and
+  not filter(f_truesearch);
 };
 
 #####################

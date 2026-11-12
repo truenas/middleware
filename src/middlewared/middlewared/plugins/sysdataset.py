@@ -224,6 +224,7 @@ once over `failover.call_remote`.
 from contextlib import contextmanager, suppress
 import enum
 import errno
+import filecmp
 import os
 import shutil
 import stat
@@ -246,6 +247,8 @@ from middlewared.api.current import (
     ZFSResourceSetArgsData,
     ZFSResourceSetProperties,
 )
+from middlewared.plugins.config import PWENC_UPLOADED
+from middlewared.plugins.system_dataset.encryption import rekey_pwenc_dataset, setup_pwenc_dataset
 from middlewared.plugins.system_dataset.hierarchy import SystemDatasetZfsProperties, get_system_dataset_spec
 from middlewared.plugins.system_dataset.mount import (
     mount_hierarchy,
@@ -255,8 +258,10 @@ from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH, dataset_mo
 from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException, ZFSPathNotFoundException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
+from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
+from middlewared.utils.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -757,17 +762,37 @@ class SystemDatasetService(ConfigService):
                 ),
             )
         }
+        failed = []
         for dataset, config in datasets.items():
             props = config['props']
+            # A dataset encrypted with the pwenc secret is its own encryption root.
+            pwenc_encrypted = config.get('pwenc_encrypted', False)
             # Disable encryption for system managed datasets that are
             # configured on zpools that are passphrase-encrypted.
-            if root_dataset_is_passphrase_encrypted:
+            if root_dataset_is_passphrase_encrypted and not pwenc_encrypted:
                 props['encryption'] = 'off'
             is_cores_ds = dataset.endswith('/cores')
             if is_cores_ds:
                 # 1G; raw value so the update_props_dict comparison below
                 # works (raw values are strings of bytes for sizes).
                 props['quota'] = '1073741824'
+
+            if pwenc_encrypted:
+                existing = datasets_prop.get(dataset)
+                try:
+                    created = await self.middleware.call(
+                        'systemdataset.setup_encrypted_dataset', dataset, props,
+                        None if existing is None else existing['encryption']['raw'],
+                    )
+                except Exception as e:
+                    # The dataset is not mounted, so the services that use it do not start. Nothing goes to an
+                    # unencrypted directory in its place. A CallError says what to do.
+                    self.logger.error('%s: failed to set up the encrypted dataset: %s', dataset, e, exc_info=True)
+                    failed.append(dataset)
+                    continue
+
+                if created:
+                    continue
 
             if dataset not in datasets_prop:
                 await self.call2(
@@ -801,7 +826,44 @@ class SystemDatasetService(ConfigService):
                         ZFSResourceSetArgsData(path=dataset, properties=update_props, bypass=True),
                     )
 
+        for dataset in failed:
+            del datasets[dataset]
+
         return list(datasets.values())
+
+    @private
+    @pass_thread_local_storage
+    def setup_encrypted_dataset(self, tls, dataset, props, encryption):
+        """
+        Make sure that `dataset` is encrypted with the pwenc secret and that its key is loaded. Return True if the
+        dataset was made with `props`.
+        """
+        return setup_pwenc_dataset(tls, dataset, props, encryption)
+
+    @private
+    @pass_thread_local_storage
+    def rekey_encrypted_datasets(self, tls, secret_path):
+        """
+        Wrap the keys of the system datasets that the pwenc secret encrypts with the secret at `secret_path`. Only the
+        node that has imported the pool of the system dataset does this. The boot pool has no such dataset.
+        """
+        config = self.middleware.call_sync('systemdataset.config')
+        imported = {pool['name'] for pool in query_imported_fast_impl().values()}
+        if config['pool'] == self.call_sync2(self.s.boot.pool_name) or config['pool'] not in imported:
+            return
+
+        spec = get_system_dataset_spec(config['pool'], config['uuid'])
+        names = [ds['name'] for ds in spec if ds.get('pwenc_encrypted')]
+        for found in self.call_sync2(
+            self.s.zfs.resource.list_impl,
+            ZFSResourceQuery(paths=names, properties=['encryption', 'keyformat', 'keylocation', 'keystatus']),
+        ):
+            # A dataset that does not exist is made with the new secret at the next boot. A locked one cannot be
+            # wrapped again. It can be encrypted with the new secret already, on a pool of the system that saved the
+            # configuration.
+            enc = get_encryption_info(found['properties'])
+            if enc.encrypted and not enc.locked:
+                rekey_pwenc_dataset(tls, found['name'], secret_path)
 
     @private
     def mount_system_dataset(self, datasets):
@@ -876,6 +938,7 @@ class SystemDatasetService(ConfigService):
         # services as its first act, so the message is live while it does.
         self._job_progress(job, 10, 'Stopping services that use the system dataset')
         with self.release_system_dataset():
+            self._destroy_encrypted_datasets(live_pool, uid)
             self._job_progress(job, 25, f'Copying system dataset to {target_pool!r}')
             try:
                 replicate(live_pool, target_pool)
@@ -908,6 +971,25 @@ class SystemDatasetService(ConfigService):
         # destroy here must not undo the migration -- log and leave the orphan.
         self._job_progress(job, 95, f'Removing previous system dataset from {live_pool!r}')
         self._destroy_sysdataset_root(live_pool, must_succeed=False)
+
+    def _destroy_encrypted_datasets(self, pool, uid):
+        """Unmount and destroy the datasets of `pool` that are encrypted with
+        the pwenc secret. A replication stream with properties cannot hold an
+        encrypted dataset unless the send is raw, so these datasets are not
+        copied. setup_datasets makes new empty datasets on the target pool,
+        and TrueSearch builds its indexes again. Stop the services that use
+        them first.
+        """
+        for ds in get_system_dataset_spec(pool, uid):
+            if not ds.get('pwenc_encrypted'):
+                continue
+
+            with suppress(OSError):
+                umount(dataset_mountpoint(ds))
+            try:
+                self.call_sync2(self.s.zfs.resource.destroy_impl, ds['name'], recursive=True, bypass=True)
+            except ZFSPathNotFoundException:
+                pass
 
     def _destroy_sysdataset_root(self, pool, *, must_succeed):
         """Recursively destroy `<pool>/.system` with explicit status
@@ -1008,15 +1090,25 @@ class SystemDatasetService(ConfigService):
             restart.append('nfs')
         if self.call_sync2(self.s.service.started, 'open-vm-tools'):
             restart.append('open-vm-tools')
+        # Both TrueSearch daemons map the index files on the system dataset, and one daemon alone still holds them.
+        # After a swap, the post-mount action of the index dataset runs `truesearch.configure`, which starts them
+        # again. After a failure, it runs here.
+        truesearch = self.call_sync2(self.s.truesearch.alive)
+        finished = False
 
         try:
             for svc in restart:
                 self.call_sync2(self.s.service.control, 'STOP', svc).wait_sync(raise_error=True)
+            if truesearch:
+                self.call_sync2(self.s.service.control, 'STOP', 'truesearch').wait_sync(raise_error=True)
             close_sysdataset_tdb_handles()
             yield
+            finished = True
         finally:
             for svc in reversed(restart):
                 self.call_sync2(self.s.service.control, 'START', svc).wait_sync(raise_error=True)
+            if truesearch and not finished:
+                self.call_sync2(self.s.truesearch.configure)
 
     @private
     def get_system_dataset_spec(self, pool, uid):
@@ -1165,6 +1257,13 @@ async def pool_pre_export(middleware, pool, options, job):
             )
 
 
+def on_config_upload(middleware, path):
+    # The pwenc secret of an uploaded configuration replaces the secret of this system at the next boot. The index
+    # dataset must then unlock with the new secret.
+    if os.path.exists(PWENC_UPLOADED) and not filecmp.cmp(PWENC_UPLOADED, PWENC_FILE_SECRET, shallow=False):
+        middleware.call_sync('systemdataset.rekey_encrypted_datasets', PWENC_UPLOADED)
+
+
 async def setup(middleware):
     def setup_paths():
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
@@ -1181,6 +1280,7 @@ async def setup(middleware):
     # Reconfigure the system dataset first thing after a pool import.
     middleware.register_hook('pool.post_import', pool_post_import, order=-10000)
     middleware.register_hook('pool.pre_export', pool_pre_export, order=40, raise_error=True)
+    middleware.register_hook('config.on_upload', on_config_upload, sync=True)
 
     try:
         await middleware.run_in_thread(setup_paths)

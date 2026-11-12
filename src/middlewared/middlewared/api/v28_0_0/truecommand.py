@@ -6,22 +6,27 @@ from pydantic import Field, Secret
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    'TRUECOMMAND_CONNECTING_STATUS_REASON',
-    'TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON',
-    'TruecommandStatus', 'TruecommandStatusReason',
-    'TruecommandEntry', 'TruecommandUpdate', 'TruecommandUpdateArgs', 'TruecommandUpdateResult',
-    'TruecommandConfigChangedEvent',
+    "TRUECOMMAND_CONNECTING_STATUS_REASON",
+    "TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON",
+    "TruecommandStatus",
+    "TruecommandStatusReason",
+    "TruecommandEntry",
+    "TruecommandUpdate",
+    "TruecommandUpdateArgs",
+    "TruecommandUpdateResult",
+    "TruecommandConfigChangedEvent",
 ]
 
-TRUECOMMAND_CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
-TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON = 'Truecommand service is disabled on standby controller'
+TRUECOMMAND_CONNECTING_STATUS_REASON = "Waiting for connection from Truecommand."
+TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON = "Truecommand service is disabled on standby controller"
 
 
 class TruecommandStatus(enum.Enum):
-    CONNECTED = 'CONNECTED'
-    CONNECTING = 'CONNECTING'
-    DISABLED = 'DISABLED'
-    FAILED = 'FAILED'
+    CONNECTED = "CONNECTED"
+    CONNECTING = "CONNECTING"
+    DISABLED = "DISABLED"
+    FAILED = "FAILED"
+
 
 # In the database we save 3 states, CONNECTED/DISABLED/FAILED
 # Connected is saved when portal has approved an api key
@@ -37,10 +42,10 @@ class TruecommandStatus(enum.Enum):
 
 
 class TruecommandStatusReason(enum.Enum):
-    CONNECTED = 'Truecommand service is connected.'
-    CONNECTING = 'Pending Confirmation From iX Portal for Truecommand API Key.'
-    DISABLED = 'Truecommand service is disabled.'
-    FAILED = 'Truecommand API Key Disabled by iX Portal.'
+    CONNECTED = "Truecommand service is connected."
+    CONNECTING = "Pending Confirmation From iX Portal for Truecommand API Key."
+    DISABLED = "Truecommand service is disabled."
+    FAILED = "Truecommand API Key Disabled by iX Portal."
 
 
 class TruecommandEntry(BaseModel):

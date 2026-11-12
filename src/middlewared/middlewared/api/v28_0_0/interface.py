@@ -8,6 +8,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     IPv4Address,
     IPvAnyAddress,
+    Multiline,
     NonEmptyString,
     NotRequired,
     UniqueList,
@@ -17,21 +18,51 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "InterfaceEntry", "InterfaceAvailableFecModesArgs", "InterfaceAvailableFecModesResult",
-    "InterfaceBridgeMembersChoicesArgs", "InterfaceBridgeMembersChoicesResult",
-    "InterfaceCancelRollbackArgs", "InterfaceCancelRollbackResult", "InterfaceCheckinArgs", "InterfaceCheckinResult",
-    "InterfaceCheckinWaitingArgs", "InterfaceCheckinWaitingResult", "InterfaceChoicesArgs", "InterfaceChoicesResult",
-    "InterfaceCommitArgs", "InterfaceCommitResult", "InterfaceCreateArgs", "InterfaceCreateResult",
-    "InterfaceNetworkConfigToBeRemovedArgs", "InterfaceNetworkConfigToBeRemovedResult", "InterfaceDeleteArgs",
-    "InterfaceDeleteResult", "InterfaceHasPendingChangesArgs", "InterfaceHasPendingChangesResult",
-    "InterfaceIpInUseArgs", "InterfaceIpInUseResult", "InterfaceLacpduRateChoicesArgs",
-    "InterfaceLacpduRateChoicesResult", "InterfaceLagPortsChoicesArgs", "InterfaceLagPortsChoicesResult",
-    "InterfaceRollbackArgs", "InterfaceRollbackResult", "InterfaceSaveNetworkConfigArgs",
-    "InterfaceSaveNetworkConfigResult", "InterfaceServicesRestartedOnSyncArgs",
-    "InterfaceServicesRestartedOnSyncResult", "InterfaceUpdateArgs", "InterfaceUpdateResult",
-    "InterfaceVlanParentInterfaceChoicesArgs", "InterfaceVlanParentInterfaceChoicesResult",
-    "InterfaceWebsocketInterfaceArgs", "InterfaceWebsocketInterfaceResult", "InterfaceWebsocketLocalIpArgs",
-    "InterfaceWebsocketLocalIpResult", "InterfaceXmitHashPolicyChoicesArgs", "InterfaceXmitHashPolicyChoicesResult",
+    "InterfaceEntry",
+    "InterfaceAvailableFecModesArgs",
+    "InterfaceAvailableFecModesResult",
+    "InterfaceBridgeMembersChoicesArgs",
+    "InterfaceBridgeMembersChoicesResult",
+    "InterfaceCancelRollbackArgs",
+    "InterfaceCancelRollbackResult",
+    "InterfaceCheckinArgs",
+    "InterfaceCheckinResult",
+    "InterfaceCheckinWaitingArgs",
+    "InterfaceCheckinWaitingResult",
+    "InterfaceChoicesArgs",
+    "InterfaceChoicesResult",
+    "InterfaceCommitArgs",
+    "InterfaceCommitResult",
+    "InterfaceCreateArgs",
+    "InterfaceCreateResult",
+    "InterfaceNetworkConfigToBeRemovedArgs",
+    "InterfaceNetworkConfigToBeRemovedResult",
+    "InterfaceDeleteArgs",
+    "InterfaceDeleteResult",
+    "InterfaceHasPendingChangesArgs",
+    "InterfaceHasPendingChangesResult",
+    "InterfaceIpInUseArgs",
+    "InterfaceIpInUseResult",
+    "InterfaceLacpduRateChoicesArgs",
+    "InterfaceLacpduRateChoicesResult",
+    "InterfaceLagPortsChoicesArgs",
+    "InterfaceLagPortsChoicesResult",
+    "InterfaceRollbackArgs",
+    "InterfaceRollbackResult",
+    "InterfaceSaveNetworkConfigArgs",
+    "InterfaceSaveNetworkConfigResult",
+    "InterfaceServicesRestartedOnSyncArgs",
+    "InterfaceServicesRestartedOnSyncResult",
+    "InterfaceUpdateArgs",
+    "InterfaceUpdateResult",
+    "InterfaceVlanParentInterfaceChoicesArgs",
+    "InterfaceVlanParentInterfaceChoicesResult",
+    "InterfaceWebsocketInterfaceArgs",
+    "InterfaceWebsocketInterfaceResult",
+    "InterfaceWebsocketLocalIpArgs",
+    "InterfaceWebsocketLocalIpResult",
+    "InterfaceXmitHashPolicyChoicesArgs",
+    "InterfaceXmitHashPolicyChoicesResult",
 ]
 
 
@@ -59,7 +90,7 @@ class InterfaceEntryStatePort(BaseModel):
 class InterfaceEntryState(BaseModel):
     name: str = Field(description="Current name of the network interface.")
     orig_name: str = Field(description="Original name of the network interface before any renaming.")
-    description: str = Field(description="Human-readable description of the network interface.")
+    description: Multiline[str] = Field(description="Human-readable description of the network interface.")
     mtu: int = Field(description="Maximum transmission unit size for the interface.")
     cloned: bool = Field(description="Whether the interface is a cloned/virtual interface.")
     flags: list[str] = Field(
@@ -159,11 +190,11 @@ class InterfaceEntryState(BaseModel):
         description=(
             "Currently active Forward Error Correction mode from the hardware. Only present for physical interfaces.\n"
             "\n"
-            "* \"AUTO\": Selects the best FEC mode based on cable/port capabilities\n"
-            "* \"RS\": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n"
-            "* \"BASER\": BaseR-FEC (FireCode)\n"
-            "* \"OFF\": Disables FEC\n"
-            "* \"LLRS\": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR\n"
+            '* "AUTO": Selects the best FEC mode based on cable/port capabilities\n'
+            '* "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n'
+            '* "BASER": BaseR-FEC (FireCode)\n'
+            '* "OFF": Disables FEC\n'
+            '* "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR\n'
             "* `null`: FEC not supported or mode cannot be determined"
         ),
     )
@@ -239,18 +270,18 @@ class InterfaceEntry(InterfaceCommonOptions):
     aliases: list[InterfaceEntryAlias] = Field(description="List of IP address aliases configured on the interface.")
     ipv4_dhcp: bool = Field(description="Whether IPv4 DHCP is enabled for automatic IP address assignment.")
     ipv6_auto: bool = Field(description="Whether IPv6 autoconfiguration is enabled.")
-    description: str = Field(description="Human-readable description of the interface.")
+    description: Multiline[str] = Field(description="Human-readable description of the interface.")
     mtu: int | None = Field(description="Maximum transmission unit size for the interface.")
     fec_mode: FecModeName = Field(
         default=NotRequired,
         description=(
             "Forward Error Correction (FEC) mode. Only valid for physical interfaces.\n"
             "\n"
-            "* \"AUTO\": Selects the best FEC mode based on cable/port capabilities\n"
-            "* \"RS\": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n"
-            "* \"BASER\": BaseR-FEC (FireCode)\n"
-            "* \"OFF\": Disables FEC\n"
-            "* \"LLRS\": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR"
+            '* "AUTO": Selects the best FEC mode based on cable/port capabilities\n'
+            '* "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n'
+            '* "BASER": BaseR-FEC (FireCode)\n'
+            '* "OFF": Disables FEC\n'
+            '* "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR'
         ),
     )
     vlan_parent_interface: str | None = Field(
@@ -332,9 +363,9 @@ class InterfaceCreateAlias(InterfaceCreateFailoverAlias):
 class InterfaceCreate(InterfaceCommonOptions):
     name: str = Field(
         default=NotRequired,
-        description="Generate a name if not provided based on `type`, e.g. \"br0\", \"bond1\", \"vlan0\".",
+        description='Generate a name if not provided based on `type`, e.g. "br0", "bond1", "vlan0".',
     )
-    description: str = Field(default="", description="Human-readable description of the interface.")
+    description: Multiline[str] = Field(default="", description="Human-readable description of the interface.")
     type: Literal["BRIDGE", "LINK_AGGREGATION", "VLAN"] = Field(description="Type of interface to create.")
     ipv4_dhcp: bool = Field(default=False, description="Enable IPv4 DHCP for automatic IP address assignment.")
     ipv6_auto: bool = Field(default=False, description="Enable IPv6 autoconfiguration.")
@@ -456,11 +487,11 @@ class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
             "Support for resolving link negotiation failures due to FEC mismatches with the upstream switch. Improper "
             "configuration of this field can cause a healthy interface to go down.\n"
             "\n"
-            "* \"AUTO\": Selects the best FEC mode based on cable/port capabilities\n"
-            "* \"RS\": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n"
-            "* \"BASER\": BaseR-FEC (FireCode)\n"
-            "* \"OFF\": Disables FEC\n"
-            "* \"LLRS\": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR"
+            '* "AUTO": Selects the best FEC mode based on cable/port capabilities\n'
+            '* "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n'
+            '* "BASER": BaseR-FEC (FireCode)\n'
+            '* "OFF": Disables FEC\n'
+            '* "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR'
         ),
     )
 
@@ -570,19 +601,14 @@ class InterfaceIpInUseArgs(BaseModel):
 
 
 class InterfaceIpInUseResult(BaseModel):
-    result: list[InterfaceIPInUseItem] = Field(examples=[[
-        {
-            "type": "INET6",
-            "address": "fe80::5054:ff:fe16:4aac",
-            "netmask": 64
-        },
-        {
-            "type": "INET",
-            "address": "192.168.122.148",
-            "netmask": 24,
-            "broadcast": "192.168.122.255"
-        },
-    ]])
+    result: list[InterfaceIPInUseItem] = Field(
+        examples=[
+            [
+                {"type": "INET6", "address": "fe80::5054:ff:fe16:4aac", "netmask": 64},
+                {"type": "INET", "address": "192.168.122.148", "netmask": 24, "broadcast": "192.168.122.255"},
+            ]
+        ]
+    )
 
 
 class InterfaceLacpduRateChoicesArgs(BaseModel):
@@ -701,10 +727,10 @@ class InterfaceAvailableFecModesResult(BaseModel):
         description=(
             "List of FEC modes supported by the interface. Empty list if FEC is not supported.\n"
             "\n"
-            "* \"AUTO\": Selects the best FEC mode based on cable/port capabilities\n"
-            "* \"RS\": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n"
-            "* \"BASER\": BaseR-FEC (FireCode)\n"
-            "* \"OFF\": Disables FEC\n"
-            "* \"LLRS\": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR"
+            '* "AUTO": Selects the best FEC mode based on cable/port capabilities\n'
+            '* "RS": RS-FEC (Reed-Solomon), often used for 25GbE/100GbE+ NICs\n'
+            '* "BASER": BaseR-FEC (FireCode)\n'
+            '* "OFF": Disables FEC\n'
+            '* "LLRS": Low Latency Reed-Solomon FEC, used for 25GBASE-KR/CR'
         ),
     )
