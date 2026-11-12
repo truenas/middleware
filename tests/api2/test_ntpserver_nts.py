@@ -8,8 +8,6 @@ from middlewared.test.integration.utils import call, mock, ssh
 from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 CONFIG_FILE = "/etc/chrony/chrony.conf"
-# The NTS servers the database migration 04a6293d595a adds to a stock configuration
-DEFAULT_NTS_SERVERS = {"time.cloudflare.com", "ntppool1.time.nl"}
 # The one test_nts_server_is_used actually talks to
 LIVE_NTS_SERVER = "time.cloudflare.com"
 STOCK_SERVERS = {f"{i}.debian.pool.ntp.org" for i in range(3)}
@@ -54,11 +52,11 @@ def server_lines():
     return config_lines("server ")
 
 
-def test_stock_configuration_includes_nts_servers():
-    """The database migration adds two, from different operators, to the TrueNAS default servers."""
-    assert {server["address"]: server["nts"] for server in call("system.ntpserver.query")} == (
-        {address: False for address in STOCK_SERVERS} | {address: True for address in DEFAULT_NTS_SERVERS}
-    )
+def test_stock_configuration_has_no_nts_servers():
+    """The database migration adds none, so the stock servers stay in use."""
+    assert {server["address"]: server["nts"] for server in call("system.ntpserver.query")} == {
+        address: False for address in STOCK_SERVERS
+    }
 
 
 def test_nts_is_rendered():
