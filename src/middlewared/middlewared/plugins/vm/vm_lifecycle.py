@@ -1,3 +1,5 @@
+import errno
+
 from truenas_pylibvirt import Error as PyLibvirtError, Time, VmBootloader, VmCpuMode, VmVideoModel
 
 from middlewared.api import api_method
@@ -63,25 +65,33 @@ class VMService(Service):
         """
         Stops a VM.
 
-        For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become
-        unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only going to send a
-        shutdown signal to the guest and wait the desired `shutdown_timeout` value before tearing down guest vmemory.
-
-        `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
-        not already stopped within the specified `shutdown_timeout`.
+        Unless `force` is set, a suspended VM is resumed and the guest is sent a shutdown request. If the guest is
+        still running after `shutdown_timeout` seconds, the VM is powered off when `force_after_timeout` is set,
+        otherwise the job fails and the VM keeps running. Use `vm.poweroff` to power it off immediately.
         """
         vm_data = self.middleware.call_sync('vm.get_instance', id_)
         libvirt_domain = self.pylibvirt_vm(vm_data)
-        if options['force']:
-            self.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
-            return
+        vms = self.middleware.libvirt_domains_manager.vms
+        try:
+            if options['force']:
+                vms.destroy(libvirt_domain)
+                return
 
-        self.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm_data['shutdown_timeout'])
-        if (
-            options['force_after_timeout']
-            and self.middleware.call_sync('vm.get_instance', id_)['status']['state'] == 'RUNNING'
-        ):
-            self.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
+            if vm_data['status']['state'] == 'SUSPENDED':
+                # A paused guest cannot act on the shutdown request.
+                vms.resume(libvirt_domain)
+
+            vms.shutdown(libvirt_domain, vm_data['shutdown_timeout'])
+            if self.middleware.call_sync('vm.get_instance', id_)['status']['state'] != 'STOPPED':
+                if options['force_after_timeout']:
+                    vms.destroy(libvirt_domain)
+                else:
+                    raise CallError(
+                        f'VM {vm_data["name"]!r} did not stop within {vm_data["shutdown_timeout"]} seconds',
+                        errno.ETIMEDOUT,
+                    )
+        except PyLibvirtError as e:
+            raise CallError(str(e))
 
     @api_method(VMPoweroffArgs, VMPoweroffResult, roles=['VM_WRITE'])
     def poweroff(self, id_):
