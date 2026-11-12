@@ -4,6 +4,7 @@ import threading
 import typing
 
 from middlewared.api.base.handler.accept import validate_model
+from middlewared.api.base.server.event import event_source_models
 from middlewared.role import RoleManager
 from middlewared.service import ValidationErrors
 
@@ -73,9 +74,8 @@ class EventSource:
     args: type['BaseModel'] | None = None
     event: type['BaseModel'] | None = None
     # The event types this source sends. Only these are documented; `REMOVED` carries no `fields`.
+    # A source that sends an `id` with each event declares it as an `id` field of `event`, next to `result`.
     event_types: tuple['EventType', ...] = ('ADDED',)
-    # Type of the `id` this source sends with each event, or `None` if it sends none.
-    event_id: type | None = None
     roles: list[str] = []
 
     def __init__(
@@ -96,6 +96,14 @@ class EventSource:
         self._cancel_sync = threading.Event()
 
     def send_event(self, event_type: str, **kwargs: typing.Any) -> None:
+        # Keep the frames in line with what the API dump documents for this source.
+        assert event_type in self.event_types, (
+            f'{self.name!r} sends undeclared event type {event_type!r}, expected one of {self.event_types!r}'
+        )
+        expected = event_source_models(type(self))[event_type].model_fields.keys()
+        assert kwargs.keys() == expected, (
+            f'{self.name!r} {event_type} event sends {sorted(kwargs)!r}, documented as {sorted(expected)!r}'
+        )
         self.send_event_internal(event_type, **kwargs)
 
     async def validate_arg(self) -> None:

@@ -1,36 +1,40 @@
-from typing import TYPE_CHECKING, Annotated, Any
+import functools
+from typing import TYPE_CHECKING, Any
 
-from pydantic import Field, create_model
-
-from middlewared.api.base.model import BaseModel
+from middlewared.api.base.model import EVENT_MODEL_SUFFIXES, BaseModel, event_model
 
 if TYPE_CHECKING:
     from middlewared.event import EventSource
     from middlewared.main import Middleware
 
 
+@functools.cache
 def event_source_models(event_source: type["EventSource"]) -> dict[str, type[BaseModel] | None]:
     """
     Models that document an event source: its subscription parameters and each event type it sends.
 
-    `event_source.event` declares the payload as its `result` field; it is sent as the event's `fields`.
+    `event_source.event` declares the payload as its `result` field, which is sent as the event's `fields`, and,
+    if the source sends one, the `id` field.
+
+    The first declared event type keeps the bare `event_source.event` name, so the type names generated from earlier
+    dumps do not change. The others are named the way CRUD service events are (`...ChangedEvent`, `...RemovedEvent`).
+
+    The result is cached: it does not depend on the API version. Do not mutate it.
     """
     assert event_source.event is not None
-    payload = event_source.event.model_fields["result"].annotation
-    models: dict[str, type[BaseModel] | None] = {"Subscription parameters": event_source.args}
-    for event_type in event_source.event_types:
-        attrs: dict[str, Any] = {}
-        if event_source.event_id is not None:
-            attrs["id"] = Annotated[event_source.event_id, Field()]
-        if event_type != "REMOVED":
-            attrs["fields"] = Annotated[payload, Field()]
+    model_fields = event_source.event.model_fields
+    result = model_fields["result"]
+    id_ = model_fields.get("id")
+    base_name = event_source.event.__name__.removesuffix("Event")
 
-        models[event_type] = create_model(
-            # `ADDED` keeps the bare model name so that the type names generated from earlier dumps do not change.
-            event_source.event.__name__ + ("" if event_type == "ADDED" else event_type.capitalize()),
-            __base__=(BaseModel,),
-            __module__=event_source.__module__,
-            **attrs,
+    models: dict[str, type[BaseModel] | None] = {"Subscription parameters": event_source.args}
+    for i, event_type in enumerate(event_source.event_types):
+        models[event_type] = event_model(
+            event_source.event.__name__ if i == 0 else base_name + EVENT_MODEL_SUFFIXES[event_type],
+            event_source.__module__,
+            event_type,
+            id_=(id_.annotation, id_) if id_ is not None else None,
+            fields=(result.annotation, result),
         )
 
     return models

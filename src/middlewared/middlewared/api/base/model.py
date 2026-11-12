@@ -503,33 +503,45 @@ def query_result_item(item: type[ModelT]) -> type[ModelT]:
     return result
 
 
-def added_event_model(item: type[BaseModel]) -> type[BaseModel]:
-    return create_model(
-        item.__name__.removesuffix("Entry") + "AddedEvent",
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        id=Annotated[item.model_fields["id"].annotation, Field()],
+EVENT_MODEL_SUFFIXES: dict[str, str] = {"ADDED": "AddedEvent", "CHANGED": "ChangedEvent", "REMOVED": "RemovedEvent"}
+
+
+def event_model(name: str, module: str, event_type: str, id_: Any = None, fields: Any = None) -> type[BaseModel]:
+    """
+    Model of one collection event frame.
+
+    The frame carries `id` when `id_` is given and, unless it is a `REMOVED` event, `fields`. `id_` and `fields` are
+    field definitions as `create_model` accepts them.
+    """
+    attrs: dict[str, Any] = {}
+    if id_ is not None:
+        attrs["id"] = id_
+    if event_type != "REMOVED":
+        attrs["fields"] = fields
+
+    return create_model(name, __base__=(BaseModel,), __module__=module, **attrs)
+
+
+def _entry_event_model(item: type[BaseModel], event_type: str) -> type[BaseModel]:
+    return event_model(
+        item.__name__.removesuffix("Entry") + EVENT_MODEL_SUFFIXES[event_type],
+        item.__module__,
+        event_type,
+        id_=Annotated[item.model_fields["id"].annotation, Field()],
         fields=Annotated[item, Field()],
     )
+
+
+def added_event_model(item: type[BaseModel]) -> type[BaseModel]:
+    return _entry_event_model(item, "ADDED")
 
 
 def changed_event_model(item: type[BaseModel]) -> type[BaseModel]:
-    return create_model(
-        item.__name__.removesuffix("Entry") + "ChangedEvent",
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        id=Annotated[item.model_fields["id"].annotation, Field()],
-        fields=Annotated[item, Field()],
-    )
+    return _entry_event_model(item, "CHANGED")
 
 
 def removed_event_model(item: type[BaseModel]) -> type[BaseModel]:
-    return create_model(
-        item.__name__.removesuffix("Entry") + "RemovedEvent",
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        id=Annotated[item.model_fields["id"].annotation, Field()],
-    )
+    return _entry_event_model(item, "REMOVED")
 
 
 def model_subset(base: type[BaseModel], fields: list[str]) -> type[BaseModel]:

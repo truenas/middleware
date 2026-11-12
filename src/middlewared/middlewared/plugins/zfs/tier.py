@@ -284,7 +284,6 @@ class ZfsTierRewriteJobQueryEventSource(TypedEventSource[ZfsTierRewriteJobQueryE
     args = ZfsTierRewriteJobQueryEventSourceArgs
     event = ZfsTierRewriteJobQueryEventSourceEvent
     event_types = ("ADDED", "CHANGED", "REMOVED")
-    event_id = str
     roles = ["ZFS_RESOURCE_READ"]
 
     def run_sync(self) -> None:

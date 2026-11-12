@@ -145,6 +145,7 @@ class ZfsTierRewriteJobQueryEventSourceArgs(BaseModel):
 
 
 class ZfsTierRewriteJobQueryEventSourceEvent(BaseModel):
+    id: NonEmptyString = Field(description="Rewrite job identifier in `dataset_name@job_uuid` format.")
     result: ZfsTierRewriteJobEntry = Field(description="Current job entry reflecting the latest lifecycle state.")
 
 
