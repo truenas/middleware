@@ -9,7 +9,9 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "ReplicationConfigEntry", "ReplicationConfigUpdateArgs", "ReplicationConfigUpdateResult",
+    "ReplicationConfigEntry",
+    "ReplicationConfigUpdateArgs",
+    "ReplicationConfigUpdateResult",
 ]
 
 

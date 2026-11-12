@@ -12,13 +12,17 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
-    'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdate', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
-    'TrueNASConnectGenerateClaimTokenArgs',
-    'TrueNASConnectGenerateClaimTokenResult',
-    'TrueNASConnectConfigChangedEvent',
-    'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
+    "TrueNASConnectEntry",
+    "TrueNASConnectGetRegistrationUriArgs",
+    "TrueNASConnectGetRegistrationUriResult",
+    "TrueNASConnectUpdate",
+    "TrueNASConnectUpdateArgs",
+    "TrueNASConnectUpdateResult",
+    "TrueNASConnectGenerateClaimTokenArgs",
+    "TrueNASConnectGenerateClaimTokenResult",
+    "TrueNASConnectConfigChangedEvent",
+    "TrueNASConnectIpsWithHostnamesArgs",
+    "TrueNASConnectIpsWithHostnamesResult",
 ]
 
 
@@ -50,7 +54,7 @@ class TrueNASConnectEntry(BaseModel):
             "`tn_connect.update_environment`."
         ),
     )
-    tier: Literal['FOUNDATION', 'PLUS', 'BUSINESS'] | None = Field(description="TrueNAS Connect tier.")
+    tier: Literal["FOUNDATION", "PLUS", "BUSINESS"] | None = Field(description="TrueNAS Connect tier.")
     last_heartbeat_failure_datetime: str | None = Field(
         description=(
             "Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."

@@ -16,12 +16,18 @@ from middlewared.api.base import (
 
 __all__ = [
     "VMWareEntry",
-    "VMWareCreateArgs", "VMWareCreateResult",
-    "VMWareUpdateArgs", "VMWareUpdateResult",
-    "VMWareDeleteArgs", "VMWareDeleteResult",
-    "VMWareGetDatastoresArgs", "VMWareGetDatastoresResult",
-    "VMWareMatchDatastoresWithDatasetsArgs", "VMWareMatchDatastoresWithDatasetsResult",
-    "VMWareDatasetHasVmsArgs", "VMWareDatasetHasVmsResult",
+    "VMWareCreateArgs",
+    "VMWareCreateResult",
+    "VMWareUpdateArgs",
+    "VMWareUpdateResult",
+    "VMWareDeleteArgs",
+    "VMWareDeleteResult",
+    "VMWareGetDatastoresArgs",
+    "VMWareGetDatastoresResult",
+    "VMWareMatchDatastoresWithDatasetsArgs",
+    "VMWareMatchDatastoresWithDatasetsResult",
+    "VMWareDatasetHasVmsArgs",
+    "VMWareDatasetHasVmsResult",
 ]
 
 

@@ -13,12 +13,21 @@ from middlewared.api.base import (
     excluded_field,
 )
 
-__all__ = ["MailEntry", "MailUpdate", "MailUpdateArgs", "MailUpdateResult", "MailSendMessage", "MailSendArgs",
-           "MailSendResult", "MailLocalAdministratorEmailArgs", "MailLocalAdministratorEmailResult"]
+__all__ = [
+    "MailEntry",
+    "MailUpdate",
+    "MailUpdateArgs",
+    "MailUpdateResult",
+    "MailSendMessage",
+    "MailSendArgs",
+    "MailSendResult",
+    "MailLocalAdministratorEmailArgs",
+    "MailLocalAdministratorEmailResult",
+]
 
 
 class MailEntryOAuth(BaseModel):
-    provider: str = Field(description="An email provider, e.g. \"gmail\", \"outlook\".")
+    provider: str = Field(description='An email provider, e.g. "gmail", "outlook".')
     client_id: str = Field(description="OAuth client ID provided by the email provider.")
     client_secret: str = Field(description="OAuth client secret provided by the email provider.")
     refresh_token: Multiline[LongString] = Field(
@@ -73,20 +82,20 @@ class MailSendMessage(BaseModel):
             "Example:\n"
             "[\n"
             "  {\n"
-            "    \"headers\": [\n"
+            '    "headers": [\n'
             "      {\n"
-            "        \"name\": \"Content-Transfer-Encoding\",\n"
-            "        \"value\": \"base64\"\n"
+            '        "name": "Content-Transfer-Encoding",\n'
+            '        "value": "base64"\n'
             "      },\n"
             "      {\n"
-            "        \"name\": \"Content-Type\",\n"
-            "        \"value\": \"application/octet-stream\",\n"
-            "        \"params\": {\n"
-            "          \"name\": \"test.txt\"\n"
+            '        "name": "Content-Type",\n'
+            '        "value": "application/octet-stream",\n'
+            '        "params": {\n'
+            '          "name": "test.txt"\n'
             "        }\n"
             "      }\n"
             "    ],\n"
-            "    \"content\": \"dGVzdAo=\"\n"
+            '    "content": "dGVzdAo="\n'
             "  }\n"
             "]"
         ),

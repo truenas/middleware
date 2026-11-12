@@ -16,18 +16,59 @@ from middlewared.api.base import (
 from .pool_scrub import PoolScan
 
 __all__ = [
-    "PoolEntry", "PoolDdtPruneArgs", "PoolDdtPruneResult", "PoolDdtPrefetchArgs", "PoolDdtPrefetchResult",
-    "PoolAttachArgs", "PoolAttachResult", "PoolAttachmentsArgs", "PoolAttachmentsResult", "PoolCreateArgs",
-    "PoolCreateResult", "PoolDetachArgs", "PoolDetachResult", "PoolExpandArgs", "PoolExpandResult", "PoolExportArgs",
-    "PoolExportResult", "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs",
-    "PoolGetDisksResult", "PoolImportFindArgs", "PoolImportFindResult", "PoolImportPoolArgs", "PoolImportPoolResult",
-    "PoolIsUpgradedArgs", "PoolIsUpgradedResult", "PoolOfflineArgs", "PoolOfflineResult", "PoolOnlineArgs",
-    "PoolOnlineResult", "PoolProcess", "PoolProcessesArgs", "PoolProcessesResult", "PoolReimportArgs",
+    "PoolEntry",
+    "PoolDdtPruneArgs",
+    "PoolDdtPruneResult",
+    "PoolDdtPrefetchArgs",
+    "PoolDdtPrefetchResult",
+    "PoolAttachArgs",
+    "PoolAttachResult",
+    "PoolAttachmentsArgs",
+    "PoolAttachmentsResult",
+    "PoolCreateArgs",
+    "PoolCreateResult",
+    "PoolDetachArgs",
+    "PoolDetachResult",
+    "PoolExpandArgs",
+    "PoolExpandResult",
+    "PoolExportArgs",
+    "PoolExportResult",
+    "PoolFilesystemChoicesArgs",
+    "PoolFilesystemChoicesResult",
+    "PoolGetDisksArgs",
+    "PoolGetDisksResult",
+    "PoolImportFindArgs",
+    "PoolImportFindResult",
+    "PoolImportPoolArgs",
+    "PoolImportPoolResult",
+    "PoolIsUpgradedArgs",
+    "PoolIsUpgradedResult",
+    "PoolOfflineArgs",
+    "PoolOfflineResult",
+    "PoolOnlineArgs",
+    "PoolOnlineResult",
+    "PoolProcess",
+    "PoolProcessesArgs",
+    "PoolProcessesResult",
+    "PoolReimportArgs",
     "PoolReimportResult",
-    "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs",
-    "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult",
-    "PoolValidateNameArgs", "PoolValidateNameResult", "PoolCreateEncryptionOptions", "PoolPrefetchArgs",
-    "PoolPrefetchResult", "PoolAttachment",
+    "PoolRemoveArgs",
+    "PoolRemoveArgs",
+    "PoolRemoveResult",
+    "PoolReplaceArgs",
+    "PoolReplaceResult",
+    "PoolScrubArgs",
+    "PoolScrubResult",
+    "PoolUpdateArgs",
+    "PoolUpdateResult",
+    "PoolUpgradeArgs",
+    "PoolUpgradeResult",
+    "PoolValidateNameArgs",
+    "PoolValidateNameResult",
+    "PoolCreateEncryptionOptions",
+    "PoolPrefetchArgs",
+    "PoolPrefetchResult",
+    "PoolAttachment",
 ]
 
 
@@ -52,20 +93,27 @@ class PoolEntry(BaseModel):
             "Information about the most recent scrub or resilver operation. `null` if no scan data is available."
         ),
     )
-    expand: Annotated[
-        dict,
-        Field(examples=[{
-            'state': 'FINISHED',
-            'expanding_vdev': 0,
-            'start_time': None,
-            'end_time': None,
-            'bytes_to_reflow': 835584,
-            'bytes_reflowed': 978944,
-            'waiting_for_resilver': 0,
-            'total_secs_left': None,
-            'percentage': 85.35564853556485,
-        }])
-    ] | None = Field(
+    expand: (
+        Annotated[
+            dict,
+            Field(
+                examples=[
+                    {
+                        "state": "FINISHED",
+                        "expanding_vdev": 0,
+                        "start_time": None,
+                        "end_time": None,
+                        "bytes_to_reflow": 835584,
+                        "bytes_reflowed": 978944,
+                        "waiting_for_resilver": 0,
+                        "total_secs_left": None,
+                        "percentage": 85.35564853556485,
+                    }
+                ]
+            ),
+        ]
+        | None
+    ) = Field(
         description="Information about any active pool expansion operation. `null` if no expansion is running.",
     )
     is_upgraded: bool = Field(
@@ -111,13 +159,17 @@ class PoolEntry(BaseModel):
     freeing_str: str | None = Field(
         description="Human-readable string representation of space being freed. `null` if not available.",
     )
-    autotrim: dict = Field(examples=[{
-        'parsed': 'off',
-        'rawvalue': 'off',
-        'source': 'DEFAULT',
-        'value': 'off',
-    }],
-        description="Auto-trim configuration for the pool indicating whether automatic TRIM operations are enabled.")
+    autotrim: dict = Field(
+        examples=[
+            {
+                "parsed": "off",
+                "rawvalue": "off",
+                "source": "DEFAULT",
+                "value": "off",
+            }
+        ],
+        description="Auto-trim configuration for the pool indicating whether automatic TRIM operations are enabled.",
+    )
     topology: PoolTopology | None = Field(
         description="Physical topology and structure of the pool including vdevs. `null` if not available.",
     )
@@ -142,6 +194,7 @@ class PoolCreateEncryptionOptions(BaseModel):
     """Encryption options for pool creation. Keys are stored by the system for automatic locking/unlocking on \
     import/export of encrypted datasets. If that is not desired, datasets should be created with a passphrase as a \
     key."""
+
     generate_key: bool = Field(
         default=False,
         description="Automatically generate the key to be used for dataset encryption.",
@@ -180,8 +233,7 @@ class PoolCreateTopologyVdevNonDRAID(BaseModel):
 
 
 PoolCreateTopologyDataVdev: TypeAlias = Annotated[
-    PoolCreateTopologyVdevDRAID | PoolCreateTopologyVdevNonDRAID,
-    Discriminator("type")
+    PoolCreateTopologyVdevDRAID | PoolCreateTopologyVdevNonDRAID, Discriminator("type")
 ]
 
 
@@ -243,29 +295,24 @@ class PoolCreate(BaseModel):
             "used in special circumstances as it carries a significant overhead."
         ),
     )
-    checksum: Literal[
-        "ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3", None
-    ] = Field(default=None, description="Checksum algorithm to use for data integrity verification.")
+    checksum: Literal["ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3", None] = (
+        Field(default=None, description="Checksum algorithm to use for data integrity verification.")
+    )
     encryption_options: PoolCreateEncryptionOptions = Field(
         default_factory=PoolCreateEncryptionOptions,
         description="Specify configuration for encryption of root dataset.",
     )
-    topology: PoolCreateTopology = Field(examples=[{
-        "data": [{
-            "type": "RAIDZ1",
-            "disks": ["da1", "da2", "da3"]
-        }],
-        "cache": [{
-            "type": "STRIPE",
-            "disks": ["da4"]
-        }],
-        "log": [{
-            "type": "STRIPE",
-            "disks": ["da5"]
-        }],
-        "spares": ["da6"]
-    }],
-        description="Physical layout and configuration of vdevs in the pool.")
+    topology: PoolCreateTopology = Field(
+        examples=[
+            {
+                "data": [{"type": "RAIDZ1", "disks": ["da1", "da2", "da3"]}],
+                "cache": [{"type": "STRIPE", "disks": ["da4"]}],
+                "log": [{"type": "STRIPE", "disks": ["da5"]}],
+                "spares": ["da6"],
+            }
+        ],
+        description="Physical layout and configuration of vdevs in the pool.",
+    )
     allow_duplicate_serials: bool = Field(
         default=False,
         description="Whether to allow disks with duplicate serial numbers in the pool.",
@@ -328,6 +375,7 @@ class PoolReplace(BaseModel):
 
 class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
     """Cannot change type of existing vdevs."""
+
     data: list[PoolCreateTopologyDataVdev]
 
 

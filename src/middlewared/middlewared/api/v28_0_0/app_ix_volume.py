@@ -2,7 +2,7 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, NonEmptyString
 
-__all__ = ['AppsIxVolumeEntry', 'AppsIxVolumeExistsArgs', 'AppsIxVolumeExistsResult']
+__all__ = ["AppsIxVolumeEntry", "AppsIxVolumeExistsArgs", "AppsIxVolumeExistsResult"]
 
 
 class AppsIxVolumeEntry(BaseModel):

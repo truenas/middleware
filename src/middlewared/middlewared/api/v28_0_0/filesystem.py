@@ -20,19 +20,37 @@ from .acl import AceWhoId
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    'FilesystemDirEntry',
-    'FilesystemChownArgs', 'FilesystemChownResult',
-    'FilesystemSetpermArgs', 'FilesystemSetpermResult',
-    'FilesystemListdirResultItem', 'FilesystemListdirArgs', 'FilesystemListdirResult',
-    'FilesystemMkdirData', 'FilesystemMkdirOptions', 'FilesystemMkdirArgs', 'FilesystemMkdirResult',
-    'FilesystemStatData', 'FilesystemStatArgs', 'FilesystemStatResult',
-    'FilesystemStatfsData', 'FilesystemStatfsArgs', 'FilesystemStatfsResult',
-    'ZFSFileAttrsData',
-    'FilesystemSetZfsAttributesData', 'FilesystemSetZfsAttributesArgs', 'FilesystemSetZfsAttributesResult',
-    'FilesystemGetZfsAttributesArgs', 'FilesystemGetZfsAttributesResult',
-    'FilesystemGetArgs', 'FilesystemGetResult',
-    'FilesystemPutOptions', 'FilesystemPutArgs', 'FilesystemPutResult',
-    'FileFollowTailEventSourceArgs', 'FileFollowTailEventSourceEvent',
+    "FilesystemDirEntry",
+    "FilesystemChownArgs",
+    "FilesystemChownResult",
+    "FilesystemSetpermArgs",
+    "FilesystemSetpermResult",
+    "FilesystemListdirResultItem",
+    "FilesystemListdirArgs",
+    "FilesystemListdirResult",
+    "FilesystemMkdirData",
+    "FilesystemMkdirOptions",
+    "FilesystemMkdirArgs",
+    "FilesystemMkdirResult",
+    "FilesystemStatData",
+    "FilesystemStatArgs",
+    "FilesystemStatResult",
+    "FilesystemStatfsData",
+    "FilesystemStatfsArgs",
+    "FilesystemStatfsResult",
+    "ZFSFileAttrsData",
+    "FilesystemSetZfsAttributesData",
+    "FilesystemSetZfsAttributesArgs",
+    "FilesystemSetZfsAttributesResult",
+    "FilesystemGetZfsAttributesArgs",
+    "FilesystemGetZfsAttributesResult",
+    "FilesystemGetArgs",
+    "FilesystemGetResult",
+    "FilesystemPutOptions",
+    "FilesystemPutArgs",
+    "FilesystemPutResult",
+    "FileFollowTailEventSourceArgs",
+    "FileFollowTailEventSourceEvent",
 ]
 
 
@@ -79,19 +97,17 @@ class FilesystemPermChownBase(BaseModel):
     )
 
 
-@single_argument_args('filesystem_chown')
+@single_argument_args("filesystem_chown")
 class FilesystemChownArgs(FilesystemPermChownBase):
     options: FilesystemChownOptions = Field(
         default=FilesystemChownOptions(),
         description="Additional options for the ownership change operation.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def user_group_present(self) -> Self:
         if all(field in UNSET_ENTRY for field in (self.uid, self.user, self.gid, self.group)):
-            raise ValueError(
-                'At least one of uid, gid, user, and group must be set in chown payload'
-            )
+            raise ValueError("At least one of uid, gid, user, and group must be set in chown payload")
 
         return self
 
@@ -100,7 +116,7 @@ class FilesystemChownResult(BaseModel):
     result: None = Field(description="Returns `null` when the ownership change is successfully completed.")
 
 
-@single_argument_args('filesystem_setperm')
+@single_argument_args("filesystem_setperm")
 class FilesystemSetpermArgs(FilesystemPermChownBase):
     mode: UnixPerm | None = Field(
         default=None,
@@ -111,14 +127,11 @@ class FilesystemSetpermArgs(FilesystemPermChownBase):
         description="Additional options for the permission change operation.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def payload_is_actionable(self) -> Self:
-        """ User should be changing something. Either stripping ACL or setting mode """
+        """User should be changing something. Either stripping ACL or setting mode"""
         if self.mode is None and self.options.stripacl is False:
-            raise ValueError(
-                'Payload must either explicitly specify permissions or '
-                'contain the stripacl option.'
-            )
+            raise ValueError("Payload must either explicitly specify permissions or contain the stripacl option.")
 
         return self
 
@@ -128,44 +141,44 @@ class FilesystemSetpermResult(BaseModel):
 
 
 FILESYSTEM_STATX_ATTRS = Literal[
-    'COMPRESSED',
-    'APPEND',
-    'NODUMP',
-    'ENCRYPTED',
-    'IMMUTABLE',
-    'AUTOMOUNT',
-    'MOUNT_ROOT',
-    'VERIFY',
-    'DAX',
-    'POSIXACL',
-    'NFSV4ACL',
-    'RDONLY'
+    "COMPRESSED",
+    "APPEND",
+    "NODUMP",
+    "ENCRYPTED",
+    "IMMUTABLE",
+    "AUTOMOUNT",
+    "MOUNT_ROOT",
+    "VERIFY",
+    "DAX",
+    "POSIXACL",
+    "NFSV4ACL",
+    "RDONLY",
 ]
 
 
 FILESYSTEM_ZFS_ATTRS = Literal[
-    'READONLY',
-    'HIDDEN',
-    'SYSTEM',
-    'ARCHIVE',
-    'IMMUTABLE',
-    'NOUNLINK',
-    'APPENDONLY',
-    'NODUMP',
-    'OPAQUE',
-    'AV_QUARANTINED',
-    'AV_MODIFIED',
-    'REPARSE',
-    'OFFLINE',
-    'SPARSE'
+    "READONLY",
+    "HIDDEN",
+    "SYSTEM",
+    "ARCHIVE",
+    "IMMUTABLE",
+    "NOUNLINK",
+    "APPENDONLY",
+    "NODUMP",
+    "OPAQUE",
+    "AV_QUARANTINED",
+    "AV_MODIFIED",
+    "REPARSE",
+    "OFFLINE",
+    "SPARSE",
 ]
 
 
 FileType = Literal[
-    'DIRECTORY',
-    'FILE',
-    'SYMLINK',
-    'OTHER',
+    "DIRECTORY",
+    "FILE",
+    "SYMLINK",
+    "OTHER",
 ]
 
 
@@ -237,7 +250,7 @@ FilesystemListdirResult = query_result_from_item(FilesystemListdirResultItem, "F
 
 
 class FilesystemMkdirOptions(BaseModel):
-    mode: UnixPerm = Field(default='755', description="Unix permissions for the new directory.")
+    mode: UnixPerm = Field(default="755", description="Unix permissions for the new directory.")
     raise_chmod_error: bool = Field(
         default=True,
         description=(
@@ -341,16 +354,23 @@ class FilesystemStatResult(BaseModel):
 
 
 StatfsFlags = Literal[
-    'RW', 'RO',
-    'XATTR',
-    'NOACL', 'NFS4ACL', 'POSIXACL',
-    'CASESENSITIVE', 'CASEINSENSITIVE',
-    'NOATIME', 'RELATIME',
-    'NOSUID', 'NODEV', 'NOEXEC',
+    "RW",
+    "RO",
+    "XATTR",
+    "NOACL",
+    "NFS4ACL",
+    "POSIXACL",
+    "CASESENSITIVE",
+    "CASEINSENSITIVE",
+    "NOATIME",
+    "RELATIME",
+    "NOSUID",
+    "NODEV",
+    "NOEXEC",
 ]
 
 
-StatfsFstype = Literal['zfs', 'tmpfs']
+StatfsFstype = Literal["zfs", "tmpfs"]
 
 
 class FilesystemStatfsData(BaseModel):
@@ -404,7 +424,7 @@ class ZFSFileAttrsData(BaseModel):
     hidden: bool | None = Field(
         default=None,
         description=(
-            "HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag is set and file is \"hidden\" from the perspective "
+            'HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag is set and file is "hidden" from the perspective '
             "of SMB clients."
         ),
     )
@@ -441,7 +461,7 @@ class ZFSFileAttrsData(BaseModel):
     )
 
 
-FilesystemZFSAttrRecursiveTarget = Literal['FILES', 'DIRECTORIES']
+FilesystemZFSAttrRecursiveTarget = Literal["FILES", "DIRECTORIES"]
 
 
 class FilesystemSetZfsAttributesOptions(BaseModel):

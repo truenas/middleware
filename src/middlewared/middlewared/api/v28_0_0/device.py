@@ -73,5 +73,5 @@ class DeviceGetInfoArgs(BaseModel):
 
 class DeviceGetInfoResult(BaseModel):
     result: dict[str, str] | dict[str, dict] | list[SerialInfo] | list[GPUInfo] = Field(
-        description="Return an object if `type=\"DISK\"` or an array otherwise.",
+        description='Return an object if `type="DISK"` or an array otherwise.',
     )

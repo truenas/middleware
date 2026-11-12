@@ -9,13 +9,17 @@ from middlewared.api.base import BaseModel, NonEmptyString
 
 from .system_reboot import RebootInfo
 
-__all__ = ["FailoverRebootInfoArgs", "FailoverRebootInfoResult",
-           "FailoverRebootOtherNodeArgs", "FailoverRebootOtherNodeResult",
-           "FailoverRebootInfoChangedEvent"]
+__all__ = [
+    "FailoverRebootInfoArgs",
+    "FailoverRebootInfoResult",
+    "FailoverRebootOtherNodeArgs",
+    "FailoverRebootOtherNodeResult",
+    "FailoverRebootInfoChangedEvent",
+]
 
 
 class FailoverRebootOtherNodeOptions(BaseModel):
-    reason: NonEmptyString = Field(default='System upgrade', description="Reason for the system reboot.")
+    reason: NonEmptyString = Field(default="System upgrade", description="Reason for the system reboot.")
     graceful: bool = Field(
         default=False,
         description=(

@@ -25,7 +25,8 @@ class iSCSITargetAuthorizedInitiatorEntry(BaseModel):
         ),
     )
     comment: Multiline[str] = Field(
-        default='', description="Optional comment describing the authorized initiator group.",
+        default="",
+        description="Optional comment describing the authorized initiator group.",
     )
 
 

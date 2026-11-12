@@ -12,13 +12,22 @@ from middlewared.api.base import (
 
 from .cloud_sync_providers import CloudCredentialProvider
 
-__all__ = ["CloudCredentialCreate", "CloudCredentialUpdate",
-           "CredentialsEntry",
-           "CredentialsCreateArgs", "CredentialsCreateResult",
-           "CredentialsUpdateArgs", "CredentialsUpdateResult",
-           "CredentialsDeleteArgs", "CredentialsDeleteResult",
-           "CredentialsVerifyArgs", "CredentialsVerifyData", "CredentialsVerifyResult",
-           "CredentialsS3ProviderChoicesArgs", "CredentialsS3ProviderChoicesResult"]
+__all__ = [
+    "CloudCredentialCreate",
+    "CloudCredentialUpdate",
+    "CredentialsEntry",
+    "CredentialsCreateArgs",
+    "CredentialsCreateResult",
+    "CredentialsUpdateArgs",
+    "CredentialsUpdateResult",
+    "CredentialsDeleteArgs",
+    "CredentialsDeleteResult",
+    "CredentialsVerifyArgs",
+    "CredentialsVerifyData",
+    "CredentialsVerifyResult",
+    "CredentialsS3ProviderChoicesArgs",
+    "CredentialsS3ProviderChoicesResult",
+]
 
 
 class CredentialsEntry(BaseModel):
@@ -79,7 +88,8 @@ class CredentialsVerifyData(BaseModel):
         description="Error message if credential verification failed or `null` on success.",
     )
     excerpt: Multiline[LongString] | None = Field(
-        default=None, description="Logs excerpt (or `null` if no error occurred).",
+        default=None,
+        description="Logs excerpt (or `null` if no error occurred).",
     )
 
 

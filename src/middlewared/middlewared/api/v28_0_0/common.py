@@ -14,19 +14,31 @@ from middlewared.api.base import (
     validate_filters,
 )
 
-__all__ = ["QueryFilters", "QueryOptions", "QueryOptionsGet", "QueryOptionsCount", "QueryArgs", "GenericQueryResult",
-           "CronModel", "TimeCronModel", "StorageTier"]
+__all__ = [
+    "QueryFilters",
+    "QueryOptions",
+    "QueryOptionsGet",
+    "QueryOptionsCount",
+    "QueryArgs",
+    "GenericQueryResult",
+    "CronModel",
+    "TimeCronModel",
+    "StorageTier",
+]
 
-StorageTier = Literal['REGULAR', 'PERFORMANCE']
+StorageTier = Literal["REGULAR", "PERFORMANCE"]
 """Storage performance tier. `REGULAR` uses standard-capacity drives; `PERFORMANCE` uses fast media (e.g. NVMe)."""
 
 QF_DOC = 'List of filters for query results. See API documentation for "Query Methods" for more guidance.'
 QueryFilters = Annotated[
     list[Any],
-    JsonSchemaExtra(description=QF_DOC, examples=[
-        [["name", "=", "bob"]],
-        [["OR", [["name", "=", "bob"], ["name", "=", "larry"]]]],
-    ]),
+    JsonSchemaExtra(
+        description=QF_DOC,
+        examples=[
+            [["name", "=", "bob"]],
+            [["OR", [["name", "=", "bob"], ["name", "=", "larry"]]]],
+        ],
+    ),
     AfterValidator(validate_filters),
 ]
 
@@ -34,6 +46,7 @@ QueryFilters = Annotated[
 class QueryOptions(BaseModel):
     """ Query options customize the results returned by a query method. More complete documentation with examples \
     are covered in the "Query methods" section of the TrueNAS API documentation. """
+
     extra: dict[str, Any] = Field(
         default={},
         description=(
@@ -43,7 +56,7 @@ class QueryOptions(BaseModel):
     )
     order_by: list[str] = Field(
         default=[],
-        examples=[['size', '-devname', 'nulls_first:-expiretime']],
+        examples=[["size", "-devname", "nulls_first:-expiretime"]],
         description=(
             "An array of field names describing the manner in which query results should be ordered. The field names "
             "may also have one of more of the following special prefixes: `-` (reverse sort direction), `nulls_first:` "
@@ -53,7 +66,7 @@ class QueryOptions(BaseModel):
     )
     select: list[str | list[Any]] = Field(
         default=[],
-        examples=[['username', 'Authentication.status']],
+        examples=[["username", "Authentication.status"]],
         description=(
             "An array of field names specifying the exact fields to include in the query return. The dot character `.` "
             "may be used to explicitly select only subkeys of the query result."
@@ -132,11 +145,12 @@ class CronModel(BaseModel):
     Each field can either be a single value or a comma-separated list of values.
     A "*" represents the full list of values.
     """
-    minute: str = Field(default="*", description="\"00\" - \"59\".")
-    hour: str = Field(default="*", description="\"00\" - \"23\".")
-    dom: str = Field(default="*", description="\"1\" - \"31\".")
-    month: str = Field(default="*", description="\"1\" (January) - \"12\" (December).")
-    dow: str = Field(default="*", description="\"1\" (Monday) - \"7\" (Sunday).")
+
+    minute: str = Field(default="*", description='"00" - "59".')
+    hour: str = Field(default="*", description='"00" - "23".')
+    dom: str = Field(default="*", description='"1" - "31".')
+    month: str = Field(default="*", description='"1" (January) - "12" (December).')
+    dow: str = Field(default="*", description='"1" (Monday) - "7" (Sunday).')
 
     @model_validator(mode="after")
     def validate_attrs(self):

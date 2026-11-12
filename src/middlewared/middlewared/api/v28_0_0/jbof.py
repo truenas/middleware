@@ -13,8 +13,17 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'JBOFEntry', 'JBOFCreateArgs', 'JBOFCreateResult', 'JBOFDeleteArgs', 'JBOFDeleteResult', 'JBOFLicensedArgs',
-    'JBOFLicensedResult', 'JBOFReapplyConfigArgs', 'JBOFReapplyConfigResult', 'JBOFUpdateArgs', 'JBOFUpdateResult',
+    "JBOFEntry",
+    "JBOFCreateArgs",
+    "JBOFCreateResult",
+    "JBOFDeleteArgs",
+    "JBOFDeleteResult",
+    "JBOFLicensedArgs",
+    "JBOFLicensedResult",
+    "JBOFReapplyConfigArgs",
+    "JBOFReapplyConfigResult",
+    "JBOFUpdateArgs",
+    "JBOFUpdateResult",
 ]
 
 

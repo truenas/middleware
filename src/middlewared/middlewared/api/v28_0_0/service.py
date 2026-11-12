@@ -5,11 +5,25 @@ from pydantic import Field
 from middlewared.api.base import BaseModel
 
 __all__ = [
-    "ServiceEntry", "ServiceReloadArgs", "ServiceReloadResult", "ServiceRestartArgs", "ServiceRestartResult",
-    "ServiceStartArgs", "ServiceStartResult", "ServiceStartedArgs", "ServiceStartedResult",
-    "ServiceStartedOrEnabledArgs", "ServiceStartedOrEnabledResult", "ServiceStopArgs", "ServiceStopResult",
-    "ServiceUpdate", "ServiceUpdateArgs", "ServiceUpdateResult",
-    "ServiceOptions", "ServiceControlArgs", "ServiceControlResult",
+    "ServiceEntry",
+    "ServiceReloadArgs",
+    "ServiceReloadResult",
+    "ServiceRestartArgs",
+    "ServiceRestartResult",
+    "ServiceStartArgs",
+    "ServiceStartResult",
+    "ServiceStartedArgs",
+    "ServiceStartedResult",
+    "ServiceStartedOrEnabledArgs",
+    "ServiceStartedOrEnabledResult",
+    "ServiceStopArgs",
+    "ServiceStopResult",
+    "ServiceUpdate",
+    "ServiceUpdateArgs",
+    "ServiceUpdateResult",
+    "ServiceOptions",
+    "ServiceControlArgs",
+    "ServiceControlResult",
 ]
 
 
@@ -49,8 +63,8 @@ class ServiceControlArgs(BaseModel):
 class ServiceControlResult(BaseModel):
     result: bool = Field(
         description=(
-            "For \"START\", \"RESTART\", \"RELOAD\", indicate whether the service is running after performing the "
-            "operation. For \"STOP\", indicate whether the service was successfully stopped."
+            'For "START", "RESTART", "RELOAD", indicate whether the service is running after performing the '
+            'operation. For "STOP", indicate whether the service was successfully stopped.'
         ),
     )
 
