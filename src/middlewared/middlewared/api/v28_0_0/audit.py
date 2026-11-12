@@ -17,11 +17,18 @@ from middlewared.api.base import (
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    "AuditEntry", "AuditDownloadReportArgs", "AuditDownloadReportResult", "AuditQueryArgs", "AuditQueryResult",
-    "AuditExportArgs", "AuditExportResult", "AuditUpdateArgs", "AuditUpdateResult",
+    "AuditEntry",
+    "AuditDownloadReportArgs",
+    "AuditDownloadReportResult",
+    "AuditQueryArgs",
+    "AuditQueryResult",
+    "AuditExportArgs",
+    "AuditExportResult",
+    "AuditUpdateArgs",
+    "AuditUpdateResult",
 ]
 
-AuditService = Literal['MIDDLEWARE', 'S3', 'SMB', 'SUDO', 'SYSTEM']
+AuditService = Literal["MIDDLEWARE", "S3", "SMB", "SUDO", "SYSTEM"]
 
 
 class AuditEntrySpace(BaseModel):
@@ -94,16 +101,16 @@ class AuditEntry(BaseModel):
 
 class AuditQuery(BaseModel):
     services: list[AuditService] = Field(
-        default=['MIDDLEWARE'],
+        default=["MIDDLEWARE"],
         description="Array of services to include in the audit query.",
     )
     query_filters: QueryFilters = Field(
-        alias='query-filters',
+        alias="query-filters",
         default=[],
         description="Array of filters to apply to the audit query results.",
     )
     query_options: QueryOptions = Field(
-        alias='query-options',
+        alias="query-options",
         default=QueryOptions(),
         description=(
             "If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient "
@@ -127,15 +134,15 @@ class AuditExportQueryOptions(QueryOptions):
 
 
 class AuditExport(AuditQuery):
-    query_options: AuditExportQueryOptions = Field(alias='query-options', default=AuditExportQueryOptions())
-    export_format: Literal['CSV', 'JSON', 'YAML'] = Field(
-        default='JSON',
+    query_options: AuditExportQueryOptions = Field(alias="query-options", default=AuditExportQueryOptions())
+    export_format: Literal["CSV", "JSON", "YAML"] = Field(
+        default="JSON",
         description="Format for exporting audit data.",
     )
 
 
 class AuditQueryResultItem(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
     audit_id: UUID | None = Field(description="GUID uniquely identifying this specific audit event.")
     message_timestamp: int = Field(
@@ -179,7 +186,7 @@ class AuditUpdate(AuditEntry, metaclass=ForUpdateMetaclass):
     enabled_services: Excluded = excluded_field()
 
 
-@single_argument_args('data')
+@single_argument_args("data")
 class AuditDownloadReportArgs(BaseModel):
     report_name: str = Field(description="Name of the audit report to download.")
 

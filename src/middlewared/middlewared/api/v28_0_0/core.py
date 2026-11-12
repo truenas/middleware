@@ -13,32 +13,45 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "CoreGetServicesArgs", "CoreGetServicesResult",
-    "CoreGetMethodsArgs", "CoreGetMethodsResult",
+    "CoreGetServicesArgs",
+    "CoreGetServicesResult",
+    "CoreGetMethodsArgs",
+    "CoreGetMethodsResult",
     "CoreGetJobsItem",
-    "CoreGetJobsAddedEvent", "CoreGetJobsChangedEvent",
-    "CoreResizeShellArgs", "CoreResizeShellResult",
-    "CoreJobDownloadLogsArgs", "CoreJobDownloadLogsResult",
-    "CoreJobWaitArgs", "CoreJobWaitResult",
-    "CoreJobAbortArgs", "CoreJobAbortResult",
-    "CorePingArgs", "CorePingResult",
-    "CorePingRemoteArgs", "CorePingRemoteResult",
-    "CoreArpArgs", "CoreArpResult",
-    "CoreDownloadArgs", "CoreDownloadResult",
-    "CoreBulkArgs", "CoreBulkResult",
-    "CoreSetOptionsArgs", "CoreSetOptionsResult",
-    "CoreSubscribeArgs", "CoreSubscribeResult",
-    "CoreUnsubscribeArgs", "CoreUnsubscribeResult",
+    "CoreGetJobsAddedEvent",
+    "CoreGetJobsChangedEvent",
+    "CoreResizeShellArgs",
+    "CoreResizeShellResult",
+    "CoreJobDownloadLogsArgs",
+    "CoreJobDownloadLogsResult",
+    "CoreJobWaitArgs",
+    "CoreJobWaitResult",
+    "CoreJobAbortArgs",
+    "CoreJobAbortResult",
+    "CorePingArgs",
+    "CorePingResult",
+    "CorePingRemoteArgs",
+    "CorePingRemoteResult",
+    "CoreArpArgs",
+    "CoreArpResult",
+    "CoreDownloadArgs",
+    "CoreDownloadResult",
+    "CoreBulkArgs",
+    "CoreBulkResult",
+    "CoreSetOptionsArgs",
+    "CoreSetOptionsResult",
+    "CoreSubscribeArgs",
+    "CoreSubscribeResult",
+    "CoreUnsubscribeArgs",
+    "CoreUnsubscribeResult",
 ]
 
 
 class CoreGetServicesArgs(BaseModel):
-    target: Literal['WS', 'CLI', 'REST'] = Field(
-        default='WS',
+    target: Literal["WS", "CLI", "REST"] = Field(
+        default="WS",
         description=(
-            "Target interface to get services for.\n"
-            "\n"
-            "`WS` for WebSocket, `CLI` for command line, `REST` for HTTP API."
+            "Target interface to get services for.\n\n`WS` for WebSocket, `CLI` for command line, `REST` for HTTP API."
         ),
     )
 
@@ -51,12 +64,10 @@ class CoreGetServicesResult(BaseModel):
 
 class CoreGetMethodsArgs(BaseModel):
     service: str | None = Field(default=None, description="Filters the result for a single service.")
-    target: Literal['WS', 'CLI', 'REST'] = Field(
-        default='WS',
+    target: Literal["WS", "CLI", "REST"] = Field(
+        default="WS",
         description=(
-            "Target interface to get methods for.\n"
-            "\n"
-            "`WS` for WebSocket, `CLI` for command line, `REST` for HTTP API."
+            "Target interface to get methods for.\n\n`WS` for WebSocket, `CLI` for command line, `REST` for HTTP API."
         ),
     )
 
@@ -259,7 +270,7 @@ class CoreBulkArgs(BaseModel):
     params: list[list] = Field(description="Array of parameter arrays, each representing one method call.")
     description: Multiline[str] | None = Field(
         default=None,
-        description="Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\").",
+        description='Format string for job progress (e.g. "Deleting snapshot {0[dataset]}@{0[name]}").',
     )
 
 

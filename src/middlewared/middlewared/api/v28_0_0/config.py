@@ -3,8 +3,12 @@ from pydantic import Field
 from middlewared.api.base import BaseModel
 
 __all__ = [
-    "ConfigSaveArgs", "ConfigSaveResult", "ConfigUploadArgs",
-    "ConfigUploadResult", "ConfigResetArgs", "ConfigResetResult"
+    "ConfigSaveArgs",
+    "ConfigSaveResult",
+    "ConfigUploadArgs",
+    "ConfigUploadResult",
+    "ConfigResetArgs",
+    "ConfigResetResult",
 ]
 
 
@@ -12,13 +16,13 @@ class ConfigSave(BaseModel):
     secretseed: bool = Field(
         default=True,
         description="Whether to include the secret seed in the configuration backup. The seed decrypts every password, "
-                    "private key and API key the backup contains, so treat a backup that includes it as a secret. A "
-                    "backup saved without it cannot be uploaded.",
+        "private key and API key the backup contains, so treat a backup that includes it as a secret. A "
+        "backup saved without it cannot be uploaded.",
     )
     pool_keys: bool = Field(
         default=False,
         description="Whether to include encryption keys for storage pools in the backup. IGNORED and deprecated; "
-                    "it does not apply on SCALE systems.",
+        "it does not apply on SCALE systems.",
     )
     root_authorized_keys: bool = Field(
         default=False,

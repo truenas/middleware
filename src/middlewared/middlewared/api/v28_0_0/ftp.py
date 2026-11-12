@@ -72,8 +72,8 @@ class FTPEntry(BaseModel):
     tls: bool = Field(description="Whether to enable TLS/SSL encryption for FTP connections.")
     tls_policy: TLS_PolicyOptions = Field(
         description=(
-            "TLS policy for connections. Values include: `\"on\"` (required), `\"off\"` (disabled), `\"data\"` (data "
-            "only), `\"auth\"` (authentication only), `\"ctrl\"` (control only), or combinations with `+` and `!` "
+            'TLS policy for connections. Values include: `"on"` (required), `"off"` (disabled), `"data"` (data '
+            'only), `"auth"` (authentication only), `"ctrl"` (control only), or combinations with `+` and `!` '
             "modifiers."
         ),
     )

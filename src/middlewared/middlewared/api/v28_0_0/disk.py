@@ -97,11 +97,7 @@ class DiskEntry(BaseModel):
 class DiskDetails(BaseModel):
     join_partitions: bool = Field(
         default=False,
-        description=(
-            "Return all partitions currently written to disk.\n"
-            "\n"
-            "**NOTE: This is an expensive operation.**"
-        ),
+        description=("Return all partitions currently written to disk.\n\n**NOTE: This is an expensive operation.**"),
     )
     type: Literal["USED", "UNUSED", "BOTH"] = Field(
         default="BOTH",
@@ -146,11 +142,7 @@ class DiskDetailsResult(BaseModel):
 class DiskGetUsedArgs(BaseModel):
     join_partitions: bool = Field(
         default=False,
-        description=(
-            "Return all partitions currently written to disk.\n"
-            "\n"
-            "**NOTE: this is an expensive operation.**"
-        ),
+        description=("Return all partitions currently written to disk.\n\n**NOTE: this is an expensive operation.**"),
     )
 
 
@@ -162,8 +154,8 @@ class DiskTemperaturesArgs(BaseModel):
     name: list[str] = Field(
         default_factory=list,
         description=(
-            "List of names of disks to retrieve temperature information. Name should be in the form of \"sda\", "
-            "\"nvme0n1\", etc."
+            'List of names of disks to retrieve temperature information. Name should be in the form of "sda", '
+            '"nvme0n1", etc.'
         ),
     )
     include_thresholds: bool = Field(
@@ -234,7 +226,7 @@ class DiskWipeResult(BaseModel):
     result: None = Field(description="Returns `null` when the disk wipe operation is successfully started.")
 
 
-@single_argument_args('disk_sed_unlock')
+@single_argument_args("disk_sed_unlock")
 class DiskUnlockSedArgs(BaseModel):
     name: NonEmptyString = Field(description="Name of disk to unlock.")
     password: Secret[NonEmptyString | None] = Field(default=None, description="Password for disk to unlock.")
@@ -244,7 +236,7 @@ class DiskUnlockSedResult(BaseModel):
     result: Literal[True] = Field(description="Returns true if the disk unlock was successful.")
 
 
-@single_argument_args('disk_sed_setup')
+@single_argument_args("disk_sed_setup")
 class DiskSetupSedArgs(BaseModel):
     name: NonEmptyString = Field(description="Name of disk to setup.")
     password: Secret[NonEmptyString | None] = Field(
@@ -260,7 +252,7 @@ class DiskSetupSedResult(BaseModel):
     result: Literal[True] = Field(description="Returns true if the disk setup was successful.")
 
 
-@single_argument_args('disk_sed_reset')
+@single_argument_args("disk_sed_reset")
 class DiskResetSedArgs(BaseModel):
     name: NonEmptyString = Field(description="Name of disk to reset.")
     psid: NonEmptyString = Field(description="PID of disk to reset.")

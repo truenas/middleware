@@ -8,7 +8,8 @@ from .replication import ReplicationEntry
 
 __all__ = [
     "ReplicationRestoreOptions",
-    "ReplicationRestoreArgs", "ReplicationRestoreResult",
+    "ReplicationRestoreArgs",
+    "ReplicationRestoreResult",
 ]
 
 

@@ -15,8 +15,12 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'SSHEntry', 'SSHUpdate', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs',
-    'SSHUpdateResult',
+    "SSHEntry",
+    "SSHUpdate",
+    "SSHBindifaceChoicesArgs",
+    "SSHBindifaceChoicesResult",
+    "SSHUpdateArgs",
+    "SSHUpdateResult",
 ]
 
 
@@ -29,13 +33,13 @@ class SSHEntry(BaseModel):
     kerberosauth: bool = Field(description="Whether Kerberos authentication is enabled.")
     tcpfwd: bool = Field(description="Whether TCP forwarding is enabled.")
     compression: bool = Field(description="Whether compression is enabled for SSH connections.")
-    sftp_log_level: Literal['', 'QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE', 'DEBUG', 'DEBUG2', 'DEBUG3'] = Field(
+    sftp_log_level: Literal["", "QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG2", "DEBUG3"] = Field(
         description="Logging level for SFTP subsystem (empty string means default).",
     )
     sftp_log_facility: Literal[
-        '', 'DAEMON', 'USER', 'AUTH', 'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3', 'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7'
+        "", "DAEMON", "USER", "AUTH", "LOCAL0", "LOCAL1", "LOCAL2", "LOCAL3", "LOCAL4", "LOCAL5", "LOCAL6", "LOCAL7"
     ] = Field(description="Syslog facility for SFTP logging (empty string means default).")
-    weak_ciphers: list[Literal['AES128-CBC', 'NONE']] = Field(
+    weak_ciphers: list[Literal["AES128-CBC", "NONE"]] = Field(
         description="Array of weak ciphers to enable for compatibility with legacy clients.",
     )
     options: FullAdmin[Multiline[LongString]] = Field(description="Additional SSH daemon configuration options.")
@@ -80,6 +84,7 @@ class SSHUpdate(SSHEntry, metaclass=ForUpdateMetaclass):
     Each of `password_login_groups` is quoted into a `Match Group` line of `sshd_config`.
     A double quote in one would let the caller add directives that `options` is marked to deny.
     """
+
     id: Excluded = excluded_field()
     password_login_groups: list[Annotated[str, StringConstraints(pattern=r'^[^"]*$')]]
     privatekey: Excluded = excluded_field()

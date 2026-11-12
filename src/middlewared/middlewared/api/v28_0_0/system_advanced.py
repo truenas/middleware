@@ -15,15 +15,28 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "SystemAdvancedEntry", "SystemAdvancedGetGpuPciChoicesArgs", "SystemAdvancedGetGpuPciChoicesResult",
-    "SystemAdvancedLoginBannerArgs", "SystemAdvancedLoginBannerResult", "SystemAdvancedSedGlobalPasswordArgs",
-    "SystemAdvancedSedGlobalPasswordResult", "SystemAdvancedSedGlobalPasswordIsSetArgs",
-    "SystemAdvancedSedGlobalPasswordIsSetResult", "SystemAdvancedSerialPortChoicesArgs",
-    "SystemAdvancedSerialPortChoicesResult", "SystemAdvancedSyslogCertificateAuthorityChoicesArgs",
-    "SystemAdvancedSyslogCertificateAuthorityChoicesResult", "SystemAdvancedSyslogCertificateChoicesArgs",
-    "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdate", "SystemAdvancedUpdateArgs",
-    "SystemAdvancedUpdateResult", "SystemAdvancedUpdateGpuPciIdsArgs", "SystemAdvancedUpdateGpuPciIdsResult",
-    "SystemAdvancedNvidiaPresentArgs", "SystemAdvancedNvidiaPresentResult",
+    "SystemAdvancedEntry",
+    "SystemAdvancedGetGpuPciChoicesArgs",
+    "SystemAdvancedGetGpuPciChoicesResult",
+    "SystemAdvancedLoginBannerArgs",
+    "SystemAdvancedLoginBannerResult",
+    "SystemAdvancedSedGlobalPasswordArgs",
+    "SystemAdvancedSedGlobalPasswordResult",
+    "SystemAdvancedSedGlobalPasswordIsSetArgs",
+    "SystemAdvancedSedGlobalPasswordIsSetResult",
+    "SystemAdvancedSerialPortChoicesArgs",
+    "SystemAdvancedSerialPortChoicesResult",
+    "SystemAdvancedSyslogCertificateAuthorityChoicesArgs",
+    "SystemAdvancedSyslogCertificateAuthorityChoicesResult",
+    "SystemAdvancedSyslogCertificateChoicesArgs",
+    "SystemAdvancedSyslogCertificateChoicesResult",
+    "SystemAdvancedUpdate",
+    "SystemAdvancedUpdateArgs",
+    "SystemAdvancedUpdateResult",
+    "SystemAdvancedUpdateGpuPciIdsArgs",
+    "SystemAdvancedUpdateGpuPciIdsResult",
+    "SystemAdvancedNvidiaPresentArgs",
+    "SystemAdvancedNvidiaPresentResult",
 ]
 
 
@@ -39,14 +52,14 @@ class SyslogServer(BaseModel):
             "TLS transport as per RFC5425."
         ),
     )
-    transport: Literal['UDP', 'TCP', 'TLS'] = Field(
-        default='UDP',
+    transport: Literal["UDP", "TCP", "TLS"] = Field(
+        default="UDP",
         description="Transport Protocol for the remote system log server connection.",
     )
     tls_certificate: int | None = Field(
         default=None,
         description=(
-            "Applies only if `transport` is \"TLS\".\n"
+            'Applies only if `transport` is "TLS".\n'
             "\n"
             "ID of the local certificate to send for mutual TLS (mTLS) connections. `null` indicates one-way TLS in "
             "which only the server identified by `host` will need to provide a certificate."
@@ -76,7 +89,7 @@ class SystemAdvancedEntry(BaseModel):
     serialconsole: bool = Field(description="Enable serial console access.")
     serialport: str = Field(description="Serial port device for console access.")
     anonstats_token: str = Field(description="Token used for anonymous statistics reporting.")
-    serialspeed: Literal['9600', '19200', '38400', '57600', '115200'] = Field(
+    serialspeed: Literal["9600", "19200", "38400", "57600", "115200"] = Field(
         description="Baud rate for serial console communication.",
     )
     overprovision: NonNegativeInt | None = Field(
@@ -85,10 +98,10 @@ class SystemAdvancedEntry(BaseModel):
     traceback: bool = Field(description="Enable generation and saving of tracebacks for debugging.")
     uploadcrash: bool = Field(description="Automatically upload crash reports to iXsystems for analysis.")
     anonstats: bool = Field(description="Enable anonymous usage statistics reporting to help improve TrueNAS.")
-    sed_user: Literal['USER', 'MASTER'] = Field(
+    sed_user: Literal["USER", "MASTER"] = Field(
         description="SED (Self-Encrypting Drive) user type for drive encryption.",
     )
-    sysloglevel: Literal['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG'] = Field(
+    sysloglevel: Literal["F_EMERG", "F_ALERT", "F_CRIT", "F_ERR", "F_WARNING", "F_NOTICE", "F_INFO", "F_DEBUG"] = Field(
         description="Minimum log level for syslog messages. F_EMERG is most critical, F_DEBUG is least critical.",
     )
     syslogservers: list[SyslogServer] = Field(

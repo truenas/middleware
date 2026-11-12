@@ -12,12 +12,29 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "SupportEntry", "SupportUpdate", "SupportAttachTicket", "SupportAttachTicketArgs", "SupportAttachTicketResult",
-    "SupportAttachTicketMaxSizeArgs", "SupportAttachTicketMaxSizeResult", "SupportFieldsArgs", "SupportFieldsResult",
-    "SupportIsAvailableArgs", "SupportIsAvailableResult", "SupportIsAvailableAndEnabledArgs",
-    "SupportIsAvailableAndEnabledResult", "SupportNewTicketArgs", "SupportNewTicketResult", "SupportNewTicket",
-    "SupportNewTicketCommunity", "SupportNewTicketEnterprise", "SupportSimilarIssuesArgs", "SupportSimilarIssuesResult",
-    "SupportSimilarIssue", "SupportUpdateArgs", "SupportUpdateResult",
+    "SupportEntry",
+    "SupportUpdate",
+    "SupportAttachTicket",
+    "SupportAttachTicketArgs",
+    "SupportAttachTicketResult",
+    "SupportAttachTicketMaxSizeArgs",
+    "SupportAttachTicketMaxSizeResult",
+    "SupportFieldsArgs",
+    "SupportFieldsResult",
+    "SupportIsAvailableArgs",
+    "SupportIsAvailableResult",
+    "SupportIsAvailableAndEnabledArgs",
+    "SupportIsAvailableAndEnabledResult",
+    "SupportNewTicketArgs",
+    "SupportNewTicketResult",
+    "SupportNewTicket",
+    "SupportNewTicketCommunity",
+    "SupportNewTicketEnterprise",
+    "SupportSimilarIssuesArgs",
+    "SupportSimilarIssuesResult",
+    "SupportSimilarIssue",
+    "SupportUpdateArgs",
+    "SupportUpdateResult",
 ]
 
 
@@ -39,7 +56,7 @@ class SupportNewTicketCommunity(BaseModel):
     body: Multiline[str] = Field(max_length=20000, description="Detailed description of the issue or request.")
     attach_debug: bool = Field(default=False, description="Whether to attach debug information to the ticket.")
     token: Secret[str] = Field(description="Authentication token for creating community tickets.")
-    type: Literal['BUG', 'FEATURE'] = Field(description="Type of ticket being created.")
+    type: Literal["BUG", "FEATURE"] = Field(description="Type of ticket being created.")
     cc: list[EmailString] = Field(default=[], description="Array of email addresses to copy on the ticket.")
 
 
@@ -61,7 +78,7 @@ class SupportSimilarIssue(BaseModel):
     summary: Multiline[str] = Field(default=NotRequired, description="Brief summary of the similar issue.")
 
     class Config:
-        extra = 'allow'
+        extra = "allow"
 
 
 class SupportUpdate(SupportEntry, metaclass=ForUpdateMetaclass):

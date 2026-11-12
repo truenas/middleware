@@ -18,29 +18,92 @@ from middlewared.utils.lang import undefined
 from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
-    'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',
-    'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult',
-    'VMBootloaderAavmfChoicesArgs', 'VMBootloaderAavmfChoicesResult',
-    'VMBootloaderOptionsArgs',
-    'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
-    'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureAndMachineChoicesArgs',
-    'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult',
-    'VMSupportsVirtualizationArgs', 'VMDisplayDeviceInfo', 'VMGetDisplayWebUri', 'VMDisplayWebURIOptions',
-    'VMSupportsVirtualizationResult', 'VMVirtualizationDetailsArgs', 'VMVirtualizationDetailsResult',
-    'VMMaximumSupportedVcpusArgs', 'VMMaximumSupportedVcpusResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
-    'VMGetConsoleResult', 'VMCpuModelChoicesArgs', 'VMCpuModelChoicesResult', 'VMGetMemoryUsageArgs',
-    'VMGetMemoryUsageResult', 'VMPortWizardArgs', 'VMPortWizardResult', 'VMResolutionChoicesArgs',
-    'VMResolutionChoicesResult', 'VMGetDisplayDevicesArgs', 'VMGetDisplayDevicesResult', 'VMGetDisplayWebUriArgs',
-    'VMGetDisplayWebUriResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
-    'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMResetArgs',
-    'VMResetResult', 'VMSuspendArgs', 'VMSuspendResult', 'VMGetVmemoryInUseArgs',
-    'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
-    'VMGetAvailableMemoryResult', 'VMGetVmMemoryInfoArgs', 'VMGetVmMemoryInfoResult', 'VMRandomMacArgs',
-    'VMRandomMacResult', 'VMCreate', 'VMUpdate', 'VMDeleteOptions', 'VMVirtualizationDetails', 'VMFlags',
-    'VMGetVmemoryInUse', 'VMStatus', 'VMGetVmMemoryInfo', 'VMStartOptions', 'VMStopOptions', 'VMPortWizard',
-    'VMBootloaderOptions',
-    'VMGuestNetworkInterfaceIPAddress', 'VMGuestNetworkInterface',
-    'VMGetGuestNetworkInterfacesArgs', 'VMGetGuestNetworkInterfacesResult',
+    "VMEntry",
+    "VMCreateArgs",
+    "VMCreateResult",
+    "VMUpdateArgs",
+    "VMUpdateResult",
+    "VMDeleteArgs",
+    "VMDeleteResult",
+    "VMBootloaderOvmfChoicesArgs",
+    "VMBootloaderOvmfChoicesResult",
+    "VMBootloaderAavmfChoicesArgs",
+    "VMBootloaderAavmfChoicesResult",
+    "VMBootloaderOptionsArgs",
+    "VMBootloaderOptionsResult",
+    "VMStatusArgs",
+    "VMStatusResult",
+    "VMLogFilePathArgs",
+    "VMLogFilePathResult",
+    "VMLogFileDownloadArgs",
+    "VMLogFileDownloadResult",
+    "VMGuestArchitectureAndMachineChoicesArgs",
+    "VMGuestArchitectureAndMachineChoicesResult",
+    "VMCloneArgs",
+    "VMCloneResult",
+    "VMSupportsVirtualizationArgs",
+    "VMDisplayDeviceInfo",
+    "VMGetDisplayWebUri",
+    "VMDisplayWebURIOptions",
+    "VMSupportsVirtualizationResult",
+    "VMVirtualizationDetailsArgs",
+    "VMVirtualizationDetailsResult",
+    "VMMaximumSupportedVcpusArgs",
+    "VMMaximumSupportedVcpusResult",
+    "VMFlagsArgs",
+    "VMFlagsResult",
+    "VMGetConsoleArgs",
+    "VMGetConsoleResult",
+    "VMCpuModelChoicesArgs",
+    "VMCpuModelChoicesResult",
+    "VMGetMemoryUsageArgs",
+    "VMGetMemoryUsageResult",
+    "VMPortWizardArgs",
+    "VMPortWizardResult",
+    "VMResolutionChoicesArgs",
+    "VMResolutionChoicesResult",
+    "VMGetDisplayDevicesArgs",
+    "VMGetDisplayDevicesResult",
+    "VMGetDisplayWebUriArgs",
+    "VMGetDisplayWebUriResult",
+    "VMStartArgs",
+    "VMStartResult",
+    "VMStopArgs",
+    "VMStopResult",
+    "VMRestartArgs",
+    "VMRestartResult",
+    "VMResumeArgs",
+    "VMResumeResult",
+    "VMPoweroffArgs",
+    "VMPoweroffResult",
+    "VMResetArgs",
+    "VMResetResult",
+    "VMSuspendArgs",
+    "VMSuspendResult",
+    "VMGetVmemoryInUseArgs",
+    "VMGetVmemoryInUseResult",
+    "VMGetAvailableMemoryArgs",
+    "VMGetAvailableMemoryResult",
+    "VMGetVmMemoryInfoArgs",
+    "VMGetVmMemoryInfoResult",
+    "VMRandomMacArgs",
+    "VMRandomMacResult",
+    "VMCreate",
+    "VMUpdate",
+    "VMDeleteOptions",
+    "VMVirtualizationDetails",
+    "VMFlags",
+    "VMGetVmemoryInUse",
+    "VMStatus",
+    "VMGetVmMemoryInfo",
+    "VMStartOptions",
+    "VMStopOptions",
+    "VMPortWizard",
+    "VMBootloaderOptions",
+    "VMGuestNetworkInterfaceIPAddress",
+    "VMGuestNetworkInterface",
+    "VMGetGuestNetworkInterfacesArgs",
+    "VMGetGuestNetworkInterfacesResult",
 ]
 
 
@@ -55,11 +118,11 @@ class VMStatus(BaseModel):
 
 class VMEntry(BaseModel):
     command_line_args: FullAdmin[str] = Field(
-        default='',
+        default="",
         description="Additional command line arguments passed to the VM hypervisor.",
     )
-    cpu_mode: Literal['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH'] = Field(
-        default='CUSTOM',
+    cpu_mode: Literal["CUSTOM", "HOST-MODEL", "HOST-PASSTHROUGH"] = Field(
+        default="CUSTOM",
         description=(
             "CPU virtualization mode.\n"
             "\n"
@@ -74,7 +137,8 @@ class VMEntry(BaseModel):
     )
     name: NonEmptyString = Field(description="Display name of the virtual machine.")
     description: Multiline[str] = Field(
-        default='', description="Optional description or notes about the virtual machine.",
+        default="",
+        description="Optional description or notes about the virtual machine.",
     )
     vcpus: int = Field(
         ge=1,
@@ -128,13 +192,13 @@ class VMEntry(BaseModel):
         default=False,
         description="Whether to enable Hyper-V enlightenments for improved Windows guest performance.",
     )
-    bootloader: Literal['UEFI_CSM', 'UEFI'] = Field(
-        default='UEFI',
+    bootloader: Literal["UEFI_CSM", "UEFI"] = Field(
+        default="UEFI",
         description="Boot firmware type. `UEFI` for modern UEFI, `UEFI_CSM` for legacy BIOS compatibility.",
     )
     bootloader_ovmf: str = Field(
-        default='OVMF_CODE.fd',
-        examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'],
+        default="OVMF_CODE.fd",
+        examples=["OVMF_CODE.fd", "OVMF_CODE.secboot.fd"],
         description="OVMF firmware file to use for UEFI boot.",
     )
     autostart: bool = Field(
@@ -154,12 +218,12 @@ class VMEntry(BaseModel):
             "(e.g. Ubuntu Server). Set to `false` when using GPU passthrough without a separate display device."
         ),
     )
-    video_model: Literal['QXL', 'VGA', 'VIRTIO'] = Field(
-        default='VGA',
+    video_model: Literal["QXL", "VGA", "VIRTIO"] = Field(
+        default="VGA",
         description="Emulated video adapter presented to the guest. aarch64 guests support only `VIRTIO`.",
     )
-    time: Literal['LOCAL', 'UTC'] = Field(
-        default='LOCAL',
+    time: Literal["LOCAL", "UTC"] = Field(
+        default="LOCAL",
         description="Guest OS time zone reference. `LOCAL` uses host timezone, `UTC` uses coordinated universal time.",
     )
     shutdown_timeout: int = Field(
@@ -186,11 +250,10 @@ class VMEntry(BaseModel):
     display_available: bool = Field(description="Whether at least one display device is available for this VM.")
     id: int = Field(description="Unique identifier for the virtual machine.")
     status_or_null: VMStatus | None = Field(
-        alias='status',
+        alias="status",
         description=(
-            "Current runtime status information for the VM. `null` if `query-options.extra.retrieve_status` is "
-            "`false`."
-        )
+            "Current runtime status information for the VM. `null` if `query-options.extra.retrieve_status` is `false`."
+        ),
     )
     enable_secure_boot: bool = Field(
         default=False,
@@ -202,7 +265,7 @@ class VMEntry(BaseModel):
         # Query result items leave unselected fields `undefined`.
         if self.status_or_null is None or self.status_or_null is undefined:
             raise ValueError(
-                'Status was not retrieved; the query set `retrieve_status` to false or did not select `status`'
+                "Status was not retrieved; the query set `retrieve_status` to false or did not select `status`"
             )
         return self.status_or_null
 
@@ -221,10 +284,10 @@ class VMCreate(VMEntry):
     )
     bootloader_ovmf: str | None = Field(
         default=None,
-        examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'],
+        examples=["OVMF_CODE.fd", "OVMF_CODE.secboot.fd"],
         description="OVMF firmware file to use for UEFI boot.",
     )
-    video_model: Literal['QXL', 'VGA', 'VIRTIO'] | None = Field(
+    video_model: Literal["QXL", "VGA", "VIRTIO"] | None = Field(
         default=None,
         description=(
             "Emulated video adapter presented to the guest. `null` selects `VIRTIO` for aarch64 guests and `VGA` "
@@ -245,7 +308,7 @@ class VMUpdate(VMCreate, metaclass=ForUpdateMetaclass):
     uuid: Excluded = excluded_field()
     bootloader_ovmf: Excluded = excluded_field()
     enable_secure_boot: Excluded = excluded_field()
-    video_model: Literal['QXL', 'VGA', 'VIRTIO'] = Field(
+    video_model: Literal["QXL", "VGA", "VIRTIO"] = Field(
         description="Emulated video adapter presented to the guest. aarch64 guests support only `VIRTIO`.",
     )
 
@@ -264,8 +327,8 @@ class VMDeleteOptions(BaseModel):
     force: bool = Field(
         default=False,
         description="Delete a running or suspended VM by stopping it first. Without this, deleting an active VM is "
-                    "rejected. Also causes failures to destroy associated ZFS volumes to be logged and ignored rather "
-                    "than aborting the deletion."
+        "rejected. Also causes failures to destroy associated ZFS volumes to be logged and ignored rather "
+        "than aborting the deletion.",
     )
 
 
@@ -302,9 +365,9 @@ class VMBootloaderOptionsArgs(BaseModel):
 
 
 class VMBootloaderOptions(BaseModel):
-    UEFI: Literal['UEFI'] = Field(default='UEFI', description="Modern UEFI firmware with secure boot support.")
-    UEFI_CSM: Literal['Legacy BIOS'] = Field(
-        default='Legacy BIOS',
+    UEFI: Literal["UEFI"] = Field(default="UEFI", description="Modern UEFI firmware with secure boot support.")
+    UEFI_CSM: Literal["Legacy BIOS"] = Field(
+        default="Legacy BIOS",
         description="UEFI with Compatibility Support Module for legacy BIOS compatibility.",
     )
 
@@ -350,8 +413,7 @@ class VMCloneArgs(BaseModel):
     name: NonEmptyString | None = Field(
         default=None,
         description=(
-            "Name for the cloned virtual machine. "
-            "`null` to append the next available number to the original VM name."
+            "Name for the cloned virtual machine. `null` to append the next available number to the original VM name."
         ),
     )
 
@@ -416,7 +478,7 @@ class VMGetConsoleResult(BaseModel):
 
 class VMCpuModelChoicesArgs(BaseModel):
     arch: str = Field(
-        default='x86_64',
+        default="x86_64",
         description="Guest architecture to return CPU model choices for (e.g. 'x86_64', 'aarch64').",
     )
 
@@ -475,8 +537,8 @@ class VMGetDisplayDevicesResult(BaseModel):
 
 
 class VMDisplayWebURIOptions(BaseModel):
-    protocol: Literal['HTTP', 'HTTPS'] = Field(
-        default='HTTP',
+    protocol: Literal["HTTP", "HTTPS"] = Field(
+        default="HTTP",
         description="Protocol to use for the web display URI (HTTP or HTTPS).",
     )
 
@@ -484,7 +546,7 @@ class VMDisplayWebURIOptions(BaseModel):
 class VMGetDisplayWebUriArgs(BaseModel):
     id: int = Field(description="ID of the virtual machine to get display web URI for.")
     host: str = Field(
-        default='',
+        default="",
         description="Hostname or IP address to use in the URI. Empty string for automatic detection.",
     )
     options: VMDisplayWebURIOptions = Field(
@@ -655,6 +717,4 @@ class VMGetGuestNetworkInterfacesArgs(BaseModel):
 
 
 class VMGetGuestNetworkInterfacesResult(BaseModel):
-    result: list[VMGuestNetworkInterface] = Field(
-        description="Network interfaces reported by the QEMU guest agent."
-    )
+    result: list[VMGuestNetworkInterface] = Field(description="Network interfaces reported by the QEMU guest agent.")

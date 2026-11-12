@@ -28,20 +28,20 @@ class iSCSITargetAuthCredentialEntry(BaseModel):
         description="Password/secret for iSCSI CHAP authentication. Must be 12-16 characters.",
     )
     peeruser: str = Field(
-        default='',
+        default="",
         description="Username for mutual CHAP authentication or empty string if not configured.",
     )
     peersecret: Secret[str] = Field(
-        default='',
+        default="",
         description=(
             "Password/secret for mutual CHAP authentication, or empty string if not configured. Must be 12-16 "
             "characters when set and must differ from `secret`."
         ),
     )
     discovery_auth: IscsiAuthType = Field(
-        default='NONE',
+        default="NONE",
         description=(
-            "Authentication method for target discovery. If \"CHAP_MUTUAL\" is selected for target discovery, it is "
+            'Authentication method for target discovery. If "CHAP_MUTUAL" is selected for target discovery, it is '
             "only permitted for a single entry systemwide."
         ),
     )

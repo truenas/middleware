@@ -5,13 +5,22 @@ from middlewared.utils.security import STIGType
 
 from .group import GroupEntry
 
-__all__ = ["PrivilegeEntry", "PrivilegeRolesEntry", "UnmappedGroupEntry",
-           "PrivilegeCreate", "PrivilegeUpdate",
-           "PrivilegeCreateArgs", "PrivilegeCreateResult",
-           "PrivilegeUpdateArgs", "PrivilegeUpdateResult",
-           "PrivilegeDeleteArgs", "PrivilegeDeleteResult",
-           "PrivilegeBecomeReadonlyArgs", "PrivilegeBecomeReadonlyResult",
-           "UserWebUiLoginDisabledAddedEvent"]
+__all__ = [
+    "PrivilegeEntry",
+    "PrivilegeRolesEntry",
+    "UnmappedGroupEntry",
+    "PrivilegeCreate",
+    "PrivilegeUpdate",
+    "PrivilegeCreateArgs",
+    "PrivilegeCreateResult",
+    "PrivilegeUpdateArgs",
+    "PrivilegeUpdateResult",
+    "PrivilegeDeleteArgs",
+    "PrivilegeDeleteResult",
+    "PrivilegeBecomeReadonlyArgs",
+    "PrivilegeBecomeReadonlyResult",
+    "UserWebUiLoginDisabledAddedEvent",
+]
 
 
 class UnmappedGroupEntry(BaseModel):
@@ -107,6 +116,7 @@ class PrivilegeBecomeReadonlyArgs(BaseModel):
     """ Reduce the privileges of the current user credentials to `READONLY_ADMINS`. \
     This action prevents the session from making configuration changes. It also redacts \
     sensitive data in API output. """
+
     pass
 
 

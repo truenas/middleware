@@ -6,8 +6,10 @@ from middlewared.api.base import BaseModel
 
 __all__ = [
     "RdmaLinkConfig",
-    "RDMAGetCardChoicesArgs", "RDMAGetCardChoicesResult",
-    "RDMACapableProtocolsArgs", "RDMACapableProtocolsResult"
+    "RDMAGetCardChoicesArgs",
+    "RDMAGetCardChoicesResult",
+    "RDMACapableProtocolsArgs",
+    "RDMACapableProtocolsResult",
 ]
 
 

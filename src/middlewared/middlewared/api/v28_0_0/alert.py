@@ -39,7 +39,7 @@ __all__ = [
     "AlertLevel",
 ]
 
-AlertLevel: TypeAlias = Literal['INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY']
+AlertLevel: TypeAlias = Literal["INFO", "NOTICE", "WARNING", "ERROR", "CRITICAL", "ALERT", "EMERGENCY"]
 
 
 class Alert(BaseModel):
@@ -49,7 +49,7 @@ class Alert(BaseModel):
     args: Any = Field(description="Arguments and parameters specific to the alert type.")
     node: str = Field(description="Node identifier in HA systems or hostname for single-node systems.")
     key: LongString = Field(description="Unique key used for alert deduplication and identification.")
-    datetime_: datetime = Field(alias='datetime', description="Timestamp when the alert was first created.")
+    datetime_: datetime = Field(alias="datetime", description="Timestamp when the alert was first created.")
     last_occurrence: datetime = Field(description="Timestamp of the most recent occurrence of this alert.")
     dismissed: bool = Field(description="Whether the alert has been manually dismissed by a user.")
     mail: Any = Field(description="Email notification configuration and status for this alert.")
@@ -75,7 +75,7 @@ class AlertCategory(BaseModel):
 
 class AlertClassConfiguration(BaseModel):
     level: AlertLevel = Field(default=NotRequired, description="Severity level for alerts of this class.")
-    policy: Literal['IMMEDIATELY', 'HOURLY', 'DAILY', 'NEVER'] = Field(
+    policy: Literal["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"] = Field(
         default=NotRequired,
         description=(
             "Notification policy for alerts of this class.\n"
@@ -123,8 +123,7 @@ class AlertListCategoriesOptions(BaseModel):
     include_all_products: bool = Field(
         default=False,
         description=(
-            "Include every alert class, including those that do not apply to this system's "
-            "hardware or license."
+            "Include every alert class, including those that do not apply to this system's hardware or license."
         ),
     )
     include_hidden_classes: bool = Field(default=False, description="Include hidden alert classes.")

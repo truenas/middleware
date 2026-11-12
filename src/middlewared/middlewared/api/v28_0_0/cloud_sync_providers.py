@@ -39,15 +39,17 @@ __all__ = [
 
 class AzureBlobCredentialsModel(BaseModel):
     type: Literal["AZUREBLOB"] = Field(description="Cloud provider type identifier for Microsoft Azure Blob storage.")
-    account: Secret[Annotated[
-        NonEmptyString,
-        AfterValidator(
-            match_validator(
-                re.compile(r"^[a-z0-9\-.]+$", re.IGNORECASE),
-                "Account Name field can only contain alphanumeric characters, - and .",
-            )
-        )
-    ]] = Field(description="Azure Blob Storage account name for authentication.")
+    account: Secret[
+        Annotated[
+            NonEmptyString,
+            AfterValidator(
+                match_validator(
+                    re.compile(r"^[a-z0-9\-.]+$", re.IGNORECASE),
+                    "Account Name field can only contain alphanumeric characters, - and .",
+                )
+            ),
+        ]
+    ] = Field(description="Azure Blob Storage account name for authentication.")
     key: Secret[NonEmptyString] = Field(description="Azure Blob Storage access key for authentication.")
     endpoint: Secret[Literal[""] | HttpUrl] = Field(
         default="",

@@ -2,7 +2,10 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel
 
-__all__ = ["SystemGeneralKbdmapChoicesArgs", "SystemGeneralKbdmapChoicesResult",]
+__all__ = [
+    "SystemGeneralKbdmapChoicesArgs",
+    "SystemGeneralKbdmapChoicesResult",
+]
 
 
 class SystemGeneralKbdmapChoicesArgs(BaseModel):

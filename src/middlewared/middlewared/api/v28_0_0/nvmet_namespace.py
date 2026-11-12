@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-DeviceType: TypeAlias = Literal['ZVOL', 'FILE']
+DeviceType: TypeAlias = Literal["ZVOL", "FILE"]
 
 
 class NVMetNamespaceEntry(BaseModel):
@@ -40,27 +40,27 @@ class NVMetNamespaceEntry(BaseModel):
             "\n"
             "When `device_type` is:\n"
             "\n"
-            "* \"ZVOL\": `device_path` is e.g. \"zvol/poolname/zvolname\"\n"
-            "* \"FILE\": `device_path` is e.g. \"/mnt/poolmnt/path/to/file\". The file will be created if necessary."
+            '* "ZVOL": `device_path` is e.g. "zvol/poolname/zvolname"\n'
+            '* "FILE": `device_path` is e.g. "/mnt/poolmnt/path/to/file". The file will be created if necessary.'
         ),
     )
     dataset: str | None = Field(
         description=(
             "The ZFS dataset containing the file-based namespace (e.g., 'tank/nvmet'). Returns `null` for ZVOL-based "
             "namespaces or if the FILE path cannot be resolved yet (encrypted dataset not unlocked, etc.). This is a "
-            "read-only field automatically populated from \"device_path\"."
+            'read-only field automatically populated from "device_path".'
         ),
     )
     relative_path: str | None = Field(
         description=(
             "The path of the file-based namespace relative to the dataset mountpoint (e.g., 'namespaces/ns1.img'). An "
             "empty string indicates the file is at the dataset root. Returns `null` for ZVOL-based namespaces or if the"
-            " path cannot be resolved yet. This is a read-only field automatically populated from \"device_path\"."
+            ' path cannot be resolved yet. This is a read-only field automatically populated from "device_path".'
         ),
     )
     filesize: int | None = Field(
         default=None,
-        description="When `device_type` is \"FILE\" then this will be the size of the file in bytes.",
+        description='When `device_type` is "FILE" then this will be the size of the file in bytes.',
     )
     device_uuid: NonEmptyString = Field(description="Unique device identifier for the namespace.")
     device_nguid: NonEmptyString = Field(description="Namespace Globally Unique Identifier for the namespace.")

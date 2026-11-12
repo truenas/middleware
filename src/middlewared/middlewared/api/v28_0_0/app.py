@@ -7,28 +7,86 @@ from middlewared.api.base import BaseModel, FullAdmin, LongString, Multiline, No
 from .catalog import CatalogAppInfo
 
 __all__ = [
-    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
-    'AppEntry', 'AppCreate', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
-    'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
-    'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
-    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult',
-    'AppPullImages', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppCertificate', 'AppCertificateChoices', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
-    'AppContainerIDOptions', 'AppContainerIdsArgs', 'AppContainerIdsResult',
-    'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult', 'AppContainerResponse',
-    'AppGPUResponse', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'ContainerDetails', 'GPU',
-    'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppRollbackOptions',
-    'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
-    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppUpgradeSummary', 'AppVersionInfo',
-    'AppRollbackArgs', 'AppDelete', 'AppUpdate', 'AppUpgradeBulkEntry', 'AppBulkUpgradeJobResult',
-    'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
-    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
-    'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
-    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult', 'AppUpgradeOptions', 'AppUpgradeSummaryOptions',
+    "AppCategoriesArgs",
+    "AppCategoriesResult",
+    "AppSimilarArgs",
+    "AppSimilarResult",
+    "AppAvailableItem",
+    "AppEntry",
+    "AppCreate",
+    "AppCreateArgs",
+    "AppCreateResult",
+    "AppUpdateArgs",
+    "AppUpdateResult",
+    "AppDeleteArgs",
+    "AppDeleteResult",
+    "AppConfigArgs",
+    "AppConfigResult",
+    "AppConvertToCustomArgs",
+    "AppConvertToCustomResult",
+    "AppStopArgs",
+    "AppStopResult",
+    "AppStartArgs",
+    "AppStartResult",
+    "AppRedeployArgs",
+    "AppRedeployResult",
+    "AppOutdatedDockerImagesArgs",
+    "AppOutdatedDockerImagesResult",
+    "AppPullImages",
+    "AppPullImagesArgs",
+    "AppPullImagesResult",
+    "AppCertificate",
+    "AppCertificateChoices",
+    "AppCertificateChoicesArgs",
+    "AppCertificateChoicesResult",
+    "AppContainerIDOptions",
+    "AppContainerIdsArgs",
+    "AppContainerIdsResult",
+    "AppContainerConsoleChoicesArgs",
+    "AppContainerConsoleChoicesResult",
+    "AppContainerResponse",
+    "AppGPUResponse",
+    "AppGpuChoicesArgs",
+    "AppGpuChoicesResult",
+    "ContainerDetails",
+    "GPU",
+    "AppIpChoices",
+    "AppIpChoicesArgs",
+    "AppIpChoicesResult",
+    "AppRollbackOptions",
+    "AppUsedPortsArgs",
+    "AppUsedPortsResult",
+    "AppUsedHostIpsArgs",
+    "AppUsedHostIpsResult",
+    "AppAvailableSpaceArgs",
+    "AppAvailableSpaceResult",
+    "AppUpgradeSummary",
+    "AppVersionInfo",
+    "AppRollbackArgs",
+    "AppDelete",
+    "AppUpdate",
+    "AppUpgradeBulkEntry",
+    "AppBulkUpgradeJobResult",
+    "AppRollbackResult",
+    "AppRollbackVersionsArgs",
+    "AppRollbackVersionsResult",
+    "AppUpgradeArgs",
+    "AppUpgradeResult",
+    "AppUpgradeSummaryArgs",
+    "AppUpgradeSummaryResult",
+    "AppContainerLogsFollowTailEventSourceArgs",
+    "AppContainerLogsFollowTailEventSourceEvent",
+    "AppStatsEventSourceArgs",
+    "AppStatsEventSourceEvent",
+    "AppLatestItem",
+    "AppUpgradeBulkArgs",
+    "AppUpgradeBulkResult",
+    "AppUpgradeOptions",
+    "AppUpgradeSummaryOptions",
 ]
 
 
-CONTAINER_STATES: TypeAlias = Literal['crashed', 'created', 'exited', 'running', 'starting']
+CONTAINER_STATES: TypeAlias = Literal["crashed", "created", "exited", "running", "starting"]
 
 
 class HostPorts(BaseModel):
@@ -38,7 +96,7 @@ class HostPorts(BaseModel):
 
 class UsedPorts(BaseModel):
     container_port: int = Field(description="The port number inside the container.")
-    protocol: str = Field(examples=['tcp', 'udp'], description="The network protocol used.")
+    protocol: str = Field(examples=["tcp", "udp"], description="The network protocol used.")
     host_ports: list[HostPorts] = Field(description="Array of host port mappings for this container port.")
 
 
@@ -46,7 +104,7 @@ class AppVolumes(BaseModel):
     source: str = Field(description="The source path or volume name on the host system.")
     destination: str = Field(description="The mount path inside the container.")
     mode: str = Field(description="The mount mode (e.g., 'rw' for read-write, 'ro' for read-only).")
-    type_: str = Field(alias='type', examples=['bind', 'volume'], description="The volume type.")
+    type_: str = Field(alias="type", examples=["bind", "volume"], description="The volume type.")
 
 
 class AppContainerDetails(BaseModel):
@@ -63,7 +121,7 @@ class AppNetworks(BaseModel):
     Id: str = Field(description="Unique identifier for the Docker network.")
     Labels: dict = Field(description="Key-value pairs of labels associated with the network.")
 
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class AppActiveWorkloads(BaseModel):
@@ -81,13 +139,13 @@ class AppActiveWorkloads(BaseModel):
 class AppEntry(BaseModel):
     name: NonEmptyString = Field(description="The display name of the application.")
     id: NonEmptyString = Field(description="Unique identifier for the application instance.")
-    state: Literal['CRASHED', 'DEPLOYING', 'ERROR', 'RUNNING', 'STOPPED', 'STOPPING'] = Field(
+    state: Literal["CRASHED", "DEPLOYING", "ERROR", "RUNNING", "STOPPED", "STOPPING"] = Field(
         description=(
             "Current operational state of the application. `ERROR` means the application's on-disk data could "
             "not be read, in which case the only operation it supports is deletion."
         ),
     )
-    error_reason: Literal['METADATA_MISSING', 'METADATA_UNREADABLE', 'METADATA_INCOMPLETE'] | None = Field(
+    error_reason: Literal["METADATA_MISSING", "METADATA_UNREADABLE", "METADATA_INCOMPLETE"] | None = Field(
         default=None,
         description=(
             "Why the application is in the `ERROR` state, or `null` if it is not. `METADATA_MISSING` means its "
@@ -170,7 +228,7 @@ class AppCreate(BaseModel):
         description="Docker Compose configuration as a structured object for custom applications.",
     )
     custom_compose_config_string: FullAdmin[Secret[Multiline[LongString]]] = Field(
-        default='',
+        default="",
         validate_default=True,
         description="Docker Compose configuration as a YAML string for custom applications.",
     )
@@ -179,8 +237,8 @@ class AppCreate(BaseModel):
         description="Name of the catalog application to install. Required when `custom_app` is `false`.",
     )
     app_name: str = Field(
-        examples=['abc123', 'abc', 'abcd-1232'],
-        pattern='^[a-z]([-a-z0-9]*[a-z0-9])?$',
+        examples=["abc123", "abc", "abcd-1232"],
+        pattern="^[a-z]([-a-z0-9]*[a-z0-9])?$",
         min_length=1,
         max_length=40,
         description=(
@@ -192,13 +250,13 @@ class AppCreate(BaseModel):
         ),
     )
     train: NonEmptyString = Field(
-        default='stable',
-        examples=['stable', 'enterprise'],
+        default="stable",
+        examples=["stable", "enterprise"],
         description="The catalog train to install from.",
     )
     version: NonEmptyString = Field(
-        default='latest',
-        examples=['latest', '1.2.3'],
+        default="latest",
+        examples=["latest", "1.2.3"],
         description="The version of the application to install.",
     )
 
@@ -223,7 +281,7 @@ class AppUpdate(BaseModel):
         description="Updated Docker Compose configuration as a structured object.",
     )
     custom_compose_config_string: FullAdmin[Secret[Multiline[LongString]]] = Field(
-        default='',
+        default="",
         validate_default=True,
         description="Updated Docker Compose configuration as a YAML string.",
     )
@@ -355,6 +413,7 @@ class ContainerDetails(BaseModel):
 
 class AppContainerResponse(RootModel[dict[str, ContainerDetails]]):
     """Object mapping container IDs to their detailed information."""
+
     pass
 
 
@@ -484,7 +543,7 @@ class AppRollbackVersionsResult(BaseModel):
 
 class AppUpgradeOptions(BaseModel):
     app_version: NonEmptyString = Field(
-        default='latest',
+        default="latest",
         description="Target version to upgrade to. Use 'latest' for the newest available version.",
     )
     values: Secret[dict] = Field(
@@ -538,7 +597,7 @@ class AppUpgradeBulkResult(BaseModel):
 
 class AppUpgradeSummaryOptions(BaseModel):
     app_version: NonEmptyString = Field(
-        default='latest',
+        default="latest",
         description="Target version to generate upgrade summary for. Use 'latest' for the newest available version.",
     )
 
@@ -575,7 +634,7 @@ class AppAvailableItem(CatalogAppInfo):
     catalog: NonEmptyString = Field(description="Name of the catalog this application comes from.")
     installed: bool = Field(description="Whether this application is currently installed on the system.")
     train: NonEmptyString = Field(
-        examples=['stable', 'enterprise'],
+        examples=["stable", "enterprise"],
         description="The catalog train this application version belongs to.",
     )
     popularity_rank: int | None = Field(
@@ -587,6 +646,7 @@ class AppAvailableItem(CatalogAppInfo):
 
 class AppLatestItem(AppAvailableItem):
     """Represents the latest version of an available application."""
+
     pass
 
 
@@ -600,7 +660,7 @@ class AppCategoriesResult(BaseModel):
 
 class AppSimilarArgs(BaseModel):
     app_name: NonEmptyString = Field(description="Name of the application to find similar apps for.")
-    train: NonEmptyString = Field(examples=['stable', 'enterprise'], description="The catalog train to search within.")
+    train: NonEmptyString = Field(examples=["stable", "enterprise"], description="The catalog train to search within.")
 
 
 class AppSimilarResult(BaseModel):

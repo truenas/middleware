@@ -55,8 +55,8 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
         default=False,
         description=(
             "Valid only for GOOGLE_DRIVER provider. Allow files which return cannotDownloadAbusiveFile to be "
-            "downloaded. If downloading a file returns the error \"This file has been identified as malware or spam and"
-            " cannot be downloaded\" with the error code \"cannotDownloadAbusiveFile\" then enable this flag to "
+            'downloaded. If downloading a file returns the error "This file has been identified as malware or spam and'
+            ' cannot be downloaded" with the error code "cannotDownloadAbusiveFile" then enable this flag to '
             "indicate you acknowledge the risks of downloading the file and TrueNAS will download it anyway."
         ),
     )
@@ -65,8 +65,17 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
         default=None,
         description="Valid only for S3 provider. Server-Side Encryption.",
     )
-    storage_class: Literal["", "STANDARD", "REDUCED_REDUNDANCY", "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING",
-                           "GLACIER", "GLACIER_IR", "DEEP_ARCHIVE"] = Field(
+    storage_class: Literal[
+        "",
+        "STANDARD",
+        "REDUCED_REDUNDANCY",
+        "STANDARD_IA",
+        "ONEZONE_IA",
+        "INTELLIGENT_TIERING",
+        "GLACIER",
+        "GLACIER_IR",
+        "DEEP_ARCHIVE",
+    ] = Field(
         default="",
         description="Valid only for S3 provider. The storage class to use.",
     )
@@ -79,13 +88,13 @@ class BaseCloudEntry(BaseModel):
     dataset: str | None = Field(
         description=(
             "The ZFS dataset containing this path (e.g., 'tank/backup'). This is a read-only field automatically "
-            "resolved from \"path\". May be `null` if dataset is unavailable."
+            'resolved from "path". May be `null` if dataset is unavailable.'
         ),
     )
     relative_path: str | None = Field(
         description=(
             "The path relative to the dataset mountpoint (e.g., 'subdir/data'). This is a read-only field automatically"
-            " resolved from \"path\". May be `null` if dataset is unavailable."
+            ' resolved from "path". May be `null` if dataset is unavailable.'
         ),
     )
     credentials: CredentialsEntry = Field(description="Cloud credentials to use for each backup.")

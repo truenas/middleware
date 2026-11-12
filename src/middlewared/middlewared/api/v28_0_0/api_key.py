@@ -15,10 +15,21 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "ApiKeyEntry", "ApiKeyEntryWithKey", "ApiKeyCreate", "ApiKeyUpdate",
-    "ApiKeyCreateArgs", "ApiKeyCreateResult", "ApiKeyUpdateArgs", "ApiKeyUpdateResult",
-    "ApiKeyDeleteArgs", "ApiKeyDeleteResult", "ApiKeyMyKeysArgs", "ApiKeyMyKeysResult",
-    "ApiKeyConvertRawKeyArgs", "ApiKeyConvertRawKeyResult", "ApiKeyScramData",
+    "ApiKeyEntry",
+    "ApiKeyEntryWithKey",
+    "ApiKeyCreate",
+    "ApiKeyUpdate",
+    "ApiKeyCreateArgs",
+    "ApiKeyCreateResult",
+    "ApiKeyUpdateArgs",
+    "ApiKeyUpdateResult",
+    "ApiKeyDeleteArgs",
+    "ApiKeyDeleteResult",
+    "ApiKeyMyKeysArgs",
+    "ApiKeyMyKeysResult",
+    "ApiKeyConvertRawKeyArgs",
+    "ApiKeyConvertRawKeyResult",
+    "ApiKeyScramData",
 ]
 
 

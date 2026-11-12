@@ -5,9 +5,22 @@ from middlewared.api.base import BaseModel, Excluded, Multiline, excluded_field
 from .pool import PoolEntry
 
 __all__ = [
-    "BootGetDisksArgs", "BootGetDisksResult", "BootAttachArgs", "BootAttachOptions", "BootAttachResult",
-    "BootDetachArgs", "BootDetachResult", "BootReplaceArgs", "BootReplaceResult", "BootScrubArgs", "BootScrubResult",
-    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult", "BootGetState", "BootGetStateArgs", "BootGetStateResult",
+    "BootGetDisksArgs",
+    "BootGetDisksResult",
+    "BootAttachArgs",
+    "BootAttachOptions",
+    "BootAttachResult",
+    "BootDetachArgs",
+    "BootDetachResult",
+    "BootReplaceArgs",
+    "BootReplaceResult",
+    "BootScrubArgs",
+    "BootScrubResult",
+    "BootSetScrubIntervalArgs",
+    "BootSetScrubIntervalResult",
+    "BootGetState",
+    "BootGetStateArgs",
+    "BootGetStateResult",
 ]
 
 

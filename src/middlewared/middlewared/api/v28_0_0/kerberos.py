@@ -1,4 +1,3 @@
-
 from pydantic import Field, Secret, field_validator
 
 from middlewared.api.base import (
@@ -14,14 +13,23 @@ from middlewared.api.base import (
 from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params
 
 __all__ = [
-    'KerberosEntry', 'KerberosRealmEntry', 'KerberosKeytabEntry',
-    'KerberosUpdateArgs', 'KerberosUpdateResult',
-    'KerberosRealmCreateArgs', 'KerberosRealmCreateResult',
-    'KerberosRealmUpdateArgs', 'KerberosRealmUpdateResult',
-    'KerberosRealmDeleteArgs', 'KerberosRealmDeleteResult',
-    'KerberosKeytabCreateArgs', 'KerberosKeytabCreateResult',
-    'KerberosKeytabUpdateArgs', 'KerberosKeytabUpdateResult',
-    'KerberosKeytabDeleteArgs', 'KerberosKeytabDeleteResult',
+    "KerberosEntry",
+    "KerberosRealmEntry",
+    "KerberosKeytabEntry",
+    "KerberosUpdateArgs",
+    "KerberosUpdateResult",
+    "KerberosRealmCreateArgs",
+    "KerberosRealmCreateResult",
+    "KerberosRealmUpdateArgs",
+    "KerberosRealmUpdateResult",
+    "KerberosRealmDeleteArgs",
+    "KerberosRealmDeleteResult",
+    "KerberosKeytabCreateArgs",
+    "KerberosKeytabCreateResult",
+    "KerberosKeytabUpdateArgs",
+    "KerberosKeytabUpdateResult",
+    "KerberosKeytabDeleteArgs",
+    "KerberosKeytabDeleteResult",
 ]
 
 
@@ -42,13 +50,13 @@ class KerberosEntry(BaseModel):
         ),
     )
 
-    @field_validator('appdefaults_aux')
+    @field_validator("appdefaults_aux")
     @classmethod
     def validate_appdefaults(cls, v):
         parse_krb_aux_params(KRB5ConfSection.APPDEFAULTS, {}, v)
         return v
 
-    @field_validator('libdefaults_aux')
+    @field_validator("libdefaults_aux")
     @classmethod
     def validate_libdefaults(cls, v):
         parse_krb_aux_params(KRB5ConfSection.LIBDEFAULTS, {}, v)
@@ -108,7 +116,7 @@ class KerberosKeytabEntry(BaseModel):
     )
 
 
-@single_argument_args('kerberos_update')
+@single_argument_args("kerberos_update")
 class KerberosUpdateArgs(KerberosEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

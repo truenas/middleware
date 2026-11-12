@@ -14,8 +14,14 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'UPSEntry', 'UPSPortChoicesArgs', 'UPSPortChoicesResult', 'UPSDriverChoicesArgs',
-    'UPSDriverChoicesResult', 'UPSUpdateArgs', 'UPSUpdateResult', 'UPSUpdate',
+    "UPSEntry",
+    "UPSPortChoicesArgs",
+    "UPSPortChoicesResult",
+    "UPSDriverChoicesArgs",
+    "UPSDriverChoicesResult",
+    "UPSUpdateArgs",
+    "UPSUpdateResult",
+    "UPSUpdate",
 ]
 
 
@@ -46,12 +52,8 @@ class UPSEntry(BaseModel):
     identifier: NonEmptyString = Field(
         description="Unique identifier name for this UPS device within the monitoring system.",
     )
-    mode: Literal['MASTER', 'SLAVE'] = Field(
-        description=(
-            "Operating mode.\n"
-            "* `MASTER` controls the UPS directly\n"
-            "* `SLAVE` monitors remotely"
-        ),
+    mode: Literal["MASTER", "SLAVE"] = Field(
+        description=("Operating mode.\n* `MASTER` controls the UPS directly\n* `SLAVE` monitors remotely"),
     )
     monpwd: str = Field(description="Password for UPS monitoring authentication.")
     monuser: NonEmptyString = Field(description="Username for UPS monitoring authentication.")
@@ -63,7 +65,7 @@ class UPSEntry(BaseModel):
     )
     port: str = Field(description="Serial port or device path for UPS communication.")
     remotehost: str = Field(description="Hostname or IP address of remote UPS server when operating in SLAVE mode.")
-    shutdown: Literal['LOWBATT', 'BATT'] = Field(
+    shutdown: Literal["LOWBATT", "BATT"] = Field(
         description="Shutdown trigger condition: LOWBATT on low battery, BATT when on battery power.",
     )
     shutdowncmd: FullAdmin[str | None] = Field(

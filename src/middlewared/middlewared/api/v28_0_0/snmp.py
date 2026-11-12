@@ -14,8 +14,8 @@ from middlewared.api.base import (
 
 __all__ = ["SNMPEntry", "SNMPUpdate", "SNMPUpdateArgs", "SNMPUpdateResult"]
 
-_CONTACT_PATTERN = r'^[-_a-zA-Z0-9\s]*$'
-_COMMUNITY_PATTERN = r'^[!\$%&()\+\-_={}\[\]<>,\.\?a-zA-Z0-9\s]*$'
+_CONTACT_PATTERN = r"^[-_a-zA-Z0-9\s]*$"
+_COMMUNITY_PATTERN = r"^[!\$%&()\+\-_={}\[\]<>,\.\?a-zA-Z0-9\s]*$"
 _V3SecretString = Annotated[str, StringConstraints(pattern=r'^[^"]*$')]
 
 
@@ -33,18 +33,18 @@ class SNMPEntry(BaseModel):
     )
     community: str = Field(
         pattern=_COMMUNITY_PATTERN,
-        default='public',
+        default="public",
         description=(
             "SNMP community string for v1/v2c access. Allows letters and numbers: a-zA-Z0-9 special characters: "
             "!$%&()+-_={}[]<>,.? and spaces. Notable excluded characters: # / \\ @."
         ),
     )
     v3_username: str = Field(max_length=20, description="Username for SNMP version 3 authentication.")
-    v3_authtype: Literal['', 'MD5', 'SHA'] = Field(
+    v3_authtype: Literal["", "MD5", "SHA"] = Field(
         description="Authentication type for SNMP version 3 (empty string means no authentication).",
     )
     v3_password: Secret[str] = Field(description="Password for SNMP version 3 authentication.")
-    v3_privproto: Literal[None, 'AES', 'DES'] | None = Field(
+    v3_privproto: Literal[None, "AES", "DES"] | None = Field(
         description=(
             "Privacy protocol for SNMP version 3 encryption. `null` means no encryption. If set, ['AES'|'DES'], a "
             "`privpassphrase` must be supplied."
@@ -74,6 +74,7 @@ class SNMPUpdate(SNMPEntry, metaclass=ForUpdateMetaclass):
     A double quote is rejected on the two secrets quoted into the `createUser` line of `snmpd.conf`.
     It would otherwise let the caller append directives, `rwcommunity` say, that `options` is marked to deny.
     """
+
     id: Excluded = excluded_field()
     location: str
     contact: EmailStr | Annotated[str, StringConstraints(pattern=_CONTACT_PATTERN)]

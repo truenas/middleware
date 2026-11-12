@@ -15,24 +15,43 @@ from middlewared.api.base import (
     single_argument_args,
 )
 
-__all__ = ["KeychainCredentialEntry",
-           "SSHKeyPair", "SSHKeyPairEntry", "SSHCredentials", "SSHCredentialsEntry",
-           "KeychainCredentialCreateSSHCredentialsEntry", "KeychainCredentialCreateSSHKeyPairEntry",
-           "KeychainCredentialCreate", "KeychainCredentialUpdate",
-           "KeychainCredentialCreateArgs", "KeychainCredentialCreateResult",
-           "KeychainCredentialUpdateArgs", "KeychainCredentialUpdateResult",
-           "KeychainCredentialDeleteOptions", "KeychainCredentialDeleteArgs", "KeychainCredentialDeleteResult",
-           "KeychainCredentialUsedByArgs", "KeychainCredentialUsedByResult", "UsedKeychainCredential",
-           "KeychainCredentialGenerateSshKeyPairArgs", "KeychainCredentialGenerateSshKeyPairResult",
-           "KeychainCredentialRemoteSshHostKeyScanArgs", "KeychainCredentialRemoteSshHostKeyScanResult",
-           "KeychainCredentialRemoteSSHSemiautomaticSetup",
-           "KeychainCredentialRemoteSshSemiautomaticSetupArgs", "KeychainCredentialRemoteSshSemiautomaticSetupResult",
-           "SetupSSHConnectionManual", "SetupSSHConnectionSemiautomatic",
-           "KeychainCredentialSetupSshConnectionArgs", "KeychainCredentialSetupSshConnectionResult"]
+__all__ = [
+    "KeychainCredentialEntry",
+    "SSHKeyPair",
+    "SSHKeyPairEntry",
+    "SSHCredentials",
+    "SSHCredentialsEntry",
+    "KeychainCredentialCreateSSHCredentialsEntry",
+    "KeychainCredentialCreateSSHKeyPairEntry",
+    "KeychainCredentialCreate",
+    "KeychainCredentialUpdate",
+    "KeychainCredentialCreateArgs",
+    "KeychainCredentialCreateResult",
+    "KeychainCredentialUpdateArgs",
+    "KeychainCredentialUpdateResult",
+    "KeychainCredentialDeleteOptions",
+    "KeychainCredentialDeleteArgs",
+    "KeychainCredentialDeleteResult",
+    "KeychainCredentialUsedByArgs",
+    "KeychainCredentialUsedByResult",
+    "UsedKeychainCredential",
+    "KeychainCredentialGenerateSshKeyPairArgs",
+    "KeychainCredentialGenerateSshKeyPairResult",
+    "KeychainCredentialRemoteSshHostKeyScanArgs",
+    "KeychainCredentialRemoteSshHostKeyScanResult",
+    "KeychainCredentialRemoteSSHSemiautomaticSetup",
+    "KeychainCredentialRemoteSshSemiautomaticSetupArgs",
+    "KeychainCredentialRemoteSshSemiautomaticSetupResult",
+    "SetupSSHConnectionManual",
+    "SetupSSHConnectionSemiautomatic",
+    "KeychainCredentialSetupSshConnectionArgs",
+    "KeychainCredentialSetupSshConnectionResult",
+]
 
 
 class SSHKeyPair(BaseModel):
     """At least one of the two keys must be provided on creation."""
+
     private_key: Multiline[LongString] | None = Field(
         default=None,
         description="SSH private key in OpenSSH format. `null` if only public key is provided.",
@@ -97,8 +116,7 @@ class KeychainCredentialCreateSSHCredentialsEntry(SSHCredentialsEntry):
 
 
 class KeychainCredentialUpdateSSHCredentialsEntry(
-    KeychainCredentialCreateSSHCredentialsEntry,
-    metaclass=ForUpdateMetaclass
+    KeychainCredentialCreateSSHCredentialsEntry, metaclass=ForUpdateMetaclass
 ):
     type: Excluded = excluded_field()
 

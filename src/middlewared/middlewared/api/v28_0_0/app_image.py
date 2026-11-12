@@ -5,11 +5,18 @@ from pydantic import Field, Secret
 from middlewared.api.base import BaseModel, LongString, Multiline, NonEmptyString
 
 __all__ = [
-    'AppImageEntry', 'AppImageParsedRepoTags', 'AppImageAuthConfig',
-    'AppImagePull', 'AppImagePullArgs', 'AppImagePullResult',
-    'AppImageDeleteOptions', 'AppImageDeleteArgs', 'AppImageDeleteResult',
-    'AppImageDockerhubRateLimitInfo',
-    'AppImageDockerhubRateLimitArgs', 'AppImageDockerhubRateLimitResult',
+    "AppImageEntry",
+    "AppImageParsedRepoTags",
+    "AppImageAuthConfig",
+    "AppImagePull",
+    "AppImagePullArgs",
+    "AppImagePullResult",
+    "AppImageDeleteOptions",
+    "AppImageDeleteArgs",
+    "AppImageDeleteResult",
+    "AppImageDockerhubRateLimitInfo",
+    "AppImageDockerhubRateLimitArgs",
+    "AppImageDockerhubRateLimitResult",
 ]
 
 

@@ -8,14 +8,36 @@ from middlewared.api.base import BaseModel, single_argument_args, single_argumen
 from .user import UserGetUserObjData
 
 __all__ = [
-    'AuthSessionsEntry', 'AuthGenerateOnetimePasswordArgs', 'AuthGenerateOnetimePasswordResult',
-    'AuthGenerateTokenArgs', 'AuthGenerateTokenResult', 'AuthLoginArgs', 'AuthLoginResult', 'AuthLoginExArgs',
-    'AuthLoginExResult', 'AuthLoginExContinueArgs', 'AuthLoginExContinueResult', 'AuthLoginWithApiKeyArgs',
-    'AuthLoginWithApiKeyResult', 'AuthLoginWithTokenArgs', 'AuthLoginWithTokenResult', 'AuthMeArgs', 'AuthMeResult',
-    'AuthMechanismChoicesArgs', 'AuthMechanismChoicesResult', 'AuthLogoutArgs', 'AuthLogoutResult',
-    'AuthSetAttributeArgs', 'AuthSetAttributeResult', 'AuthTerminateOtherSessionsArgs',
-    'AuthTerminateOtherSessionsResult', 'AuthTerminateSessionArgs', 'AuthTerminateSessionResult',
-    'AuthSessionsAddedEvent', 'AuthSessionsRemovedEvent', 'ComposedPrivilege',
+    "AuthSessionsEntry",
+    "AuthGenerateOnetimePasswordArgs",
+    "AuthGenerateOnetimePasswordResult",
+    "AuthGenerateTokenArgs",
+    "AuthGenerateTokenResult",
+    "AuthLoginArgs",
+    "AuthLoginResult",
+    "AuthLoginExArgs",
+    "AuthLoginExResult",
+    "AuthLoginExContinueArgs",
+    "AuthLoginExContinueResult",
+    "AuthLoginWithApiKeyArgs",
+    "AuthLoginWithApiKeyResult",
+    "AuthLoginWithTokenArgs",
+    "AuthLoginWithTokenResult",
+    "AuthMeArgs",
+    "AuthMeResult",
+    "AuthMechanismChoicesArgs",
+    "AuthMechanismChoicesResult",
+    "AuthLogoutArgs",
+    "AuthLogoutResult",
+    "AuthSetAttributeArgs",
+    "AuthSetAttributeResult",
+    "AuthTerminateOtherSessionsArgs",
+    "AuthTerminateOtherSessionsResult",
+    "AuthTerminateSessionArgs",
+    "AuthTerminateSessionResult",
+    "AuthSessionsAddedEvent",
+    "AuthSessionsRemovedEvent",
+    "ComposedPrivilege",
 ]
 
 
@@ -39,7 +61,7 @@ class APIKeyCredentialData(UserCredentialData):
 
 
 class TokenCredentialData(BaseCredentialData):
-    parent: 'TokenParentCredentialsData' = Field(description="Parent credential information that generated this token.")
+    parent: "TokenParentCredentialsData" = Field(description="Parent credential information that generated this token.")
     login_id: str = Field(description="Unique identifier for the login.")
     username: str | None = Field(description="Username associated with the token. `null` if not user-specific.")
 
@@ -49,19 +71,19 @@ class AuthSessionsEntry(BaseModel):
     current: bool = Field(description="Whether this is the current active session.")
     internal: bool = Field(
         description=(
-            "Whether this is an internal system session. Pass `[[\"internal\", \"=\", false]]` as "
+            'Whether this is an internal system session. Pass `[["internal", "=", false]]` as '
             "`query-filters` to exclude internal sessions from the list."
         ),
     )
     origin: str = Field(description="Origin information for the session (IP address, hostname, etc.).")
     credentials: Literal[
-        'UNIX_SOCKET',
-        'LOGIN_PASSWORD',
-        'LOGIN_TWOFACTOR',
-        'LOGIN_ONETIME_PASSWORD',
-        'API_KEY',
-        'TOKEN',
-        'TRUENAS_NODE',
+        "UNIX_SOCKET",
+        "LOGIN_PASSWORD",
+        "LOGIN_TWOFACTOR",
+        "LOGIN_ONETIME_PASSWORD",
+        "API_KEY",
+        "TOKEN",
+        "TRUENAS_NODE",
     ] = Field(
         description=(
             "Authentication method used for this session.\n"
@@ -166,10 +188,11 @@ class AuthSCRAM(BaseModel):
             "RFC5802. CLIENT_FINAL_MESSAGE - this corresponds with the client-final-message as defined in RFC5802."
         ),
     )
-    rfc_str: str = Field(examples=[
-        "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL",
-        "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
-    ],
+    rfc_str: str = Field(
+        examples=[
+            "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL",
+            "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=",
+        ],
         description=(
             "This field contains the SCRAM authentication exchange message as defined in RFC5802. The expected format "
             "and contents depends on the `scram_type`. CLIENT_FIRST_MESSAGE: `n,,n=user:10,r=fyko+d2lbbFgONRv9qkxdawL` "
@@ -181,7 +204,8 @@ class AuthSCRAM(BaseModel):
             "support). `r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j` contains the combined client and server nonce as "
             "returned by the response to the CLIENT_FIRST_MESSAGE. `p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=` contains the "
             "base64-encoded client proof generated based on client-side key material and client + server nonce."
-        ))
+        ),
+    )
 
 
 class AuthRespAuthErr(BaseModel):
@@ -248,7 +272,7 @@ class AuthRespSuccess(BaseModel):
     user_info: AuthUserInfo | None = Field(
         description="Authenticated user information (the output of `auth.me`), or `null` if not requested.",
     )
-    authenticator: Literal['LEVEL_1', 'LEVEL_2'] = Field(
+    authenticator: Literal["LEVEL_1", "LEVEL_2"] = Field(
         description="Authentication level achieved (LEVEL_1 for password, LEVEL_2 for two-factor).",
     )
     reconnect_token: str | None = Field(
@@ -272,11 +296,13 @@ class AuthRespScram(BaseModel):
             "SERVER_FINAL_RESPONSE will contain the server verification proof for client mutual validation."
         ),
     )
-    rfc_str: str = Field(examples=[
-        "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=500000",
-        "v=rmF9pqV8S7suAoZWja4dJRkFsKQ="
-    ],
-        description="Server authentication response containing string per RFC5802.")
+    rfc_str: str = Field(
+        examples=[
+            "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=500000",
+            "v=rmF9pqV8S7suAoZWja4dJRkFsKQ=",
+        ],
+        description="Server authentication response containing string per RFC5802.",
+    )
     user_info: AuthUserInfo | None = Field(
         description="Authenticated user information on SERVER_FINAL_RESPONSE or null on SERVER_FIRST_RESPONSE.",
     )
@@ -293,19 +319,19 @@ class AuthTokenPlain(BaseModel):
 
 class TokenParentCredentialsData(BaseModel):
     credentials: Literal[
-        'UNIX_SOCKET',
-        'LOGIN_PASSWORD',
-        'LOGIN_TWOFACTOR',
-        'API_KEY',
-        'TOKEN',
-        'TRUENAS_NODE',
+        "UNIX_SOCKET",
+        "LOGIN_PASSWORD",
+        "LOGIN_TWOFACTOR",
+        "API_KEY",
+        "TOKEN",
+        "TRUENAS_NODE",
     ] = Field(description="Type of credentials used to generate this token.")
     credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | TokenCredentialData = Field(
         description="Credential data used to authenticate the token request.",
     )
 
 
-@single_argument_args('generate_single_use_password')
+@single_argument_args("generate_single_use_password")
 class AuthGenerateOnetimePasswordArgs(BaseModel):
     username: str = Field(description="Username to generate a one-time password for.")
 
@@ -346,17 +372,22 @@ class AuthLoginResult(BaseModel):
 
 
 class AuthLoginExArgs(BaseModel):
-    login_data: Union[
-        AuthApiKeyPlain, AuthPasswordPlain, AuthTokenPlain, AuthOTPToken, AuthSCRAM
-    ] = Field(discriminator='mechanism', description="Authentication data specifying mechanism and credentials.")
+    login_data: Union[AuthApiKeyPlain, AuthPasswordPlain, AuthTokenPlain, AuthOTPToken, AuthSCRAM] = Field(
+        discriminator="mechanism", description="Authentication data specifying mechanism and credentials."
+    )
 
 
 class AuthLoginExResult(BaseModel):
     result: Union[
-        AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect,
-        AuthRespScram, AuthRespDenied
+        AuthRespSuccess,
+        AuthRespAuthErr,
+        AuthRespExpired,
+        AuthRespOTPRequired,
+        AuthRespAuthRedirect,
+        AuthRespScram,
+        AuthRespDenied,
     ] = Field(
-        discriminator='response_type',
+        discriminator="response_type",
         description="Authentication response indicating success, failure, or additional steps required.",
     )
 
@@ -367,9 +398,13 @@ class AuthLoginExContinueArgs(BaseModel):
 
 class AuthLoginExContinueResult(BaseModel):
     result: Union[
-        AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect,
+        AuthRespSuccess,
+        AuthRespAuthErr,
+        AuthRespExpired,
+        AuthRespOTPRequired,
+        AuthRespAuthRedirect,
         AuthRespDenied,
-    ] = Field(discriminator='response_type', description="Authentication response after continuing with OTP token.")
+    ] = Field(discriminator="response_type", description="Authentication response after continuing with OTP token.")
 
 
 class AuthLoginWithApiKeyArgs(BaseModel):
@@ -415,6 +450,7 @@ class AuthLogoutResult(BaseModel):
 
 class AuthSetAttributeArgs(BaseModel):
     """WebUI attributes."""
+
     key: str = Field(description="Attribute key name.")
     value: Any = Field(description="Attribute value to set.")
 
