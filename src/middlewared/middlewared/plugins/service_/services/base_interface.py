@@ -73,6 +73,16 @@ class ServiceInterface(CallMixin):
     async def select_etc(self) -> list:
         return self.etc
 
+    async def systemd_enabled_units(self, config_db=None):
+        """
+        Units to enable at boot when this service is enabled.  Units of the service that are not
+        returned here are kept disabled at boot.
+
+        `config_db` is the path of a database to evaluate instead of the live configuration
+        (e.g. an uploaded one that will be used after the next reboot).
+        """
+        return []
+
     async def get_failed_sub_units(self):
         """Return dict of failed/crash-looping units in the dependency tree.
 
