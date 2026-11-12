@@ -5,8 +5,8 @@ reader had to split it. A value pasted with CRLF left a carriage return at the e
 and an entry could never be told apart from its own separator. The column becomes a JSON list.
 
 Revision ID: 89df7b088012
-Revises: 84556ccb6184
-Create Date: 2026-11-10 11:00:00.000000+00:00
+Revises: 5dfc6658deaa
+Create Date: 2026-11-12 11:00:00.000000+00:00
 
 """
 import json
@@ -17,7 +17,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '89df7b088012'
-down_revision = '84556ccb6184'
+down_revision = '5dfc6658deaa'
 branch_labels = None
 depends_on = None
 
