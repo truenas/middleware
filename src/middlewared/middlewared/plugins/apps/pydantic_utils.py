@@ -1,9 +1,10 @@
 import os
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
-    AfterValidator, AnyUrl, BeforeValidator, ConfigDict, PlainSerializer,
+    AfterValidator, AnyUrl, BeforeValidator, ConfigDict, GetCoreSchemaHandler, PlainSerializer,
 )
+from pydantic_core import CoreSchema
 
 from middlewared.api.base import BaseModel as PydanticBaseModel, IPvAnyAddress  # noqa: F401
 
@@ -17,6 +18,15 @@ class BaseModel(PydanticBaseModel):
         extra='allow',
         strict=False,
     )
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source: Any, handler: GetCoreSchemaHandler) -> CoreSchema:
+        """Opt out of the line break check that `BaseModel` adds to every string.
+
+        A catalog question is not ours to mark `Multiline`, and its value is stored with the installed
+        app, where no migration can repair a line break.
+        """
+        return handler(source)
 
 
 def _validate_absolute_path(value: str) -> str:

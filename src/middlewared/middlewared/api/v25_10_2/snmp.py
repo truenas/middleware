@@ -4,7 +4,7 @@ from pydantic.types import StringConstraints
 from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, single_argument_args
 )
 
 __all__ = ["SNMPEntry",
@@ -46,7 +46,7 @@ class SNMPEntry(BaseModel):
         description="Privacy passphrase for SNMP version 3 encryption. This field is required when `privproto` is set.",
     )
     loglevel: int = Field(ge=0, le=7, description="Logging level for SNMP daemon (0=emergency to 7=debug).")
-    options: str = Field(
+    options: Multiline[str] = Field(
         description=(
             "Additional SNMP daemon configuration options. Manual settings should be used with caution as they may "
             "render the SNMP service non-functional."

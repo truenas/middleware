@@ -4,7 +4,7 @@ from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
-    single_argument_result, LibvirtUUID,
+    single_argument_result, LibvirtUUID, Multiline,
 )
 
 from .vm_device import VMDisplayDevice, VMDeviceEntry
@@ -59,7 +59,9 @@ class VMEntry(BaseModel):
         description="Specific CPU model to emulate. `null` to use hypervisor default.",
     )
     name: NonEmptyString = Field(description="Display name of the virtual machine.")
-    description: str = Field(default='', description="Optional description or notes about the virtual machine.")
+    description: Multiline[str] = Field(
+        default='', description="Optional description or notes about the virtual machine.",
+    )
     vcpus: int = Field(ge=1, default=1, description="Number of virtual CPUs allocated to the VM.")
     cores: int = Field(ge=1, default=1, description="Number of CPU cores per socket.")
     threads: int = Field(ge=1, default=1, description="Number of threads per CPU core.")
@@ -308,7 +310,9 @@ class VMVirtualizationDetailsArgs(BaseModel):
 @single_argument_result
 class VMVirtualizationDetailsResult(BaseModel):
     supported: bool = Field(description="Whether hardware virtualization is supported and available.")
-    error: str | None = Field(description="Error message if virtualization is not available. `null` if supported.")
+    error: Multiline[str] | None = Field(
+        description="Error message if virtualization is not available. `null` if supported.",
+    )
 
 
 class VMMaximumSupportedVcpusArgs(BaseModel):
@@ -414,7 +418,7 @@ class VMGetDisplayWebUriArgs(BaseModel):
 
 @single_argument_result
 class VMGetDisplayWebUriResult(BaseModel):
-    error: str | None = Field(description="Error message if URI generation failed. `null` on success.")
+    error: Multiline[str] | None = Field(description="Error message if URI generation failed. `null` on success.")
     uri: str | None = Field(description="Generated web URI for accessing the VM display. `null` on error.")
 
 

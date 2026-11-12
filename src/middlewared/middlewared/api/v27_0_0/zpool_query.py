@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Multiline
 
 __all__ = (
     "ZPoolScan",
@@ -27,7 +27,7 @@ class ZPoolPropertyValue(BaseModel):
     source: str | None = Field(
         description="The source from where this property received its value (DEFAULT, LOCAL, NONE, etc.).",
     )
-    value: int | float | str | bool | None = Field(description="The native Python value of the property.")
+    value: int | float | Multiline[str] | bool | None = Field(description="The native Python value of the property.")
 
 
 class ZPoolVdevStats(BaseModel):
@@ -125,7 +125,7 @@ class ZPoolExpand(BaseModel):
 class ZPoolFeature(BaseModel):
     name: str = Field(description="Feature name.")
     guid: str = Field(description="Feature GUID.")
-    description: str = Field(description="Feature description.")
+    description: Multiline[str] = Field(description="Feature description.")
     state: str = Field(description="Feature state.")
 
 
@@ -144,7 +144,7 @@ class ZPoolEntry(BaseModel):
     status_code: str | None = Field(
         description="Detailed status code (e.g., OK, ERRATA, FEAT_DISABLED, LOCKED_SED_DISKS).",
     )
-    status_detail: str | None = Field(description="Human-readable status description.")
+    status_detail: Multiline[str] | None = Field(description="Human-readable status description.")
     is_upgraded: bool | None = Field(
         default=None,
         description="Whether every ZFS feature flag on the pool is enabled. `null` for OFFLINE pools.",

@@ -3,7 +3,7 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import ConfigDict, Discriminator, Field, model_validator, RootModel, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, NonEmptyString, single_argument_args,
     single_argument_result,
 )
 
@@ -350,13 +350,13 @@ class VMDevicePassthroughDevice(BaseModel):
     )
     available: bool = Field(description="Whether the device is available for passthrough to virtual machines.")
     drivers: list[str] = Field(description="Array of kernel drivers currently bound to this device.")
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         description="Error message if the device cannot be used for passthrough. `null` if no error.",
     )
     reset_mechanism_defined: bool = Field(
         description="Whether the device supports proper reset mechanisms for passthrough.",
     )
-    description: str = Field(description="Human-readable description of the PCI device.")
+    description: Multiline[str] = Field(description="Human-readable description of the PCI device.")
     critical: bool = Field(description="Whether this device is critical to host system operation.")
     device_path: str | None = Field(description="Device filesystem path. `null` if not available.")
 
@@ -407,7 +407,7 @@ class VMDeviceUsbPassthroughDeviceArgs(BaseModel):
 class USBPassthroughDevice(BaseModel):
     capability: USBCapability = Field(description="USB device capability and identification information.")
     available: bool = Field(description="Whether the USB device is available for passthrough to virtual machines.")
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         description="Error message if the device cannot be used for passthrough. `null` if no error.",
     )
 

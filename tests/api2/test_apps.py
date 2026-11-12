@@ -103,6 +103,20 @@ CUSTOM_CONFIG = {
     """,
 }
 
+CUSTOM_CONFIG_STRING = """\
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+"""
+
+UPDATED_CONFIG_STRING = """\
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+"""
+
 INVALID_YAML = """
 services:
   actual_budget
@@ -166,6 +180,119 @@ def test_create_custom_app_validation_error(docker_pool):
             {"remove_images": False},
         ):
             pass
+
+
+def test_create_custom_app_from_a_compose_string(docker_pool):
+    """A compose document is YAML, so `custom_compose_config_string` always carries line breaks.
+
+    Every string of an API model rejects a line break unless it is marked `Multiline`, and this field was
+    missed when that rule landed: creating a custom app this way failed with `Line breaks are not allowed`
+    and nothing noticed, because every other test here uses the `custom_compose_config` object instead.
+    """
+    with app(
+        "custom-nginx",
+        {
+            "custom_app": True,
+            "custom_compose_config_string": CUSTOM_CONFIG_STRING,
+        },
+        {"remove_images": False},
+    ) as app_info:
+        assert app_info["name"] == "custom-nginx"
+        # A one-container nginx can finish deploying before `app.create` returns, unlike the image the
+        # rest of this module installs, so either state is a pass here.
+        assert app_info["state"] in ("DEPLOYING", "RUNNING"), app_info
+        assert "nginx" in call("app.config", "custom-nginx")["services"]
+
+
+def test_update_custom_app_from_a_compose_string(docker_pool):
+    """`app.update` parses the string through the same helper, so it needs the marker just as much."""
+    with app(
+        "custom-nginx",
+        {
+            "custom_app": True,
+            "custom_compose_config_string": CUSTOM_CONFIG_STRING,
+        },
+        {"remove_images": False},
+    ):
+        call(
+            "app.update",
+            "custom-nginx",
+            {"custom_compose_config_string": UPDATED_CONFIG_STRING},
+            job=True,
+        )
+        services = call("app.config", "custom-nginx")["services"]
+        assert services["nginx"]["image"] == "nginx:1.27-alpine", services
+        assert services["nginx"]["restart"] == "always", services
+
+
+def test_create_custom_app_rejects_an_invalid_compose_string(docker_pool):
+    """The object field cannot reach this error: a string supplied there is rejected as the wrong type."""
+    with pytest.raises(ValidationErrors) as ve:
+        with app(
+            "custom-nginx",
+            {
+                "custom_app": True,
+                "custom_compose_config_string": INVALID_YAML,
+            },
+            {"remove_images": False},
+        ):
+            pass
+
+    assert any(
+        error[0] == "app_create.custom_compose_config_string" and "Invalid YAML" in error[1]
+        for error in ve.value.errors
+    ), ve.value.errors
+
+
+def test_create_custom_app_rejects_both_compose_fields(docker_pool):
+    with pytest.raises(ValidationErrors) as ve:
+        with app(
+            "custom-nginx",
+            {
+                "custom_app": True,
+                "custom_compose_config": CUSTOM_CONFIG,
+                "custom_compose_config_string": CUSTOM_CONFIG_STRING,
+            },
+            {"remove_images": False},
+        ):
+            pass
+
+    assert any(
+        error[0] == "app_create.custom_compose_config_string" and "Only one" in error[1]
+        for error in ve.value.errors
+    ), ve.value.errors
+
+
+def test_create_custom_app_requires_a_compose_config(docker_pool):
+    """Neither field supplied: both carry a falsy default, so the model accepts the payload and the
+    service has to reject it."""
+    with pytest.raises(ValidationErrors) as ve:
+        with app("custom-nginx", {"custom_app": True}, {"remove_images": False}):
+            pass
+
+    assert any(
+        error[0] == "app_create.custom_compose_config" and "required" in error[1]
+        for error in ve.value.errors
+    ), ve.value.errors
+
+
+def test_create_custom_app_rejects_a_compose_string_docker_will_not_take(docker_pool):
+    """Valid YAML that is not a valid compose file: `docker compose config` is what catches it."""
+    with pytest.raises(ValidationErrors) as ve:
+        with app(
+            "custom-nginx",
+            {
+                "custom_app": True,
+                "custom_compose_config_string": "services:\n  nginx:\n    restart: unless-stopped\n",
+            },
+            {"remove_images": False},
+        ):
+            pass
+
+    assert any(
+        error[0] == "app_create.custom_compose_config_string" and "Invalid compose configuration" in error[1]
+        for error in ve.value.errors
+    ), ve.value.errors
 
 
 def test_create_custom_app_invalid_yaml(docker_pool):

@@ -8,7 +8,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from middlewared.api import api_method
-from middlewared.api.base import BaseModel, LongString, single_argument_args
+from middlewared.api.base import BaseModel, LongString, Multiline, single_argument_args
 from middlewared.api.current import (
     DNSAuthenticatorEntry, DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult,
     DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult, DNSAuthenticatorDeleteArgs,
@@ -29,7 +29,7 @@ class JWKCreate(BaseModel):
 class ACMERegistrationBody(BaseModel):
     id: int
     status: str
-    key: LongString
+    key: Multiline[LongString]
 
 
 class ACMERegistrationEntry(BaseModel):

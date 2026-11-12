@@ -6,6 +6,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NetbiosName,
     NetbiosDomain,
     NonEmptyString,
@@ -233,7 +234,7 @@ class SMBEntry(BaseModel):
             "and group accounts."
         ),
     )
-    smb_options: str = Field(
+    smb_options: Multiline[str] = Field(
         description=(
             "Additional unvalidated and unsupported configuration options for the SMB server. WARNING: Using "
             "`smb_options` may produce unexpected server behavior."
@@ -514,7 +515,7 @@ class LegacyOpt(BaseModel):
             "share."
         ),
     )
-    auxsmbconf: LongString = Field(
+    auxsmbconf: Multiline[LongString] = Field(
         default='',
         description=(
             "Additional parameters to set on the SMB share. Parameters must be separated by the new-line character.\n"

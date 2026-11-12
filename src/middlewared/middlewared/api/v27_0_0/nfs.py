@@ -7,6 +7,7 @@ from middlewared.api.base import (
     Excluded,
     excluded_field,
     ForUpdateMetaclass,
+    Multiline,
     NonEmptyString,
     single_argument_args,
     TcpPort,
@@ -123,7 +124,7 @@ class SharingNFSEntry(BaseModel):
         ),
     )
     aliases: list[NonEmptyString] = Field(default=[], description="IGNORED for now.")
-    comment: str = Field(default="", description="User comment associated with share.")
+    comment: Multiline[str] = Field(default="", description="User comment associated with share.")
     networks: list[NonEmptyString] = Field(
         default=[],
         description=(

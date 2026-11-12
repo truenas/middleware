@@ -7,6 +7,7 @@ from middlewared.api.base import (
     Excluded,
     excluded_field,
     ForUpdateMetaclass,
+    Multiline,
     single_argument_args,
     UnixPerm
 )
@@ -48,7 +49,7 @@ class FTPEntry(BaseModel):
     onlylocal: bool = Field(
         description="Whether to allow only local system users to login, disabling anonymous access.",
     )
-    banner: str = Field(description="Welcome message displayed to FTP clients upon connection.")
+    banner: Multiline[str] = Field(description="Welcome message displayed to FTP clients upon connection.")
     filemask: UnixPerm = Field(description="Default Unix permissions (umask) for files created by FTP users.")
     dirmask: UnixPerm = Field(description="Default Unix permissions (umask) for directories created by FTP users.")
     fxp: bool = Field(description="Whether to enable File eXchange Protocol (FXP) for server-to-server transfers.")
@@ -127,7 +128,7 @@ class FTPEntry(BaseModel):
             "ID of the certificate to use for TLS/SSL connections. `null` to use the default system certificate."
         ),
     )
-    options: str = Field(
+    options: Multiline[str] = Field(
         description=(
             "Additional ProFTPD configuration directives to include in the server configuration. Manual directives may "
             "render the FTP service non-functional and should be used with caution."

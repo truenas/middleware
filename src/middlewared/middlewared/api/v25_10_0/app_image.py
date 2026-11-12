@@ -2,7 +2,14 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import (
+    BaseModel,
+    LongString,
+    Multiline,
+    NonEmptyString,
+    single_argument_args,
+    single_argument_result,
+)
 
 __all__ = [
     'AppImageEntry', 'ContainerImagesDockerhubRateLimitArgs', 'ContainerImagesDockerhubRateLimitResult',
@@ -30,7 +37,7 @@ class AppImageEntry(BaseModel):
     update_available: bool = Field(description="Whether a newer version of this image is available for download.")
     created: str = Field(description="Timestamp when the container image was created (ISO format).")
     author: str = Field(description="Author or maintainer of the container image.")
-    comment: LongString = Field(description="Comment or description provided by the image author.")
+    comment: Multiline[LongString] = Field(description="Comment or description provided by the image author.")
     parsed_repo_tags: list[AppImageParsedRepoTags] | None = Field(
         default=None,
         description="Parsed repository tag information or `null` if not available.",
@@ -53,7 +60,7 @@ class ContainerImagesDockerhubRateLimitResult(BaseModel):
         default=None,
         description="Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed.",
     )
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         default=None,
         description="Error message if rate limit information could not be retrieved or `null` on success.",
     )

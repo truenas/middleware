@@ -13,7 +13,9 @@ import urllib.parse
 from truenas_api_client import Client, ClientException
 
 from middlewared.api import api_method
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import (
+    BaseModel, LongString, Multiline, NonEmptyString, single_argument_args, single_argument_result
+)
 from middlewared.api.current import (
     KeychainCredentialEntry,
     SSHKeyPairEntry, SSHCredentialsEntry,
@@ -268,13 +270,13 @@ class KeychainCredentialGetOfTypeResult(BaseModel):
 class KeychainCredentialSSHPairArgs(BaseModel):
     remote_hostname: NonEmptyString
     username: str = "root"
-    public_key: NonEmptyString
+    public_key: Multiline[NonEmptyString]
 
 
 @single_argument_result
 class KeychainCredentialSSHPairResult(BaseModel):
     port: int
-    host_key: LongString
+    host_key: Multiline[LongString]
 
 
 class KeychainCredentialService(CRUDService):

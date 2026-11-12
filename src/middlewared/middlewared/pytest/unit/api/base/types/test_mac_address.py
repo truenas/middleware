@@ -33,7 +33,6 @@ def test_mac_address_accepts_colon_and_normalizes(value, expected):
         "00:a0-99:7e-bb:8a",  # mixed separators
         "00:a0:99:7e:bb",  # too short
         "gg:gg:gg:gg:gg:gg",  # colon-separated but non-hex
-        "00:a0:99:7e:bb:8a\n",  # trailing newline ($ in Python re matches before it)
         "00:a0:99:7e:bb:8a ",  # trailing whitespace
         " 00:a0:99:7e:bb:8a",  # leading whitespace
     ],
@@ -43,6 +42,15 @@ def test_mac_address_rejects_non_colon(value):
         accept_params(MACAddressModel, [value])
 
     assert "colon-separated" in ve.value.errors[0].errmsg
+
+
+def test_mac_address_rejects_a_trailing_newline():
+    """`$` in a Python regular expression matches before a final newline, so the pattern alone would
+    accept one. Every string of an API model now rejects a line break, which covers it."""
+    with pytest.raises(ValidationErrors) as ve:
+        accept_params(MACAddressModel, ["00:a0:99:7e:bb:8a\n"])
+
+    assert ve.value.errors[0].errmsg == "Value error, Line breaks are not allowed"
 
 
 @pytest.mark.parametrize("model", [VMNICDevice, ContainerNICDevice])

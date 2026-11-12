@@ -3,7 +3,9 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NotRequired
+from middlewared.api.base import (
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, Multiline, NotRequired
+)
 
 
 __all__ = [
@@ -27,10 +29,10 @@ class Alert(BaseModel):
     last_occurrence: datetime = Field(description="Timestamp of the most recent occurrence of this alert.")
     dismissed: bool = Field(description="Whether the alert has been manually dismissed by a user.")
     mail: Any = Field(description="Email notification configuration and status for this alert.")
-    text: LongString = Field(description="Human-readable description of the alert.")
+    text: Multiline[LongString] = Field(description="Human-readable description of the alert.")
     id: str = Field(description="Alert identifier used for API operations.")
     level: str = Field(description="Severity level of the alert (INFO, WARNING, ERROR, etc.).")
-    formatted: LongString | None = Field(description="Formatted alert message with HTML.")
+    formatted: Multiline[LongString] | None = Field(description="Formatted alert message with HTML.")
     one_shot: bool = Field(description="Whether this alert will not be dismissed automatically.")
 
 

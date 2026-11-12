@@ -3,8 +3,8 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import Discriminator, Field, PositiveInt, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args,
-    LongString, ForUpdateMetaclass,
+    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args, LongString, Multiline,
+    ForUpdateMetaclass,
 )
 from .pool_scrub import PoolScan
 
@@ -70,7 +70,7 @@ class PoolEntry(BaseModel):
     status_code: str | None = Field(
         description="Detailed status code for the pool condition. `null` if not applicable.",
     )
-    status_detail: str | None = Field(
+    status_detail: Multiline[str] | None = Field(
         description="Human-readable description of the pool status. `null` if not available.",
     )
     size: int | None = Field(description="Total size of the pool in bytes. `null` if not available.")
@@ -277,7 +277,7 @@ class PoolCreate(BaseModel):
 
 
 class PoolDetachOptions(BaseModel):
-    label: str = Field(description="GUID or device name of the vdev to detach.")
+    label: Multiline[str] = Field(description="GUID or device name of the vdev to detach.")
     wipe: bool = Field(default=False, description="Whether to wipe the detached disk after removal.")
 
 
@@ -295,18 +295,18 @@ class PoolImportFind(BaseModel):
 
 
 class PoolLabel(BaseModel):
-    label: str = Field(description="The vdev guid or device name.")
+    label: Multiline[str] = Field(description="The vdev guid or device name.")
 
 
 class PoolProcess(BaseModel):
     pid: int = Field(description="Process ID of the process using the pool.")
     name: str = Field(description="Name of the process using the pool.")
     service: str | None = Field(description="Name of the service if this process belongs to a system service.")
-    cmdline: LongString | None = Field(description="Full command line of the process.")
+    cmdline: Multiline[LongString] | None = Field(description="Full command line of the process.")
 
 
 class PoolReplace(BaseModel):
-    label: str = Field(description="GUID or device name of the disk to replace.")
+    label: Multiline[str] = Field(description="GUID or device name of the disk to replace.")
     disk: str = Field(description="Name of the new disk to use as replacement.")
     force: bool = Field(default=False, description="Force the replacement even if the new disk appears to be in use.")
     preserve_settings: bool = Field(

@@ -10,6 +10,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     LocalUsername,
+    Multiline,
     RemoteUsername,
 )
 
@@ -596,7 +597,7 @@ class SharingS3RecoveredBucket(BaseModel):
     bucket: SharingS3Entry | None = Field(
         description="Recovered bucket configuration or `null` when not recovered.",
     )
-    error: str | None = Field(description="Reason why bucket restore failed. `null` on success.")
+    error: Multiline[str] | None = Field(description="Reason why bucket restore failed. `null` on success.")
 
 
 class SharingS3RecoverResult(BaseModel):

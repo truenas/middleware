@@ -5,7 +5,7 @@ import re
 from pydantic import Field
 
 from middlewared.api import api_method
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Multiline
 from middlewared.api.current import (
     ReplicationEntry,
     ReplicationCreateArgs, ReplicationCreateResult,
@@ -105,7 +105,7 @@ class ReplicationPeriodicSnapshotTaskModel(sa.Model):
 
 class ReplicationPairData(BaseModel):
     hostname: str
-    public_key: str = Field(alias="public-key")
+    public_key: Multiline[str] = Field(alias="public-key")
     user: str | None = None
 
 
