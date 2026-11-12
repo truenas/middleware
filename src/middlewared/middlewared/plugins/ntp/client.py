@@ -35,15 +35,19 @@ def format_ntp_packet(data: bytes) -> dict[str, Any]:
 @dataclasses.dataclass(slots=True)
 class NTPClient:
     host: str
+    port: int = 123
     timeout: int = 5  # second
 
     def make_request(self) -> dict[str, Any]:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        # Prefer IPv4 for names that have both kinds of address, as this client always used to
+        addresses = socket.getaddrinfo(self.host, self.port, type=socket.SOCK_DGRAM)
+        family, type_, proto, _, sockaddr = min(addresses, key=lambda address: address[0] != socket.AF_INET)
+        with socket.socket(family, type_, proto) as s:
             # set timeout
             s.settimeout(self.timeout)
 
             # send a ntp formatted packet
-            s.sendto(b'\x1b' + 47 * b'\0', (self.host, 123))
+            s.sendto(b'\x1b' + 47 * b'\0', sockaddr)
 
             # receive response from ntp peer
             data, addr = s.recvfrom(1024)
