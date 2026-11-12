@@ -78,7 +78,7 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         audit_extended=lambda data: data['name'],
         check_annotations=True
     )
-    @job(lock=lambda args: f'container_create:{args[0].get("name")}')
+    @job(lock=lambda args: f'container_create:{args[0].get("name")}', abortable=True)
     async def do_create(self, job: Job, data: ContainerCreate) -> ContainerEntry:
         """
         Create a Container.
