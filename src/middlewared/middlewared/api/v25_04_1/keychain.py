@@ -128,8 +128,8 @@ class KeychainCredentialGenerateSshKeyPairArgs(BaseModel):
 
 @single_argument_result
 class KeychainCredentialGenerateSshKeyPairResult(BaseModel):
-    private_key: LongString
-    public_key: LongString
+    private_key: Multiline[LongString]
+    public_key: Multiline[LongString]
 
 
 @single_argument_args("keychain_remote_ssh_host_key_scan")

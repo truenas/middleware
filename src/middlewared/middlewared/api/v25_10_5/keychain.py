@@ -159,8 +159,8 @@ class KeychainCredentialGenerateSshKeyPairArgs(BaseModel):
 
 @single_argument_result
 class KeychainCredentialGenerateSshKeyPairResult(BaseModel):
-    private_key: LongString = Field(description="Generated SSH private key in PEM format.")
-    public_key: LongString = Field(description="Generated SSH public key in OpenSSH format.")
+    private_key: Multiline[LongString] = Field(description="Generated SSH private key in PEM format.")
+    public_key: Multiline[LongString] = Field(description="Generated SSH public key in OpenSSH format.")
 
 
 @single_argument_args("keychain_remote_ssh_host_key_scan")
