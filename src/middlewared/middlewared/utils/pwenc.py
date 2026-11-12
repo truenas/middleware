@@ -4,13 +4,15 @@ import uuid
 
 import truenas_pypwenc
 
-__all__ = ['PWENC_FILE_SECRET', 'PWENC_FILE_SECRET_MODE', 'pwenc_rename', 'pwenc_encrypt', 'pwenc_decrypt',
-           'pwenc_generate_secret']
+__all__ = ['PWENC_FILE_SECRET', 'PWENC_FILE_SECRET_MODE', 'PWENC_KEY_LOCATION', 'pwenc_rename', 'pwenc_encrypt',
+           'pwenc_decrypt', 'pwenc_generate_secret']
 
 
 PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
 PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
 PWENC_FILE_SECRET_MODE = 0o600
+# The keylocation of a dataset that the pwenc secret encrypts. ZFS reads the key from the secret file.
+PWENC_KEY_LOCATION = f'file://{PWENC_FILE_SECRET}'
 global_ctx = None
 lock = threading.Lock()
 

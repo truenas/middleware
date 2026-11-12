@@ -62,7 +62,6 @@ Depends: acl,
          libtruenas-licensed-dev,
          truenas-s3,
          truenas-webui,
-         truesearch,
          usrmerge,
          waagent,
 # Wireguard needs to be fixed because it needs extra dependencies to build the module during install
