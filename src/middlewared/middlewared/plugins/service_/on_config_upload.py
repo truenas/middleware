@@ -14,14 +14,16 @@ def on_config_upload(middleware, path):
         for service, enabled in cursor.execute('SELECT srv_service, srv_enable FROM services_services').fetchall():
             try:
                 units = middleware.call_sync('service.systemd_units', service)
+                enabled_units = middleware.call_sync('service.systemd_enabled_units', service, path)
             except MatchNotFound:
                 # An old service which we don't have currently
                 continue
 
-            if enabled:
-                enable_disable_units['enable'].extend(units)
-            else:
-                enable_disable_units['disable'].extend(units)
+            for unit in units:
+                if enabled and unit in enabled_units:
+                    enable_disable_units['enable'].append(unit)
+                else:
+                    enable_disable_units['disable'].append(unit)
     finally:
         conn.close()
 
