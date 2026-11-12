@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 from pydantic.types import StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, SingleLineNonEmptyString, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
 __all__ = [
     "NTPServerEntry",
@@ -42,7 +42,7 @@ class NTPServerEntry(BaseModel):
 
 class NTPServerCreate(NTPServerEntry):
     id: Excluded = excluded_field()
-    address: Annotated[SingleLineNonEmptyString, StringConstraints(pattern=r'^\S+$')] = Field(
+    address: Annotated[NonEmptyString, StringConstraints(pattern=r"^\S+$")] = Field(
         description="Hostname or IP address of the NTP server."
     )
     force: bool = Field(
