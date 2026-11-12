@@ -128,7 +128,13 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     @api_method(ContainerStopArgs, ContainerStopResult, roles=['CONTAINER_WRITE'], check_annotations=True)
     @job(lock=lambda args: f'container_stop_{args[0]}')
     def stop(self, job: Job, id_: int, options: ContainerStopOptions) -> None:
-        """Stop ``id`` container."""
+        """
+        Stop ``id`` container.
+
+        Unless ``force`` is set, the container is sent a shutdown request. If it is still running after
+        ``shutdown_timeout`` seconds, it is killed when ``force_after_timeout`` is set, otherwise the job fails and
+        the container keeps running.
+        """
         return stop_container(self.context, id_, options)
 
     @api_method(ContainerMigrateArgs, ContainerMigrateResult, roles=['CONTAINER_WRITE'], check_annotations=True)
