@@ -1057,6 +1057,112 @@ class TestNVMe(NVMeRunning):
                     ):
                         call('nvmet.namespace.update', ns['id'], {'device_path': file2})
 
+    def test__file_namespace_size_alignment(self, fixture_port):
+        """
+        Test that FILE namespaces must be a multiple of the block size,
+        whether they use a pre-existing file or one created by us.
+        """
+        odd_size = MB_100 + 123
+        odd_file = f'/mnt/{pool_name}/odd_file_{digits}'
+        new_file = f'/mnt/{pool_name}/new_file_{digits}'
+        good_file = f'/mnt/{pool_name}/good_file_{digits}'
+
+        with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
+            subsys_id = subsys['id']
+
+            # Pre-existing file of an unaligned size is rejected
+            ssh(f'truncate -s {odd_size} {odd_file}')
+            try:
+                with assert_validation_errors(
+                    'nvmet_namespace_create.device_path',
+                    f'Size of existing file ({odd_size}) must be a multiple of 512 bytes',
+                ):
+                    with nvmet_namespace(subsys_id, odd_file, DEVICE_TYPE_FILE):
+                        pass
+            finally:
+                ssh(f'rm -f {odd_file}')
+
+            # New file with an unaligned filesize is rejected, and not created
+            with assert_validation_errors(
+                'nvmet_namespace_create.filesize',
+                f'File size ({odd_size}) must be a multiple of 512 bytes',
+            ):
+                with nvmet_namespace(
+                    subsys_id,
+                    new_file,
+                    DEVICE_TYPE_FILE,
+                    filesize=odd_size,
+                    delete_options={'remove': True},
+                ):
+                    pass
+            assert ssh(f'test -e {new_file} && echo yes || echo no').strip() == 'no'
+
+            # Pre-existing file of an aligned size is accepted
+            ssh(f'truncate -s {MB_100} {good_file}')
+            with nvmet_namespace(
+                subsys_id,
+                good_file,
+                DEVICE_TYPE_FILE,
+                delete_options={'remove': True},
+            ) as ns:
+                # Unrelated updates are still allowed
+                call('nvmet.namespace.update', ns['id'], {'enabled': False})
+                call('nvmet.namespace.update', ns['id'], {'enabled': True})
+
+                # Growing to an unaligned filesize is rejected ...
+                with assert_validation_errors(
+                    'nvmet_namespace_update.filesize',
+                    f'File size ({MB_200 + 123}) must be a multiple of 512 bytes',
+                ):
+                    call('nvmet.namespace.update', ns['id'], {'filesize': MB_200 + 123})
+                assert int(ssh(f'stat -c %s {good_file}')) == MB_100
+
+                # ... but growing to an aligned one is fine
+                call('nvmet.namespace.update', ns['id'], {'filesize': MB_200})
+                assert int(ssh(f'stat -c %s {good_file}')) == MB_200
+
+    def test__file_namespace_existing_file_size(self, fixture_port):
+        """
+        Test that resizing a namespace based on a pre-existing file uses
+        the actual size of the file, rather than the stored filesize.
+        """
+        file1 = f'/mnt/{pool_name}/existing_file1_{digits}'
+        file2 = f'/mnt/{pool_name}/existing_file2_{digits}'
+
+        with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
+            subsys_id = subsys['id']
+
+            # No filesize supplied: the actual size is recorded, and the
+            # namespace can subsequently be grown.
+            ssh(f'truncate -s {MB_100} {file1}')
+            with nvmet_namespace(
+                subsys_id,
+                file1,
+                DEVICE_TYPE_FILE,
+                delete_options={'remove': True},
+            ) as ns:
+                assert ns['filesize'] == MB_100
+                ns = call('nvmet.namespace.update', ns['id'], {'filesize': MB_200})
+                assert ns['filesize'] == MB_200
+                assert int(ssh(f'stat -c %s {file1}')) == MB_200
+
+            # Mismatched filesize supplied: a later "expansion" that is
+            # smaller than the actual file must not truncate it.
+            ssh(f'truncate -s {MB_200} {file2}')
+            with nvmet_namespace(
+                subsys_id,
+                file2,
+                DEVICE_TYPE_FILE,
+                filesize=MB_100,
+                delete_options={'remove': True},
+            ) as ns:
+                with assert_validation_errors(
+                    'nvmet_namespace_update.filesize',
+                    'Shrinking an namespace file is not allowed.',
+                ):
+                    call('nvmet.namespace.update', ns['id'], {'filesize': MB_150})
+                assert int(ssh(f'stat -c %s {file2}')) == MB_200
+
     def test__pool_export_import(
         self, fixture_port, loopback_client: NVMeCLIClient, zvol1
     ):
