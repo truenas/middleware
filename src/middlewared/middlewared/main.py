@@ -29,7 +29,6 @@ from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
-from pydantic import Field, create_model
 from truenas_api_client import json
 
 import middlewared.service
@@ -42,7 +41,7 @@ from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.model import BaseModel
 from .api.base.server.api import API
 from .api.base.server.doc import APIDumper
-from .api.base.server.event import Event
+from .api.base.server.event import Event, event_source_models
 from .api.base.server.legacy_api_method import LegacyAPIMethod
 from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
@@ -534,15 +533,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
             events.append(Event(self, name, {
                 'description': description,
-                'models': {
-                    'Subscription parameters': event_source.args,
-                    'ADDED': create_model(
-                        event_source.event.__name__,
-                        __base__=(BaseModel,),
-                        __module__=event_source.__module__,
-                        fields=typing.Annotated[event_source.event.model_fields["result"].annotation, Field()],  # noqa: F821
-                    ),
-                },
+                'models': event_source_models(event_source),
                 'roles': self.role_manager.roles_for_event(name),
                 'private': False,
             }))
