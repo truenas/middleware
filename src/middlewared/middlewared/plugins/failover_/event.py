@@ -70,9 +70,12 @@ class FailoverEventsService(Service):
     # represents if a failover event was successful or not
     FAILOVER_RESULT = None
 
-    # tracks the type of the last successfully-completed event so the
-    # vrrp event thread can avoid re-firing vrrp_backup when we're
-    # already in BACKUP state. None until the first event completes.
+    # tracks the type of the last event so the vrrp event thread can avoid
+    # re-firing vrrp_backup when we're already in BACKUP state. 'BACKUP' is
+    # set when vrrp_backup completes successfully; 'MASTER' is set as soon
+    # as vrrp_master starts, so that a BACKUP following a MASTER attempt
+    # (even one that failed partway) is always acted upon. None until the
+    # first event.
     LAST_EVENT_TYPE = None
 
     # list of critical services that get restarted first
@@ -208,10 +211,10 @@ class FailoverEventsService(Service):
                 self.logger.warning('Failed to refresh failover status on active node')
 
     def last_event_type(self):
-        """Return the type ('MASTER' | 'BACKUP') of the last successfully
-        completed failover event on this middlewared process, or None if
-        no event has completed since startup. Used by the vrrp event
-        thread to avoid re-firing a redundant vrrp_backup after a flap.
+        """Return 'MASTER' if vrrp_master was the last event started, 'BACKUP'
+        if vrrp_backup was the last to complete successfully since, or None if
+        neither has happened since this middlewared process started. Used by
+        the vrrp event thread to avoid re-firing a redundant vrrp_backup.
         """
         return self.LAST_EVENT_TYPE
 
@@ -448,6 +451,8 @@ class FailoverEventsService(Service):
 
     @job(lock=FAILOVER_LOCK_NAME, read_roles=['READONLY_ADMIN'])
     def vrrp_master(self, job, fobj, ifname, event):
+        # set before doing anything, so that a BACKUP after a failed attempt is still processed
+        self.LAST_EVENT_TYPE = 'MASTER'
 
         # vrrp does the "election" for us. If we've gotten this far
         # then the specified timeout for NOT receiving an advertisement
@@ -608,7 +613,6 @@ class FailoverEventsService(Service):
             # there is nothing else to do so just log a warning and return early
             logger.warning('No zpools to import, exiting failover event')
             self.FAILOVER_RESULT = 'INFO'
-            self.LAST_EVENT_TYPE = 'MASTER'
             return self.FAILOVER_RESULT
 
         # unlock SED disks
@@ -937,7 +941,6 @@ class FailoverEventsService(Service):
         job.set_progress(None, description='SUCCESS', extra='Failover complete')
 
         self.FAILOVER_RESULT = 'SUCCESS'
-        self.LAST_EVENT_TYPE = 'MASTER'
 
         return self.FAILOVER_RESULT
 

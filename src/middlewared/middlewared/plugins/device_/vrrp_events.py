@@ -79,6 +79,20 @@ class VrrpEventThread(Thread):
     def user_provided_timeout(self, value):
         self.__upt = value
 
+    def is_redundant_backup(self, event):
+        # vrrp_backup restarts keepalived, which reports BACKUP (init) again. If that reaches
+        # us after vrrp_backup completed (and no failover event has started since), acting on
+        # it would run vrrp_backup a second time for nothing.
+        if event['event'] != 'BACKUP':
+            return False
+        return self.middleware.call_sync('failover.events.last_event_type') == 'BACKUP'
+
+    def send_event(self, event):
+        if self.is_redundant_backup(event):
+            LOGGER.info('Skipping redundant BACKUP (vrrp_backup already ran): (%r)', event)
+            return
+        self.middleware.call_hook_sync('vrrp.fifo', data=event)
+
     def run(self):
         set_name('vrrp_event_thread')
         LOGGER.info('vrrp event thread started')
@@ -131,7 +145,7 @@ class VrrpEventThread(Thread):
                 last_event = None
                 backoff = False
                 self.event_queue.pop()
-                self.middleware.call_hook_sync('vrrp.fifo', data=this_event)
+                self.send_event(this_event)
             elif time_diff_floor == max_wait_floor:
                 # scenario #2 listed above
                 # NOTE:
@@ -144,7 +158,7 @@ class VrrpEventThread(Thread):
                 last_event = None
                 backoff = False
                 self.event_queue.pop()
-                self.middleware.call_hook_sync('vrrp.fifo', data=this_event)
+                self.send_event(this_event)
             elif time_diff_floor < max_wait_floor:
                 # scenario #4 listed above
                 # NOTE:
@@ -174,10 +188,7 @@ class VrrpEventThread(Thread):
                     backoff = False
                     self.event_queue.pop()
                     if this_event['event'] == 'BACKUP':
-                        last_type = self.middleware.call_sync(
-                            'failover.events.last_event_type'
-                        )
-                        if last_type == 'BACKUP':
+                        if self.is_redundant_backup(this_event):
                             LOGGER.warning(
                                 'Rapid succession of failover events; '
                                 'skipping redundant BACKUP after settle '
