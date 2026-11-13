@@ -269,18 +269,24 @@ class NVMetNamespaceService(SharingService):
                     verrors.add(f'{schema_name}.filesize',
                                 'Must supply filesize if device_path FILE does not exist.')
             else:
-                if old:
-                    if _new_size := data.get('filesize'):
-                        old_size = int(old['filesize'])
-                        new_size = int(_new_size)
+                # Compare against the actual size of the file, as the stored
+                # filesize may be unset (existing file used as-is) or stale.
+                current_size = os.stat(path).st_size
+                new_size = data.get('filesize')
+                if old and path == old['device_path']:
+                    # Only act if the filesize is being changed
+                    if new_size and new_size != old['filesize']:
                         # Only allow expansion
-                        if new_size > old_size:
-                            subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                        if new_size > current_size:
+                            subprocess.run(['truncate', '-s', str(new_size), path])
                             # resync so connected initiators can see the new size
                             self.middleware.call_sync('nvmet.namespace.resize_namespace', data['id'])
-                        elif old_size > new_size:
+                        elif new_size < current_size:
                             verrors.add(f'{schema_name}.filesize',
                                         'Shrinking an namespace file is not allowed. This can lead to data loss.')
+                elif not new_size or (old and new_size == old['filesize']):
+                    # Existing file used without specifying a size, record its actual size
+                    data['filesize'] = current_size
 
             # Split path into dataset and relative_path for FILE type extents
             # May return None if path exists but can't be authoritatively resolved yet
