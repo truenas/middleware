@@ -1,4 +1,5 @@
 from collections import defaultdict
+import contextlib
 from contextlib import contextmanager
 import logging
 import os
@@ -33,7 +34,27 @@ from .render_common import (
 logger = logging.getLogger(__name__)
 
 
-class NvmetConfig:
+class RenderFailures:
+    """
+    Isolate failures to the individual item, so that one bad entry
+    (e.g. a namespace whose device cannot be opened) does not abort the
+    remainder of the render, including the post-yield delete phases of
+    the enclosing renders.  Failures are logged and collected so that
+    write_config can report them once everything has been applied.
+    """
+    def __init__(self):
+        self.failures = []
+
+    @contextmanager
+    def isolate(self, op: str, key):
+        try:
+            yield
+        except Exception:
+            logger.error('%s: failed to %s %r', self.__class__.__name__, op, str(key), exc_info=True)
+            self.failures.append(f'{op} {key}')
+
+
+class NvmetConfig(RenderFailures):
 
     directory = None  # Directory below which the entities will be created
     query = None  # Query in the render_ctx that contains the entities
@@ -62,27 +83,33 @@ class NvmetConfig:
         update_keys = config_keys - remove_keys - add_keys
         # First make any required new directories.  Will call set_attrs
         # later to give the kernel time to prepare things
+        created = []
         for key in add_keys:
-            pathlib.Path(parent_dir, key).mkdir()
+            with self.isolate('create', key):
+                pathlib.Path(parent_dir, key).mkdir()
+                created.append(key)
 
         for key in update_keys:
-            path = pathlib.Path(parent_dir, key)
-            self.update_attrs(path, config[key], render_ctx)
-            self.post_update(path, render_ctx)
+            with self.isolate('update', key):
+                path = pathlib.Path(parent_dir, key)
+                self.update_attrs(path, config[key], render_ctx)
+                self.post_update(path, render_ctx)
 
         # Now ensure the newly created directories have the correct attributes
         retries = 10
-        for key in add_keys:
-            path = pathlib.Path(parent_dir, key)
-            retries = self.set_attrs(path, config[key], retries, render_ctx)
-            self.post_create(path, render_ctx)
+        for key in created:
+            with self.isolate('configure', key):
+                path = pathlib.Path(parent_dir, key)
+                retries = self.set_attrs(path, config[key], retries, render_ctx)
+                self.post_create(path, render_ctx)
 
         yield
 
         for key in remove_keys:
-            path = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.directory, key)
-            self.pre_delete(path, render_ctx)
-            path.rmdir()
+            with self.isolate('delete', key):
+                path = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.directory, key)
+                self.pre_delete(path, render_ctx)
+                path.rmdir()
 
     def set_mapped_attrs(self, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
         for k, v in attrs.items():
@@ -298,38 +325,46 @@ class NvmetPortReferralConfig(NvmetConfig):
                 # We're supposed to have some referrals.  Check for additions,
                 # updates, removals.
                 config_keys = {str(index) for index in referrals[parent_index]}
-                live_keys = {ref.name for ref in referrals_path.iterdir() if ref.name.isnumeric}
-                add_keys = config_keys - live_keys
-                remove_keys = live_keys - config_keys
-                update_keys = config_keys - remove_keys - add_keys
+                with self.isolate('read referrals of', portpath):
+                    live_keys = {ref.name for ref in referrals_path.iterdir() if ref.name.isnumeric}
+                    add_keys = config_keys - live_keys
+                    remove_keys = live_keys - config_keys
+                    update_keys = config_keys - remove_keys - add_keys
 
-                to_remove.extend(pathlib.Path(referrals_path, key) for key in remove_keys)
+                    to_remove.extend(pathlib.Path(referrals_path, key) for key in remove_keys)
 
-                for key in add_keys:
-                    pathlib.Path(referrals_path, key).mkdir()
+                    created = []
+                    for key in add_keys:
+                        with self.isolate('create', pathlib.Path(referrals_path, key)):
+                            pathlib.Path(referrals_path, key).mkdir()
+                            created.append(key)
 
-                for key in update_keys:
-                    index = int(key)
-                    port = ports_by_index[index]
-                    attrs = self.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
-                    self.update_referral(pathlib.Path(referrals_path, key), attrs)
+                    for key in update_keys:
+                        with self.isolate('update', pathlib.Path(referrals_path, key)):
+                            index = int(key)
+                            port = ports_by_index[index]
+                            attrs = self.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
+                            self.update_referral(pathlib.Path(referrals_path, key), attrs)
 
-                # Now ensure the newly created directories have the correct attributes
-                retries = 10
-                for key in add_keys:
-                    index = int(key)
-                    port = ports_by_index[index]
-                    attrs = self.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
-                    attrs['enable'] = '1'
-                    path = pathlib.Path(referrals_path, key)
-                    retries = self.set_mapped_attrs(path, attrs, retries, render_ctx)
+                    # Now ensure the newly created directories have the correct attributes
+                    retries = 10
+                    for key in created:
+                        with self.isolate('configure', pathlib.Path(referrals_path, key)):
+                            index = int(key)
+                            port = ports_by_index[index]
+                            attrs = self.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
+                            attrs['enable'] = '1'
+                            path = pathlib.Path(referrals_path, key)
+                            retries = self.set_mapped_attrs(path, attrs, retries, render_ctx)
             else:
-                to_remove.extend(referrals_path.iterdir())
+                with self.isolate('read referrals of', portpath):
+                    to_remove.extend(referrals_path.iterdir())
 
         yield
 
         for path in to_remove:
-            path.rmdir()
+            with self.isolate('delete', path):
+                path.rmdir()
 
 
 class NvmetPortAnaReferralConfig(NvmetPortReferralConfig):
@@ -468,22 +503,33 @@ class NvmetNamespaceConfig(NvmetConfig):
                                       self.directory)
 
             config_keys = set(namespaces.keys())
-            live_keys = set(os.listdir(parent_dir))
+            try:
+                live_keys = set(os.listdir(parent_dir))
+            except Exception:
+                # e.g. the subsystem itself failed to be created
+                logger.error('%s: failed to list %r', self.__class__.__name__, str(parent_dir), exc_info=True)
+                self.failures.extend(f'create {parent_dir}/{key}' for key in config_keys)
+                continue
             add_keys = config_keys - live_keys
             remove_keys = live_keys - config_keys
             update_keys = config_keys - remove_keys - add_keys
             # First make any required new directories.  Will call set_attrs
             # later to give the kernel time to prepare things
+            created = []
             for key in add_keys:
-                pathlib.Path(parent_dir, key).mkdir()
+                with self.isolate('create', pathlib.Path(parent_dir, key)):
+                    pathlib.Path(parent_dir, key).mkdir()
+                    created.append(key)
 
             for key in update_keys:
-                self.update_attrs(pathlib.Path(parent_dir, key), namespaces[key], render_ctx)
+                with self.isolate('update', pathlib.Path(parent_dir, key)):
+                    self.update_attrs(pathlib.Path(parent_dir, key), namespaces[key], render_ctx)
 
             # Now ensure the newly created directories have the correct attributes
             retries = 10
-            for key in add_keys:
-                retries = self.set_attrs(pathlib.Path(parent_dir, key), namespaces[key], retries, render_ctx)
+            for key in created:
+                with self.isolate('configure', pathlib.Path(parent_dir, key)):
+                    retries = self.set_attrs(pathlib.Path(parent_dir, key), namespaces[key], retries, render_ctx)
 
             for key in remove_keys:
                 remove_dirs.append(pathlib.Path(parent_dir, key))
@@ -491,7 +537,8 @@ class NvmetNamespaceConfig(NvmetConfig):
         yield
 
         for d in remove_dirs:
-            d.rmdir()
+            with self.isolate('delete', d):
+                d.rmdir()
 
     def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
@@ -521,7 +568,7 @@ class NvmetNamespaceConfig(NvmetConfig):
         return result
 
 
-class NvmetLinkConfig:
+class NvmetLinkConfig(RenderFailures):
     query = None
     src_parentdir = None
     src_subdir = None
@@ -572,13 +619,15 @@ class NvmetLinkConfig:
             srcdir = pathlib.Path(rootdir, k, self.src_subdir)
             for entry_name in v:
                 new_link = pathlib.Path(srcdir, entry_name)
-                new_link.symlink_to(pathlib.Path(dstdir, entry_name))
+                with self.isolate('create', new_link):
+                    new_link.symlink_to(pathlib.Path(dstdir, entry_name))
 
         yield
 
         # Remove any links no longer required
         for link in to_unlink:
-            link.unlink()
+            with self.isolate('delete', link):
+                link.unlink()
 
 
 class NvmetHostSubsysConfig(NvmetLinkConfig):
@@ -638,17 +687,30 @@ def write_config(config):
     #
     # Therefore we can nest them to enfore the necessary
     # order of operations.
-    with (
-        NvmetSubsysConfig().render(config),
-        NvmetHostConfig().render(config),
-        NvmetPortConfig().render(config),
-        NvmetPortReferralConfig().render(config),
-        NvmetPortAnaReferralConfig().render(config),
-        NvmetHostSubsysConfig().render(config),
-        NvmetPortSubsysConfig().render(config),
-        NvmetNamespaceConfig().render(config),
-    ):
-        pass
+    #
+    # Errors on individual items are logged and collected (see
+    # RenderFailures) rather than aborting the whole render.
+    renderers = (
+        NvmetSubsysConfig(),
+        NvmetHostConfig(),
+        NvmetPortConfig(),
+        NvmetPortReferralConfig(),
+        NvmetPortAnaReferralConfig(),
+        NvmetHostSubsysConfig(),
+        NvmetPortSubsysConfig(),
+        NvmetNamespaceConfig(),
+    )
+    with contextlib.ExitStack() as stack:
+        for renderer in renderers:
+            stack.enter_context(renderer.render(config))
+
+    failures = [
+        f'{renderer.__class__.__name__}: {failure}'
+        for renderer in renderers
+        for failure in renderer.failures
+    ]
+    if failures:
+        raise RuntimeError(f'Kernel nvmet config applied with {len(failures)} failure(s): {"; ".join(failures)}')
 
 
 def _map_device_path(device_type, device_path):
