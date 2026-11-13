@@ -121,7 +121,6 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "nvmet.port_subsys.query",
             "nvmet.subsys.query",
             "pool.query",
-            "zpool.query",
             "pool.dataset.query",
             "pool.snapshot.query",
             "privilege.query",

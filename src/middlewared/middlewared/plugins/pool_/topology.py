@@ -52,7 +52,7 @@ class PoolService(Service):
     @private
     def transform_topology(self, x, options=None):
         """
-        Transform topology output from zpool.query_impl to add `device`, `disk`,
+        Transform topology output from zpool.list_impl to add `device`, `disk`,
         `path`, `status`, `type` (uppercase), and `unavail_disk` fields.
 
         Also converts vdev stats and guid to legacy format.
