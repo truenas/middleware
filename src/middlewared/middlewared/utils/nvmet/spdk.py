@@ -13,6 +13,7 @@ from spdk.rpc.client import JSONRPCClient  # type: ignore[import-untyped]
 from middlewared.plugins.nvmet.constants import (
     NAMESPACE_DEVICE_TYPE,
     NVMET_DISCOVERY_NQN,
+    NVMET_FILE_BLOCK_SIZE,
     PORT_ADDR_FAMILY,
 )
 
@@ -665,7 +666,7 @@ class NvmetBdevConfig(NvmetConfig):
                     'bdev_aio_create',
                     {
                         'filename': _path,
-                        'block_size': render_ctx.get('path_to_recordsize', {}).get(_path, 512),
+                        'block_size': render_ctx.get('path_to_recordsize', {}).get(_path, NVMET_FILE_BLOCK_SIZE),
                         'name': name
                     }
                 )
