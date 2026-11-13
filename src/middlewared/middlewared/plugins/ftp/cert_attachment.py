@@ -9,10 +9,9 @@ if TYPE_CHECKING:
 
 
 class FTPCertificateAttachment(CertificateServiceAttachmentDelegate):
-
-    CERT_FIELD = 'ssltls_certificate'
-    HUMAN_NAME = 'FTP Service'
-    SERVICE = 'ftp'
+    CERT_FIELD = "ssltls_certificate"
+    HUMAN_NAME = "FTP Service"
+    SERVICE = "ftp"
 
 
 async def setup(middleware: Middleware) -> None:

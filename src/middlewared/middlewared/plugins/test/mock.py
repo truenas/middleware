@@ -20,10 +20,7 @@ class TestService(Service):
         private = True
 
     async def set_mock(
-        self,
-        name: str,
-        args: list,
-        description: str | dict[Literal["exception", "return_value"], Any]
+        self, name: str, args: list, description: str | dict[Literal["exception", "return_value"], Any]
     ) -> None:
         if isinstance(description, str):
             scope: dict[str, Any] = {"__name__": "__main__"}
@@ -35,9 +32,11 @@ class TestService(Service):
         elif isinstance(description, dict):
             keys = set(description.keys())
             if keys == {"exception"}:
+
                 def method(*args, **kwargs):
                     raise Exception(description["exception"])
             elif keys == {"return_value"}:
+
                 def method(*args, **kwargs):
                     return description["return_value"]
             else:
@@ -58,14 +57,14 @@ class TestService(Service):
 
         This allows testing RBAC against mocked endpoint
         """
-        if 'MOCK' in self.middleware.role_manager.roles:
+        if "MOCK" in self.middleware.role_manager.roles:
             return
 
         # There are no STIG requirements specified for MOCK role here because
         # we need to be able to mock methods in CI testing while under STIG restrictions
-        self.middleware.role_manager.roles['MOCK'] = Role()
-        self.middleware.role_manager.register_method(method_name='test.test1', roles=['MOCK'])
-        self.middleware.role_manager.register_method(method_name='test.test2', roles=['MOCK'])
+        self.middleware.role_manager.roles["MOCK"] = Role()
+        self.middleware.role_manager.register_method(method_name="test.test1", roles=["MOCK"])
+        self.middleware.role_manager.register_method(method_name="test.test2", roles=["MOCK"])
 
         await self.call2(self.s.alert.oneshot_create, SystemTestingAlert())
 

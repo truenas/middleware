@@ -35,9 +35,8 @@ def get_alert_policy(alert: Alert[Any], classes: AlertClasses) -> str:
 
 def get_alert_proactive_support(alert: Alert[Any], classes: AlertClasses) -> bool:
     if (
-        (config := classes.get(alert.instance.config.name)) is not None
-        and "proactive_support" in config.model_fields_set
-    ):
+        config := classes.get(alert.instance.config.name)
+    ) is not None and "proactive_support" in config.model_fields_set:
         return config.proactive_support
 
     return True

@@ -45,7 +45,6 @@ SCHEMA = {
 
 
 class PostInstallService(Service):
-
     class Config:
         private = True
 
@@ -65,11 +64,15 @@ class PostInstallService(Service):
         self.middleware.call_sync2(self.middleware.services.tn_connect.post_install_process, data)
         for interface in data.get("network_interfaces", []):
             try:
-                self.middleware.call_sync("interface.update", interface["name"], {
-                    "aliases": interface.get("aliases", []),
-                    "ipv4_dhcp": interface.get("ipv4_dhcp", False),
-                    "ipv6_auto": interface.get("ipv6_auto", False),
-                })
+                self.middleware.call_sync(
+                    "interface.update",
+                    interface["name"],
+                    {
+                        "aliases": interface.get("aliases", []),
+                        "ipv4_dhcp": interface.get("ipv4_dhcp", False),
+                        "ipv6_auto": interface.get("ipv6_auto", False),
+                    },
+                )
             except Exception as e:
                 self.logger.warning("Error configuring interface %r from post_install: %r", interface["name"], e)
 
