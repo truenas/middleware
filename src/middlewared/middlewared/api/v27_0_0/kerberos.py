@@ -4,6 +4,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongNonEmptyString,
+    Multiline,
     NonEmptyString,
     single_argument_args,
 )
@@ -24,14 +25,14 @@ __all__ = [
 
 class KerberosEntry(BaseModel):
     id: int = Field(description="Unique identifier for the Kerberos configuration.")
-    appdefaults_aux: str = Field(
+    appdefaults_aux: Multiline[str] = Field(
         description=(
             "Advanced field for manually setting additional parameters inside the appdefaults section of the krb5.conf "
             "file. These are generally not required as the required krb5.conf settings are automatically detected and "
             "set for the environment. See manpage for MIT krb5.conf."
         ),
     )
-    libdefaults_aux: str = Field(
+    libdefaults_aux: Multiline[str] = Field(
         description=(
             "Advanced field for manually setting additional parameters inside the libdefaults section of the krb5.conf "
             "file. These are generally not required as the required krb5.conf settings are automatically detected and "
@@ -100,7 +101,7 @@ class KerberosKeytabEntry(BaseModel):
             "file. Some names are used for internal purposes such as AD_MACHINE_ACCOUNT and IPA_MACHINE_ACCOUNT."
         ),
     )
-    file: Secret[LongNonEmptyString | None] = Field(
+    file: Secret[Multiline[LongNonEmptyString] | None] = Field(
         description="Base64 encoded kerberos keytab entries to append to the system keytab.",
     )
 

@@ -1,5 +1,6 @@
 from middlewared.api.base import (
     BaseModel,
+    Multiline,
     NonEmptyString,
     UnixPerm,
     single_argument_args,
@@ -161,9 +162,11 @@ FileType = Literal[
 
 
 class FilesystemDirEntry(BaseModel):
-    name: NonEmptyString = Field(description="Entry's base name.")
-    path: NonEmptyString = Field(description="Entry's full path.")
-    realpath: NonEmptyString = Field(description="Canonical path of the entry, eliminating any symbolic links.")
+    name: Multiline[NonEmptyString] = Field(description="Entry's base name.")
+    path: Multiline[NonEmptyString] = Field(description="Entry's full path.")
+    realpath: Multiline[NonEmptyString] = Field(
+        description="Canonical path of the entry, eliminating any symbolic links.",
+    )
     type: FileType = Field(
         description=(
             "Type of filesystem entry.\n"
@@ -243,7 +246,9 @@ class FilesystemMkdirResult(BaseModel):
 
 
 class FilesystemStatData(BaseModel):
-    realpath: NonEmptyString = Field(description="Canonical path of the entry, eliminating any symbolic links.")
+    realpath: Multiline[NonEmptyString] = Field(
+        description="Canonical path of the entry, eliminating any symbolic links.",
+    )
     type: FileType = Field(description="Type of filesystem entry.")
     size: int = Field(description="Size in bytes of a plain file. This corresonds with stx_size.")
     allocation_size: int = Field(description="Allocated size of file. Calculated by multiplying stx_blocks by 512.")
@@ -478,4 +483,4 @@ class FileFollowTailEventSourceArgs(BaseModel):
 
 @single_argument_result
 class FileFollowTailEventSourceEvent(BaseModel):
-    data: str = Field(description="New data appended to the file being followed.")
+    data: Multiline[str] = Field(description="New data appended to the file being followed.")

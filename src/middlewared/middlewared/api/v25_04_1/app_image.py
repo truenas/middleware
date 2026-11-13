@@ -2,7 +2,9 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import (
+    BaseModel, LongString, Multiline, NonEmptyString, single_argument_args, single_argument_result
+)
 
 __all__ = [
     'AppImageEntry', 'ContainerImagesDockerhubRateLimitArgs', 'ContainerImagesDockerhubRateLimitResult',
@@ -28,7 +30,7 @@ class AppImageEntry(BaseModel):
     update_available: bool
     created: str
     author: str
-    comment: LongString
+    comment: Multiline[LongString]
     parsed_repo_tags: list[AppImageParsedRepoTags] | None = None
 
 
@@ -48,7 +50,7 @@ class ContainerImagesDockerhubRateLimitResult(BaseModel):
         default=None,
         description="Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed",
     )
-    error: str | None = None
+    error: Multiline[str] | None = None
 
 
 class AppImageAuthConfig(BaseModel):

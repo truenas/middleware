@@ -3,7 +3,7 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import ConfigDict, Discriminator, Field, model_validator, RootModel, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, NonEmptyString, single_argument_args,
     single_argument_result,
 )
 
@@ -257,9 +257,9 @@ class VMDevicePassthroughDevice(BaseModel):
     iommu_group: VMDeviceIOMMUGroup | None = None
     available: bool
     drivers: list[str]
-    error: str | None
+    error: Multiline[str] | None
     reset_mechanism_defined: bool
-    description: str
+    description: Multiline[str]
     critical: bool
     device_path: str | None
 
@@ -304,7 +304,7 @@ class VMDeviceUSBPassthroughDeviceArgs(BaseModel):
 class USBPassthroughDevice(BaseModel):
     capability: USBCapability
     available: bool
-    error: str | None
+    error: Multiline[str] | None
 
 
 class USBPassthroughInfo(RootModel[dict[str, USBPassthroughDevice]]):

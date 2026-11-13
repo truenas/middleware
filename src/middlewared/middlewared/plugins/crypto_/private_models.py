@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import EmailStr, Field
 
-from middlewared.api.base import BaseModel, LongNonEmptyString, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, LongNonEmptyString, Multiline, NonEmptyString, single_argument_args
 from middlewared.api.current import ECCurves
 
 
@@ -40,16 +40,16 @@ class CertificateCreateCSRArgs(BaseModel):
 @single_argument_args('certificate_create_csr_imported')
 class CertificateCreateImportedCSRArgs(BaseModel):
     name: NonEmptyString
-    CSR: LongNonEmptyString
-    privatekey: LongNonEmptyString
+    CSR: Multiline[LongNonEmptyString]
+    privatekey: Multiline[LongNonEmptyString]
     passphrase: NonEmptyString | None = None
 
 
 @single_argument_args('certificate_create_certificate_imported')
 class CertificateCreateImportedCertificateArgs(BaseModel):
     name: NonEmptyString
-    certificate: LongNonEmptyString
-    privatekey: LongNonEmptyString | None
+    certificate: Multiline[LongNonEmptyString]
+    privatekey: Multiline[LongNonEmptyString] | None
     passphrase: NonEmptyString | None = None
 
 

@@ -6,7 +6,8 @@ from pydantic import BeforeValidator, Field, AfterValidator, StringConstraints
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 from middlewared.api.base import (
-    BaseModel, LongString, single_argument_args, NonEmptyString, NotRequired, Excluded, excluded_field, JsonSchemaExtra
+    BaseModel, LongString, Multiline, single_argument_args, NonEmptyString, NotRequired, Excluded, excluded_field,
+    JsonSchemaExtra
 )
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 
@@ -45,8 +46,8 @@ UserPropertyKey = Annotated[
 
 
 class PoolSnapshotEntryPropertyFields(BaseModel):
-    value: LongString = Field(description="Current effective value of the ZFS property as a string.")
-    rawvalue: LongString = Field(description="Raw string value of the ZFS property as stored.")
+    value: Multiline[LongString] = Field(description="Current effective value of the ZFS property as a string.")
+    rawvalue: Multiline[LongString] = Field(description="Raw string value of the ZFS property as stored.")
     source: Literal["NONE", "DEFAULT", "LOCAL", "TEMPORARY", "INHERITED", "RECEIVED"] = Field(
         description=(
             "Source of the property value.\n"
@@ -167,7 +168,7 @@ class PoolSnapshotRollbackOptions(BaseModel):
 
 class PoolSnapshotUserPropertyUpdate(BaseModel):
     key: UserPropertyKey = Field(description="The property name in namespace:property format.")
-    value: LongString = Field(description="The new value to assign to the user property.")
+    value: Multiline[LongString] = Field(description="The new value to assign to the user property.")
 
 
 class PoolSnapshotUpdate(BaseModel):

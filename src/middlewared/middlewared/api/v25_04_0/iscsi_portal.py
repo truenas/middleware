@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import IPvAnyAddress, field_validator
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, NonEmptyString
 
 __all__ = [
     "ISCSIPortalEntry",
@@ -35,7 +35,7 @@ class ISCSIPortalEntry(BaseModel):
     id: int
     listen: list[IscsiPortalIPInfo]
     tag: int
-    comment: str = ''
+    comment: Multiline[str] = ''
 
 
 class ISCSIPortalListenIpChoicesArgs(BaseModel):

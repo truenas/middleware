@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, LongString, Excluded, excluded_field, ForUpdateMetaclass, TcpPort
+from middlewared.api.base import BaseModel, LongString, Multiline, Excluded, excluded_field, ForUpdateMetaclass, TcpPort
 
 
 __all__ = ['SSHEntry', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs', 'SSHUpdateResult',]
@@ -26,28 +26,38 @@ class SSHEntry(BaseModel):
     weak_ciphers: list[Literal['AES128-CBC', 'NONE']] = Field(
         description="Array of weak ciphers to enable for compatibility with legacy clients.",
     )
-    options: LongString = Field(description="Additional SSH daemon configuration options.")
-    privatekey: LongString = Field(description="SSH host private key data.")
-    host_dsa_key: LongString | None = Field(description="DSA host private key. `null` if not configured.")
-    host_dsa_key_pub: LongString | None = Field(description="DSA host public key. `null` if not configured.")
-    host_dsa_key_cert_pub: LongString | None = Field(
+    options: Multiline[LongString] = Field(description="Additional SSH daemon configuration options.")
+    privatekey: Multiline[LongString] = Field(description="SSH host private key data.")
+    host_dsa_key: Multiline[LongString] | None = Field(description="DSA host private key. `null` if not configured.")
+    host_dsa_key_pub: Multiline[LongString] | None = Field(description="DSA host public key. `null` if not configured.")
+    host_dsa_key_cert_pub: Multiline[LongString] | None = Field(
         description="DSA host certificate public key. `null` if not configured.",
     )
-    host_ecdsa_key: LongString | None = Field(description="ECDSA host private key. `null` if not configured.")
-    host_ecdsa_key_pub: LongString | None = Field(description="ECDSA host public key. `null` if not configured.")
-    host_ecdsa_key_cert_pub: LongString | None = Field(
+    host_ecdsa_key: Multiline[LongString] | None = Field(
+        description="ECDSA host private key. `null` if not configured.",
+    )
+    host_ecdsa_key_pub: Multiline[LongString] | None = Field(
+        description="ECDSA host public key. `null` if not configured.",
+    )
+    host_ecdsa_key_cert_pub: Multiline[LongString] | None = Field(
         description="ECDSA host certificate public key. `null` if not configured.",
     )
-    host_ed25519_key: LongString | None = Field(description="Ed25519 host private key. `null` if not configured.")
-    host_ed25519_key_pub: LongString | None = Field(description="Ed25519 host public key. `null` if not configured.")
-    host_ed25519_key_cert_pub: LongString | None = Field(
+    host_ed25519_key: Multiline[LongString] | None = Field(
+        description="Ed25519 host private key. `null` if not configured.",
+    )
+    host_ed25519_key_pub: Multiline[LongString] | None = Field(
+        description="Ed25519 host public key. `null` if not configured.",
+    )
+    host_ed25519_key_cert_pub: Multiline[LongString] | None = Field(
         description="Ed25519 host certificate public key. `null` if not configured.",
     )
-    host_key: LongString | None = Field(description="Legacy SSH host private key. `null` if not configured.")
-    host_key_pub: LongString | None = Field(description="Legacy SSH host public key. `null` if not configured.")
-    host_rsa_key: LongString | None = Field(description="RSA host private key. `null` if not configured.")
-    host_rsa_key_pub: LongString | None = Field(description="RSA host public key. `null` if not configured.")
-    host_rsa_key_cert_pub: LongString | None = Field(
+    host_key: Multiline[LongString] | None = Field(description="Legacy SSH host private key. `null` if not configured.")
+    host_key_pub: Multiline[LongString] | None = Field(
+        description="Legacy SSH host public key. `null` if not configured.",
+    )
+    host_rsa_key: Multiline[LongString] | None = Field(description="RSA host private key. `null` if not configured.")
+    host_rsa_key_pub: Multiline[LongString] | None = Field(description="RSA host public key. `null` if not configured.")
+    host_rsa_key_cert_pub: Multiline[LongString] | None = Field(
         description="RSA host certificate public key. `null` if not configured.",
     )
 

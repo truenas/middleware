@@ -5,6 +5,7 @@ from middlewared.api.base import (
     excluded_field,
     ForUpdateMetaclass,
     LocalUsername,
+    Multiline,
     NonEmptyString,
     RemoteUsername,
     single_argument_args,
@@ -277,7 +278,7 @@ class ACLTemplateEntry(BaseModel):
     name: str
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E]
     acl: list[NFS4ACE] | list[POSIXACE]
-    comment: str = ''
+    comment: Multiline[str] = ''
 
 
 class AclTemplateCreate(ACLTemplateEntry):

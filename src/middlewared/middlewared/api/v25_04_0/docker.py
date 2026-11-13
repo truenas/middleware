@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, NonEmptyString, single_argument_args,
 )
 
 
@@ -78,7 +78,7 @@ class DockerStatusArgs(BaseModel):
 
 
 class StatusResult(BaseModel):
-    description: str
+    description: Multiline[str]
     status: Literal['PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED', 'FAILED']
 
 

@@ -15,6 +15,7 @@ from middlewared.api import api_method
 from middlewared.api.base import (
     BaseModel,
     LongNonEmptyString,
+    Multiline,
     NonEmptyString,
 )
 from middlewared.api.current import (
@@ -58,7 +59,7 @@ class FilesystemReceiveFileOptions(BaseModel):
 
 class FilesystemReceiveFileArgs(BaseModel):
     path: NonEmptyString
-    content: LongNonEmptyString
+    content: Multiline[LongNonEmptyString]
     options: FilesystemReceiveFileOptions = FilesystemReceiveFileOptions()
 
 

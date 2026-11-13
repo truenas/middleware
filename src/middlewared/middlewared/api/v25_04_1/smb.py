@@ -3,6 +3,7 @@ from middlewared.api.base import (
     excluded_field,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NetbiosName,
     NetbiosDomain,
     NonEmptyString,
@@ -175,7 +176,7 @@ class SMBEntry(BaseModel):
             "user and group accounts"
         ),
     )
-    smb_options: str = Field(
+    smb_options: Multiline[str] = Field(
         description=(
             "Additional unvalidated and unsupported configuration options for the SMB server. WARNING: using "
             "smb_options may produce unexpected server behavior."

@@ -4,7 +4,8 @@ from typing import Literal
 from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Excluded, excluded_field, single_argument_args,
+    BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Multiline, Excluded, excluded_field,
+    single_argument_args,
 )
 from .alert import Alert
 
@@ -49,7 +50,7 @@ class DiskEntry(BaseModel):
     serial: str = Field(description="Manufacturer serial number of the disk.")
     lunid: str | None = Field(description="Logical unit number identifier or `null` if not applicable.")
     size: int | None = Field(description="Total size of the disk in bytes. `null` if not available.")
-    description: str = Field(description="Human-readable description of the disk device.")
+    description: Multiline[str] = Field(description="Human-readable description of the disk device.")
     transfermode: str = Field(description="Data transfer mode and capabilities of the disk.")
     hddstandby: Literal["ALWAYS ON", "5", "10", "20", "30", "60", "120", "180", "240", "300", "330"] = Field(
         description="Hard disk standby timer in minutes or `ALWAYS ON` to disable standby.",

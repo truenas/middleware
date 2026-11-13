@@ -5,8 +5,8 @@ from typing import Annotated, Literal
 from pydantic import AfterValidator, EmailStr, Field, Secret, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, EKU_OID, ForUpdateMetaclass, LongString, LongNonEmptyString, match_validator,
-    NonEmptyString, single_argument_args,
+    BaseModel, EKU_OID, ForUpdateMetaclass, LongString, Multiline, LongNonEmptyString, match_validator, NonEmptyString,
+    single_argument_args,
 )
 
 
@@ -43,19 +43,19 @@ class CertificateEntry(BaseModel):
             " and underscores."
         ),
     )
-    certificate: LongString | None = Field(
+    certificate: Multiline[LongString] | None = Field(
         description=(
             "PEM-encoded X.509 certificate data. `null` for certificate signing requests (CSR) that have not yet been "
             "signed."
         ),
     )
-    privatekey: Secret[LongString | None] = Field(
+    privatekey: Secret[Multiline[LongString] | None] = Field(
         description=(
             "PEM-encoded private key corresponding to the certificate. `null` if no private key is available or for "
             "imported certificates without keys."
         ),
     )
-    CSR: LongString | None = Field(
+    CSR: Multiline[LongString] | None = Field(
         description=(
             "PEM-encoded Certificate Signing Request (CSR) data. `null` for imported certificates or completed ACME "
             "certificates."
@@ -108,7 +108,7 @@ class CertificateEntry(BaseModel):
         ),
     )
     cert_type_CA: bool = Field(description="Whether this certificate is a Certificate Authority (CA) certificate.")
-    chain_list: list[LongString] = Field(
+    chain_list: list[Multiline[LongString]] = Field(
         description="Array of PEM-encoded certificates in the certificate chain, starting with the leaf certificate.",
     )
     key_length: int | None = Field(
@@ -310,15 +310,15 @@ class CertificateCreateArgs(BaseModel):
         description="Whether to add this certificate to the trusted certificate store.",
     )
     # Fields for importing certs/CSRs
-    certificate: LongNonEmptyString | None = Field(
+    certificate: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description="PEM-encoded certificate to import or `null`.",
     )
-    privatekey: Secret[LongNonEmptyString | None] = Field(
+    privatekey: Secret[Multiline[LongNonEmptyString] | None] = Field(
         default=None,
         description="PEM-encoded private key to import or `null`.",
     )
-    CSR: LongNonEmptyString | None = Field(
+    CSR: Multiline[LongNonEmptyString] | None = Field(
         default=None,
         description="PEM-encoded certificate signing request to import or `null`.",
     )

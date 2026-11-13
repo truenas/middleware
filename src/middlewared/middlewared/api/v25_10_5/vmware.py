@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args, single_argument_result,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, single_argument_args, single_argument_result,
 )
 
 __all__ = [
@@ -95,7 +95,7 @@ class VMWareMatchDatastoresWithDatasetsResult(BaseModel):
 
 class VMWareMatchDatastoresWithDatasetsResultDatastore(BaseModel):
     name: str = Field(description="Name of the VMware datastore.")
-    description: str = Field(description="Human-readable description of the datastore.")
+    description: Multiline[str] = Field(description="Human-readable description of the datastore.")
     filesystems: list[str] = Field(
         description="Array of local filesystem names that can provide storage for this datastore.",
     )
@@ -106,7 +106,7 @@ class VMWareMatchDatastoresWithDatasetsResultFilesystem(BaseModel):
         description="Type of storage - FILESYSTEM for ZFS datasets, VOLUME for ZFS volumes.",
     )
     name: str = Field(description="Name of the local filesystem or volume.")
-    description: str = Field(description="Human-readable description of the filesystem or volume.")
+    description: Multiline[str] = Field(description="Human-readable description of the filesystem or volume.")
 
 
 class VMWareDatasetHasVmsArgs(BaseModel):

@@ -8,6 +8,7 @@ from middlewared.api.base import (
     excluded_field,
     ForUpdateMetaclass,
     LongNonEmptyString,
+    Multiline,
     NonEmptyString,
     single_argument_args,
     TimeString,
@@ -114,7 +115,7 @@ class CloudSyncCreateResult(BaseModel):
 
 
 class RestoreOpts(BaseModel):
-    description: str = Field(default="", description="Description for the restore operation.")
+    description: Multiline[str] = Field(default="", description="Description for the restore operation.")
     transfer_mode: Literal["SYNC", "COPY"] = Field(description="Transfer mode for the restore operation.")
     path: NonEmptyString = Field(description="Local path where files will be restored.")
 
@@ -248,7 +249,7 @@ class CloudSyncProviderTaskSchemaItem(BaseModel):
 class CloudSyncOneDriveListDrivesArgs(BaseModel):
     client_id: Secret[str] = Field(default="", description="OAuth client ID for OneDrive API access.")
     client_secret: Secret[str] = Field(default="", description="OAuth client secret for OneDrive API access.")
-    token: Secret[LongNonEmptyString] = Field(description="OAuth access token for OneDrive authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(description="OAuth access token for OneDrive authentication.")
 
 
 class CloudSyncOneDriveListDrivesResult(BaseModel):
@@ -259,4 +260,4 @@ class CloudSyncOneDriveListDrivesDrive(BaseModel):
     drive_id: str = Field(description="OneDrive drive identifier.")
     drive_type: Literal["PERSONAL", "BUSINESS", "DOCUMENT_LIBRARY"] = Field(description="Type of OneDrive.")
     name: str = Field(description="Display name of the OneDrive.")
-    description: str = Field(description="Description of the OneDrive.")
+    description: Multiline[str] = Field(description="Description of the OneDrive.")

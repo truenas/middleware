@@ -1,6 +1,6 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, Multiline
 from .common import CronModel
 
 
@@ -20,7 +20,7 @@ class CronJobCreate(BaseModel):
     stdout: bool = True
     schedule: CronJobSchedule = CronJobSchedule()
     command: str
-    description: str = ""
+    description: Multiline[str] = ""
     user: str
 
 

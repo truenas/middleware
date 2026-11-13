@@ -5,9 +5,8 @@ from pydantic import (
 )
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
-    single_argument_args,
-    TcpPort, exclude_tcp_ports
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline, NonEmptyString, single_argument_args, TcpPort,
+    exclude_tcp_ports
 )
 
 __all__ = ["NFSEntry",
@@ -79,7 +78,7 @@ class SharingNFSEntry(BaseModel):
     id: int
     path: NonEmptyString = Field(description="Local path to be exported.")
     aliases: list[NonEmptyString] = Field(default=[], description="IGNORED for now.")
-    comment: str = Field(default="", description="User comment associated with share.")
+    comment: Multiline[str] = Field(default="", description="User comment associated with share.")
     networks: Annotated[list[NonEmptyString], Field(max_length=MAX_NUM_NFS_NETWORKS)] = Field(
         default=[],
         description=(

@@ -4,6 +4,7 @@ from middlewared.api.base import (
     excluded_field,
     ForUpdateMetaclass,
     LocalUsername,
+    Multiline,
     NonEmptyString,
     RemoteUsername,
     single_argument_args,
@@ -405,7 +406,9 @@ class ACLTemplateEntry(BaseModel):
     name: str = Field(description="Human-readable name for the ACL template.")
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] = Field(description="ACL type this template provides.")
     acl: list[NFS4ACE] | list[POSIXACE] = Field(description="Array of Access Control Entries defined by this template.")
-    comment: str = Field(default='', description="Optional descriptive comment about the template's purpose.")
+    comment: Multiline[str] = Field(
+        default='', description="Optional descriptive comment about the template's purpose.",
+    )
 
 
 class AclTemplateCreate(ACLTemplateEntry):

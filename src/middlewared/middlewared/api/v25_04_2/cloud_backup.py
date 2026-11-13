@@ -3,7 +3,9 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NonEmptyString
+from middlewared.api.base import (
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, Multiline, NonEmptyString
+)
 from .cloud_sync import CredentialsEntry
 from .common import CronModel
 
@@ -23,7 +25,7 @@ class CloudBackupCron(CronModel):
 
 
 class CloudBackupCreate(BaseModel):
-    description: str = Field(default="", description="The name of the task to display in the UI")
+    description: Multiline[str] = Field(default="", description="The name of the task to display in the UI")
     path: str = Field(description="The local path to back up beginning with `/mnt` or `/dev/zvol`")
     credentials: int = Field(description="ID of the cloud credential to use for each backup")
     attributes: dict = Field(description="Additional information for each backup, e.g. bucket name")
@@ -31,8 +33,10 @@ class CloudBackupCreate(BaseModel):
         default=CloudBackupCron(),
         description="Cron schedule dictating when the task should run",
     )
-    pre_script: LongString = Field(default="", description="A Bash script to run immediately before every backup")
-    post_script: LongString = Field(
+    pre_script: Multiline[LongString] = Field(
+        default="", description="A Bash script to run immediately before every backup",
+    )
+    post_script: Multiline[LongString] = Field(
         default="",
         description="A Bash script to run immediately after every backup if it succeeds",
     )

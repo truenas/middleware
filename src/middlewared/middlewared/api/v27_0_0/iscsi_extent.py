@@ -3,8 +3,8 @@ from typing import Annotated, Literal
 from pydantic import Field, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize,
-    IscsiExtentRPM, IscsiExtentType, NonEmptyString, excluded_field
+    BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize, IscsiExtentRPM, IscsiExtentType, Multiline,
+    NonEmptyString, excluded_field
 )
 
 __all__ = [
@@ -48,7 +48,7 @@ class iSCSITargetExtentEntry(BaseModel):
         default=None,
         description="Available space threshold percentage or `null` to disable.",
     )
-    comment: str = Field(default='', description="Optional comment describing the extent.")
+    comment: Multiline[str] = Field(default='', description="Optional comment describing the extent.")
     naa: str = Field(max_length=34, description="Network Address Authority (NAA) identifier for the extent.")
     insecure_tpc: bool = Field(
         default=True,

@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, LongString, single_argument_args
+from middlewared.api.base import BaseModel, LongString, Multiline, single_argument_args
 
 
 __all__ = [
@@ -16,7 +16,7 @@ class JWKCreate(BaseModel):
 class ACMERegistrationBody(BaseModel):
     id: int
     status: str
-    key: LongString
+    key: Multiline[LongString]
 
 
 class ACMERegistrationEntry(BaseModel):

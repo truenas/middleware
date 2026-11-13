@@ -5,6 +5,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongString,
+    Multiline,
     NonEmptyString,
     excluded_field,
     single_argument_result,
@@ -74,11 +75,13 @@ class CredentialsVerifyArgs(BaseModel):
 @single_argument_result
 class CredentialsVerifyResult(BaseModel):
     valid: bool = Field(description="Whether the cloud credentials are valid and functional.")
-    error: LongString | None = Field(
+    error: Multiline[LongString] | None = Field(
         default=None,
         description="Error message if credential verification failed or `null` on success.",
     )
-    excerpt: LongString | None = Field(default=None, description="Logs excerpt (or `null` if no error occurred).")
+    excerpt: Multiline[LongString] | None = Field(
+        default=None, description="Logs excerpt (or `null` if no error occurred).",
+    )
 
 
 class CredentialsS3ProviderChoicesArgs(BaseModel):

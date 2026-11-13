@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline
 from .common import CronModel
 
 
@@ -22,7 +22,7 @@ class PoolScrubCron(CronModel):
 class PoolScrubEntry(BaseModel):
     pool: PositiveInt
     threshold: Annotated[int, Field(ge=0)] = 35
-    description: str = ""
+    description: Multiline[str] = ""
     schedule: PoolScrubCron = Field(default_factory=PoolScrubCron)
     enabled: bool = True
     id: int

@@ -1,6 +1,6 @@
 from pydantic import Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, Multiline
 
 
 __all__ = [
@@ -12,7 +12,7 @@ __all__ = [
 class AppRegistryEntry(BaseModel):
     id: int
     name: str
-    description: str | None = None
+    description: Multiline[str] | None = None
     username: Secret[str]
     password: Secret[str]
     uri: str

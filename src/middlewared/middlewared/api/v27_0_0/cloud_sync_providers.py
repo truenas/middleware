@@ -3,7 +3,9 @@ from typing import Annotated, Literal, Union
 
 from pydantic import AfterValidator, Discriminator, Field, Secret
 
-from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, NonEmptyString, HttpsOnlyURL
+from middlewared.api.base import (
+    BaseModel, HttpUrl, LongNonEmptyString, Multiline, match_validator, NonEmptyString, HttpsOnlyURL
+)
 
 __all__ = ["CloudCredentialProvider"]
 
@@ -36,14 +38,16 @@ class BoxCredentialsModel(BaseModel):
     type: Literal["BOX"] = Field(description="Cloud provider type identifier for Box cloud storage.")
     client_id: Secret[str] = Field(default="", description="Box OAuth application client ID.")
     client_secret: Secret[str] = Field(default="", description="Box OAuth application client secret.")
-    token: Secret[LongNonEmptyString] = Field(description="Box OAuth access token for API authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(description="Box OAuth access token for API authentication.")
 
 
 class DropboxCredentialsModel(BaseModel):
     type: Literal["DROPBOX"] = Field(description="Cloud provider type identifier for Dropbox storage.")
     client_id: Secret[str] = Field(default="", description="Dropbox OAuth application client ID.")
     client_secret: Secret[str] = Field(default="", description="Dropbox OAuth application client secret.")
-    token: Secret[LongNonEmptyString] = Field(description="Dropbox OAuth access token for API authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(
+        description="Dropbox OAuth access token for API authentication.",
+    )
 
 
 class FTPCredentialsModel(BaseModel):
@@ -58,7 +62,7 @@ class GoogleCloudStorageCredentialsModel(BaseModel):
     type: Literal["GOOGLE_CLOUD_STORAGE"] = Field(
         description="Cloud provider type identifier for Google Cloud Storage.",
     )
-    service_account_credentials: Secret[LongNonEmptyString] = Field(
+    service_account_credentials: Secret[Multiline[LongNonEmptyString]] = Field(
         description="JSON service account credentials for Google Cloud Storage authentication.",
     )
 
@@ -67,7 +71,9 @@ class GoogleDriveCredentialsModel(BaseModel):
     type: Literal["GOOGLE_DRIVE"] = Field(description="Cloud provider type identifier for Google Drive.")
     client_id: Secret[str] = Field(default="", description="OAuth client ID for Google Drive API access.")
     client_secret: Secret[str] = Field(default="", description="OAuth client secret for Google Drive API access.")
-    token: Secret[LongNonEmptyString] = Field(description="OAuth access token for Google Drive authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(
+        description="OAuth access token for Google Drive authentication.",
+    )
     team_drive: Secret[str] = Field(
         default="",
         description="Google Drive team drive ID or empty string for personal drive.",
@@ -78,7 +84,9 @@ class GooglePhotosCredentialsModel(BaseModel):
     type: Literal["GOOGLE_PHOTOS"] = Field(description="Cloud provider type identifier for Google Photos.")
     client_id: Secret[str] = Field(default="", description="OAuth client ID for Google Photos API access.")
     client_secret: Secret[str] = Field(default="", description="OAuth client secret for Google Photos API access.")
-    token: Secret[LongNonEmptyString] = Field(description="OAuth access token for Google Photos authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(
+        description="OAuth access token for Google Photos authentication.",
+    )
 
 
 class HTTPCredentialsModel(BaseModel):
@@ -88,7 +96,7 @@ class HTTPCredentialsModel(BaseModel):
 
 class HubicCredentialsModel(BaseModel):
     type: Literal["HUBIC"] = Field(description="Cloud provider type identifier for Hubic.")
-    token: Secret[LongNonEmptyString] = Field(description="OAuth access token for Hubic authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(description="OAuth access token for Hubic authentication.")
 
 
 class MegaCredentialsModel(BaseModel):
@@ -101,7 +109,7 @@ class OneDriveCredentialsModel(BaseModel):
     type: Literal["ONEDRIVE"] = Field(description="Cloud provider type identifier for OneDrive.")
     client_id: Secret[str] = Field(default="", description="OAuth client ID for OneDrive API access.")
     client_secret: Secret[str] = Field(default="", description="OAuth client secret for OneDrive API access.")
-    token: Secret[LongNonEmptyString] = Field(description="OAuth access token for OneDrive authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(description="OAuth access token for OneDrive authentication.")
     drive_type: Secret[Literal["PERSONAL", "BUSINESS", "DOCUMENT_LIBRARY"]] = Field(
         description="Type of OneDrive to access.",
     )
@@ -112,7 +120,7 @@ class PCloudCredentialsModel(BaseModel):
     type: Literal["PCLOUD"] = Field(description="Cloud provider type identifier for pCloud.")
     client_id: Secret[str] = Field(default="", description="OAuth client ID for pCloud API access.")
     client_secret: Secret[str] = Field(default="", description="OAuth client secret for pCloud API access.")
-    token: Secret[LongNonEmptyString] = Field(description="OAuth access token for pCloud authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(description="OAuth access token for pCloud authentication.")
     hostname: Secret[str] = Field(default="", description="pCloud hostname or empty string for default.")
 
 
@@ -242,7 +250,9 @@ class YandexCredentialsModel(BaseModel):
     type: Literal["YANDEX"] = Field(description="Cloud provider type identifier for Yandex Disk storage.")
     client_id: Secret[str] = Field(default="", description="Yandex OAuth application client ID.")
     client_secret: Secret[str] = Field(default="", description="Yandex OAuth application client secret.")
-    token: Secret[LongNonEmptyString] = Field(description="Yandex OAuth access token for API authentication.")
+    token: Secret[Multiline[LongNonEmptyString]] = Field(
+        description="Yandex OAuth access token for API authentication.",
+    )
 
 
 CloudCredentialProvider = Annotated[

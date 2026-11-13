@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, LongString
+from middlewared.api.base import BaseModel, LongString, Multiline
 
 
 __all__ = [
@@ -44,7 +44,7 @@ class TrueNASGetEulaArgs(BaseModel):
 
 
 class TrueNASGetEulaResult(BaseModel):
-    result: LongString | None = Field(
+    result: Multiline[LongString] | None = Field(
         description="Full text of the End User License Agreement. `null` if no EULA is required.",
     )
 

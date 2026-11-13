@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, Multiline
 
 
 __all__ = [
@@ -25,10 +25,10 @@ class Alert(BaseModel):
     last_occurrence: datetime
     dismissed: bool
     mail: Any
-    text: LongString
+    text: Multiline[LongString]
     id: str
     level: str
-    formatted: LongString | None
+    formatted: Multiline[LongString] | None
     one_shot: bool
 
 

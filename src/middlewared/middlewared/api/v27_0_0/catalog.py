@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import ConfigDict, Field, RootModel
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, LongString
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, LongString, Multiline
 
 
 __all__ = [
@@ -17,7 +17,7 @@ __all__ = [
 
 class CatalogEntry(BaseModel):
     id: NonEmptyString = Field(description="Unique identifier for the catalog.")
-    label: NonEmptyString = Field(
+    label: Multiline[NonEmptyString] = Field(
         pattern=r'^\w+[\w.-]*$',
         description="Catalog identifier. Must start with alphanumeric, then allow alphanumeric, periods, and hyphens.",
     )
@@ -74,11 +74,11 @@ class Maintainer(BaseModel):
 
 
 class CatalogAppInfo(BaseModel):
-    app_readme: LongString | None = Field(description="HTML content of the app README.")
+    app_readme: Multiline[LongString] | None = Field(description="HTML content of the app README.")
     categories: list[str] = Field(description="List of categories for the app.")
-    description: str = Field(description="Short description of the app.")
+    description: Multiline[str] = Field(description="Short description of the app.")
     healthy: bool = Field(description="Health status of the app.")
-    healthy_error: str | None = Field(default=None, description="Error if app is not healthy.")
+    healthy_error: Multiline[str] | None = Field(default=None, description="Error if app is not healthy.")
     home: str = Field(description="Homepage URL of the app.")
     location: str = Field(description="Local path to the app's location.")
     latest_version: str | None = Field(description="Latest available app version.")

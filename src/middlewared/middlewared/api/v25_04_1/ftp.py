@@ -7,6 +7,7 @@ from middlewared.api.base import (
     Excluded,
     excluded_field,
     ForUpdateMetaclass,
+    Multiline,
     single_argument_args,
     UnixPerm
 )
@@ -30,7 +31,7 @@ class FTPEntry(BaseModel):
     onlyanonymous: bool
     anonpath: str | None
     onlylocal: bool
-    banner: str
+    banner: Multiline[str]
     filemask: UnixPerm
     dirmask: UnixPerm
     fxp: bool
@@ -59,7 +60,7 @@ class FTPEntry(BaseModel):
     tls_opt_dns_name_required: bool
     tls_opt_ip_address_required: bool
     ssltls_certificate: int | None
-    options: str
+    options: Multiline[str]
 
     @field_validator("passiveportsmin", "passiveportsmax")
     @classmethod

@@ -1,6 +1,6 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, Multiline
 
 __all__ = [
     "iSCSITargetAuthorizedInitiatorEntry",
@@ -16,7 +16,7 @@ __all__ = [
 class iSCSITargetAuthorizedInitiatorEntry(BaseModel):
     id: int
     initiators: list[str] = []
-    comment: str = ''
+    comment: Multiline[str] = ''
 
 
 class IscsiInitiatorCreate(iSCSITargetAuthorizedInitiatorEntry):

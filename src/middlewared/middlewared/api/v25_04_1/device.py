@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Multiline
 
 
 __all__ = ["DeviceGetInfoArgs", "DeviceGetInfoResult"]
@@ -14,7 +14,7 @@ class SerialInfo(BaseModel):
     drivername: str
     start: str
     size: int
-    description: str
+    description: Multiline[str]
 
 
 class GPUInfoAddr(BaseModel):
@@ -32,12 +32,12 @@ class GPUInfoDevice(BaseModel):
 
 class GPUInfo(BaseModel):
     addr: GPUInfoAddr
-    description: str
+    description: Multiline[str]
     devices: list[GPUInfoDevice]
     vendor: str | None
     available_to_host: bool
     uses_system_critical_devices: bool
-    critical_reason: str | None
+    critical_reason: Multiline[str] | None
 
     class Config:
         extra = "allow"

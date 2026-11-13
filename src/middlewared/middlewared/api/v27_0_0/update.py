@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, Multiline,
 )
 
 
@@ -47,8 +47,8 @@ class UpdateUpdateResult(BaseModel):
 
 class UpdateProfileChoice(BaseModel):
     name: str = Field(description="Profile name.")
-    footnote: str = Field(description="Profile footnote.")
-    description: LongString = Field(description="Profile description.")
+    footnote: Multiline[str] = Field(description="Profile footnote.")
+    description: Multiline[LongString] = Field(description="Profile description.")
     available: bool = Field(description="Whether profile is available for selection.")
 
 
@@ -77,7 +77,7 @@ class UpdateStatusCurrentVersion(BaseModel):
 class UpdateStatusNewVersion(BaseModel):
     version: str = Field(description="Newly available version number.")
     manifest: dict = Field(description="Object containing detailed version information and metadata.")
-    release_notes: LongString | None = Field(description="Release notes.")
+    release_notes: Multiline[LongString] | None = Field(description="Release notes.")
     release_notes_url: LongString = Field(description="Release notes URL.")
 
 
@@ -90,12 +90,14 @@ class UpdateStatusStatus(BaseModel):
 
 class UpdateStatusError(BaseModel):
     errname: str = Field(description="Error code (i.e. ENONET).")
-    reason: LongString = Field(description="Error text.")
+    reason: Multiline[LongString] = Field(description="Error text.")
 
 
 class UpdateDownloadProgress(BaseModel):
     percent: float = Field(description="Download completion percentage (0.0 to 100.0).")
-    description: LongString = Field(description="Human-readable description of the current download activity.")
+    description: Multiline[LongString] = Field(
+        description="Human-readable description of the current download activity.",
+    )
     version: str = Field(description="Version number being downloaded.")
 
 

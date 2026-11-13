@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, Multiline, NonEmptyString, single_argument_args,
 )
 
 
@@ -92,7 +92,7 @@ class DockerStatusArgs(BaseModel):
 
 
 class StatusResult(BaseModel):
-    description: str = Field(description="Human-readable description of the current Docker service status.")
+    description: Multiline[str] = Field(description="Human-readable description of the current Docker service status.")
     status: Literal[
         'PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED',
         'FAILED', 'MIGRATING', 'MIGRATION_FAILED'

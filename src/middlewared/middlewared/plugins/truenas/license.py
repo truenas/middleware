@@ -6,7 +6,7 @@ from licenselib.license import License
 from pydantic import Secret
 
 from middlewared.api import api_method
-from middlewared.api.base import LongNonEmptyString
+from middlewared.api.base import LongNonEmptyString, Multiline
 from middlewared.api.current import (
     LicenseFeatureEntry,
     LicenseInfoEntry,
@@ -90,7 +90,9 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         roles=["FULL_ADMIN"],
         check_annotations=True,
     )
-    def upload(self, license_: Secret[LongNonEmptyString], options: TrueNASLicenseUploadOptions) -> None:
+    def upload(
+        self, license_: Secret[Multiline[LongNonEmptyString]], options: TrueNASLicenseUploadOptions
+    ) -> None:
         """Upload a PEM-wrapped license file."""
         current = self.info_private()
         had_license = current is not None and current.origin is LicenseOrigin.ISSUED
