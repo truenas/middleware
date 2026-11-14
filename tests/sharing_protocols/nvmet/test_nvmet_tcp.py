@@ -83,6 +83,8 @@ MB_150 = 150 * MB
 MB_200 = 200 * MB
 NVME_ALT1_TCP_PORT = 4444
 NVME_ALT2_TCP_PORT = 4555
+# How long to wait for the host to drop a subsystem after disconnecting
+SUBSYS_GONE_TIMEOUT = 10
 
 # Use a RE because the message returned varies depending on whether based on
 # Bookworm or Trixie
@@ -297,6 +299,44 @@ class NVMeCLIClient:
         command = 'nvme list-subsys --output-format=json'
         return json.loads(self.run_command(command))
 
+    def subsys_nqns(self):
+        # Output is a list of hosts with newer nvme-cli, a single dict with older.
+        data = self.nvme_list_subsys()
+        hosts = data if isinstance(data, list) else [data]
+        return {
+            subsys['NQN']
+            for host in hosts
+            for subsys in host.get('Subsystems', [])
+            if 'NQN' in subsys
+        }
+
+    def assert_subsys_gone(self, nqn=None):
+        """
+        Assert that, after a disconnect, the host no longer has the subsystem
+        `nqn` (or any subsystem, if `nqn` is None).
+
+        A subsystem lingers (with no paths) if something on the host still has
+        one of its namespaces open.  Fail here, in the test responsible, rather
+        than in whichever later test next checks for a clean host.
+        """
+        deadline = time.monotonic() + SUBSYS_GONE_TIMEOUT
+        while True:
+            remaining = self.subsys_nqns()
+            if nqn is not None:
+                remaining &= {nqn}
+            if not remaining:
+                return
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(1)
+        holders = self.run_command(
+            'fuser -v /dev/nvme*n* 2>&1; ls -l /sys/block/nvme*/holders/ 2>&1; true'
+        )
+        raise AssertionError(
+            f'Host still has subsystem(s) {sorted(remaining)} '
+            f'{SUBSYS_GONE_TIMEOUT}s after disconnect:\n{holders}'
+        )
+
     @contextlib.contextmanager
     def connect_ctx(
         self, nqn, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp', **kwargs
@@ -304,32 +344,42 @@ class NVMeCLIClient:
         if self.DEBUG:
             print('Connecting:', nqn)
         self.connect(nqn, addr, port, transport, **kwargs)
+        succeeded = False
         try:
             if self.DEBUG:
                 print('Connected:', nqn)
             yield
+            succeeded = True
         finally:
             if self.DEBUG:
                 print('Disconnecting:', nqn)
             self.disconnect(nqn)
             if self.DEBUG:
                 print('Disconnected:', nqn)
+            # Don't mask an exception raised in the body
+            if succeeded:
+                self.assert_subsys_gone(nqn)
 
     @contextlib.contextmanager
     def connect_all_ctx(self, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp'):
         if self.DEBUG:
             print('Doing connect-all')
         self.connect_all(addr, port, transport)
+        succeeded = False
         try:
             if self.DEBUG:
                 print('Connected')
             yield
+            succeeded = True
         finally:
             if self.DEBUG:
                 print('Doing disconnect-all')
             self.disconnect_all()
             if self.DEBUG:
                 print('Disconnected')
+            # Don't mask an exception raised in the body
+            if succeeded:
+                self.assert_subsys_gone()
 
     def run_command(self, command):
         pass
