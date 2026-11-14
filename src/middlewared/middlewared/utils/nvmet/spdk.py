@@ -515,8 +515,8 @@ class NvmetHostSubsysConfig(NvmetConfig):
     query = 'nvmet.host_subsys.query'
 
     def config_key(self, config_item, render_ctx):
-
-        return f"{config_item['host']['hostnqn']}:{config_item['subsys']['subnqn']}"
+        if subsys_visible(config_item['subsys'], render_ctx):
+            return f"{config_item['host']['hostnqn']}:{config_item['subsys']['subnqn']}"
 
     def get_live(self, client, render_ctx):
         result = {}
