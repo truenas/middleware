@@ -7,6 +7,10 @@ NVMET_SERVICE_NAME = 'nvmet'
 
 NVMET_MAX_NSID = 0xFFFFFFFE
 
+# Logical block size used for FILE namespaces.  SPDK's bdev_aio_create
+# rejects any file whose size is not a multiple of this.
+NVMET_FILE_BLOCK_SIZE = 512
+
 
 class ApiMapper(enum.Enum):
 

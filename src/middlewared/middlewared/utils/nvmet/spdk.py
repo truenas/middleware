@@ -13,6 +13,7 @@ from spdk.rpc.client import JSONRPCClient  # type: ignore[import-untyped]
 from middlewared.plugins.nvmet.constants import (
     NAMESPACE_DEVICE_TYPE,
     NVMET_DISCOVERY_NQN,
+    NVMET_FILE_BLOCK_SIZE,
     PORT_ADDR_FAMILY,
 )
 
@@ -136,17 +137,29 @@ class NvmetConfig:
         update_keys = config_keys - remove_keys - add_keys
 
         self.debug(live, config)
+        self.failures: list[str] = []
 
         for item in add_keys:
-            self.add(client, config[item], render_ctx)  # type: ignore[attr-defined]
+            self._apply('add', item, client, config[item], render_ctx)
 
         for item in update_keys:
-            self.update(client, config[item], live[item], render_ctx)  # type: ignore[attr-defined]
+            self._apply('update', item, client, config[item], live[item], render_ctx)
 
         yield
 
         for item in remove_keys:
-            self.delete(client, live[item], render_ctx)  # type: ignore[attr-defined]
+            self._apply('delete', item, client, live[item], render_ctx)
+
+    def _apply(self, op: str, key: str, *args: Any) -> None:
+        # Isolate failures to the individual item, so that one bad entry
+        # (e.g. a namespace backed by an unusable file) does not abort the
+        # remainder of the render, including the post-yield delete phases
+        # and ANA state transitions of the enclosing renders.
+        try:
+            getattr(self, op)(*args)
+        except Exception:
+            LOGGER.error('%s: failed to %s %r', self.__class__.__name__, op, key, exc_info=True)
+            self.failures.append(f'{op} {key}')
 
 
 class NvmetSubsysConfig(NvmetConfig):
@@ -502,8 +515,8 @@ class NvmetHostSubsysConfig(NvmetConfig):
     query = 'nvmet.host_subsys.query'
 
     def config_key(self, config_item, render_ctx):
-
-        return f"{config_item['host']['hostnqn']}:{config_item['subsys']['subnqn']}"
+        if subsys_visible(config_item['subsys'], render_ctx):
+            return f"{config_item['host']['hostnqn']}:{config_item['subsys']['subnqn']}"
 
     def get_live(self, client, render_ctx):
         result = {}
@@ -653,7 +666,7 @@ class NvmetBdevConfig(NvmetConfig):
                     'bdev_aio_create',
                     {
                         'filename': _path,
-                        'block_size': render_ctx.get('path_to_recordsize', {}).get(_path, 512),
+                        'block_size': render_ctx.get('path_to_recordsize', {}).get(_path, NVMET_FILE_BLOCK_SIZE),
                         'name': name
                     }
                 )
@@ -822,20 +835,40 @@ def write_config(config):
     #
     # SPDK automatically does what we had called cross-port
     # referrals in the kernel implementation.
+    #
+    # Errors on individual items are logged and collected (see
+    # NvmetConfig._apply) rather than aborting the whole render.
+    subsys = NvmetSubsysConfig()
+    keys = NvmetKeyringDhchapKeyConfig()
+    ctrl_keys = NvmetKeyringDhchapCtrlKeyConfig()
+    ports = NvmetPortConfig()
+    referrals = NvmetPortAnaReferralConfig()
+    host_subsys = NvmetHostSubsysConfig()
+    port_subsys = NvmetPortSubsysConfig()
+    bdevs = NvmetBdevConfig()
+    namespaces = NvmetNamespaceConfig()
     with (
-        NvmetSubsysConfig().render(client, config),
+        subsys.render(client, config),
         NvmetTransportConfig().render(client, config),
-        NvmetKeyringDhchapKeyConfig().render(client, config),
-        NvmetKeyringDhchapCtrlKeyConfig().render(client, config),
-        NvmetPortConfig().render(client, config),
-        NvmetPortAnaReferralConfig().render(client, config),
-        NvmetHostSubsysConfig().render(client, config),
-        NvmetPortSubsysConfig().render(client, config),
+        keys.render(client, config),
+        ctrl_keys.render(client, config),
+        ports.render(client, config),
+        referrals.render(client, config),
+        host_subsys.render(client, config),
+        port_subsys.render(client, config),
         NvmetAnaStateConfig().render(client, config),
-        NvmetBdevConfig().render(client, config),
-        NvmetNamespaceConfig().render(client, config),
+        bdevs.render(client, config),
+        namespaces.render(client, config),
     ):
         pass
+
+    failures = [
+        f'{renderer.__class__.__name__}: {failure}'
+        for renderer in (subsys, keys, ctrl_keys, ports, referrals, host_subsys, port_subsys, bdevs, namespaces)
+        for failure in renderer.failures
+    ]
+    if failures:
+        raise RuntimeError(f'SPDK nvmet config applied with {len(failures)} failure(s): {"; ".join(failures)}')
 
 
 def lock_namespace(data, render_ctx):
