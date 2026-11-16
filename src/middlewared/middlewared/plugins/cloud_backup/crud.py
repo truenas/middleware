@@ -9,6 +9,8 @@ from middlewared.api.current import (
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
+from middlewared.plugins.cloud.path import get_remote_path
+from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.service import LocalPathInfo, private, TaskPathService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -171,6 +173,20 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
                 statfs = self.middleware.call_sync("filesystem.statfs", data["cache_path"])
                 if "RO" in statfs["flags"]:
                     verrors.add(f"{name}.cache_path", "The cache directory must be writeable")
+
+        if not verrors:
+            remote = REMOTES[self._get_credentials(data["credentials"])["provider"]["type"]]
+            remote_path = get_remote_path(remote, data["attributes"])
+            for cloud_backup in self.middleware.call_sync("cloud_backup.query", [
+                ["id", "!=", data.get("id")],
+                ["credentials.id", "=", data["credentials"]],
+            ]):
+                if get_remote_path(remote, cloud_backup["attributes"]) == remote_path:
+                    verrors.add(
+                        f"{name}.attributes.folder",
+                        f"The cloud backup task {cloud_backup['description']!r} already uses this folder",
+                    )
+                    break
 
         if not verrors:
             try:
