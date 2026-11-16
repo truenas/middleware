@@ -8,10 +8,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr, formatdate, getaddresses, make_msgid
 import errno
+import functools
 import html
 import json
 import os
 import smtplib
+import ssl
 from threading import Lock
 
 import html2text
@@ -76,6 +78,7 @@ class MailModel(sa.Model):
     em_outgoingserver = sa.Column(sa.String(120))
     em_port = sa.Column(sa.Integer(), default=25)
     em_security = sa.Column(sa.String(120), default="plain")
+    em_validate_certificate = sa.Column(sa.Boolean(), default=True)
     em_smtp = sa.Column(sa.Boolean())
     em_user = sa.Column(sa.String(120), nullable=True)
     em_pass = sa.Column(sa.EncryptedText(), nullable=True)
@@ -333,8 +336,13 @@ class MailService(ConfigService):
         if not config['outgoingserver'] or not config['port']:
             raise ValueError('You must provide an outgoing mailserver and mail server port when sending mail')
 
+        context = ssl.create_default_context()
+        if not config['validate_certificate']:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+
         if config['security'] == 'SSL':
-            factory = smtplib.SMTP_SSL
+            factory = functools.partial(smtplib.SMTP_SSL, context=context)
         else:
             factory = smtplib.SMTP
 
@@ -345,7 +353,7 @@ class MailService(ConfigService):
             local_hostname=local_hostname,
         ) as server:
             if config['security'] == 'TLS':
-                server.starttls()
+                server.starttls(context=context)
 
             if config['oauth'] and config['oauth']['provider'] == 'outlook':
                 self.middleware.call_sync('mail.outlook_xoauth2', server, config)
