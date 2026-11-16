@@ -8,6 +8,7 @@ def test_config_settings():
         "pass": "changeme",
         "port": 25,
         "security": "PLAIN",
+        "validate_certificate": False,
         "smtp": True,
         "user": "william.spam@ixsystems.com"
     }
