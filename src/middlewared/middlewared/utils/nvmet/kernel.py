@@ -1,5 +1,4 @@
 from collections import defaultdict
-import contextlib
 from contextlib import contextmanager
 import logging
 import os
@@ -42,8 +41,9 @@ class RenderFailures:
     the enclosing renders.  Failures are logged and collected so that
     write_config can report them once everything has been applied.
     """
-    def __init__(self):
-        self.failures = []
+    def __init__(self, failures: list | None = None):
+        # write_config passes one list shared by all the renderers
+        self.failures = [] if failures is None else failures
 
     @contextmanager
     def isolate(self, op: str, key):
@@ -51,7 +51,7 @@ class RenderFailures:
             yield
         except Exception:
             logger.error('%s: failed to %s %r', self.__class__.__name__, op, str(key), exc_info=True)
-            self.failures.append(f'{op} {key}')
+            self.failures.append(f'{self.__class__.__name__}: {op} {key}')
 
 
 class NvmetConfig(RenderFailures):
@@ -508,7 +508,7 @@ class NvmetNamespaceConfig(NvmetConfig):
             except Exception:
                 # e.g. the subsystem itself failed to be created
                 logger.error('%s: failed to list %r', self.__class__.__name__, str(parent_dir), exc_info=True)
-                self.failures.extend(f'create {parent_dir}/{key}' for key in config_keys)
+                self.failures.extend(f'{self.__class__.__name__}: create {parent_dir}/{key}' for key in config_keys)
                 continue
             add_keys = config_keys - live_keys
             remove_keys = live_keys - config_keys
@@ -690,25 +690,19 @@ def write_config(config):
     #
     # Errors on individual items are logged and collected (see
     # RenderFailures) rather than aborting the whole render.
-    renderers = (
-        NvmetSubsysConfig(),
-        NvmetHostConfig(),
-        NvmetPortConfig(),
-        NvmetPortReferralConfig(),
-        NvmetPortAnaReferralConfig(),
-        NvmetHostSubsysConfig(),
-        NvmetPortSubsysConfig(),
-        NvmetNamespaceConfig(),
-    )
-    with contextlib.ExitStack() as stack:
-        for renderer in renderers:
-            stack.enter_context(renderer.render(config))
+    failures = []
+    with (
+        NvmetSubsysConfig(failures).render(config),
+        NvmetHostConfig(failures).render(config),
+        NvmetPortConfig(failures).render(config),
+        NvmetPortReferralConfig(failures).render(config),
+        NvmetPortAnaReferralConfig(failures).render(config),
+        NvmetHostSubsysConfig(failures).render(config),
+        NvmetPortSubsysConfig(failures).render(config),
+        NvmetNamespaceConfig(failures).render(config),
+    ):
+        pass
 
-    failures = [
-        f'{renderer.__class__.__name__}: {failure}'
-        for renderer in renderers
-        for failure in renderer.failures
-    ]
     if failures:
         raise RuntimeError(f'Kernel nvmet config applied with {len(failures)} failure(s): {"; ".join(failures)}')
 
