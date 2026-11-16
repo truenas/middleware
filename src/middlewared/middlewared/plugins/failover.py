@@ -8,6 +8,7 @@ import logging
 import os
 import shutil
 import stat
+import subprocess
 import time
 
 from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
@@ -58,6 +59,12 @@ from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_FILE
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
+
+# Timeouts in seconds for prepare_smb_failover. Keep their sum under the 20 seconds that
+# failover.reboot.other_node allows for become_passive.
+SMB_FAILOVER_FIREWALL_TIMEOUT = 3
+SMB_FAILOVER_SYNC_TIMEOUT = 10
+SMB_FAILOVER_MARK_TIMEOUT = 3
 
 logger = logging.getLogger('failover')
 
@@ -326,11 +333,83 @@ class FailoverService(ConfigService):
             Current Node In The Head" (similar to **STONITH**). This ensures the current node gets out
             of the way *completely* so there is no chance of the zpool being imported on both nodes at
             the same time which can ultimately end in data corruption.
+
+        With SMB stateful failover, prepare_smb_failover runs first so that SMB durable handles survive.
         """
         if self.middleware.call_sync('failover.config')['disabled'] is True:
             raise ValidationError('failover.become_passive', 'Failover must be enabled.')
         else:
-            stcnith_reboot()
+            try:
+                self.prepare_smb_failover()
+            finally:
+                stcnith_reboot()
+
+    @private
+    def prepare_smb_failover(self):
+        """
+        The other controller drops SMB durable handles that have unflushed writes. This keeps them:
+
+        1. Block SMB and VIP traffic both ways. Clients get no more replies and resend unanswered requests.
+        2. Sync the pools that have SMB shares.
+        3. Run `truenas_smbhad mark-synced` to tell the other controller that the pools are synced.
+
+        Each step has a timeout. If one fails, the rest are skipped and the handles are dropped as before.
+        The caller must reset this controller afterwards in all cases.
+        """
+        try:
+            if not self.middleware.call_sync('smb.config')['stateful_failover']:
+                return
+            if not self.middleware.call_sync('service.started', 'cifs'):
+                return
+            pools = {
+                share['dataset'].split('/')[0]
+                for share in self.middleware.call_sync('sharing.smb.query', [], {'select': ['dataset']})
+                if share['dataset']
+            }
+        except Exception:
+            self.logger.warning('SMB failover preparation: checking the SMB service failed', exc_info=True)
+            return
+        if not pools:
+            return
+
+        try:
+            fw = self.middleware.call_sync('failover.firewall.drop_all', True)
+            if fw.wait_sync(timeout=SMB_FAILOVER_FIREWALL_TIMEOUT, raise_error=True) is not True:
+                raise CallError('no rules applied')
+        except Exception:
+            self.logger.warning('SMB failover preparation: blocking the traffic failed', exc_info=True)
+            return
+
+        try:
+            sync = subprocess.Popen(
+                ['zpool', 'sync', *sorted(pools)], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
+            )
+            err = sync.communicate(timeout=SMB_FAILOVER_SYNC_TIMEOUT)[1]
+        except subprocess.TimeoutExpired:
+            # Don't wait for it (subprocess.run would): a hung pool must not block the reset.
+            sync.kill()
+            self.logger.warning('SMB failover preparation: zpool sync timed out')
+            return
+        except Exception:
+            self.logger.warning('SMB failover preparation: zpool sync failed', exc_info=True)
+            return
+        if sync.returncode != 0:
+            self.logger.warning('SMB failover preparation: zpool sync failed: %s', err.strip())
+            return
+
+        try:
+            cp = subprocess.run(
+                ['truenas_smbhad', 'mark-synced', '--timeout-ms', str(SMB_FAILOVER_MARK_TIMEOUT * 1000)],
+                capture_output=True, text=True, timeout=SMB_FAILOVER_MARK_TIMEOUT + 1,
+            )
+        except Exception:
+            self.logger.warning('SMB failover preparation: truenas_smbhad mark-synced failed', exc_info=True)
+            return
+        result = ' '.join((cp.stdout + cp.stderr).split())
+        if cp.returncode == 0:
+            self.logger.info('SMB failover preparation: %s', result)
+        else:
+            self.logger.warning('SMB failover preparation: %s', result)
 
     @private
     async def force_master(self):

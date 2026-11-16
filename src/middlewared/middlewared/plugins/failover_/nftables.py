@@ -35,6 +35,14 @@ class NftablesService(Service):
                 rules.append(f'add rule {i} filter INPUT tcp dport {sshport} counter accept')
                 rules.append(f'add rule {i} filter INPUT tcp dport {web["ui_port"]} counter accept')
                 rules.append(f'add rule {i} filter INPUT tcp dport {web["ui_httpsport"]} counter accept')
+                if data['replies']:
+                    # allow their replies too
+                    rules.append(f'add rule {i} filter OUTPUT tcp sport {sshport} counter accept')
+                    rules.append(f'add rule {i} filter OUTPUT tcp sport {web["ui_port"]} counter accept')
+                    rules.append(f'add rule {i} filter OUTPUT tcp sport {web["ui_httpsport"]} counter accept')
+                    # block SMB on all addresses, not just the VIPs
+                    rules.append(f'add rule {i} filter INPUT tcp dport {{ 139, 445 }} counter drop')
+                    rules.append(f'add rule {i} filter OUTPUT tcp sport {{ 139, 445 }} counter drop')
                 # only tcp and udp are dropped so that icmp (ping, path MTU
                 # discovery, IPv6 neighbor discovery) keeps working on the VIPs
                 drop = 'meta l4proto { tcp, udp } counter drop'
@@ -45,8 +53,12 @@ class NftablesService(Service):
                     # to block traffic there.
                     if j['type'] == 'INET' and i == 'ip':
                         rules.append(f'add rule {i} filter INPUT {i} daddr {j["address"]}/32 {drop}')
+                        if data['replies']:
+                            rules.append(f'add rule {i} filter OUTPUT {i} saddr {j["address"]}/32 {drop}')
                     elif j['type'] == 'INET6' and i == 'ip6':
                         rules.append(f'add rule {i} filter INPUT {i} daddr {j["address"]}/128 {drop}')
+                        if data['replies']:
+                            rules.append(f'add rule {i} filter OUTPUT {i} saddr {j["address"]}/128 {drop}')
 
             if i == 'ip':
                 v4 = rules
@@ -68,17 +80,23 @@ class NftablesService(Service):
 
         return True
 
-    def flush_chain_INPUT(self):
-        ip4_flush = not bool(run(['nft', 'flush', 'chain', 'ip', 'filter', 'INPUT']).returncode)
-        ip6_flush = not bool(run(['nft', 'flush', 'chain', 'ip6', 'filter', 'INPUT']).returncode)
-        return ip4_flush and ip6_flush
+    def flush_chains(self):
+        flushed = True
+        for i in ('ip', 'ip6'):
+            for chain in ('INPUT', 'OUTPUT'):
+                flushed &= not bool(run(['nft', 'flush', 'chain', i, 'filter', chain]).returncode)
+        return flushed
 
     @job(lock=JOB_LOCK)
-    def drop_all(self, job):
+    def drop_all(self, job, replies=False):
         """
         Drops (silently) all v4/v6 inbound TCP/UDP traffic destined for
         the VIP addresses on a TrueNAS SCALE HA system. SSH and webUI
         mgmt traffic is always allowed.
+
+        With `replies`, also drops outbound VIP traffic, and SMB traffic both
+        ways on all addresses. Use it only right before this controller is
+        reset (see failover.prepare_smb_failover).
 
         NOTE:
             Do not call this unless you know what
@@ -95,10 +113,10 @@ class NftablesService(Service):
         if not vips:
             raise CallError('No VIP addresses detected on system')
 
-        if not self.flush_chain_INPUT():
-            self.logger.error('Failed flushing INPUT chain')
+        if not self.flush_chains():
+            self.logger.error('Failed flushing INPUT and OUTPUT chains')
 
-        return self.generate_rules({'drop': True, 'vips': vips})
+        return self.generate_rules({'drop': True, 'replies': replies, 'vips': vips})
 
     @job(lock=JOB_LOCK)
     def accept_all(self, job):
@@ -106,7 +124,7 @@ class NftablesService(Service):
         if not self.middleware.call_sync('failover.licensed'):
             return False
 
-        if not self.flush_chain_INPUT():
-            self.logger.error('Failed flushing INPUT chain')
+        if not self.flush_chains():
+            self.logger.error('Failed flushing INPUT and OUTPUT chains')
 
-        return self.generate_rules({'drop': False, 'vips': []})
+        return self.generate_rules({'drop': False, 'replies': False, 'vips': []})
