@@ -18,8 +18,9 @@ def temp_remove_ntp_config():
         yield copy.deepcopy(orig[0])  # arbitrarily yield first entry
     finally:
         for i in orig:
-            # finally update with original (functional) config
-            assert call("system.ntpserver.create", i)
+            # finally update with original (functional) config, without probing the servers again (NTS ones
+            # would need TCP port 4460 to be reachable)
+            assert call("system.ntpserver.create", i | {"force": True})
 
 
 def test_verify_ntp_alert_is_raised():

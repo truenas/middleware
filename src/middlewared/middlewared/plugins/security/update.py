@@ -26,6 +26,7 @@ class SystemSecurityModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     enable_fips = sa.Column(sa.Boolean(), default=False)
     enable_gpos_stig = sa.Column(sa.Boolean(), default=False)
+    require_nts = sa.Column(sa.Boolean(), default=False)
     min_password_age = sa.Column(sa.Integer(), nullable=True)
     max_password_age = sa.Column(sa.Integer(), nullable=True)
     password_complexity_ruleset = sa.Column(sa.JSON(set), nullable=True)
@@ -255,6 +256,15 @@ class SystemSecurityService(ConfigService):
                 )
 
     @private
+    async def validate_require_nts(self):
+        # chronyd would otherwise have nothing it may synchronize the clock to
+        if not await self.middleware.call('system.ntpserver.query', [['nts', '=', True]]):
+            raise ValidationError(
+                'system_security_update.require_nts',
+                'At least one NTP server with NTS enabled must be configured first.'
+            )
+
+    @private
     async def validate_password_security(self, old: dict, new: dict) -> bool:
         """
         Performs validation of global local account security settings.
@@ -376,7 +386,14 @@ class SystemSecurityService(ConfigService):
 
             await self.validate_stig(job.credentials)
 
+        if new['require_nts'] and not old['require_nts']:
+            await self.validate_require_nts()
+
         await self.middleware.call('datastore.update', self._config.datastore, old['id'], new)
+
+        if new['require_nts'] != old['require_nts']:
+            # chrony's `authselectmode`; service.control restarts chronyd on the other controller too (`ha_propagate`)
+            await (await self.middleware.call('service.control', 'RESTART', 'ntpd')).wait(raise_error=True)
 
         reboot_reason = None
         reboot_other_node = False
