@@ -30,7 +30,7 @@ from middlewared.utils.directoryservices.constants import (
     DSCredType, DomainJoinResponse, DSStatus, DSType, DEF_SVC_OPTS
 )
 from middlewared.utils.directoryservices.credential import (
-    validate_credential, validate_ldap_credential,
+    get_time_advice, validate_credential, validate_ldap_credential,
 )
 from middlewared.utils.directoryservices.ldap_constants import (
     LDAP_SEARCH_BASES_SCHEMA_NAME, LDAP_PASSWD_MAP_SCHEMA_NAME,
@@ -687,7 +687,7 @@ class DirectoryServices(ConfigService):
                 # validating credentials below
                 self.logger.debug('kdestroy failed while preparing initial credentials', exc_info=True)
 
-        validate_credential(SCHEMA, new, verrors, revert)
+        validate_credential(SCHEMA, new, verrors, revert, get_time_advice(self.middleware))
         # Validating a Kerberos credential replaces the primary domain's name with the one the domain controller reports
         self.validate_idmap_names(old, new, verrors)
         if verrors:
@@ -1030,7 +1030,9 @@ class DirectoryServices(ConfigService):
         # and we don't try to recover while leaving the domain.
         orig_state = self.middleware.call_sync('directoryservices.status')['status']
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
-        validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
+        validate_credential(
+            'directoryservices.leave_domain', ds_config, verrors, revert, get_time_advice(self.middleware)
+        )
         if verrors:
             self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, orig_state)
             self.__revert_changes(revert)
