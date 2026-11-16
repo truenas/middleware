@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 
 from middlewared.api.current import CloudBackupEntry, CredentialsEntry
-from middlewared.plugins.cloud_backup.restic import ResticConfig, get_restic_config
+from middlewared.plugins.cloud_backup.restic import ResticConfig, get_restic_config, restic_error_message
 from middlewared.service import CallError, ServiceContext
 
 
@@ -48,7 +48,7 @@ def is_initialized(context: ServiceContext, restic_config: ResticConfig) -> bool
         )
         return True
     except subprocess.CalledProcessError as e:
-        text = e.stderr.strip()
+        text = restic_error_message(e.stderr)
 
         if "Is there a repository at the following location?" in text:
             return False
@@ -73,4 +73,4 @@ def init(context: ServiceContext, entry: CloudBackupEntry, credentials: Credenti
             check=True,
         )
     except subprocess.CalledProcessError as e:
-        raise CallError(e.stderr)
+        raise CallError(restic_error_message(e.stderr))

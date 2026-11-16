@@ -6,7 +6,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from middlewared.api.current import CloudBackupSnapshot, CloudBackupSnapshotItem
-from middlewared.plugins.cloud_backup.restic import get_restic_config
+from middlewared.plugins.cloud_backup.restic import get_restic_config, restic_error_message
 from middlewared.plugins.cloud_backup.utils import resolve_credentials
 from middlewared.service import CallError, ServiceContext
 
@@ -31,7 +31,7 @@ def list_snapshots(context: ServiceContext, id_: int) -> list[CloudBackupSnapsho
             check=True,
         ).stdout)
     except subprocess.CalledProcessError as e:
-        raise CallError(e.stderr)
+        raise CallError(restic_error_message(e.stderr))
 
     for snapshot in snapshots:
         snapshot["time"] = datetime.fromisoformat(snapshot["time"])
@@ -58,7 +58,7 @@ def list_snapshot_directory(
             check=True,
         ).stdout.splitlines()))
     except subprocess.CalledProcessError as e:
-        raise CallError(e.stderr)
+        raise CallError(restic_error_message(e.stderr))
 
     contents = []
     for item in items[1:]:
@@ -92,4 +92,4 @@ def delete_snapshot(context: ServiceContext, job: Job, id_: int, snapshot_id: st
             check=True,
         )
     except subprocess.CalledProcessError as e:
-        raise CallError(e.stderr)
+        raise CallError(restic_error_message(e.stderr))
