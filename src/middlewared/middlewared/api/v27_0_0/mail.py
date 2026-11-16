@@ -33,6 +33,7 @@ class MailEntry(BaseModel):
     outgoingserver: str = Field(description="Hostname or IP address of the SMTP server used for sending emails.")
     port: int = Field(description="TCP port number for the SMTP server connection.")
     security: Literal["PLAIN", "SSL", "TLS"] = Field(description="Type of encryption.")
+    validate_certificate: bool = Field(description="Validate the SMTP server certificate.")
     smtp: bool = Field(description="Whether SMTP authentication is enabled and `user`, `pass` are required.")
     user: str | None = Field(description="SMTP username.")
     pass_: Secret[str | None] = Field(alias="pass", description="SMTP password.")
