@@ -26,6 +26,14 @@ def upgrade():
     connection = op.get_bind()
     rows = connection.execute(sa.text('SELECT id, gc_hosts FROM network_globalconfiguration')).fetchall()
     for id_, stored in rows:
+        try:
+            if isinstance(json.loads(stored), list):
+                # 27.1 converts the column in its own revision a4c63b1ff6cf. Converting it again would store the
+                # whole list as a single host entry.
+                continue
+        except (TypeError, ValueError):
+            pass
+
         # A carriage return becomes a separator of its own: the reader split on a line feed alone, so a
         # value pasted with CRLF would otherwise leave one at the end of every entry.
         normalized = (stored or '').replace('\r\n', '\n').replace('\r', '\n')
