@@ -13,6 +13,7 @@ from spdk.rpc.client import JSONRPCClient  # type: ignore[import-untyped]
 from middlewared.plugins.nvmet.constants import (
     NAMESPACE_DEVICE_TYPE,
     NVMET_DISCOVERY_NQN,
+    NVMET_FILE_BLOCK_SIZE,
     PORT_ADDR_FAMILY,
 )
 
@@ -22,6 +23,7 @@ from .render_common import (
     ANA_PORT_INDEX_OFFSET,
     NVMET_NODE_A_MAX_CONTROLLER_ID,
     NVMET_NODE_B_MIN_CONTROLLER_ID,
+    RenderFailures,
     addr_traddr_to_address,
     ana_grpid,
     ana_state,
@@ -91,13 +93,17 @@ def nvmf_ready(cheap: bool = False) -> bool:
     return False
 
 
-class NvmetConfig:
+class NvmetConfig(RenderFailures):
     DEBUG = False
     query: str
     query_key: str
 
     def config_key(self, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> str | None:
         return str(config_item[self.query_key])
+
+    def log_key(self, key: str) -> str:
+        # How an item is identified in failure logs and messages
+        return key
 
     def config_dict(self, render_ctx: dict[str, Any]) -> dict[str, Any]:
         # Implement so that any class can skip entries by returning
@@ -138,15 +144,18 @@ class NvmetConfig:
         self.debug(live, config)
 
         for item in add_keys:
-            self.add(client, config[item], render_ctx)  # type: ignore[attr-defined]
+            with self.isolate('add', self.log_key(item)):
+                self.add(client, config[item], render_ctx)  # type: ignore[attr-defined]
 
         for item in update_keys:
-            self.update(client, config[item], live[item], render_ctx)  # type: ignore[attr-defined]
+            with self.isolate('update', self.log_key(item)):
+                self.update(client, config[item], live[item], render_ctx)  # type: ignore[attr-defined]
 
         yield
 
         for item in remove_keys:
-            self.delete(client, live[item], render_ctx)  # type: ignore[attr-defined]
+            with self.isolate('delete', self.log_key(item)):
+                self.delete(client, live[item], render_ctx)  # type: ignore[attr-defined]
 
 
 class NvmetSubsysConfig(NvmetConfig):
@@ -203,7 +212,7 @@ class NvmetSubsysConfig(NvmetConfig):
         )
 
 
-class NvmetTransportConfig:
+class NvmetTransportConfig(RenderFailures):
     """
     There currently is no mechanism to unload transports, so in the render
     we will simply add them if necessary.
@@ -212,16 +221,19 @@ class NvmetTransportConfig:
     def render(self, client: Any, render_ctx: dict[str, Any]) -> Iterator[None]:
         # Create a set of the transports demanded by the config
         required = set([port['addr_trtype'] for port in render_ctx['nvmet.port.query']])
-        current = set([transport['trtype'] for transport in client.call('nvmf_get_transports')])
+        current: set[str] = set()
+        with self.isolate('read', 'transports'):
+            current = set([transport['trtype'] for transport in client.call('nvmf_get_transports')])
         for transport in required - current:
-            client.call(
-                'nvmf_create_transport',
-                {
-                    'trtype': transport,
-                    'no_srq': False,        # default in former wrapper
-                    'c2h_success': True,    # default in former wrapper
-                }
-            )
+            with self.isolate('add', transport):
+                client.call(
+                    'nvmf_create_transport',
+                    {
+                        'trtype': transport,
+                        'no_srq': False,        # default in former wrapper
+                        'c2h_success': True,    # default in former wrapper
+                    }
+                )
         yield
 
 
@@ -468,6 +480,10 @@ class NvmetKeyringDhchapKeyConfig(NvmetConfig):
     def config_key(self, config_item, render_ctx):
         return host_config_key(config_item, self.key_type)
 
+    def log_key(self, key):
+        # Drop the trailing hash of the secret, leaving the key type and hostnqn
+        return key.rsplit('-', 1)[0]
+
     def _write_keyfile(self, key):
         with tempfile.NamedTemporaryFile(mode="w+", dir=SPDK_KEY_DIR, delete=False) as tmp_file:
             tmp_file.write(key)
@@ -502,8 +518,8 @@ class NvmetHostSubsysConfig(NvmetConfig):
     query = 'nvmet.host_subsys.query'
 
     def config_key(self, config_item, render_ctx):
-
-        return f"{config_item['host']['hostnqn']}:{config_item['subsys']['subnqn']}"
+        if subsys_visible(config_item['subsys'], render_ctx):
+            return f"{config_item['host']['hostnqn']}:{config_item['subsys']['subnqn']}"
 
     def get_live(self, client, render_ctx):
         result = {}
@@ -653,7 +669,7 @@ class NvmetBdevConfig(NvmetConfig):
                     'bdev_aio_create',
                     {
                         'filename': _path,
-                        'block_size': render_ctx.get('path_to_recordsize', {}).get(_path, 512),
+                        'block_size': render_ctx.get('path_to_recordsize', {}).get(_path, NVMET_FILE_BLOCK_SIZE),
                         'name': name
                     }
                 )
@@ -769,7 +785,7 @@ def nvmf_subsystem_get_qpairs(client, nqn):
     )
 
 
-class NvmetAnaStateConfig:
+class NvmetAnaStateConfig(RenderFailures):
 
     @contextmanager
     def render(self, client, render_ctx: dict):
@@ -784,7 +800,9 @@ class NvmetAnaStateConfig:
         for subsys in render_ctx['nvmet.subsys.query']:
             if subsys_ana(subsys, render_ctx):
                 nqn = subsys['subnqn']
-                _listeners = client.call('nvmf_subsystem_get_listeners', {'nqn': nqn})
+                _listeners = []
+                with self.isolate('read listeners of', nqn):
+                    _listeners = client.call('nvmf_subsystem_get_listeners', {'nqn': nqn})
                 for listener in _listeners:
                     if cur_state := next(filter(lambda x: x['ana_group'] == _anagrpid, listener['ana_states']), None):
                         if cur_state['ana_state'] != new_state:
@@ -797,13 +815,17 @@ class NvmetAnaStateConfig:
                             updates.append(params)
 
         if new_state == ANA_INACCESSIBLE_STATE:
-            for params in updates:
-                client.call('nvmf_subsystem_listener_set_ana_state', params)
+            self.set_ana_states(client, updates)
 
         yield
 
         if new_state == ANA_OPTIMIZED_STATE:
-            for params in updates:
+            self.set_ana_states(client, updates)
+
+    def set_ana_states(self, client: Any, updates: list[dict[str, Any]]) -> None:
+        for params in updates:
+            key = f'{params["nqn"]} {params.get("traddr")}:{params.get("trsvcid")}'
+            with self.isolate(f'set ANA state {params["ana_state"]} of', key):
                 client.call('nvmf_subsystem_listener_set_ana_state', params)
 
 
@@ -822,20 +844,27 @@ def write_config(config):
     #
     # SPDK automatically does what we had called cross-port
     # referrals in the kernel implementation.
+    #
+    # Errors on individual items are logged and collected (see
+    # RenderFailures) rather than aborting the whole render.
+    failures: list[str] = []
     with (
-        NvmetSubsysConfig().render(client, config),
-        NvmetTransportConfig().render(client, config),
-        NvmetKeyringDhchapKeyConfig().render(client, config),
-        NvmetKeyringDhchapCtrlKeyConfig().render(client, config),
-        NvmetPortConfig().render(client, config),
-        NvmetPortAnaReferralConfig().render(client, config),
-        NvmetHostSubsysConfig().render(client, config),
-        NvmetPortSubsysConfig().render(client, config),
-        NvmetAnaStateConfig().render(client, config),
-        NvmetBdevConfig().render(client, config),
-        NvmetNamespaceConfig().render(client, config),
+        NvmetSubsysConfig(failures).render(client, config),
+        NvmetTransportConfig(failures).render(client, config),
+        NvmetKeyringDhchapKeyConfig(failures).render(client, config),
+        NvmetKeyringDhchapCtrlKeyConfig(failures).render(client, config),
+        NvmetPortConfig(failures).render(client, config),
+        NvmetPortAnaReferralConfig(failures).render(client, config),
+        NvmetHostSubsysConfig(failures).render(client, config),
+        NvmetPortSubsysConfig(failures).render(client, config),
+        NvmetAnaStateConfig(failures).render(client, config),
+        NvmetBdevConfig(failures).render(client, config),
+        NvmetNamespaceConfig(failures).render(client, config),
     ):
         pass
+
+    if failures:
+        raise RuntimeError(f'SPDK nvmet config applied with {len(failures)} failure(s): {"; ".join(failures)}')
 
 
 def lock_namespace(data, render_ctx):
