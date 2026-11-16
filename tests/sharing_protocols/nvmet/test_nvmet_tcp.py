@@ -83,6 +83,8 @@ MB_150 = 150 * MB
 MB_200 = 200 * MB
 NVME_ALT1_TCP_PORT = 4444
 NVME_ALT2_TCP_PORT = 4555
+# How long to wait for the host to drop a subsystem after disconnecting
+SUBSYS_GONE_TIMEOUT = 10
 
 # Use a RE because the message returned varies depending on whether based on
 # Bookworm or Trixie
@@ -297,6 +299,44 @@ class NVMeCLIClient:
         command = 'nvme list-subsys --output-format=json'
         return json.loads(self.run_command(command))
 
+    def subsys_nqns(self):
+        # Output is a list of hosts with newer nvme-cli, a single dict with older.
+        data = self.nvme_list_subsys()
+        hosts = data if isinstance(data, list) else [data]
+        return {
+            subsys['NQN']
+            for host in hosts
+            for subsys in host.get('Subsystems', [])
+            if 'NQN' in subsys
+        }
+
+    def assert_subsys_gone(self, nqn=None):
+        """
+        Assert that, after a disconnect, the host no longer has the subsystem
+        `nqn` (or any subsystem, if `nqn` is None).
+
+        A subsystem lingers (with no paths) if something on the host still has
+        one of its namespaces open.  Fail here, in the test responsible, rather
+        than in whichever later test next checks for a clean host.
+        """
+        deadline = time.monotonic() + SUBSYS_GONE_TIMEOUT
+        while True:
+            remaining = self.subsys_nqns()
+            if nqn is not None:
+                remaining &= {nqn}
+            if not remaining:
+                return
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(1)
+        holders = self.run_command(
+            'fuser -v /dev/nvme*n* 2>&1; ls -l /sys/block/nvme*/holders/ 2>&1; true'
+        )
+        raise AssertionError(
+            f'Host still has subsystem(s) {sorted(remaining)} '
+            f'{SUBSYS_GONE_TIMEOUT}s after disconnect:\n{holders}'
+        )
+
     @contextlib.contextmanager
     def connect_ctx(
         self, nqn, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp', **kwargs
@@ -304,32 +344,42 @@ class NVMeCLIClient:
         if self.DEBUG:
             print('Connecting:', nqn)
         self.connect(nqn, addr, port, transport, **kwargs)
+        succeeded = False
         try:
             if self.DEBUG:
                 print('Connected:', nqn)
             yield
+            succeeded = True
         finally:
             if self.DEBUG:
                 print('Disconnecting:', nqn)
             self.disconnect(nqn)
             if self.DEBUG:
                 print('Disconnected:', nqn)
+            # Don't mask an exception raised in the body
+            if succeeded:
+                self.assert_subsys_gone(nqn)
 
     @contextlib.contextmanager
     def connect_all_ctx(self, addr=None, port=NVME_DEFAULT_TCP_PORT, transport='tcp'):
         if self.DEBUG:
             print('Doing connect-all')
         self.connect_all(addr, port, transport)
+        succeeded = False
         try:
             if self.DEBUG:
                 print('Connected')
             yield
+            succeeded = True
         finally:
             if self.DEBUG:
                 print('Doing disconnect-all')
             self.disconnect_all()
             if self.DEBUG:
                 print('Disconnected')
+            # Don't mask an exception raised in the body
+            if succeeded:
+                self.assert_subsys_gone()
 
     def run_command(self, command):
         pass
@@ -1056,6 +1106,112 @@ class TestNVMe(NVMeRunning):
                         'nvmet_namespace_update.device_path', in_use_msg
                     ):
                         call('nvmet.namespace.update', ns['id'], {'device_path': file2})
+
+    def test__file_namespace_size_alignment(self, fixture_port):
+        """
+        Test that FILE namespaces must be a multiple of the block size,
+        whether they use a pre-existing file or one created by us.
+        """
+        odd_size = MB_100 + 123
+        odd_file = f'/mnt/{pool_name}/odd_file_{digits}'
+        new_file = f'/mnt/{pool_name}/new_file_{digits}'
+        good_file = f'/mnt/{pool_name}/good_file_{digits}'
+
+        with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
+            subsys_id = subsys['id']
+
+            # Pre-existing file of an unaligned size is rejected
+            ssh(f'truncate -s {odd_size} {odd_file}')
+            try:
+                with assert_validation_errors(
+                    'nvmet_namespace_create.device_path',
+                    f'Size of existing file ({odd_size}) must be a multiple of 512 bytes',
+                ):
+                    with nvmet_namespace(subsys_id, odd_file, DEVICE_TYPE_FILE):
+                        pass
+            finally:
+                ssh(f'rm -f {odd_file}')
+
+            # New file with an unaligned filesize is rejected, and not created
+            with assert_validation_errors(
+                'nvmet_namespace_create.filesize',
+                f'File size ({odd_size}) must be a multiple of 512 bytes',
+            ):
+                with nvmet_namespace(
+                    subsys_id,
+                    new_file,
+                    DEVICE_TYPE_FILE,
+                    filesize=odd_size,
+                    delete_options={'remove': True},
+                ):
+                    pass
+            assert ssh(f'test -e {new_file} && echo yes || echo no').strip() == 'no'
+
+            # Pre-existing file of an aligned size is accepted
+            ssh(f'truncate -s {MB_100} {good_file}')
+            with nvmet_namespace(
+                subsys_id,
+                good_file,
+                DEVICE_TYPE_FILE,
+                delete_options={'remove': True},
+            ) as ns:
+                # Unrelated updates are still allowed
+                call('nvmet.namespace.update', ns['id'], {'enabled': False})
+                call('nvmet.namespace.update', ns['id'], {'enabled': True})
+
+                # Growing to an unaligned filesize is rejected ...
+                with assert_validation_errors(
+                    'nvmet_namespace_update.filesize',
+                    f'File size ({MB_200 + 123}) must be a multiple of 512 bytes',
+                ):
+                    call('nvmet.namespace.update', ns['id'], {'filesize': MB_200 + 123})
+                assert int(ssh(f'stat -c %s {good_file}')) == MB_100
+
+                # ... but growing to an aligned one is fine
+                call('nvmet.namespace.update', ns['id'], {'filesize': MB_200})
+                assert int(ssh(f'stat -c %s {good_file}')) == MB_200
+
+    def test__file_namespace_existing_file_size(self, fixture_port):
+        """
+        Test that resizing a namespace based on a pre-existing file uses
+        the actual size of the file, rather than the stored filesize.
+        """
+        file1 = f'/mnt/{pool_name}/existing_file1_{digits}'
+        file2 = f'/mnt/{pool_name}/existing_file2_{digits}'
+
+        with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
+            subsys_id = subsys['id']
+
+            # No filesize supplied: the actual size is recorded, and the
+            # namespace can subsequently be grown.
+            ssh(f'truncate -s {MB_100} {file1}')
+            with nvmet_namespace(
+                subsys_id,
+                file1,
+                DEVICE_TYPE_FILE,
+                delete_options={'remove': True},
+            ) as ns:
+                assert ns['filesize'] == MB_100
+                ns = call('nvmet.namespace.update', ns['id'], {'filesize': MB_200})
+                assert ns['filesize'] == MB_200
+                assert int(ssh(f'stat -c %s {file1}')) == MB_200
+
+            # Mismatched filesize supplied: a later "expansion" that is
+            # smaller than the actual file must not truncate it.
+            ssh(f'truncate -s {MB_200} {file2}')
+            with nvmet_namespace(
+                subsys_id,
+                file2,
+                DEVICE_TYPE_FILE,
+                filesize=MB_100,
+                delete_options={'remove': True},
+            ) as ns:
+                with assert_validation_errors(
+                    'nvmet_namespace_update.filesize',
+                    'Shrinking an namespace file is not allowed.',
+                ):
+                    call('nvmet.namespace.update', ns['id'], {'filesize': MB_150})
+                assert int(ssh(f'stat -c %s {file2}')) == MB_200
 
     def test__pool_export_import(
         self, fixture_port, loopback_client: NVMeCLIClient, zvol1
