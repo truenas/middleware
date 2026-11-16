@@ -97,6 +97,10 @@ class NvmetConfig:
     query: str
     query_key: str
 
+    def __init__(self, failures: list[str] | None = None) -> None:
+        # write_config passes one list shared by all the renderers
+        self.failures = [] if failures is None else failures
+
     def config_key(self, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> str | None:
         return str(config_item[self.query_key])
 
@@ -137,7 +141,6 @@ class NvmetConfig:
         update_keys = config_keys - remove_keys - add_keys
 
         self.debug(live, config)
-        self.failures: list[str] = []
 
         for item in add_keys:
             self._apply('add', item, client, config[item], render_ctx)
@@ -159,7 +162,7 @@ class NvmetConfig:
             getattr(self, op)(*args)
         except Exception:
             LOGGER.error('%s: failed to %s %r', self.__class__.__name__, op, key, exc_info=True)
-            self.failures.append(f'{op} {key}')
+            self.failures.append(f'{self.__class__.__name__}: {op} {key}')
 
 
 class NvmetSubsysConfig(NvmetConfig):
@@ -838,35 +841,22 @@ def write_config(config):
     #
     # Errors on individual items are logged and collected (see
     # NvmetConfig._apply) rather than aborting the whole render.
-    subsys = NvmetSubsysConfig()
-    keys = NvmetKeyringDhchapKeyConfig()
-    ctrl_keys = NvmetKeyringDhchapCtrlKeyConfig()
-    ports = NvmetPortConfig()
-    referrals = NvmetPortAnaReferralConfig()
-    host_subsys = NvmetHostSubsysConfig()
-    port_subsys = NvmetPortSubsysConfig()
-    bdevs = NvmetBdevConfig()
-    namespaces = NvmetNamespaceConfig()
+    failures: list[str] = []
     with (
-        subsys.render(client, config),
+        NvmetSubsysConfig(failures).render(client, config),
         NvmetTransportConfig().render(client, config),
-        keys.render(client, config),
-        ctrl_keys.render(client, config),
-        ports.render(client, config),
-        referrals.render(client, config),
-        host_subsys.render(client, config),
-        port_subsys.render(client, config),
+        NvmetKeyringDhchapKeyConfig(failures).render(client, config),
+        NvmetKeyringDhchapCtrlKeyConfig(failures).render(client, config),
+        NvmetPortConfig(failures).render(client, config),
+        NvmetPortAnaReferralConfig(failures).render(client, config),
+        NvmetHostSubsysConfig(failures).render(client, config),
+        NvmetPortSubsysConfig(failures).render(client, config),
         NvmetAnaStateConfig().render(client, config),
-        bdevs.render(client, config),
-        namespaces.render(client, config),
+        NvmetBdevConfig(failures).render(client, config),
+        NvmetNamespaceConfig(failures).render(client, config),
     ):
         pass
 
-    failures = [
-        f'{renderer.__class__.__name__}: {failure}'
-        for renderer in (subsys, keys, ctrl_keys, ports, referrals, host_subsys, port_subsys, bdevs, namespaces)
-        for failure in renderer.failures
-    ]
     if failures:
         raise RuntimeError(f'SPDK nvmet config applied with {len(failures)} failure(s): {"; ".join(failures)}')
 
