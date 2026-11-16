@@ -101,6 +101,10 @@ class NvmetConfig(RenderFailures):
     def config_key(self, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> str | None:
         return str(config_item[self.query_key])
 
+    def log_key(self, key: str) -> str:
+        # How an item is identified in failure logs and messages
+        return key
+
     def config_dict(self, render_ctx: dict[str, Any]) -> dict[str, Any]:
         # Implement so that any class can skip entries by returning
         # a config_key of None
@@ -140,17 +144,17 @@ class NvmetConfig(RenderFailures):
         self.debug(live, config)
 
         for item in add_keys:
-            with self.isolate('add', item):
+            with self.isolate('add', self.log_key(item)):
                 self.add(client, config[item], render_ctx)  # type: ignore[attr-defined]
 
         for item in update_keys:
-            with self.isolate('update', item):
+            with self.isolate('update', self.log_key(item)):
                 self.update(client, config[item], live[item], render_ctx)  # type: ignore[attr-defined]
 
         yield
 
         for item in remove_keys:
-            with self.isolate('delete', item):
+            with self.isolate('delete', self.log_key(item)):
                 self.delete(client, live[item], render_ctx)  # type: ignore[attr-defined]
 
 
@@ -475,6 +479,10 @@ class NvmetKeyringDhchapKeyConfig(NvmetConfig):
 
     def config_key(self, config_item, render_ctx):
         return host_config_key(config_item, self.key_type)
+
+    def log_key(self, key):
+        # Drop the trailing hash of the secret, leaving the key type and hostnqn
+        return key.rsplit('-', 1)[0]
 
     def _write_keyfile(self, key):
         with tempfile.NamedTemporaryFile(mode="w+", dir=SPDK_KEY_DIR, delete=False) as tmp_file:
