@@ -1,6 +1,6 @@
 import subprocess
 
-from middlewared.plugins.cloud_backup.restic import get_restic_config
+from middlewared.plugins.cloud_backup.restic import get_restic_config, restic_error_message
 from middlewared.service import CallError, Service, private
 
 
@@ -60,7 +60,7 @@ class CloudBackupService(Service):
             )
             return True
         except subprocess.CalledProcessError as e:
-            text = e.stderr.strip()
+            text = restic_error_message(e.stderr)
 
             if "Is there a repository at the following location?" in text:
                 return False
@@ -85,4 +85,4 @@ class CloudBackupService(Service):
                 check=True,
             )
         except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
+            raise CallError(restic_error_message(e.stderr))
