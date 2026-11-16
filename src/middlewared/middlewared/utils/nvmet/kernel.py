@@ -23,6 +23,7 @@ from .render_common import (
     NVMET_NODE_A_MAX_CONTROLLER_ID,
     NVMET_NODE_B_ANA_GRPID,
     NVMET_NODE_B_MIN_CONTROLLER_ID,
+    RenderFailures,
     addr_traddr_to_address,
     ana_grpid,
     ana_state,
@@ -31,27 +32,6 @@ from .render_common import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class RenderFailures:
-    """
-    Isolate failures to the individual item, so that one bad entry
-    (e.g. a namespace whose device cannot be opened) does not abort the
-    remainder of the render, including the post-yield delete phases of
-    the enclosing renders.  Failures are logged and collected so that
-    write_config can report them once everything has been applied.
-    """
-    def __init__(self, failures: list | None = None):
-        # write_config passes one list shared by all the renderers
-        self.failures = [] if failures is None else failures
-
-    @contextmanager
-    def isolate(self, op: str, key):
-        try:
-            yield
-        except Exception:
-            logger.error('%s: failed to %s %r', self.__class__.__name__, op, str(key), exc_info=True)
-            self.failures.append(f'{self.__class__.__name__}: {op} {key}')
 
 
 class NvmetConfig(RenderFailures):
