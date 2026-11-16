@@ -2,12 +2,18 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, Multiline
 
 __all__ = [
-    "InitShutdownScriptEntry", "InitShutdownScriptCreateArgs", "InitShutdownScriptCreateResult",
-    "InitShutdownScriptUpdateArgs", "InitShutdownScriptUpdateResult", "InitShutdownScriptDeleteArgs",
-    "InitShutdownScriptDeleteResult", "InitShutdownScriptCreate", "InitShutdownScriptUpdate",
+    "InitShutdownScriptEntry",
+    "InitShutdownScriptCreateArgs",
+    "InitShutdownScriptCreateResult",
+    "InitShutdownScriptUpdateArgs",
+    "InitShutdownScriptUpdateResult",
+    "InitShutdownScriptDeleteArgs",
+    "InitShutdownScriptDeleteResult",
+    "InitShutdownScriptCreate",
+    "InitShutdownScriptUpdate",
 ]
 
 
@@ -20,13 +26,13 @@ class InitShutdownScriptCreate(BaseModel):
             "* `SCRIPT`: Execute a script file"
         ),
     )
-    command: str | None = Field(default="", description="Must be given if `type=\"COMMAND\"`.")
-    script: str | None = Field(default="", description="Must be given if `type=\"SCRIPT\"`.")
+    command: Multiline[str] | None = Field(default="", description='Must be given if `type="COMMAND"`.')
+    script: str | None = Field(default="", description='Must be given if `type="SCRIPT"`.')
     when: Literal["PREINIT", "POSTINIT", "SHUTDOWN"] = Field(
         description=(
-            "* \"PREINIT\": Early in the boot process before all services have started.\n"
-            "* \"POSTINIT\": Late in the boot process when most services have started.\n"
-            "* \"SHUTDOWN\": On shutdown."
+            '* "PREINIT": Early in the boot process before all services have started.\n'
+            '* "POSTINIT": Late in the boot process when most services have started.\n'
+            '* "SHUTDOWN": On shutdown.'
         ),
     )
     enabled: bool = Field(default=True, description="Whether the init/shutdown script is enabled to execute.")
@@ -41,7 +47,7 @@ class InitShutdownScriptCreate(BaseModel):
             "limit."
         ),
     )
-    comment: Annotated[str, Field(max_length=255)] = Field(
+    comment: Annotated[Multiline[str], Field(max_length=255)] = Field(
         default="",
         description="Optional comment describing the purpose of this script.",
     )

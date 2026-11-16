@@ -2,8 +2,7 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel
 
-__all__ = ["FailoverDisabledReasonsArgs", "FailoverDisabledReasonsResult",
-           "FailoverDisabledReasonsChangedEvent"]
+__all__ = ["FailoverDisabledReasonsArgs", "FailoverDisabledReasonsResult", "FailoverDisabledReasonsChangedEvent"]
 
 
 class FailoverDisabledReasonsArgs(BaseModel):

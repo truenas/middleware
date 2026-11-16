@@ -8,6 +8,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     IPvAnyAddress,
     MACAddress,
+    Multiline,
     NonEmptyString,
     excluded_field,
 )
@@ -69,20 +70,27 @@ __all__ = [
 
 
 class VMCDROMDevice(BaseModel):
-    dtype: Literal['CDROM'] = Field(description="Device type identifier for CD-ROM/DVD devices.")
+    dtype: Literal["CDROM"] = Field(description="Device type identifier for CD-ROM/DVD devices.")
     path: NonEmptyString = Field(
-        pattern=r'^[^{}]*$',
-        description="Path must not contain \"{\", \"}\" characters, and it should start with \"/mnt/\".",
+        pattern=r"^[^{}]*$",
+        description='Path must not contain "{", "}" characters, and it should start with "/mnt/".',
     )
 
 
 class VMDisplayDevice(BaseModel):
-    dtype: Literal['DISPLAY'] = Field(description="Device type identifier for display/graphics devices.")
+    dtype: Literal["DISPLAY"] = Field(description="Device type identifier for display/graphics devices.")
     resolution: Literal[
-        '1920x1200', '1920x1080', '1600x1200', '1600x900',
-        '1400x1050', '1280x1024', '1280x720',
-        '1024x768', '800x600', '640x480',
-    ] = Field(default='1024x768', description="Screen resolution for the virtual display.")
+        "1920x1200",
+        "1920x1080",
+        "1600x1200",
+        "1600x900",
+        "1400x1050",
+        "1280x1024",
+        "1280x720",
+        "1024x768",
+        "800x600",
+        "640x480",
+    ] = Field(default="1024x768", description="Screen resolution for the virtual display.")
     port: int | None = Field(
         default=None,
         ge=5900,
@@ -93,35 +101,38 @@ class VMDisplayDevice(BaseModel):
         default=None,
         description="Web-based display access port number. `null` for auto-assignment.",
     )
-    bind: NonEmptyString = Field(default='127.0.0.1', description="IP address to bind the display server to.")
+    bind: NonEmptyString = Field(default="127.0.0.1", description="IP address to bind the display server to.")
     wait: bool = Field(default=False, description="Whether to wait for a client connection before starting the VM.")
     password: Secret[str | None] = Field(default=None, description="Password for display server authentication.")
     web: bool = Field(default=True, description="Whether to enable web-based display access.")
-    type_: Literal['SPICE', 'VNC'] = Field(alias='type', default='SPICE', description="Display protocol type.")
+    type_: Literal["SPICE", "VNC"] = Field(alias="type", default="SPICE", description="Display protocol type.")
 
 
 class VMNICPciAddress(BaseModel):
     bus: int = Field(ge=1, le=255, description="PCI bus number. Must be >= 1; bus 0 is the root complex.")
     slot: int = Field(
-        ge=0, le=31,
+        ge=0,
+        le=31,
         description="PCI slot number (0-31). No default: correct value depends on machine type.",
     )
     function: int = Field(default=0, ge=0, le=7, description="PCI function number (0-7).")
     domain: int = Field(
-        default=0, ge=0, le=0,
+        default=0,
+        ge=0,
+        le=0,
         description="PCI domain number. Must be 0; multi-segment topologies are not supported.",
     )
 
 
 class VMNICDevice(BaseModel):
-    dtype: Literal['NIC'] = Field(description="Device type identifier for network interface cards.")
+    dtype: Literal["NIC"] = Field(description="Device type identifier for network interface cards.")
     trust_guest_rx_filters: bool = Field(
         default=False,
         description="Whether to trust guest OS receive filter settings for better performance.",
     )
-    type_: Literal['E1000', 'VIRTIO'] = Field(
-        alias='type',
-        default='E1000',
+    type_: Literal["E1000", "VIRTIO"] = Field(
+        alias="type",
+        default="E1000",
         description="Network interface controller type. `E1000` for Intel compatibility, `VIRTIO` for performance.",
     )
     nic_attach: str | None = Field(
@@ -142,19 +153,19 @@ class VMNICDevice(BaseModel):
 
 
 class VMPCIDevice(BaseModel):
-    dtype: Literal['PCI'] = Field(description="Device type identifier for PCI passthrough devices.")
+    dtype: Literal["PCI"] = Field(description="Device type identifier for PCI passthrough devices.")
     pptdev: NonEmptyString = Field(description="Host PCI device identifier to pass through to the VM.")
 
 
 class VMRAWDevice(BaseModel):
-    dtype: Literal['RAW'] = Field(description="Device type identifier for raw disk devices.")
+    dtype: Literal["RAW"] = Field(description="Device type identifier for raw disk devices.")
     path: NonEmptyString = Field(
-        pattern='^[^{}]*$',
+        pattern="^[^{}]*$",
         description="Filesystem path to the raw disk device or image file.",
     )
-    type_: Literal['AHCI', 'VIRTIO'] = Field(
-        alias='type',
-        default='AHCI',
+    type_: Literal["AHCI", "VIRTIO"] = Field(
+        alias="type",
+        default="AHCI",
         description="Disk controller interface type. AHCI for compatibility, VIRTIO for performance.",
     )
     exists: bool = Field(default=False, description="Whether the disk file already exists or should be created.")
@@ -171,8 +182,8 @@ class VMRAWDevice(BaseModel):
         default=None,
         description="Physical sector size for the disk. `null` for default.",
     )
-    iotype: Literal['NATIVE', 'THREADS', 'IO_URING'] = Field(
-        default='THREADS',
+    iotype: Literal["NATIVE", "THREADS", "IO_URING"] = Field(
+        default="THREADS",
         description="I/O backend type for disk operations.",
     )
     serial: NonEmptyString | None = Field(
@@ -182,14 +193,14 @@ class VMRAWDevice(BaseModel):
 
 
 class VMDiskDevice(BaseModel):
-    dtype: Literal['DISK'] = Field(description="Device type identifier for virtual disk devices.")
+    dtype: Literal["DISK"] = Field(description="Device type identifier for virtual disk devices.")
     path: NonEmptyString | None = Field(
         default=None,
         description="Path to existing disk file or ZFS volume. `null` if creating a new ZFS volume.",
     )
-    type_: Literal['AHCI', 'VIRTIO'] = Field(
-        alias='type',
-        default='AHCI',
+    type_: Literal["AHCI", "VIRTIO"] = Field(
+        alias="type",
+        default="AHCI",
         description="Disk controller interface type. AHCI for compatibility, VIRTIO for performance.",
     )
     create_zvol: bool = Field(default=False, description="Whether to create a new ZFS volume for this disk.")
@@ -209,8 +220,8 @@ class VMDiskDevice(BaseModel):
         default=None,
         description="Physical sector size for the disk. `null` for default.",
     )
-    iotype: Literal['NATIVE', 'THREADS', 'IO_URING'] = Field(
-        default='THREADS',
+    iotype: Literal["NATIVE", "THREADS", "IO_URING"] = Field(
+        default="THREADS",
         description="I/O backend type for disk operations.",
     )
     serial: NonEmptyString | None = Field(
@@ -218,39 +229,45 @@ class VMDiskDevice(BaseModel):
         description="Serial number to assign to the virtual disk. `null` for auto-generated.",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_attrs(self):
         if self.path is not None and self.create_zvol is True:
-            raise ValueError('Path should not be provided if create_zvol is set')
+            raise ValueError("Path should not be provided if create_zvol is set")
         if self.path is None and self.create_zvol is None:
-            raise ValueError('Either `path` or `create_zvol` should be set')
+            raise ValueError("Either `path` or `create_zvol` should be set")
         if self.path is None and self.create_zvol is False:
-            raise ValueError('Path must be specified if create_zvol is not set')
+            raise ValueError("Path must be specified if create_zvol is not set")
 
         return self
 
 
 class USBAttributes(BaseModel):
     vendor_id: NonEmptyString = Field(
-        pattern='^0x.*',
+        pattern="^0x.*",
         description="USB vendor identifier in hexadecimal format (e.g., '0x1d6b' for Linux Foundation).",
     )
     product_id: NonEmptyString = Field(
-        pattern='^0x.*',
+        pattern="^0x.*",
         description="USB product identifier in hexadecimal format (e.g., '0x0002' for 2.0 root hub).",
     )
 
 
 class VMUSBDevice(BaseModel):
-    dtype: Literal['USB'] = Field(description="Device type identifier for USB devices.")
+    dtype: Literal["USB"] = Field(description="Device type identifier for USB devices.")
     usb: USBAttributes | None = Field(
         default=None,
         description="USB device attributes for identification. `null` for USB host controller only.",
     )
     controller_type: Literal[
-        'piix3-uhci', 'piix4-uhci', 'ehci', 'ich9-ehci1',
-        'vt82c686b-uhci', 'pci-ohci', 'nec-xhci', 'qemu-xhci',
-    ] = Field(default='nec-xhci', description="USB controller type for the virtual machine.")
+        "piix3-uhci",
+        "piix4-uhci",
+        "ehci",
+        "ich9-ehci1",
+        "vt82c686b-uhci",
+        "pci-ohci",
+        "nec-xhci",
+        "qemu-xhci",
+    ] = Field(default="nec-xhci", description="USB controller type for the virtual machine.")
     device: NonEmptyString | None = Field(
         default=None,
         description="Host USB device path to pass through. `null` for controller only.",
@@ -267,7 +284,7 @@ class VMISCSIDiskTarget(BaseModel):
 
 
 class VMISCSIDiskDevice(BaseModel):
-    dtype: Literal['ISCSI_DISK'] = Field(description="Device type identifier for iSCSI disk devices.")
+    dtype: Literal["ISCSI_DISK"] = Field(description="Device type identifier for iSCSI disk devices.")
     portal_address: IPvAnyAddress = Field(
         description="IP address of the iSCSI target portal.",
     )
@@ -291,9 +308,15 @@ class VMISCSIDiskDevice(BaseModel):
 
 
 VMDeviceType: TypeAlias = Annotated[
-    VMCDROMDevice | VMDisplayDevice | VMISCSIDiskDevice | VMNICDevice
-    | VMPCIDevice | VMRAWDevice | VMDiskDevice | VMUSBDevice,
-    Discriminator('dtype')
+    VMCDROMDevice
+    | VMDisplayDevice
+    | VMISCSIDiskDevice
+    | VMNICDevice
+    | VMPCIDevice
+    | VMRAWDevice
+    | VMDiskDevice
+    | VMUSBDevice,
+    Discriminator("dtype"),
 ]
 
 
@@ -369,9 +392,9 @@ class VMDeviceIotypeChoicesArgs(BaseModel):
 
 
 class VMDeviceIotypeChoices(BaseModel):
-    NATIVE: str = Field(default='NATIVE', description="Native asynchronous I/O for best performance with NVMe.")
-    THREADS: str = Field(default='THREADS', description="Thread-based I/O suitable for most storage types.")
-    IO_URING: str = Field(default='IO_URING', description="Linux io_uring interface for high-performance async I/O.")
+    NATIVE: str = Field(default="NATIVE", description="Native asynchronous I/O for best performance with NVMe.")
+    THREADS: str = Field(default="THREADS", description="Thread-based I/O suitable for most storage types.")
+    IO_URING: str = Field(default="IO_URING", description="Linux io_uring interface for high-performance async I/O.")
 
 
 class VMDeviceIotypeChoicesResult(BaseModel):
@@ -412,7 +435,7 @@ class VMDevicePassthroughDeviceArgs(BaseModel):
 
 
 class VMDeviceCapability(BaseModel):
-    class_: str | None = Field(alias='class', description="PCI device class identifier. `null` if not available.")
+    class_: str | None = Field(alias="class", description="PCI device class identifier. `null` if not available.")
     domain: str | None = Field(description="PCI domain number. `null` if not available.")
     bus: str | None = Field(description="PCI bus number. `null` if not available.")
     slot: str | None = Field(description="PCI slot number. `null` if not available.")
@@ -444,13 +467,13 @@ class VMDevicePassthroughDevice(BaseModel):
     )
     available: bool = Field(description="Whether the device is available for passthrough to virtual machines.")
     drivers: list[str] = Field(description="Array of kernel drivers currently bound to this device.")
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         description="Error message if the device cannot be used for passthrough. `null` if no error.",
     )
     reset_mechanism_defined: bool = Field(
         description="Whether the device supports proper reset mechanisms for passthrough.",
     )
-    description: str = Field(description="Human-readable description of the PCI device.")
+    description: Multiline[str] = Field(description="Human-readable description of the PCI device.")
     critical: bool = Field(description="Whether this device is critical to host system operation.")
     device_path: str | None = Field(description="Device filesystem path. `null` if not available.")
 
@@ -491,10 +514,10 @@ class VMDeviceUsbPassthroughDeviceArgs(BaseModel):
 class USBPassthroughDevice(BaseModel):
     capability: USBCapability = Field(description="USB device capability and identification information.")
     available: bool = Field(description="Whether the USB device is available for passthrough to virtual machines.")
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         description="Error message if the device cannot be used for passthrough. `null` if no error.",
     )
-    description: str = Field(description="Human-readable description of the USB device.")
+    description: Multiline[str] = Field(description="Human-readable description of the USB device.")
 
 
 class USBPassthroughInfo(RootModel[dict[str, USBPassthroughDevice]]):

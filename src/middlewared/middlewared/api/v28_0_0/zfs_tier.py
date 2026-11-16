@@ -6,11 +6,11 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NonEmptyString,
     excluded_field,
     query_result,
     single_argument_args,
-    single_argument_result,
 )
 
 from .common import QueryFilters, QueryOptions, StorageTier
@@ -136,7 +136,7 @@ class ZfsTierRewriteJobStatusEntry(ZfsTierRewriteJobEntry):
     stats: ZfsTierRewriteJobStats | None = Field(
         description="Progress statistics, or `null` if no statistics have been recorded yet.",
     )
-    error: str | None = Field(
+    error: Multiline[str] | None = Field(
         description="Error message describing why the job entered `ERROR` state, otherwise `null`.",
     )
 
@@ -145,9 +145,9 @@ class ZfsTierRewriteJobQueryEventSourceArgs(BaseModel):
     """No arguments — subscribes to all rewrite job lifecycle events."""
 
 
-@single_argument_result
 class ZfsTierRewriteJobQueryEventSourceEvent(BaseModel):
-    fields: ZfsTierRewriteJobEntry = Field(description="Current job entry reflecting the latest lifecycle state.")
+    id: NonEmptyString = Field(description="Rewrite job identifier in `dataset_name@job_uuid` format.")
+    result: ZfsTierRewriteJobEntry = Field(description="Current job entry reflecting the latest lifecycle state.")
 
 
 class ZfsTierRewriteJobStatusEventSourceArgs(BaseModel):
@@ -159,9 +159,8 @@ class ZfsTierRewriteJobStatusEventSourceArgs(BaseModel):
     )
 
 
-@single_argument_result
 class ZfsTierRewriteJobStatusEventSourceEvent(BaseModel):
-    fields: ZfsTierRewriteJobStatusEntry = Field(
+    result: ZfsTierRewriteJobStatusEntry = Field(
         description="Current status and statistics for the requested rewrite job.",
     )
 
@@ -239,7 +238,7 @@ class ZfsTierRewriteJobStatusResult(BaseModel):
 
 class ZfsTierRewriteJobFailureError(BaseModel):
     errno: int = Field(description="Error number from the failed storage tier migration.")
-    strerror: str = Field(description="Human-readable description of the error.")
+    strerror: Multiline[str] = Field(description="Human-readable description of the error.")
 
 
 class ZfsTierRewriteJobFailureEntry(BaseModel):

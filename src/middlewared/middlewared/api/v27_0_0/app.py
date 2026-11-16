@@ -2,7 +2,14 @@ from typing import Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
+from middlewared.api.base import (
+    BaseModel,
+    LongString,
+    Multiline,
+    NonEmptyString,
+    single_argument_args,
+    single_argument_result,
+)
 
 from .catalog import CatalogAppInfo
 
@@ -101,7 +108,9 @@ class AppEntry(BaseModel):
     active_workloads: AppActiveWorkloads = Field(
         description="Information about the running containers, ports, and resources used by this application.",
     )
-    notes: LongString | None = Field(description="User-provided notes or comments about this application instance.")
+    notes: Multiline[LongString] | None = Field(
+        description="User-provided notes or comments about this application instance.",
+    )
     action_required: bool = Field(
         description=(
             "Whether this application requires user action (e.g., configuration migration or deprecation handling)."
@@ -132,7 +141,7 @@ class AppCreateArgs(BaseModel):
         default_factory=dict,
         description="Docker Compose configuration as a structured object for custom applications.",
     )
-    custom_compose_config_string: Secret[LongString] = Field(
+    custom_compose_config_string: Secret[Multiline[LongString]] = Field(
         default='',
         description="Docker Compose configuration as a YAML string for custom applications.",
     )
@@ -175,7 +184,7 @@ class AppUpdate(BaseModel):
         default_factory=dict,
         description="Updated Docker Compose configuration as a structured object.",
     )
-    custom_compose_config_string: Secret[LongString] = Field(
+    custom_compose_config_string: Secret[Multiline[LongString]] = Field(
         default='',
         description="Updated Docker Compose configuration as a YAML string.",
     )
@@ -388,10 +397,10 @@ class GPU(BaseModel):
         examples=["NVIDIA", "AMD", "Intel"],
         description="GPU vendor name. `null` if not detected.",
     )
-    description: LongString | None = Field(
+    description: Multiline[LongString] | None = Field(
         description="Human-readable description of the GPU device. `null` if not available.",
     )
-    error: NonEmptyString | None = Field(
+    error: Multiline[NonEmptyString] | None = Field(
         description="Error message if the GPU cannot be accessed or configured. `null` if no errors.",
     )
     vendor_specific_config: dict = Field(description="Configuration options specific to the GPU vendor.")
@@ -472,7 +481,9 @@ class AppUpgradeBulkArgs(BaseModel):
 
 class AppBulkUpgradeJobResult(BaseModel):
     app_name: NonEmptyString = Field(description="Name of the application.")
-    error: LongString | None = Field(description="Error message if the upgrade failed, or `null` on success.")
+    error: Multiline[LongString] | None = Field(
+        description="Error message if the upgrade failed, or `null` on success.",
+    )
     result: AppEntry | None = Field(description="The application entry after upgrade, or `null` if the upgrade failed.")
 
 
@@ -509,7 +520,7 @@ class AppUpgradeSummaryResult(BaseModel):
     upgrade_version: str = Field(description="Version user has requested to be upgraded at.")
     upgrade_human_version: str = Field(description="Human-readable version user has requested to be upgraded at.")
     available_versions_for_upgrade: list[AppVersionInfo] = Field(description="List of available versions for upgrade.")
-    changelog: LongString | None = Field(
+    changelog: Multiline[LongString] | None = Field(
         description="Changelog or release notes for the upgrade version. `null` if not available.",
     )
 
@@ -564,7 +575,7 @@ class AppContainerLogsFollowTailEventSourceArgs(BaseModel):
 
 @single_argument_result
 class AppContainerLogsFollowTailEventSourceEvent(BaseModel):
-    data: str = Field(description="The log line content.")
+    data: Multiline[str] = Field(description="The log line content.")
     timestamp: str | None = Field(description="Timestamp of the log entry. `null` if not available.")
 
 

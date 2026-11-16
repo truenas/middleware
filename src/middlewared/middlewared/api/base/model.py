@@ -4,7 +4,7 @@ from types import NoneType, new_class
 from typing import Annotated, Any, Literal, Self, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ConfigDict, Field, Secret, create_model, model_serializer
+from pydantic import ConfigDict, Field, GetCoreSchemaHandler, Secret, create_model, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.fields import FieldInfo
@@ -14,6 +14,7 @@ from pydantic.types import SecretType
 from pydantic_core import PydanticUndefined, SchemaSerializer, core_schema
 
 from middlewared.api.base.full_admin import FullAdminOnly, document_full_admin_fields
+from middlewared.api.base.line_breaks import add_line_break_validators
 from middlewared.api.base.private import guard_private_fields, is_private_guard
 from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import undefined
@@ -317,6 +318,20 @@ class BaseModel(DumpableModel, metaclass=_BaseModelMetaclass):
     )
 
     @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source: Any,
+        handler: GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        """Reject a line break in every string of the model that `Multiline` did not opt out.
+
+        A value interpolated bare into a line-oriented configuration file is not free-form, and
+        finding every such field is not something a reviewer can be relied on to do. The ban is the
+        default instead, and a field whose value is genuinely more than one line says so.
+        """
+        return add_line_break_validators(handler(source))
+
+    @classmethod
     def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
         for k, v in cls.model_fields.items():
             if is_union(get_origin(v.annotation)):
@@ -503,33 +518,45 @@ def query_result_item(item: type[ModelT]) -> type[ModelT]:
     return result
 
 
-def added_event_model(item: type[BaseModel]) -> type[BaseModel]:
-    return create_model(
-        item.__name__.removesuffix("Entry") + "AddedEvent",
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        id=Annotated[item.model_fields["id"].annotation, Field()],
+EVENT_MODEL_SUFFIXES: dict[str, str] = {"ADDED": "AddedEvent", "CHANGED": "ChangedEvent", "REMOVED": "RemovedEvent"}
+
+
+def event_model(name: str, module: str, event_type: str, id_: Any = None, fields: Any = None) -> type[BaseModel]:
+    """
+    Model of one collection event frame.
+
+    The frame carries `id` when `id_` is given and, unless it is a `REMOVED` event, `fields`. `id_` and `fields` are
+    field definitions as `create_model` accepts them.
+    """
+    attrs: dict[str, Any] = {}
+    if id_ is not None:
+        attrs["id"] = id_
+    if event_type != "REMOVED":
+        attrs["fields"] = fields
+
+    return create_model(name, __base__=(BaseModel,), __module__=module, **attrs)
+
+
+def _entry_event_model(item: type[BaseModel], event_type: str) -> type[BaseModel]:
+    return event_model(
+        item.__name__.removesuffix("Entry") + EVENT_MODEL_SUFFIXES[event_type],
+        item.__module__,
+        event_type,
+        id_=Annotated[item.model_fields["id"].annotation, Field()],
         fields=Annotated[item, Field()],
     )
+
+
+def added_event_model(item: type[BaseModel]) -> type[BaseModel]:
+    return _entry_event_model(item, "ADDED")
 
 
 def changed_event_model(item: type[BaseModel]) -> type[BaseModel]:
-    return create_model(
-        item.__name__.removesuffix("Entry") + "ChangedEvent",
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        id=Annotated[item.model_fields["id"].annotation, Field()],
-        fields=Annotated[item, Field()],
-    )
+    return _entry_event_model(item, "CHANGED")
 
 
 def removed_event_model(item: type[BaseModel]) -> type[BaseModel]:
-    return create_model(
-        item.__name__.removesuffix("Entry") + "RemovedEvent",
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        id=Annotated[item.model_fields["id"].annotation, Field()],
-    )
+    return _entry_event_model(item, "REMOVED")
 
 
 def model_subset(base: type[BaseModel], fields: list[str]) -> type[BaseModel]:

@@ -1,16 +1,12 @@
 import pytest
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ha_test
 
 LICENSE_UPLOAD_METHOD = "truenas.license.upload"
 
 
+@ha_test
 def test_uploaded_license_is_redacted_in_the_audit_log():
-    """
-    Whatever installed the license on this system -- CI, TrueNAS Connect or an operator -- went
-    through the audited API, so the entry it left behind must carry the redaction placeholder
-    instead of the license.
-    """
     entries = call(
         "audit.query",
         {
@@ -18,8 +14,7 @@ def test_uploaded_license_is_redacted_in_the_audit_log():
             "query-options": {"limit": 1000},
         },
     )
-    if not entries:
-        pytest.skip(f"nothing has called {LICENSE_UPLOAD_METHOD} on this system")
+    assert entries
 
     for entry in entries:
         params = entry["event_data"]["params"]

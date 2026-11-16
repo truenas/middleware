@@ -1,6 +1,6 @@
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, excluded_field
 
 __all__ = [
     'AppRegistryEntry', 'AppRegistryCreateArgs', 'AppRegistryCreateResult', 'AppRegistryUpdateArgs',
@@ -11,7 +11,7 @@ __all__ = [
 class AppRegistryEntry(BaseModel):
     id: int = Field(description="Unique identifier for the container registry configuration.")
     name: str = Field(description="Human-readable name for the container registry.")
-    description: str | None = Field(
+    description: Multiline[str] | None = Field(
         default=None,
         description="Optional description of the container registry or `null`.",
     )

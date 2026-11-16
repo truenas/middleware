@@ -21,6 +21,19 @@ jobs:
     - uses: astral-sh/ruff-action@v3
       with:
         src: tests
+    - name: Read formatted paths
+      id: formatted-paths
+      run: |
+        mapfile -t FORMATTED < <(grep -vE '^[[:space:]]*(#|$)' .github/formatted-paths.txt)
+        echo "paths=${FORMATTED[*]}" >> "$GITHUB_OUTPUT"
+        echo "Format-checked paths:"
+        printf '  %s\n' "${FORMATTED[@]}"
+    - uses: astral-sh/ruff-action@v3
+      id: ruff-format-paths
+      continue-on-error: true
+      with:
+        args: "format --config src/middlewared/pyproject.toml --diff"
+        src: "${{ steps.formatted-paths.outputs.paths }}"
     - name: Find new Python files
       id: new-files
       run: |
@@ -37,15 +50,22 @@ jobs:
         fi
     - uses: astral-sh/ruff-action@v3
       id: ruff-check
+      continue-on-error: true
       if: steps.new-files.outputs.found == 'true'
       with:
         args: "format --config src/middlewared/pyproject.toml --diff"
         src: "${{ steps.new-files.outputs.files }}"
     - name: Show formatting instructions
-      if: failure() && steps.ruff-check.outcome == 'failure'
+      if: steps.ruff-format-paths.outcome == 'failure' || steps.ruff-check.outcome == 'failure'
       run: |
-        echo "'ruff format' failed because some new files are incorrectly formatted.'
-        echo 'Open the spoiler in the step above to see which ones."
-        echo "Please run 'pip install ruff' and then 'ruff format' on all newly added files."
+        if [ "${{ steps.ruff-format-paths.outcome }}" = "failure" ]; then
+          echo "'ruff format' failed because a path in .github/formatted-paths.txt is incorrectly formatted."
+          echo "Open the spoiler in the 'ruff-format-paths' step above to see the diff."
+        fi
+        if [ "${{ steps.ruff-check.outcome }}" = "failure" ]; then
+          echo "'ruff format' failed because some new files are incorrectly formatted."
+          echo "Open the spoiler in the 'ruff-check' step above to see which ones."
+        fi
+        echo "Please run 'pip install ruff' and then 'ruff format' on the reported files."
         echo "If 'ruff format' causes flake8 errors, add '# fmt: skip' to the lines you don't want formatted."
         exit 1

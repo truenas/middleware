@@ -10,6 +10,7 @@ from middlewared.api.base import (
     Excluded,
     JsonSchemaExtra,
     LongString,
+    Multiline,
     NonEmptyString,
     NotRequired,
     excluded_field,
@@ -18,17 +19,29 @@ from middlewared.api.base import (
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 
 __all__ = [
-    "PoolSnapshotEntry", "PoolSnapshotCloneArgs", "PoolSnapshotCloneResult", "PoolSnapshotCreateArgs",
-    "PoolSnapshotCreateResult", "PoolSnapshotDeleteArgs", "PoolSnapshotDeleteResult", "PoolSnapshotHoldArgs",
-    "PoolSnapshotHoldResult", "PoolSnapshotReleaseArgs", "PoolSnapshotReleaseResult", "PoolSnapshotRollbackArgs",
-    "PoolSnapshotRollbackResult", "PoolSnapshotUpdateArgs", "PoolSnapshotUpdateResult", "PoolSnapshotRenameArgs",
+    "PoolSnapshotEntry",
+    "PoolSnapshotCloneArgs",
+    "PoolSnapshotCloneResult",
+    "PoolSnapshotCreateArgs",
+    "PoolSnapshotCreateResult",
+    "PoolSnapshotDeleteArgs",
+    "PoolSnapshotDeleteResult",
+    "PoolSnapshotHoldArgs",
+    "PoolSnapshotHoldResult",
+    "PoolSnapshotReleaseArgs",
+    "PoolSnapshotReleaseResult",
+    "PoolSnapshotRollbackArgs",
+    "PoolSnapshotRollbackResult",
+    "PoolSnapshotUpdateArgs",
+    "PoolSnapshotUpdateResult",
+    "PoolSnapshotRenameArgs",
     "PoolSnapshotRenameResult",
 ]
 
 
 def _validate_snapshot_name(v: str) -> str:
     if not validate_snapshot_name(v):
-        raise ValueError('Please provide a valid snapshot name according to ZFS standards i.e <dataset>@<snapshot>')
+        raise ValueError("Please provide a valid snapshot name according to ZFS standards i.e <dataset>@<snapshot>")
     return v
 
 
@@ -44,15 +57,17 @@ SNAPSHOT_NAME = Annotated[
 ]
 UserPropertyKey = Annotated[
     str,
-    StringConstraints(pattern='.*:.*'),
-    JsonSchemaExtra(description="ZFS user property key in namespace:property format (e.g., "
-                                "'custom:backup_policy', 'org:created_by')."),
+    StringConstraints(pattern=".*:.*"),
+    JsonSchemaExtra(
+        description="ZFS user property key in namespace:property format (e.g., "
+        "'custom:backup_policy', 'org:created_by')."
+    ),
 ]
 
 
 class PoolSnapshotEntryPropertyFields(BaseModel):
-    value: LongString = Field(description="Current effective value of the ZFS property as a string.")
-    rawvalue: LongString = Field(description="Raw string value of the ZFS property as stored.")
+    value: Multiline[LongString] = Field(description="Current effective value of the ZFS property as a string.")
+    rawvalue: Multiline[LongString] = Field(description="Raw string value of the ZFS property as stored.")
     source: Literal["NONE", "DEFAULT", "LOCAL", "TEMPORARY", "INHERITED", "RECEIVED"] = Field(
         description=(
             "Source of the property value.\n"
@@ -103,10 +118,9 @@ class PoolSnapshotEntry(BaseModel):
     dataset: str = Field(description="Name of the dataset this snapshot was taken from.")
     createtxg: str = Field(description="Transaction group ID when the snapshot was created.")
     holds: PoolSnapshotHoldTag = Field(default=NotRequired, description="Returned when options.extra.holds is set.")
-    retention: Annotated[
-        PoolSnapshotRetentionPST | PoolSnapshotRetentionProperty,
-        Field(discriminator="source")
-    ] | None = Field(default=NotRequired, description="Returned when options.extra.retention is set.")
+    retention: (
+        Annotated[PoolSnapshotRetentionPST | PoolSnapshotRetentionProperty, Field(discriminator="source")] | None
+    ) = Field(default=NotRequired, description="Returned when options.extra.retention is set.")
 
 
 class PoolSnapshotCreateUpdateEntry(PoolSnapshotEntry):
@@ -173,7 +187,7 @@ class PoolSnapshotRollbackOptions(BaseModel):
 
 class PoolSnapshotUserPropertyUpdate(BaseModel):
     key: UserPropertyKey = Field(description="The property name in namespace:property format.")
-    value: LongString = Field(description="The new value to assign to the user property.")
+    value: Multiline[LongString] = Field(description="The new value to assign to the user property.")
 
 
 class PoolSnapshotUpdate(BaseModel):

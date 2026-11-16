@@ -184,3 +184,9 @@ def cpu_flags() -> CpuFlags:
             if title == "flags":
                 return parts[1].strip().split()
     return []
+
+
+def online_cpus() -> frozenset[int]:
+    """Logical CPU ids that are currently online."""
+    with open("/sys/devices/system/cpu/online") as f:
+        return frozenset(_parse_cpulist(f.read().strip()))

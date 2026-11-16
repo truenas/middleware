@@ -9,7 +9,7 @@ Sub-module layout:
     temperatures  -- public ``get_cpu_temperatures()`` orchestrator
 """
 
-from .info import CpuFlags, CpuInfo, cpu_flags, cpu_info, cpu_info_impl
+from .info import CpuFlags, CpuInfo, cpu_flags, cpu_info, cpu_info_impl, online_cpus
 from .temperatures import get_cpu_temperatures
 
 __all__ = (
@@ -19,4 +19,5 @@ __all__ = (
     "cpu_info",
     "cpu_info_impl",
     "get_cpu_temperatures",
+    "online_cpus",
 )

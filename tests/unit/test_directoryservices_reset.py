@@ -1,7 +1,7 @@
 """
 Unit tests for directoryservices.reset() local-state cleanup. The fix
 ensures that when reset() is called and the prior service_type was AD or
-IPA, the AD/IPA-specific entries in secrets.tdb (or CTDB), the cifs.secrets
+IPA, the AD/IPA-specific entries in secrets.tdb, the cifs.secrets
 DB backup, the kerberos realm/keytab DB rows, and /etc/krb5.keytab are all
 cleared. Without this, re-enabling silently reuses stale state via
 _test_is_joined / ALREADY_JOINED.
@@ -42,7 +42,7 @@ def ds_service():
 def test__reset_local_domain_state_ad_clears_all_local_state(ds_service):
     """
     When the prior service_type was AD, reset_local_domain_state must:
-      * call delete_machine_account_secrets(workgroup, realm, cluster=False)
+      * call delete_machine_account_secrets(workgroup, realm)
       * clear cifs.secrets in the DB (set to NULL)
       * delete the AD_MACHINE_ACCOUNT keytab DB row
       * delete the realm DB row identified by the captured FK id
@@ -63,7 +63,7 @@ def test__reset_local_domain_state_ad_clears_all_local_state(ds_service):
         if method == "datastore.delete":
             return 1
         if method == "smb.config":
-            return {"workgroup": "EXAMPLE", "stateful_failover": False}
+            return {"workgroup": "EXAMPLE"}
         raise AssertionError(f"unexpected middleware call_sync: {method}")
 
     ds_service.middleware.call_sync = MagicMock(side_effect=fake_call_sync)
@@ -77,9 +77,9 @@ def test__reset_local_domain_state_ad_clears_all_local_state(ds_service):
     ):
         ds_service.reset_local_domain_state(DSType.AD.value, 42)
 
-    # Surgical secrets cleanup called with the captured workgroup + realm; cluster=False.
+    # Surgical secrets cleanup called with the captured workgroup + realm.
     assert delete_secrets_mock.call_args_list == [
-        (("EXAMPLE", "AD.EXAMPLE.COM", False), {})
+        (("EXAMPLE", "AD.EXAMPLE.COM"), {})
     ]
 
     # cifs.secrets cleared
@@ -129,7 +129,7 @@ def test__reset_local_domain_state_ipa_uses_ipa_keytab_names(ds_service):
         if method == "kerberos.realm.query":
             return []
         if method == "smb.config":
-            return {"workgroup": "EXAMPLE", "stateful_failover": False}
+            return {"workgroup": "EXAMPLE"}
         return None
 
     ds_service.middleware.call_sync = MagicMock(side_effect=fake_call_sync)
@@ -148,41 +148,6 @@ def test__reset_local_domain_state_ipa_uses_ipa_keytab_names(ds_service):
     }
 
 
-def test__reset_local_domain_state_clustered_passes_cluster_flag(ds_service):
-    """
-    With stateful_failover the authoritative secrets store is in CTDB. The
-    surgical delete helper must be invoked with cluster=True so it operates on
-    the CTDB-backed store rather than the local file.
-    """
-
-    def fake_call_sync(method, *args, **kwargs):
-        if method == "datastore.update":
-            return None
-        if method == "kerberos.keytab.query":
-            return []
-        if method == "kerberos.realm.query":
-            return [{"id": 11, "realm": "AD.EXAMPLE.COM"}]
-        if method == "smb.config":
-            return {"workgroup": "EXAMPLE", "stateful_failover": True}
-        return None
-
-    ds_service.middleware.call_sync = MagicMock(side_effect=fake_call_sync)
-    with (
-        patch("middlewared.plugins.directoryservices_.datastore.os.unlink"),
-        patch(
-            "middlewared.plugins.directoryservices_.datastore.delete_machine_account_secrets"
-        ) as delete_secrets_mock,
-    ):
-        ds_service.reset_local_domain_state(DSType.AD.value, 11)
-
-    assert delete_secrets_mock.call_args_list == [
-        (("EXAMPLE", "AD.EXAMPLE.COM", True), {})
-    ], (
-        "reset_local_domain_state must invoke delete_machine_account_secrets "
-        "with cluster=True when stateful_failover is enabled."
-    )
-
-
 def test__reset_local_domain_state_no_realm_passes_none(ds_service):
     """
     If the prior config had no kerberos_realm_id (e.g. IPA bind that failed
@@ -195,7 +160,7 @@ def test__reset_local_domain_state_no_realm_passes_none(ds_service):
         if method == "kerberos.keytab.query":
             return []
         if method == "smb.config":
-            return {"workgroup": "EXAMPLE", "stateful_failover": False}
+            return {"workgroup": "EXAMPLE"}
         return None
 
     ds_service.middleware.call_sync = MagicMock(side_effect=fake_call_sync)
@@ -208,7 +173,7 @@ def test__reset_local_domain_state_no_realm_passes_none(ds_service):
     ):
         ds_service.reset_local_domain_state(DSType.AD.value, None)
 
-    assert captured == [("EXAMPLE", None, False)]
+    assert captured == [("EXAMPLE", None)]
 
 
 def test__reset_local_domain_state_handles_missing_keytab_file(ds_service):
@@ -224,7 +189,7 @@ def test__reset_local_domain_state_handles_missing_keytab_file(ds_service):
         if method == "kerberos.realm.query":
             return []
         if method == "smb.config":
-            return {"workgroup": "EXAMPLE", "stateful_failover": False}
+            return {"workgroup": "EXAMPLE"}
         return None
 
     ds_service.middleware.call_sync = MagicMock(side_effect=fake_call_sync)

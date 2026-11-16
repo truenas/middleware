@@ -2,7 +2,13 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel
 
-__all__ = ["IpmiSelElistEntry", "IpmiSelClearArgs", "IpmiSelClearResult", "IpmiSelInfoArgs", "IpmiSelInfoResult",]
+__all__ = [
+    "IpmiSelElistEntry",
+    "IpmiSelClearArgs",
+    "IpmiSelClearResult",
+    "IpmiSelInfoArgs",
+    "IpmiSelInfoResult",
+]
 
 
 class IpmiSelElistEntry(BaseModel):
@@ -10,8 +16,8 @@ class IpmiSelElistEntry(BaseModel):
     date: str = Field(description="Date when the event occurred.")
     time: str = Field(description="Time when the event occurred.")
     name: str = Field(description="Name or description of the sensor that generated the event.")
-    type: str = Field(description="Type of the event (e.g., \"Temperature\", \"Voltage\").")
-    event_direction: str = Field(description="Direction of the event (e.g., \"Assertion\", \"Deassertion\").")
+    type: str = Field(description='Type of the event (e.g., "Temperature", "Voltage").')
+    event_direction: str = Field(description='Direction of the event (e.g., "Assertion", "Deassertion").')
     event: str = Field(description="Detailed description of the event that occurred.")
 
 

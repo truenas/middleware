@@ -5,6 +5,7 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     HttpsOnlyURL,
     LongNonEmptyString,
+    Multiline,
     NonEmptyString,
     single_argument_args,
 )
@@ -32,7 +33,7 @@ class TrueNASConnectEntry(BaseModel):
     interfaces_ips: list[str] = Field(description="Array of IP addresses associated with the selected interfaces.")
     use_all_interfaces: bool = Field(description="Whether to automatically use all available network interfaces.")
     status: NonEmptyString = Field(description="Current operational status of the TrueNAS Connect service.")
-    status_reason: NonEmptyString = Field(
+    status_reason: Multiline[NonEmptyString] = Field(
         description="Detailed explanation of the current status, including any error conditions.",
     )
     certificate: int | None = Field(

@@ -2,7 +2,7 @@ from typing import Literal, TypeAlias
 
 from pydantic import Field, Secret, model_validator
 
-from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, Multiline, NonEmptyString, excluded_field
 
 __all__ = [
     "NVMetHostEntry",
@@ -27,7 +27,7 @@ DHChapDHGroupType: TypeAlias = Literal['2048-BIT', '3072-BIT', '4096-BIT', '6144
 class NVMetHostEntry(BaseModel):
     id: int = Field(description="Unique identifier for the NVMe-oF host.")
     hostnqn: NonEmptyString = Field(description="NQN of the host that will connect to this TrueNAS.")
-    description: str = Field(default='', description="Description of the NVMet host.")
+    description: Multiline[str] = Field(default='', description="Description of the NVMet host.")
     dhchap_key: Secret[NonEmptyString | None] = Field(
         default=None,
         description=(

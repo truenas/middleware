@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from middlewared.api.base import BaseModel, LongString
+from middlewared.api.base import BaseModel, LongString, Multiline
 
 
 class JWKCreate(BaseModel):
@@ -11,7 +11,7 @@ class JWKCreate(BaseModel):
 class ACMERegistrationBody(BaseModel):
     id: int
     status: str
-    key: LongString
+    key: Multiline[LongString]
 
 
 class ACMERegistrationEntry(BaseModel):

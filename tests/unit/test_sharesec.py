@@ -20,7 +20,6 @@ def share_info_tdb(tmp_path, monkeypatch):
     """Redirect share_info.tdb reads and writes into a temporary file."""
     path = str(tmp_path / "share_info.tdb")
     monkeypatch.setattr(sharesec, "LOCAL_SHARE_INFO_FILE", path)
-    monkeypatch.setattr(sharesec, "TDB_SHARE_INFO_CONFIG", (path, sharesec.SHARE_INFO_TDB_OPTIONS))
     return path
 
 
@@ -30,8 +29,6 @@ def share_sec_service_for(shares):
 
     def call_sync(method, *args, **kwargs):
         match method:
-            case "datastore.config":
-                return {"cifs_srv_stateful_failover": False}
             case "datastore.query":
                 return [{"name": name, "home": False, "share_acl": acl} for name, acl in shares]
             case _:
@@ -83,7 +80,7 @@ def test__flush_legacy_share_acl(share_info_tdb, legacy, expected):
     """Test that a legacy share ACL string is flushed as a packed security descriptor."""
     share_sec_service(legacy).flush_share_info()
 
-    stored = sharesec.fetch_share_acl(SHARE_NAME, False)
+    stored = sharesec.fetch_share_acl(SHARE_NAME)
     assert stored != b""
     assert sd_bytes_to_share_acl(stored) == expected
 
@@ -98,7 +95,7 @@ def test__flush_share_acl(share_info_tdb):
 
     share_sec_service(b64encode(sd_bytes).decode()).flush_share_info()
 
-    assert sharesec.fetch_share_acl(SHARE_NAME, False) == sd_bytes
+    assert sharesec.fetch_share_acl(SHARE_NAME) == sd_bytes
 
 
 def test__flush_share_without_acl(share_info_tdb):
@@ -106,7 +103,7 @@ def test__flush_share_without_acl(share_info_tdb):
     share_sec_service("").flush_share_info()
 
     with pytest.raises(MatchNotFound):
-        sharesec.fetch_share_acl(SHARE_NAME, False)
+        sharesec.fetch_share_acl(SHARE_NAME)
 
 
 def test__flush_removes_unusable_record(share_info_tdb):
@@ -121,7 +118,7 @@ def test__flush_removes_unusable_record(share_info_tdb):
     share_sec_service("").flush_share_info()
 
     with pytest.raises(MatchNotFound):
-        sharesec.fetch_share_acl(SHARE_NAME, False)
+        sharesec.fetch_share_acl(SHARE_NAME)
 
 
 def test__flush_writes_version_key_after_share_without_acl(share_info_tdb):
@@ -145,13 +142,13 @@ def test__flush_writes_version_key_after_share_without_acl(share_info_tdb):
     ]).flush_share_info()
 
     assert stored_version_key(share_info_tdb) == sharesec.SHARE_INFO_VERSION_DATA
-    assert sharesec.fetch_share_acl(SHARE_NAME, False) == sd_bytes
+    assert sharesec.fetch_share_acl(SHARE_NAME) == sd_bytes
 
 
 def test__store_writes_version_key_into_file_created_by_read(share_info_tdb):
     """Test that store_share_acl writes INFO/version into a file that a read created."""
     with pytest.raises(MatchNotFound):
-        sharesec.fetch_share_acl(SHARE_NAME, False)
+        sharesec.fetch_share_acl(SHARE_NAME)
 
     assert os.path.exists(share_info_tdb)
 
@@ -162,7 +159,6 @@ def test__store_writes_version_key_into_file_created_by_read(share_info_tdb):
                 {"ae_who_sid": SAMPLE_BUILTIN_SID, "ae_perm": "READ", "ae_type": "ALLOWED"},
             ]
         ),
-        False,
     )
 
     assert stored_version_key(share_info_tdb) == sharesec.SHARE_INFO_VERSION_DATA

@@ -3,28 +3,47 @@ from typing import Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, LongNonEmptyString, LongString, NonEmptyString
+from middlewared.api.base import BaseModel, LongNonEmptyString, LongString, Multiline, NonEmptyString
 
 from .support import SupportNewTicket
 
 __all__ = [
-    'TrueNASSetProductionArgs', 'TrueNASSetProductionResult',
-    'TrueNASIsProductionArgs', 'TrueNASIsProductionResult',
-    'TrueNASAcceptEulaArgs', 'TrueNASAcceptEulaResult',
-    'TrueNASIsEulaAcceptedArgs', 'TrueNASIsEulaAcceptedResult',
-    'TrueNASGetEulaArgs', 'TrueNASGetEulaResult',
-    'TrueNASIsIxHardwareArgs', 'TrueNASIsIxHardwareResult',
-    'TrueNASGetChassisHardwareArgs', 'TrueNASGetChassisHardwareResult',
-    'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult',
-    'TrueNASLicenseUploadOptions', 'TrueNASLicenseUploadArgs', 'TrueNASLicenseUploadResult',
-    'LicenseFeatureEntry', 'LicenseInfoEntry',
-    'TrueNASLicenseInfoArgs', 'TrueNASLicenseInfoResult',
-    'TrueNASLicenseFingerprintArgs', 'TrueNASLicenseFingerprintResult',
-    'EntitlementReason', 'EntitlementEntry', 'EntitlementsInfo',
-    'TrueNASEntitlementsInfoArgs', 'TrueNASEntitlementsInfoResult',
-    'TrueNASEntitlementsCheckArgs', 'TrueNASEntitlementsCheckResult',
-    'HardwareType', 'EntitlementFactsEntry',
-    'TrueNASEntitlementsFactsArgs', 'TrueNASEntitlementsFactsResult',
+    "TrueNASSetProductionArgs",
+    "TrueNASSetProductionResult",
+    "TrueNASIsProductionArgs",
+    "TrueNASIsProductionResult",
+    "TrueNASAcceptEulaArgs",
+    "TrueNASAcceptEulaResult",
+    "TrueNASIsEulaAcceptedArgs",
+    "TrueNASIsEulaAcceptedResult",
+    "TrueNASGetEulaArgs",
+    "TrueNASGetEulaResult",
+    "TrueNASIsIxHardwareArgs",
+    "TrueNASIsIxHardwareResult",
+    "TrueNASGetChassisHardwareArgs",
+    "TrueNASGetChassisHardwareResult",
+    "TrueNASManagedByTruecommandArgs",
+    "TrueNASManagedByTruecommandResult",
+    "TrueNASLicenseUploadOptions",
+    "TrueNASLicenseUploadArgs",
+    "TrueNASLicenseUploadResult",
+    "LicenseFeatureEntry",
+    "LicenseInfoEntry",
+    "TrueNASLicenseInfoArgs",
+    "TrueNASLicenseInfoResult",
+    "TrueNASLicenseFingerprintArgs",
+    "TrueNASLicenseFingerprintResult",
+    "EntitlementReason",
+    "EntitlementEntry",
+    "EntitlementsInfo",
+    "TrueNASEntitlementsInfoArgs",
+    "TrueNASEntitlementsInfoResult",
+    "TrueNASEntitlementsCheckArgs",
+    "TrueNASEntitlementsCheckResult",
+    "HardwareType",
+    "EntitlementFactsEntry",
+    "TrueNASEntitlementsFactsArgs",
+    "TrueNASEntitlementsFactsResult",
 ]
 
 
@@ -57,7 +76,7 @@ class TrueNASGetEulaArgs(BaseModel):
 
 
 class TrueNASGetEulaResult(BaseModel):
-    result: LongString | None = Field(
+    result: Multiline[LongString] | None = Field(
         description="Full text of the End User License Agreement. `null` if no EULA is required.",
     )
 
@@ -105,7 +124,7 @@ class TrueNASLicenseUploadOptions(BaseModel):
 
 
 class TrueNASLicenseUploadArgs(BaseModel):
-    license: Secret[LongNonEmptyString] = Field(description="PEM-wrapped license to apply to the system.")
+    license: Secret[Multiline[LongNonEmptyString]] = Field(description="PEM-wrapped license to apply to the system.")
     options: TrueNASLicenseUploadOptions = Field(default=TrueNASLicenseUploadOptions(), description="Options.")
 
 
@@ -170,7 +189,12 @@ class TrueNASLicenseFingerprintResult(BaseModel):
 
 
 EntitlementReason = Literal[
-    "ENTITLED", "NO_LICENSE", "KEY_MISSING", "WRONG_HARDWARE", "TIER_INSUFFICIENT", "WRONG_LICENSE_TYPE",
+    "ENTITLED",
+    "NO_LICENSE",
+    "KEY_MISSING",
+    "WRONG_HARDWARE",
+    "TIER_INSUFFICIENT",
+    "WRONG_LICENSE_TYPE",
     "NOT_GATED",
 ]
 
@@ -194,7 +218,7 @@ class EntitlementEntry(BaseModel):
             "New values may be added; treat an unrecognized value as a generic denial."
         )
     )
-    message: str = Field(description="Human-readable explanation of the decision. Empty when entitled.")
+    message: Multiline[str] = Field(description="Human-readable explanation of the decision. Empty when entitled.")
 
 
 class EntitlementsInfo(BaseModel):

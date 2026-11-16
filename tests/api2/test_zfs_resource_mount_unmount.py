@@ -164,6 +164,19 @@ def test_unmount_unloads_the_key_and_mount_loads_it_back():
             ssh(f"rm -f {keyfile}")
 
 
+def test_recursive_unmount_keeps_child_encryption_root_key_loaded():
+    parent = os.path.join(pool_name, "test_mnt_keep_key")
+    child = os.path.join(parent, "encrypted")
+    with zfs_resource(parent):
+        with zfs_resource(child, {"encryption": {"key": "c" * 64}}):
+            call("zfs.resource.unmount", parent, None, True)
+            assert not mounted(child)
+            assert keystatus(child) == "available"
+
+            call("zfs.resource.mount", parent, None, True)
+            assert mounted(child)
+
+
 def test_unload_key_drops_the_key_of_an_unmounted_encryption_root():
     key = "b" * 64
     path = os.path.join(pool_name, "test_unload_encrypted")

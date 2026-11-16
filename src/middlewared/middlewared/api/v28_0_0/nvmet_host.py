@@ -2,7 +2,7 @@ from typing import Literal, TypeAlias
 
 from pydantic import Field, Secret, model_validator
 
-from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, Multiline, NonEmptyString, excluded_field
 
 __all__ = [
     "NVMetHostEntry",
@@ -20,14 +20,14 @@ __all__ = [
     "NVMetHostDhchapHashChoicesResult",
 ]
 
-DHChapHashType: TypeAlias = Literal['SHA-256', 'SHA-384', 'SHA-512']
-DHChapDHGroupType: TypeAlias = Literal['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
+DHChapHashType: TypeAlias = Literal["SHA-256", "SHA-384", "SHA-512"]
+DHChapDHGroupType: TypeAlias = Literal["2048-BIT", "3072-BIT", "4096-BIT", "6144-BIT", "8192-BIT"]
 
 
 class NVMetHostEntry(BaseModel):
     id: int = Field(description="Unique identifier for the NVMe-oF host.")
     hostnqn: NonEmptyString = Field(description="NQN of the host that will connect to this TrueNAS.")
-    description: str = Field(default='', description="Description of the NVMet host.")
+    description: Multiline[str] = Field(default="", description="Description of the NVMet host.")
     dhchap_key: Secret[NonEmptyString | None] = Field(
         default=None,
         description=(
@@ -54,7 +54,7 @@ class NVMetHostEntry(BaseModel):
         ),
     )
     dhchap_hash: DHChapHashType = Field(
-        default='SHA-256',
+        default="SHA-256",
         description=(
             "HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected."
         ),
@@ -65,10 +65,10 @@ class NVMetHostCreate(NVMetHostEntry):
     id: Excluded = excluded_field()
     hostnqn: NQN
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_attrs(self):
         if self.dhchap_ctrl_key and not self.dhchap_key:
-            raise ValueError('Cannot configure bi-directional authentication without setting dhchap_key')
+            raise ValueError("Cannot configure bi-directional authentication without setting dhchap_key")
 
         return self
 
@@ -114,7 +114,7 @@ class NVMetHostDeleteResult(BaseModel):
 
 
 class NVMetHostGenerateKeyArgs(BaseModel):
-    dhchap_hash: DHChapHashType = Field(default='SHA-256', description="Hash to be used with the generated key.")
+    dhchap_hash: DHChapHashType = Field(default="SHA-256", description="Hash to be used with the generated key.")
     nqn: str | None = Field(default=None, description="NQN to be used for the transformation.")
 
 

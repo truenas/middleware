@@ -1,15 +1,51 @@
 import pathlib
 
 from truenas_os_pyutils.mount import statmount
+import truenas_pylibzfs
 
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetDetailsArgs,
     PoolDatasetDetailsResult,
+    ZFSResourceQuery,
+    ZFSResourceSnapshotCountQuery,
 )
 from middlewared.plugins.nvmet.constants import NAMESPACE_DEVICE_TYPE
 from middlewared.plugins.zfs_.utils import TNUserProp, zvol_path_to_name
 from middlewared.service import Service, private
+
+from .dataset_query_utils import normalize_user_properties, normalize_zfs_properties
+
+INTERNAL_USER_PROPERTIES = frozenset(prop.value for prop in TNUserProp)
+
+
+def legacy_dataset(row, snapshot_count):
+    props = row['properties']
+    props.pop('keylocation', None)
+    for prop in props.values():
+        prop['source']['type'] = truenas_pylibzfs.PropertySource[prop['source']['type']]
+
+    dataset = {'id': row['name'], 'type': row['type'], 'name': row['name'], 'pool': row['pool']}
+    dataset.update(normalize_zfs_properties(props))
+    dataset['user_properties'] = {
+        k: v for k, v in normalize_user_properties(row['user_properties']).items()
+        if k not in INTERNAL_USER_PROPERTIES
+    }
+    if props['encryption']['raw'] != 'off':
+        key_loaded = props['keystatus']['raw'] == 'available'
+        dataset.update(
+            encrypted=True, encryption_root=props['encryptionroot']['raw'], key_loaded=key_loaded,
+            locked=not key_loaded,
+        )
+    else:
+        dataset.update(encrypted=False, encryption_root=None, key_loaded=False, locked=False)
+    if row['type'] == 'VOLUME':
+        dataset['mountpoint'] = None
+    dataset['children'] = []
+    dataset['snapshot_count'] = snapshot_count
+    if 'tier' in row:
+        dataset['tier'] = row['tier']
+    return dataset
 
 
 class PoolDatasetService(Service):
@@ -17,61 +53,52 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @private
-    def build_filters_and_options(self):
-        options = {
-            'extra': {
-                'retrieve_user_props': True,
-                'flat': True,
-                'order_by': 'name',
-                'properties': [
-                    'atime',
-                    'casesensitivity',
-                    'readonly',
-                    'used',
-                    'available',
-                    'usedbysnapshots',
-                    'usedbydataset',
-                    'usedbychildren',
-                    'refquota',
-                    'origin',
-                    TNUserProp.REFQUOTA_CRIT.value,
-                    TNUserProp.REFQUOTA_WARN.value,
-                    'quota',
-                    TNUserProp.QUOTA_CRIT.value,
-                    TNUserProp.QUOTA_WARN.value,
-                    'refreservation',
-                    'reservation',
-                    'mountpoint',
-                    'mounted',
-                    'encryption',
-                    'encryptionroot',
-                    'keyformat',
-                    'keystatus',
-                    'volsize',
-                    'sync',
-                    'compression',
-                    'compressratio',
-                    'dedup',
-                ],
-                'snapshots_count': True,
-            }
-        }
-        return [], options
-
     @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResult, roles=['DATASET_READ'])
     def details(self):
         """
         Retrieve all dataset(s) details outlining any
         services/tasks which might be consuming them.
         """
-        filters, options = self.build_filters_and_options()
-        datasets = self.middleware.call_sync('pool.dataset.query', filters, options)
+        rows = self.call_sync2(self.s.zfs.resource.list_impl, ZFSResourceQuery(
+            properties=[
+                'atime', 'casesensitivity', 'readonly', 'used', 'available', 'usedbysnapshots', 'usedbydataset',
+                'usedbychildren', 'refquota', 'origin', 'quota', 'refreservation', 'reservation', 'mountpoint',
+                'mounted', 'encryption', 'encryptionroot', 'keyformat', 'keystatus', 'volsize', 'sync', 'compression',
+                'compressratio', 'dedup',
+            ],
+            get_user_properties=True, get_source=True, get_children=True, get_tier=True,
+        ))
+        counts = self._snapshot_counts([row['name'] for row in rows])
         info = self.build_details()
+        datasets, by_name = [], {}
+        for row in rows:
+            dataset = legacy_dataset(row, counts.get(row['name'], 0))
+            if parent := by_name.get(row['name'].rpartition('/')[0]):
+                parent['children'].append(dataset)
+            by_name[row['name']] = dataset
+            datasets.append(dataset)
         for dataset in datasets:
-            self.collapse_datasets(dataset, info)
-
+            self.normalize_dataset(dataset, info)
         return datasets
+
+    def _snapshot_counts(self, names):
+        try:
+            return self.call_sync2(
+                self.s.zfs.resource.snapshot.count_impl, ZFSResourceSnapshotCountQuery(recursive=True),
+            )
+        except Exception:
+            self.logger.warning('pool.dataset.details: recursive snapshot count failed', exc_info=True)
+
+        # one failing dataset aborts the recursive count, so count each alone and let only that one read 0
+        counts = {}
+        for name in names:
+            try:
+                counts |= self.call_sync2(
+                    self.s.zfs.resource.snapshot.count_impl, ZFSResourceSnapshotCountQuery(paths=[name]),
+                )
+            except Exception:
+                self.logger.debug('%s: failed to count snapshots', name, exc_info=True)
+        return counts
 
     @private
     def normalize_dataset(self, dataset, info):
@@ -88,12 +115,6 @@ class PoolDatasetService(Service):
         dataset['snapshot_tasks_count'] = self.get_snapshot_tasks_count(dataset, info['snap'])
         dataset['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(dataset, info['cloud'])
         dataset['rsync_tasks_count'] = self.get_rsync_tasks_count(dataset, info['rsync'])
-
-    @private
-    def collapse_datasets(self, dataset, info):
-        self.normalize_dataset(dataset, info)
-        for child in dataset.get('children', []):
-            self.collapse_datasets(child, info)
 
     @private
     def get_mount_info(self, path):

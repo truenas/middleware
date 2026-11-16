@@ -1,5 +1,6 @@
 import datetime
 import math
+import re
 import typing
 
 import jwt
@@ -23,6 +24,13 @@ HEARTBEAT_MAX_ELAPSED_DAYS = 7
 TNC_CERT_PREFIX = 'truenas_connect_'
 TNC_HOSTNAME_DETAILS_KEY = 'truenas_connect_hostname_details'
 TNC_IPS_CACHE_KEY = 'truenas_connect_sync_ips'
+# An origin exactly as a browser sends it in `Origin`: https with a lowercase host name, or http to
+# the machine itself (local development, CI), and an optional port. It also keeps what reaches the
+# nginx configuration to these characters.
+ALLOWED_ORIGIN_RE = re.compile(
+    r'(https://[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*|http://(localhost|127\.0\.0\.1))'
+    r'(:[0-9]{1,5})?'
+)
 
 
 def decode_and_validate_token(token: str) -> dict[str, typing.Any]:

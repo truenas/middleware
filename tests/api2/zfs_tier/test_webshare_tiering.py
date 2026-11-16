@@ -20,7 +20,9 @@ from middlewared.test.integration.assets.webshare import (
     webshare_session,
     webshare_share,
 )
-from middlewared.test.integration.utils import call, poll, ssh
+from middlewared.test.integration.utils import call, enterprise_test, poll, ssh
+
+pytestmark = enterprise_test
 
 USERNAME = "tier_webshare"
 PASSWORD = "password"

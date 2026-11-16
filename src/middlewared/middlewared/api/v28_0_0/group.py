@@ -13,13 +13,26 @@ from middlewared.api.base import (
     excluded_field,
 )
 
-__all__ = ["GroupEntry", "GroupCreate", "GroupUpdate",
-           "GroupCreateArgs", "GroupCreateResult",
-           "GroupUpdateArgs", "GroupUpdateResult",
-           "GroupDeleteArgs", "GroupDeleteOptions", "GroupDeleteResult",
-           "GroupGetNextGidArgs", "GroupGetNextGidResult",
-           "GroupGetGroupObj", "GroupGetGroupObjArgs", "GroupGetGroupObjData", "GroupGetGroupObjResult",
-           "GroupHasPasswordEnabledUserArgs", "GroupHasPasswordEnabledUserResult"]
+__all__ = [
+    "GroupEntry",
+    "GroupCreate",
+    "GroupUpdate",
+    "GroupCreateArgs",
+    "GroupCreateResult",
+    "GroupUpdateArgs",
+    "GroupUpdateResult",
+    "GroupDeleteArgs",
+    "GroupDeleteOptions",
+    "GroupDeleteResult",
+    "GroupGetNextGidArgs",
+    "GroupGetNextGidResult",
+    "GroupGetGroupObj",
+    "GroupGetGroupObjArgs",
+    "GroupGetGroupObjData",
+    "GroupGetGroupObjResult",
+    "GroupHasPasswordEnabledUserArgs",
+    "GroupHasPasswordEnabledUserResult",
+]
 
 
 class GroupEntry(BaseModel):
@@ -66,7 +79,7 @@ class GroupEntry(BaseModel):
             "account on the TrueNAS SMB server and has a `sid` value."
         ),
     )
-    userns_idmap: Literal['DIRECT'] | ContainerXID | None = Field(
+    userns_idmap: Literal["DIRECT"] | ContainerXID | None = Field(
         default=None,
         description=(
             "Specifies the subgid mapping for this group. If DIRECT then the GID will be directly mapped to all "
@@ -198,7 +211,7 @@ class GroupGetGroupObjData(BaseModel):
         default=None,
         description="Optional SID value for the account that is present if `sid_info` is specified in payload.",
     )
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP'] = Field(
+    source: Literal["LOCAL", "ACTIVEDIRECTORY", "LDAP"] = Field(
         description=(
             "The name server switch module that provided the user. Options are:\n"
             "\n"

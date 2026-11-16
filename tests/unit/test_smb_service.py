@@ -1,6 +1,5 @@
 from middlewared.api.current import SystemSecurityEntry
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
-from middlewared.utils.smb import TRUESEARCH_ES_PATH
 
 BASE_SMB_CONFIG = {
     'id': 1,
@@ -469,8 +468,8 @@ def test_search_protocols_spotlight():
         DISABLED_DS_CONFIG, BASE_SMB_CONFIG | {'search_protocols': ['SPOTLIGHT']}, [],
         BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
-    assert conf['spotlight backend'] == 'elasticsearch'
-    assert conf['elasticsearch:address'] == TRUESEARCH_ES_PATH
+    assert conf['spotlight backend'] == 'truesearch'
+    assert not any(key.startswith('elasticsearch:') for key in conf)
     assert conf['spotlight'] is True
     assert 'rpc_daemon:mdssd' not in conf
     assert 'rpc_server:mdssvc' not in conf
@@ -504,3 +503,19 @@ def test__tiering_not_overridden_by_aux_params():
         tiering_enabled=True
     )
     assert conf['shadow:no_dataset_traversal'] is True
+
+
+def test__stateful_failover_disabled():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert 'truenas stateful failover' not in conf
+
+
+def test__stateful_failover():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG | {'stateful_failover': True}, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert conf['truenas stateful failover'] is True

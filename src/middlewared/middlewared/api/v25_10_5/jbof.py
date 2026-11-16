@@ -2,7 +2,15 @@ from typing import Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, IPvAnyAddress, NotRequired, excluded_field
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    IPvAnyAddress,
+    Multiline,
+    NotRequired,
+    excluded_field,
+)
 
 __all__ = [
     'JBOFEntry', 'JBOFCreateArgs', 'JBOFCreateResult', 'JBOFDeleteArgs', 'JBOFDeleteResult', 'JBOFLicensedArgs',
@@ -12,7 +20,7 @@ __all__ = [
 
 class JBOFEntry(BaseModel):
     id: int = Field(description="Unique identifier for the JBOF configuration.")
-    description: str = Field(default=NotRequired, description="Optional description of the JBOF.")
+    description: Multiline[str] = Field(default=NotRequired, description="Optional description of the JBOF.")
     mgmt_ip1: IPvAnyAddress = Field(description="IP of first Redfish management interface.")
     mgmt_ip2: IPvAnyAddress = Field(
         default=NotRequired,

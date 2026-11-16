@@ -402,15 +402,6 @@ class SMBService(ConfigService):
 
         config_job.set_progress(40, 'Synchronizing passdb and groupmap.')
         await self.middleware.call('etc.generate', 'user')
-
-        # If samba is clustered, we only want the cluster leader doing the
-        # synchronization between the DB and ctdb files.
-        clustered = (await self.middleware.call('smb.config'))['stateful_failover']
-        if clustered and not await self.middleware.call('failover.is_single_master_node'):
-            await self.middleware.call('smb.set_configured')
-            config_job.set_progress(100, 'Finished configuring SMB.')
-            return
-
         await self.reconcile_local_accounts(bypass_sentinel_check=True)
 
         # share_info.tdb is node-local state on the boot pool. It does not exist on a freshly
@@ -467,11 +458,6 @@ class SMBService(ConfigService):
         and one queued push rather than one per account.
         """
         if not self.middleware.call_sync('failover.licensed'):
-            return
-
-        if self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']:
-            # ctdbd replicates the persistent databases, and only the master node
-            # is permitted to write them
             return
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
@@ -729,35 +715,6 @@ class SMBService(ConfigService):
             (SearchProtocol.SPOTLIGHT in new['search_protocols'])
         ):
             await self.call2(self.s.truesearch.configure)
-
-        if old['stateful_failover'] != new['stateful_failover']:
-            # Forcibly regenerate smb.conf on standby controller so shell utilities behave
-            # same on both nodes.
-            try:
-                await self.middleware.call('failover.call_remote', 'etc.generate', ['smb'])
-            except Exception:
-                pass
-
-            if new['stateful_failover']:
-                # We need to move our secrets.tdb file to ctdb.
-                try:
-                    await self.middleware.call('directoryservices.secrets.sync_to_ctdb')
-                except Exception:
-                    self.logger.exception('Failed to sync local directory services secrets')
-            else:
-                # There's not a clean equivalent for CTDB -> TDB and so we just have
-                # to rely on restoring from our DB
-                try:
-                    await self.middleware.call('directoryservices.secrets.restore')
-                except Exception:
-                    self.logger.exception('Failed to restore local directory services secrets')
-
-            # We need winbindd to reopen its tdb files as ctdb or vice-versa
-            wb_restart = await self.call2(self.s.service.control, 'RESTART', 'idmap')
-            await wb_restart.wait()
-
-            config_job = await self.middleware.call('smb.configure')
-            await config_job.wait()
 
         await self._service_change(self._config.service, 'restart')
         return new_config
@@ -1160,9 +1117,8 @@ class SharingSMBService(SharingService):
 
     @private
     async def delete_share_acl(self, share_name):
-        cluster = (await self.middleware.call('datastore.config', 'services.cifs'))['cifs_srv_stateful_failover']
         try:
-            await self.middleware.run_in_thread(remove_share_acl, share_name, cluster)
+            await self.middleware.run_in_thread(remove_share_acl, share_name)
         except RuntimeError as e:
             # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
             if e.args[0] != TDBError.NOEXIST:
@@ -1781,9 +1737,8 @@ class SharingSMBService(SharingService):
 
         verrors.check()
         if not normalized_acl:
-            clustered = (await self.middleware.call('smb.config'))['stateful_failover']
             try:
-                await self.middleware.run_in_thread(remove_share_acl, data['share_name'], clustered)
+                await self.middleware.run_in_thread(remove_share_acl, data['share_name'])
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:

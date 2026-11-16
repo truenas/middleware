@@ -1,4 +1,3 @@
-
 from pydantic import Field
 
 from middlewared.api.base import (
@@ -10,11 +9,26 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "FailoverEntry", "FailoverBecomePassiveArgs", "FailoverBecomePassiveResult", "FailoverGetIpsArgs",
-    "FailoverGetIpsResult", "FailoverLicensedArgs", "FailoverLicensedResult", "FailoverNodeArgs", "FailoverNodeResult",
-    "FailoverStatusArgs", "FailoverStatusResult", "FailoverSyncFromPeerArgs", "FailoverSyncFromPeerResult",
-    "FailoverSyncToPeerArgs", "FailoverSyncToPeerResult", "FailoverUpdateArgs", "FailoverUpdateResult",
-    "FailoverUpgradeArgs", "FailoverUpgradeResult", "FailoverStatusChangedEvent",
+    "FailoverEntry",
+    "FailoverBecomePassiveArgs",
+    "FailoverBecomePassiveResult",
+    "FailoverGetIpsArgs",
+    "FailoverGetIpsResult",
+    "FailoverLicensedArgs",
+    "FailoverLicensedResult",
+    "FailoverNodeArgs",
+    "FailoverNodeResult",
+    "FailoverStatusArgs",
+    "FailoverStatusResult",
+    "FailoverSyncFromPeerArgs",
+    "FailoverSyncFromPeerResult",
+    "FailoverSyncToPeerArgs",
+    "FailoverSyncToPeerResult",
+    "FailoverUpdateArgs",
+    "FailoverUpdateResult",
+    "FailoverUpgradeArgs",
+    "FailoverUpgradeResult",
+    "FailoverStatusChangedEvent",
 ]
 
 

@@ -5,9 +5,9 @@ import shlex
 import pytest
 from auto_config import pool_name
 from middlewared.service_exception import ValidationError, ValidationErrors
-from middlewared.test.integration.assets.pool import another_pool
+from middlewared.test.integration.assets.pool import another_pool, draid_pool as _draid_pool
 from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, thick_refreservation, zfs_resource
-from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils import call, enterprise_test, mock, ssh
 
 GiB = 1024**3
 
@@ -449,24 +449,7 @@ def test_zfs_resource_create_under_locked_parent_fails():
 
 @pytest.fixture(scope="module")
 def draid_pool():
-    unused_disks = call("disk.get_unused")
-    if len(unused_disks) < 2:
-        pytest.skip("Insufficient number of unused disks for a dRAID pool")
-    with another_pool(
-        {
-            "name": "test_zr_draid",
-            "topology": {
-                "data": [
-                    {
-                        "disks": [disk["name"] for disk in unused_disks[:2]],
-                        "type": "DRAID1",
-                        "draid_data_disks": 1,
-                    }
-                ],
-            },
-            "allow_duplicate_serials": True,
-        }
-    ) as pool:
+    with _draid_pool() as pool:
         yield pool
 
 
@@ -618,9 +601,6 @@ def test_zfs_resource_create_under_readonly_parent_fails():
 def test_zfs_resource_create_ssb_behavior_without_tiering():
     """Test special_small_blocks passthrough, volume pinning and filesystem
     inheritance while tiering is disabled"""
-    if call("zfs.tier.config")["enabled"]:
-        pytest.skip("ZFS tiering is enabled on this system")
-
     parent = os.path.join(pool_name, "test_create_ssb_parent")
     # explicit special_small_blocks passes straight through to zfs
     with zfs_resource(
@@ -690,11 +670,11 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
 @pytest.fixture(scope="module")
 def tier_pool():
     entitlement = call("truenas.entitlements.check", "ZFSTIER")
-    if not entitlement["entitled"]:
-        pytest.skip(entitlement["message"])
+    assert entitlement["entitled"], entitlement["message"]
+
     unused_disks = call("disk.get_unused")
-    if len(unused_disks) < 6:
-        pytest.skip("Need at least 6 unused disks for a tier pool")
+    assert len(unused_disks) >= 6
+
     with another_pool(
         {
             "topology": {
@@ -712,6 +692,7 @@ def tier_pool():
             call("zfs.tier.update", {"enabled": original["enabled"]})
 
 
+@enterprise_test
 def test_zfs_resource_create_tier_managed_ssb_denied(tier_pool):
     """Test that special_small_blocks is rejected while tiering is enabled"""
     with pytest.raises(Exception) as exc_info:
@@ -722,6 +703,7 @@ def test_zfs_resource_create_tier_managed_ssb_denied(tier_pool):
     assert "zfs.tier.dataset_set_tier" in str(exc_info.value)
 
 
+@enterprise_test
 def test_zfs_resource_create_tier_snaps_filesystem_placement(tier_pool):
     """Test that a new filesystem is pinned to its parent's effective tier"""
     # the pool root is REGULAR so the child pins to zero
@@ -748,6 +730,7 @@ def test_zfs_resource_create_tier_snaps_filesystem_placement(tier_pool):
     assert prop["source"]["type"] == "LOCAL", prop
 
 
+@enterprise_test
 def test_zfs_resource_create_tier_dedup_denied_on_performance(tier_pool):
     """Test that dedup is rejected beneath a PERFORMANCE parent but allowed on REGULAR"""
     parent = f"{tier_pool}/dedup_parent"

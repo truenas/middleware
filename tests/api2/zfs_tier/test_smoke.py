@@ -13,7 +13,9 @@ import pytest
 
 from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.utils import call, enterprise_test, client, ssh
+
+pytestmark = enterprise_test
 
 
 def test_config_fields():
@@ -134,8 +136,7 @@ def test_dataset_set_tier_with_migration(tier_ds, slow_rewrite):
 
 def test_dataset_set_tier_globally_disabled(zfstier_entitlement):
     """Returns EINVAL when tiering is globally disabled."""
-    if not zfstier_entitlement["entitled"]:
-        pytest.skip(zfstier_entitlement["message"])
+    assert zfstier_entitlement["entitled"], zfstier_entitlement["message"]
 
     original = call("zfs.tier.config")["enabled"]
     try:

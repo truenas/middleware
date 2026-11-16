@@ -35,14 +35,14 @@ class RsyncTaskEntry(BaseModel):
         description=(
             "The ZFS dataset containing the rsync task path (e.g., 'tank/data'). Returns `null` if the path cannot be "
             "resolved yet (encrypted dataset not unlocked, etc.). This is a read-only field automatically populated "
-            "from \"path\"."
+            'from "path".'
         ),
     )
     relative_path: str | None = Field(
         description=(
             "The path of the rsync task relative to the dataset mountpoint (e.g., 'backups/daily'). An empty string "
             "indicates the task path is at the dataset root. Returns `null` if the path cannot be resolved yet. This is"
-            " a read-only field automatically populated from \"path\"."
+            ' a read-only field automatically populated from "path".'
         ),
     )
     user: str = Field(description="Username to run the rsync task as.")
@@ -54,7 +54,7 @@ class RsyncTaskEntry(BaseModel):
         default=None,
         description=(
             "IP address or hostname of the remote system. If username differs on the remote host, "
-            "\"username@remote_host\" format should be used."
+            '"username@remote_host" format should be used.'
         ),
     )
     remoteport: int | None = Field(

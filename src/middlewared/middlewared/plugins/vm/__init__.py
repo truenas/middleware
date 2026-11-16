@@ -495,10 +495,9 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Stops a VM.
 
-        For unresponsive guests who have exceeded the ``shutdown_timeout`` defined by the user and have become
-        unresponsive, they required to be powered down using :method:`vm.poweroff`. :method:`vm.stop` is only going to
-        send a shutdown signal to the guest and wait the desired ``shutdown_timeout`` value before tearing down guest
-        vmemory.
+        Unless ``force`` is set, a suspended VM is resumed and the guest is sent a shutdown request. If the guest is
+        still running after ``shutdown_timeout`` seconds, the VM is powered off when ``force_after_timeout`` is set,
+        otherwise the job fails and the VM keeps running. Use :method:`vm.poweroff` to power it off immediately.
         """
         stop_vm(self.context, id_, options)
 

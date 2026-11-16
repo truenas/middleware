@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Multiline
 
 __all__ = ["DeviceGetInfoArgs", "DeviceGetInfoResult"]
 
@@ -13,7 +13,7 @@ class SerialInfo(BaseModel):
     drivername: str = Field(description="Name of the kernel driver handling this serial device.")
     start: str = Field(description="Starting address or identifier for the serial device.")
     size: int = Field(description="Size or capacity information for the serial device.")
-    description: str = Field(description="Human-readable description of the serial device.")
+    description: Multiline[str] = Field(description="Human-readable description of the serial device.")
 
 
 class GPUInfoAddr(BaseModel):
@@ -31,14 +31,16 @@ class GPUInfoDevice(BaseModel):
 
 class GPUInfo(BaseModel):
     addr: GPUInfoAddr = Field(description="PCI address information for the GPU.")
-    description: str = Field(description="Human-readable description of the GPU.")
+    description: Multiline[str] = Field(description="Human-readable description of the GPU.")
     devices: list[GPUInfoDevice] = Field(description="Array of PCI devices associated with this GPU.")
     vendor: str | None = Field(description="GPU vendor name or `null` if unknown.")
     available_to_host: bool = Field(description="Whether the GPU is available for use by the host system.")
     uses_system_critical_devices: bool = Field(
         description="Whether the GPU uses devices critical for system operation.",
     )
-    critical_reason: str | None = Field(description="Reason why GPU is considered critical or `null` if not critical.")
+    critical_reason: Multiline[str] | None = Field(
+        description="Reason why GPU is considered critical or `null` if not critical.",
+    )
 
     class Config:
         extra = "allow"

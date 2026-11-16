@@ -17,7 +17,9 @@ import pytest
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, enterprise_test
+
+pytestmark = enterprise_test
 
 
 INCOMPATIBLE_MSG = "incompatible with tiering"

@@ -281,7 +281,7 @@ class ZFSResourceSnapshotDestroyArgsData(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
+            'If true, will bypass the safety checks that prevent deleting zfs resources that are "protected".'
         ),
     )
 
@@ -309,7 +309,7 @@ class ZFSResourceSnapshotRenameArgsData(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent renaming snapshots of \"protected\" zfs resources."
+            'If true, will bypass the safety checks that prevent renaming snapshots of "protected" zfs resources.'
         ),
     )
 
@@ -377,7 +377,7 @@ class ZFSResourceSnapshotCloneArgsData(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent cloning from or into \"protected\" zfs resources. "
+            'If true, will bypass the safety checks that prevent cloning from or into "protected" zfs resources. '
             "It also skips the `aclmode`/`aclinherit` defaults that follow an explicit `acltype`."
         ),
     )
@@ -412,9 +412,7 @@ class ZFSResourceSnapshotCreateArgsData(BaseModel):
     )
     bypass: Private[bool] = Field(
         default=False,
-        description=(
-            "If true, will bypass the safety checks that prevent snapshotting \"protected\" zfs resources."
-        ),
+        description=('If true, will bypass the safety checks that prevent snapshotting "protected" zfs resources.'),
     )
 
 
@@ -436,7 +434,7 @@ class ZFSResourceSnapshotHoldArgsData(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent holding snapshots of \"protected\" zfs resources."
+            'If true, will bypass the safety checks that prevent holding snapshots of "protected" zfs resources.'
         ),
     )
 
@@ -471,7 +469,7 @@ class ZFSResourceSnapshotReleaseArgsData(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent releasing holds on snapshots of \"protected\" zfs "
+            'If true, will bypass the safety checks that prevent releasing holds on snapshots of "protected" zfs '
             "resources."
         ),
     )
@@ -501,9 +499,7 @@ class ZFSResourceSnapshotRollbackArgsData(BaseModel):
     )
     bypass: Private[bool] = Field(
         default=False,
-        description=(
-            "If true, will bypass the safety checks that prevent rolling back \"protected\" zfs resources."
-        ),
+        description=('If true, will bypass the safety checks that prevent rolling back "protected" zfs resources.'),
     )
 
 

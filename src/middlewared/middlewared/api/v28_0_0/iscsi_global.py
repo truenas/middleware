@@ -1,4 +1,3 @@
-
 from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
@@ -48,7 +47,7 @@ class ISCSIGlobalEntry(BaseModel):
     mode: int = Field(ge=0, le=1, description="Internal iSCSI operational mode.")
 
 
-@single_argument_args('iscsi_update')
+@single_argument_args("iscsi_update")
 class ISCSIGlobalUpdateArgs(ISCSIGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 

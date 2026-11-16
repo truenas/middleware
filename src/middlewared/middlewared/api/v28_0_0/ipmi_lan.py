@@ -7,15 +7,20 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, IPv4Address, pas
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    "IPMILanEntry", "IPMILanQueryArgs", "IPMILanQueryResult", "IPMILanChannelsArgs",
-    "IPMILanChannelsResult", "IPMILanUpdateArgs", "IPMILanUpdateResult",
+    "IPMILanEntry",
+    "IPMILanQueryArgs",
+    "IPMILanQueryResult",
+    "IPMILanChannelsArgs",
+    "IPMILanChannelsResult",
+    "IPMILanUpdateArgs",
+    "IPMILanUpdateResult",
 ]
 
 
 class IPMILanEntry(BaseModel, metaclass=ForUpdateMetaclass):
     channel: int = Field(description="IPMI LAN channel number.")
     id_: int = Field(alias="id", description="Unique identifier for the IPMI LAN configuration.")
-    ip_address_source: str = Field(description="Source type for IP address assignment (e.g., \"DHCP\", \"Static\").")
+    ip_address_source: str = Field(description='Source type for IP address assignment (e.g., "DHCP", "Static").')
     ip_address: str = Field(description="Current IP address assigned to the IPMI interface.")
     mac_address: str = Field(description="MAC address of the IPMI network interface.")
     subnet_mask: str = Field(description="Subnet mask for the IPMI network interface.")
@@ -30,7 +35,7 @@ class IPMILanEntry(BaseModel, metaclass=ForUpdateMetaclass):
 
 class IPMILanQueryOptions(BaseModel):
     query_remote: bool = Field(
-        alias='query-remote',
+        alias="query-remote",
         default=False,
         description="Whether to query remote IPMI LAN configuration on HA systems.",
     )
@@ -38,17 +43,17 @@ class IPMILanQueryOptions(BaseModel):
 
 class IPMILanQuery(BaseModel):
     query_filters: QueryFilters = Field(
-        alias='query-filters',
+        alias="query-filters",
         default=[],
         description="Query filters to apply to IPMI LAN configuration results.",
     )
     query_options: QueryOptions = Field(
-        alias='query-options',
+        alias="query-options",
         default_factory=QueryOptions,
         description="Query options for sorting and pagination.",
     )
     ipmi_options: IPMILanQueryOptions = Field(
-        alias='ipmi-options',
+        alias="ipmi-options",
         default_factory=IPMILanQueryOptions,
         description="IPMI-specific query options.",
     )
@@ -59,13 +64,16 @@ class IPMILanUpdateOptionsDHCP(BaseModel):
     password: Secret[
         Annotated[
             str,
-            AfterValidator(passwd_complexity_validator(
-                required_types=["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"],
-                required_cnt=3,
-                min_length=8,
-                max_length=16,
-            ))
-        ] | None
+            AfterValidator(
+                passwd_complexity_validator(
+                    required_types=["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"],
+                    required_cnt=3,
+                    min_length=8,
+                    max_length=16,
+                )
+            ),
+        ]
+        | None
     ] = Field(
         default=None,
         description=(

@@ -1,20 +1,11 @@
 from time import sleep
 
-import pytest
+from middlewared.test.integration.utils import call, ha_test, ssh
 
-from middlewared.test.integration.utils import call, ssh
-
-
-@pytest.fixture(scope='module')
-def require_enterprise():
-    # SYSTEM audit events are produced by the tnaudit handler daemon, which only
-    # processes auditd events on Enterprise systems (it no-ops on Community
-    # Edition). Skip these tests where the pipeline is intentionally inactive.
-    if call('truenas.entitlements.facts')['hardware_type'] != 'TRUENAS':
-        pytest.skip('SYSTEM auditing is only active on Enterprise systems')
+pytestmark = ha_test
 
 
-def test_audit_system_escalation(require_enterprise):
+def test_audit_system_escalation():
     """Generate an ESCALATION event and find it in the TrueNAS audit log."""
 
     # Run an ESCALATION command as root
@@ -40,7 +31,7 @@ def test_audit_system_escalation(require_enterprise):
     assert len(results) > 0, "Did not find escalation event"
 
 
-def test_audit_system_rin_operator_simple(require_enterprise):
+def test_audit_system_rin_operator_simple():
     """Test the 'rin' (contains) operator for substring matching."""
 
     # Generate a system event with a known proctitle
@@ -73,7 +64,7 @@ def test_audit_system_rin_operator_simple(require_enterprise):
         assert 'systemctl' in proctitle, f"proctitle '{proctitle}' does not contain 'systemctl'"
 
 
-def test_audit_system_rin_operator_with_or(require_enterprise):
+def test_audit_system_rin_operator_with_or():
     """Test the 'rin' operator with OR filters."""
 
     # Generate a system event

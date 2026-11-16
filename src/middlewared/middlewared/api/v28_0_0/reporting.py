@@ -13,12 +13,27 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'ReportingEntry', 'ReportingUpdate', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',
-    'ReportingNetdataGetDataArgs', 'ReportingNetdataGraphResult', 'ReportingNetdataGraphArgs',
-    'ReportingGeneratePasswordArgs', 'ReportingGeneratePasswordResult', 'ReportingRealtimeEventSourceArgs',
-    'ReportingRealtimeEventSourceEvent', 'ReportingGetDataArgs', 'ReportingGetDataResult', 'ReportingGraphArgs',
-    'ReportingGraphResult', 'ReportingNetdataGetDataResult', 'ReportingNetdataGraphsItem',
-    'GraphIdentifier', 'ReportingQuery', 'ReportingGetDataResponse',
+    "ReportingEntry",
+    "ReportingUpdate",
+    "ReportingUpdateArgs",
+    "ReportingUpdateResult",
+    "ReportingGraphsItem",
+    "ReportingNetdataGetDataArgs",
+    "ReportingNetdataGraphResult",
+    "ReportingNetdataGraphArgs",
+    "ReportingGeneratePasswordArgs",
+    "ReportingGeneratePasswordResult",
+    "ReportingRealtimeEventSourceArgs",
+    "ReportingRealtimeEventSourceEvent",
+    "ReportingGetDataArgs",
+    "ReportingGetDataResult",
+    "ReportingGraphArgs",
+    "ReportingGraphResult",
+    "ReportingNetdataGetDataResult",
+    "ReportingNetdataGraphsItem",
+    "GraphIdentifier",
+    "ReportingQuery",
+    "ReportingGetDataResponse",
 ]
 
 
@@ -45,7 +60,7 @@ timestamp: typing.TypeAlias = typing.Annotated[int, Gt(0)]
 
 
 class ReportingQuery(BaseModel):
-    unit: typing.Literal['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] | None = Field(
+    unit: typing.Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] | None = Field(
         default=None,
         description="Time unit for data aggregation. `null` for default aggregation.",
     )
@@ -63,9 +78,23 @@ class ReportingQuery(BaseModel):
 
 class GraphIdentifier(BaseModel):
     name: typing.Literal[
-        'cpu', 'cputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime',
-        'arcsize', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
-        'upsload', 'upstemperature',
+        "cpu",
+        "cputemp",
+        "disk",
+        "interface",
+        "load",
+        "processes",
+        "memory",
+        "uptime",
+        "arcsize",
+        "disktemp",
+        "upscharge",
+        "upsruntime",
+        "upsvoltage",
+        "upscurrent",
+        "upsfrequency",
+        "upsload",
+        "upstemperature",
     ] = Field(
         description=(
             "Type of performance metric to retrieve.\n"
@@ -187,10 +216,12 @@ class ReportingRealtimeEventSourceEventInterface(BaseModel):
     received_bytes_rate: float = Field(default=0, description="Bytes received per second.")
     sent_bytes_rate: float = Field(default=0, description="Bytes sent per second.")
     received_bytes: float = Field(
-        default=0, description="Bytes received in the last interval (reported when the link is down).",
+        default=0,
+        description="Bytes received in the last interval (reported when the link is down).",
     )
     sent_bytes: float = Field(
-        default=0, description="Bytes sent in the last interval (reported when the link is down).",
+        default=0,
+        description="Bytes sent in the last interval (reported when the link is down).",
     )
 
 

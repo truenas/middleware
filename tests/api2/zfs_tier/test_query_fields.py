@@ -17,7 +17,9 @@ import contextlib
 import time
 
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, enterprise_test
+
+pytestmark = enterprise_test
 
 
 @contextlib.contextmanager

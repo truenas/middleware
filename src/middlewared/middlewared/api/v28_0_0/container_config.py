@@ -10,9 +10,12 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "LXCConfigEntry", "LXCConfigUpdate",
-    "LXCConfigUpdateArgs", "LXCConfigUpdateResult",
-    "LXCConfigBridgeChoicesArgs", "LXCConfigBridgeChoicesResult",
+    "LXCConfigEntry",
+    "LXCConfigUpdate",
+    "LXCConfigUpdateArgs",
+    "LXCConfigUpdateResult",
+    "LXCConfigBridgeChoicesArgs",
+    "LXCConfigBridgeChoicesResult",
 ]
 
 

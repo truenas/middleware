@@ -18,6 +18,7 @@ GET_UNIT_STATE_SECONDS = 2
 RELOAD_REMOTE_QUICK_RETRIES = 10
 STANDBY_ENABLE_DEVICES_RETRIES = 10
 REMOTE_RELOAD_LONG_DELAY_SECS = 300
+SCST_MISSING_LOG_INTERVAL = 30
 
 
 class iSCSITargetAluaService(Service):
@@ -385,6 +386,7 @@ class iSCSITargetAluaService(Service):
 
         # Next login the HA targets.
         reload_remote_quick_retries = RELOAD_REMOTE_QUICK_RETRIES
+        scst_missing_count = 0
         while self.standby_starting:
             try:
                 while self.standby_starting:
@@ -450,6 +452,15 @@ class iSCSITargetAluaService(Service):
                     if await self.check_luns():
                         self.logger.debug('Required LUNs appear present')
                         break
+
+                # Diagnostic only: retrying cannot help if the SCST kernel modules are not loaded.
+                if await self.middleware.call('iscsi.scst.is_kernel_module_loaded'):
+                    scst_missing_count = 0
+                else:
+                    if scst_missing_count % SCST_MISSING_LOG_INTERVAL == 0:
+                        self.logger.warning('scst: kernel modules not loaded, cannot surface cluster_mode '
+                                            '(%d consecutive checks)', scst_missing_count + 1)
+                    scst_missing_count += 1
 
                 self.logger.debug('Detected missing cluster_mode.  Retrying.')
                 self._standby_write_empty_config = False

@@ -14,8 +14,11 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "NetworkConfigurationEntry", "NetworkConfigurationUpdateArgs", "NetworkConfigurationUpdateResult",
-    "NetworkConfigurationActivityChoicesArgs", "NetworkConfigurationActivityChoicesResult",
+    "NetworkConfigurationEntry",
+    "NetworkConfigurationUpdateArgs",
+    "NetworkConfigurationUpdateResult",
+    "NetworkConfigurationActivityChoicesArgs",
+    "NetworkConfigurationActivityChoicesResult",
 ]
 
 

@@ -22,6 +22,7 @@ def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
         leca_service_base_url='https://leca.example/',
         tnc_base_url='https://tnc.example/',
         heartbeat_url='https://hb.example/',
+        allowed_origins=[],
         tier=None,
         last_heartbeat_failure_datetime=None,
     )

@@ -1,11 +1,25 @@
 import asyncio
+import sqlite3
 
 from middlewared.api.current import ServiceOptions
 from middlewared.utils import run
+from middlewared.utils.iscsi.constants import ISCSIMODE
 from middlewared.utils.lio.config import ISCSI_DIR, teardown_lio_config
 
 from .base import SwitchableSimpleService
 from .base_state import ServiceState
+
+
+def _config_db_lio_mode(config_db: str) -> bool:
+    conn = sqlite3.connect(config_db)
+    try:
+        row = conn.execute('SELECT iscsi_mode FROM services_iscsitargetglobalconfiguration').fetchone()
+    except sqlite3.OperationalError:
+        # An older database may predate iscsi_mode, in which case the mode is SCST.
+        return False
+    finally:
+        conn.close()
+    return row is not None and row[0] == ISCSIMODE.LIO
 
 
 class ISCSITargetService(SwitchableSimpleService):
@@ -24,6 +38,19 @@ class ISCSITargetService(SwitchableSimpleService):
         if await self._lio_mode():
             return None
         return self.systemd_unit
+
+    async def systemd_enabled_units(self, config_db: str | None = None) -> list[str]:
+        # On HA scst is started by middleware (vrrp_master / vrrp_backup), never at boot,
+        # and it is not used at all in LIO mode.
+        if await self.middleware.call('failover.licensed'):
+            return []
+        if config_db is None:
+            lio_mode = await self._lio_mode()
+        else:
+            lio_mode = await self.middleware.run_in_thread(_config_db_lio_mode, config_db)
+        if lio_mode:
+            return []
+        return await super().systemd_enabled_units(config_db)
 
     async def get_state_no_unit(self) -> ServiceState:
         return ServiceState(ISCSI_DIR.exists(), [])

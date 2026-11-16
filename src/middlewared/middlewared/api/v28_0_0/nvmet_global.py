@@ -1,14 +1,8 @@
-
 from pydantic import Field
 
 from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
-__all__ = [
-    "NVMetGlobalEntry",
-    "NVMetGlobalUpdateArgs",
-    "NVMetGlobalUpdateResult",
-    "NVMetGlobalSessionsItem"
-]
+__all__ = ["NVMetGlobalEntry", "NVMetGlobalUpdateArgs", "NVMetGlobalUpdateResult", "NVMetGlobalSessionsItem"]
 
 
 class NVMetGlobalEntry(BaseModel):
@@ -44,7 +38,7 @@ class NVMetGlobalEntry(BaseModel):
     )
 
 
-@single_argument_args('nvmet_update')
+@single_argument_args("nvmet_update")
 class NVMetGlobalUpdateArgs(NVMetGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     basenqn: NQN = Field(

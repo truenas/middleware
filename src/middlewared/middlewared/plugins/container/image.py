@@ -30,11 +30,11 @@ class ContainerImageService(Service):
         ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult, roles=['CONTAINER_IMAGE_READ'],
         check_annotations=True,
     )
-    def query_registry(self) -> list[ContainerImageQueryRegistryResultImage]:
+    async def query_registry(self) -> list[ContainerImageQueryRegistryResultImage]:
         """
         Query images available in the images registry.
         """
-        products = query_registry_images(self.context)['products']
+        products = (await query_registry_images(self.context))['products']
 
         result = []
         for name, product in products.items():
@@ -50,13 +50,16 @@ class ContainerImageService(Service):
 
         return result
 
-    @job()
+    @job(
+        lock=lambda args: f'container_image_pull:{args[0]}:{args[1]["name"]}:{args[1]["version"]}',
+        lock_queue_size=None,
+    )
     @private
-    def pull(self, job: Job, pool: str, image: dict[str, typing.Any]) -> str:
+    async def pull(self, job: Job, pool: str, image: dict[str, typing.Any]) -> str:
         """
         Pull image.
         """
-        return pull(self.context, job, pool, image)
+        return await pull(self.context, job, pool, image)
 
 
 async def setup(middleware: Middleware) -> None:

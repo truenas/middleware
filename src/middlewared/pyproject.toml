@@ -55,7 +55,6 @@ module = [
     "mako.*",
     "pam.*",
     "samba.*",
-    "pyctdb.*",
     "pyinotify.*",
     "pyudev.*",
     "tdb.*",
@@ -66,6 +65,7 @@ module = [
     "truenas_pysnmp.*",
     "truenas_zfstierd_client.*",
     "truenas_zfstierd_common.*",
+    "truesearch_client.*",
     "wbclient",
 ]
 ignore_missing_imports = true

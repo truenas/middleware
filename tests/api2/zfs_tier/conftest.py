@@ -33,8 +33,7 @@ def zfstier_entitlement():
 @pytest.fixture(scope="module")
 def tier_pool(zfstier_entitlement):
     """A pool with a SPECIAL vdev, with tiering globally enabled."""
-    if not zfstier_entitlement["entitled"]:
-        pytest.skip(zfstier_entitlement["message"])
+    assert zfstier_entitlement["entitled"], zfstier_entitlement["message"]
 
     unused = call("disk.get_unused")
     if len(unused) < 6:

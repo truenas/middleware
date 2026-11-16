@@ -17,11 +17,15 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "SystemGeneralEntry", "SystemGeneralUpdateArgs", "SystemGeneralUpdateResult",
-    "SystemGeneralCheckinWaitingArgs", "SystemGeneralCheckinWaitingResult",
-    "SystemGeneralCheckinArgs", "SystemGeneralCheckinResult",
-    'SystemGeneralCountryChoicesArgs',
-    'SystemGeneralCountryChoicesResult',
+    "SystemGeneralEntry",
+    "SystemGeneralUpdateArgs",
+    "SystemGeneralUpdateResult",
+    "SystemGeneralCheckinWaitingArgs",
+    "SystemGeneralCheckinWaitingResult",
+    "SystemGeneralCheckinArgs",
+    "SystemGeneralCheckinResult",
+    "SystemGeneralCountryChoicesArgs",
+    "SystemGeneralCountryChoicesResult",
 ]
 
 
@@ -39,7 +43,7 @@ class SystemGeneralEntry(BaseModel):
             "When set, makes sure that all HTTP requests are converted to HTTPS requests to better enhance security."
         ),
     )
-    ui_httpsprotocols: UniqueList[Literal['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']] = Field(
+    ui_httpsprotocols: UniqueList[Literal["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]] = Field(
         description="Array of TLS protocol versions enabled for HTTPS connections.",
     )
     ui_port: TcpPort = Field(description="HTTP port for the web UI.")

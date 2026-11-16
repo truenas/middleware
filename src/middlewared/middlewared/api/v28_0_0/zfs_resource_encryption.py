@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NonEmptyString
+from middlewared.api.base import BaseModel, Multiline, NonEmptyString
 
 __all__ = (
     "ZFSResourceEncryptionChangeKeyArgs",
@@ -127,7 +127,7 @@ class ZFSResourceEncryptionUnlockArgs(BaseModel):
 
 
 class ZFSResourceEncryptionUnlockFailure(BaseModel):
-    error: str | None = Field(description="Why the resource could not be unlocked.")
+    error: Multiline[str] | None = Field(description="Why the resource could not be unlocked.")
     skipped: list[str] = Field(description="Paths below the failed resource that were not attempted because of it.")
 
 
@@ -171,7 +171,7 @@ class ZFSResourceEncryptionUnlockSummaryEntry(BaseModel):
     key_present_in_database: bool = Field(description="Whether the system has a stored key for the encryption root.")
     valid_key: bool = Field(description="Whether the supplied or stored key opens the encryption root.")
     locked: bool = Field(description="Whether the encryption root is currently locked.")
-    unlock_error: str | None = Field(description="Why an unlock would fail, or `null` if it would succeed.")
+    unlock_error: Multiline[str] | None = Field(description="Why an unlock would fail, or `null` if it would succeed.")
     unlock_successful: bool = Field(description="Whether an unlock with the same parameters would succeed.")
 
 

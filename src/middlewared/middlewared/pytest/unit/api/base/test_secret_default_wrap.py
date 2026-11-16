@@ -3,6 +3,7 @@ from pydantic import Field, Secret
 from middlewared.api.base import BaseModel
 from middlewared.api.base.model import NotRequired
 from middlewared.api.base.types.string import SECRET_VALUE
+from middlewared.utils.pydantic_ import model_json_schema
 
 
 class SecretDefaults(BaseModel):
@@ -47,3 +48,17 @@ def test_wrapped_default_redacts_on_serialization():
     dumped = SecretDefaults(required="r").model_dump()
     assert dumped["bare"] == SECRET_VALUE
     assert SecretDefaults(required="r").model_dump(expose_secrets=True)["bare"] == ""
+
+
+class TypedSecretDefaults(BaseModel):
+    flag: Secret[bool] = Field(default=False)
+    count: Secret[int] = Field(default=10000)
+    text: Secret[str] = Field(default="")
+
+
+def test_secret_default_documents_its_value_in_json_schema():
+    """The JSON schema documents a wrapped default as its value, not its redacted display."""
+    properties = model_json_schema(TypedSecretDefaults)["properties"]
+    assert properties["flag"]["default"] is False
+    assert properties["count"]["default"] == 10000
+    assert properties["text"]["default"] == ""

@@ -3,7 +3,14 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    Multiline,
+    excluded_field,
+    single_argument_args,
+)
 
 from .common import QueryFilters, QueryOptions
 
@@ -129,7 +136,7 @@ class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
         description="Converted ISO-8601 timestamp from application recording when event occurred.",
     )
     address: str = Field(description="IP address of client performing action that generated the audit message.")
-    username: str = Field(description="Username used by client performing action.")
+    username: Multiline[str] = Field(description="Username used by client performing action.")
     session: UUID | None = Field(description="GUID uniquely identifying the client session.")
     service: Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM'] = Field(
         description=(

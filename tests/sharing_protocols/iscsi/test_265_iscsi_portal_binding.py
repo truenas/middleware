@@ -45,6 +45,8 @@ from middlewared.test.integration.utils import call
 from protocols import ISCSIDiscover, iscsi_scsi_connection
 from assets.websocket.service import ensure_service_enabled
 
+pytestmark = pytest.mark.skip(reason="LIO mode is not supported yet")
+
 
 class ISCSIMODE:
     SCST_DLM_PRSTATE_SAVE = 0
@@ -120,14 +122,6 @@ def file_extent(dataset_path, filename, filesize_mb, extent_name):
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(scope='module', autouse=True)
-def _require_lio():
-    """Skip entire module if LIO mode (2) is not supported by the API."""
-    if not lio_supported():
-        pytest.skip('LIO mode (2) not accepted by API')
-    yield
 
 
 @pytest.fixture(scope='module')

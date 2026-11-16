@@ -19,23 +19,37 @@ from .common import CronModel, TimeCronModel
 from .keychain import KeychainCredentialEntry
 from .pool_snapshottask import PoolSnapshotTaskDBEntry
 
-__all__ = ["ReplicationEntry",
-           "ReplicationCreate", "ReplicationUpdate",
-           "ReplicationCreateArgs", "ReplicationCreateResult",
-           "ReplicationUpdateArgs", "ReplicationUpdateResult",
-           "ReplicationDeleteArgs", "ReplicationDeleteResult",
-           "ReplicationRunOptions", "ReplicationRunArgs", "ReplicationRunResult",
-           "ReplicationRunOnetimeArgs", "ReplicationRunOnetimeResult",
-           "ReplicationListDatasetsArgs", "ReplicationListDatasetsResult",
-           "ReplicationCreateDatasetArgs", "ReplicationCreateDatasetResult",
-           "ReplicationListNamingSchemasArgs", "ReplicationListNamingSchemasResult",
-           "ReplicationCountEligibleManualSnapshotsArgs", "ReplicationCountEligibleManualSnapshotsResult",
-           "ReplicationEligibleManualSnapshots",
-           "ReplicationTargetUnmatchedSnapshotsArgs", "ReplicationTargetUnmatchedSnapshotsResult"]
+__all__ = [
+    "ReplicationEntry",
+    "ReplicationCreate",
+    "ReplicationUpdate",
+    "ReplicationCreateArgs",
+    "ReplicationCreateResult",
+    "ReplicationUpdateArgs",
+    "ReplicationUpdateResult",
+    "ReplicationDeleteArgs",
+    "ReplicationDeleteResult",
+    "ReplicationRunOptions",
+    "ReplicationRunArgs",
+    "ReplicationRunResult",
+    "ReplicationRunOnetimeArgs",
+    "ReplicationRunOnetimeResult",
+    "ReplicationListDatasetsArgs",
+    "ReplicationListDatasetsResult",
+    "ReplicationCreateDatasetArgs",
+    "ReplicationCreateDatasetResult",
+    "ReplicationListNamingSchemasArgs",
+    "ReplicationListNamingSchemasResult",
+    "ReplicationCountEligibleManualSnapshotsArgs",
+    "ReplicationCountEligibleManualSnapshotsResult",
+    "ReplicationEligibleManualSnapshots",
+    "ReplicationTargetUnmatchedSnapshotsArgs",
+    "ReplicationTargetUnmatchedSnapshotsResult",
+]
 
 
 class ReplicationTimeCronModel(TimeCronModel):
-    minute: str = Field(default="00", description="\"00\" - \"59\".")
+    minute: str = Field(default="00", description='"00" - "59".')
 
 
 class ReplicationLifetimeModel(BaseModel):
@@ -420,10 +434,12 @@ class ReplicationTargetUnmatchedSnapshotsArgs(BaseModel):
 
 
 class ReplicationTargetUnmatchedSnapshotsResult(BaseModel):
-    result: dict[str, list[str]] = Field(examples=[
-        {
-            "backup/work": ["auto-2019-10-15_13-00", "auto-2019-10-15_09-00"],
-            "backup/games": ["auto-2019-10-15_13-00"],
-        },
-    ],
-        description="Object mapping dataset names to arrays of unmatched snapshot names on the target side.")
+    result: dict[str, list[str]] = Field(
+        examples=[
+            {
+                "backup/work": ["auto-2019-10-15_13-00", "auto-2019-10-15_09-00"],
+                "backup/games": ["auto-2019-10-15_13-00"],
+            },
+        ],
+        description="Object mapping dataset names to arrays of unmatched snapshot names on the target side.",
+    )

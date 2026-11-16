@@ -2,19 +2,28 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, Multiline
 
 from .common import CronModel
 
 __all__ = [
-    "CronJobEntry", "CronJobCreateArgs", "CronJobCreateResult", "CronJobUpdateArgs", "CronJobUpdateResult",
-    "CronJobDeleteArgs", "CronJobDeleteResult", "CronJobRunArgs", "CronJobRunResult",
-    "CronJobCreate", "CronJobUpdate", "CronJobSchedule",
+    "CronJobEntry",
+    "CronJobCreateArgs",
+    "CronJobCreateResult",
+    "CronJobUpdateArgs",
+    "CronJobUpdateResult",
+    "CronJobDeleteArgs",
+    "CronJobDeleteResult",
+    "CronJobRunArgs",
+    "CronJobRunResult",
+    "CronJobCreate",
+    "CronJobUpdate",
+    "CronJobSchedule",
 ]
 
 
 class CronJobSchedule(CronModel):
-    minute: str = Field(default="00", description="\"00\" - \"59\".")
+    minute: str = Field(default="00", description='"00" - "59".')
 
 
 class CronJobCreate(BaseModel):
@@ -32,7 +41,10 @@ class CronJobCreate(BaseModel):
         description="Cron schedule configuration for when the job runs.",
     )
     command: str = Field(description="Shell command or script to execute.")
-    description: str = Field(default="", description="Human-readable description of what this cron job does.")
+    description: Multiline[str] = Field(
+        default="",
+        description="Human-readable description of what this cron job does.",
+    )
     user: str = Field(description="System user account to run the command as.")
 
 

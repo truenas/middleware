@@ -140,8 +140,7 @@ def sed_disk_password(password=SED_PASSWORD):
     machines do not have, so the row is seeded through the datastore instead.
     """
     disks = call("datastore.query", "storage.disk", [], {"prefix": "disk_"})
-    if not disks:
-        pytest.skip("No disks in the storage.disk table")
+    assert disks
 
     disk = disks[0]
     call("datastore.update", "storage.disk", disk["identifier"], {"passwd": password}, {"prefix": "disk_"})

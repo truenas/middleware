@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, Multiline
 
 __all__ = [
     "InitShutdownScriptEntry", "InitShutdownScriptCreateArgs", "InitShutdownScriptCreateResult",
@@ -20,7 +20,7 @@ class InitShutdownScriptCreate(BaseModel):
             "* `SCRIPT`: Execute a script file"
         ),
     )
-    command: str | None = Field(default="", description="Must be given if `type=\"COMMAND\"`.")
+    command: Multiline[str] | None = Field(default="", description="Must be given if `type=\"COMMAND\"`.")
     script: str | None = Field(default="", description="Must be given if `type=\"SCRIPT\"`.")
     when: Literal["PREINIT", "POSTINIT", "SHUTDOWN"] = Field(
         description=(
@@ -41,7 +41,7 @@ class InitShutdownScriptCreate(BaseModel):
             "limit."
         ),
     )
-    comment: Annotated[str, Field(max_length=255)] = Field(
+    comment: Annotated[Multiline[str], Field(max_length=255)] = Field(
         default="",
         description="Optional comment describing the purpose of this script.",
     )

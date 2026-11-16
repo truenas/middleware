@@ -30,6 +30,7 @@ from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
 from middlewared.utils.directoryservices.ad_constants import MACHINE_ACCOUNT_KT_NAME
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS, DomainJoinResponse, DSCredType, DSStatus, DSType
 from middlewared.utils.directoryservices.credential import (
+    get_time_advice,
     validate_credential,
     validate_ldap_credential,
 )
@@ -710,7 +711,7 @@ class DirectoryServices(ConfigService):
                 # validating credentials below
                 self.logger.debug('kdestroy failed while preparing initial credentials', exc_info=True)
 
-        validate_credential(SCHEMA, new, verrors, revert)
+        validate_credential(SCHEMA, new, verrors, revert, get_time_advice(self.middleware))
         # Validating a Kerberos credential replaces the primary domain's name with the one the domain controller reports
         self.validate_idmap_names(old, new, verrors)
         if verrors:
@@ -963,8 +964,7 @@ class DirectoryServices(ConfigService):
         Each step is idempotent so a follow-up call from _ad_cleanup / _ipa_cleanup
         is harmless. Synchronous because every step is either a quick datastore call
         or a quick TDB op -- middleware.call() runs us in the io thread pool. """
-        smb_config = self.middleware.call_sync('smb.config')
-        workgroup = smb_config['workgroup']
+        workgroup = self.middleware.call_sync('smb.config')['workgroup']
 
         realm = None
         if old_kerberos_realm_id is not None:
@@ -978,9 +978,7 @@ class DirectoryServices(ConfigService):
         # workgroup + realm, leaving local-only keys (SAM/SID, SECRETS/GUID,
         # SECRETS/LOCAL_SCHANNEL_KEY, etc.) intact. Mirrors what samba's
         # `secrets_delete_machine_password_ex` does on `net ads leave`.
-        delete_machine_account_secrets(
-            workgroup, realm, smb_config['stateful_failover']
-        )
+        delete_machine_account_secrets(workgroup, realm)
 
         # DB-stored backup of secrets.tdb. Cleared by setting cifs.secrets to NULL.
         # The cifs row id is hardcoded as 1 (single-row table) consistent with the
@@ -1060,7 +1058,9 @@ class DirectoryServices(ConfigService):
         # and we don't try to recover while leaving the domain.
         orig_state = self.middleware.call_sync('directoryservices.status')['status']
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
-        validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
+        validate_credential(
+            'directoryservices.leave_domain', ds_config, verrors, revert, get_time_advice(self.middleware)
+        )
         if verrors:
             self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, orig_state)
             self.__revert_changes(revert)

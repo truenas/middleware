@@ -3,11 +3,18 @@ from pydantic import Field, NonNegativeInt
 from middlewared.api.base import BaseModel
 
 __all__ = [
-    "SystemGeneralUiAddressChoicesArgs", "SystemGeneralUiAddressChoicesResult",
-    "SystemGeneralUiCertificateChoicesArgs", "SystemGeneralUiCertificateChoicesResult",
-    "SystemGeneralUiHttpsprotocolsChoicesArgs", "SystemGeneralUiHttpsprotocolsChoicesResult",
-    "SystemGeneralLocalUrlArgs", "SystemGeneralLocalUrlResult", "SystemGeneralUiRestartArgs",
-    "SystemGeneralUiRestartResult", "SystemGeneralUiV6addressChoicesArgs", "SystemGeneralUiV6addressChoicesResult",
+    "SystemGeneralUiAddressChoicesArgs",
+    "SystemGeneralUiAddressChoicesResult",
+    "SystemGeneralUiCertificateChoicesArgs",
+    "SystemGeneralUiCertificateChoicesResult",
+    "SystemGeneralUiHttpsprotocolsChoicesArgs",
+    "SystemGeneralUiHttpsprotocolsChoicesResult",
+    "SystemGeneralLocalUrlArgs",
+    "SystemGeneralLocalUrlResult",
+    "SystemGeneralUiRestartArgs",
+    "SystemGeneralUiRestartResult",
+    "SystemGeneralUiV6addressChoicesArgs",
+    "SystemGeneralUiV6addressChoicesResult",
 ]
 
 

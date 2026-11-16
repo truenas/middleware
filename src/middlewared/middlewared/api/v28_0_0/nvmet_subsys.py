@@ -73,9 +73,7 @@ class NVMetSubsysEntry(BaseModel):
     namespaces: Optional[list[int]] = Field(
         default=NotRequired,
         description=(
-            "List of namespaces ids in this subsystem.\n"
-            "\n"
-            "Only populated on query if `extra.options.verbose` is set."
+            "List of namespaces ids in this subsystem.\n\nOnly populated on query if `extra.options.verbose` is set."
         ),
     )
     ports: Optional[list[int]] = Field(
@@ -96,11 +94,7 @@ class NVMetSubsysCreate(NVMetSubsysEntry):
     ports: Excluded = excluded_field()
     subnqn: NQN | None = Field(
         default=None,
-        description=(
-            "NVMe Qualified Name (NQN) for the subsystem.\n"
-            "\n"
-            "Must be a valid NQN format if provided."
-        ),
+        description=("NVMe Qualified Name (NQN) for the subsystem.\n\nMust be a valid NQN format if provided."),
     )
 
 

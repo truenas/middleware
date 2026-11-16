@@ -1,13 +1,26 @@
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field
+from middlewared.api.base import BaseModel, Excluded, Multiline, excluded_field
 
 from .pool import PoolEntry
 
 __all__ = [
-    "BootGetDisksArgs", "BootGetDisksResult", "BootAttachArgs", "BootAttachOptions", "BootAttachResult",
-    "BootDetachArgs", "BootDetachResult", "BootReplaceArgs", "BootReplaceResult", "BootScrubArgs", "BootScrubResult",
-    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult", "BootGetState", "BootGetStateArgs", "BootGetStateResult",
+    "BootGetDisksArgs",
+    "BootGetDisksResult",
+    "BootAttachArgs",
+    "BootAttachOptions",
+    "BootAttachResult",
+    "BootDetachArgs",
+    "BootDetachResult",
+    "BootReplaceArgs",
+    "BootReplaceResult",
+    "BootScrubArgs",
+    "BootScrubResult",
+    "BootSetScrubIntervalArgs",
+    "BootSetScrubIntervalResult",
+    "BootGetState",
+    "BootGetStateArgs",
+    "BootGetStateResult",
 ]
 
 
@@ -63,7 +76,7 @@ class BootGetStateResult(BaseModel):
 
 
 class BootReplaceArgs(BaseModel):
-    label: str = Field(description="Label of the disk in the boot pool to replace.")
+    label: Multiline[str] = Field(description="Label of the disk in the boot pool to replace.")
     dev: str = Field(description="Device name or path of the replacement disk.")
 
 

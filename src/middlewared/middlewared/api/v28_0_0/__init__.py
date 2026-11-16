@@ -115,6 +115,7 @@ from .systemdataset import *
 from .tn_connect import *
 from .truecommand import *
 from .truenas import *
+from .truesearch import *
 from .tunable import *
 from .update import *
 from .ups import *
@@ -124,6 +125,7 @@ from .vm_device import *
 from .vmware import *
 from .webshare import *
 from .webui_crypto import *
+from .webui_dataset import *
 from .webui_enclosure import *
 from .webui_main_dashboard import *
 from .zfs_resource_crud import *

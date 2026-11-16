@@ -19,7 +19,7 @@ from .internal import (
     unset_registration_details,
 )
 from .private_models import TrueNASConnectUpdateEnvironment
-from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload
+from .utils import ALLOWED_ORIGIN_RE, CLAIM_TOKEN_CACHE_KEY, get_unset_payload
 
 logger = logging.getLogger("truenas_connect")
 
@@ -52,6 +52,7 @@ class TrueNASConnectModel(sa.Model):
         sa.String(255), nullable=False, default="https://heartbeat-service.tys1.truenasconnect.net/"
     )
     last_heartbeat_failure_datetime = sa.Column(sa.String(255), nullable=True, default=None)
+    allowed_origins = sa.Column(sa.JSON(list), default=[])
 
 
 class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
@@ -159,10 +160,25 @@ class TrueNASConnectConfigServicePart(ConfigServicePart[TrueNASConnectEntry]):
                         "This field cannot be changed when TrueNAS Connect is enabled",
                     )
 
+        # Unlike the endpoints, the origins do not touch registration, so they may change while TNC is enabled.
+        for i, origin in enumerate(data.allowed_origins if "allowed_origins" in data.model_fields_set else []):
+            if not ALLOWED_ORIGIN_RE.fullmatch(origin):
+                verrors.add(
+                    f"tn_connect_update_environment.allowed_origins.{i}",
+                    f"{origin!r} is not an origin as a browser sends it, such as https://tnc.example or "
+                    "http://localhost:4300 (http only for localhost and 127.0.0.1, no path or trailing slash)",
+                )
+
         verrors.check()
 
         # Coerce HttpsOnlyURL fields to str before datastore write — SQLite stores strings.
-        db_payload = {k: str(v) for k, v in data.model_dump(exclude_unset=True).items()}
-        await self.middleware.call("datastore.update", DATASTORE, config.id, db_payload)
+        db_payload: dict[str, Any] = {
+            k: list(dict.fromkeys(v)) if k == "allowed_origins" else str(v)
+            for k, v in data.model_dump(exclude_unset=True).items()
+        }
+        if db_payload:
+            await self.middleware.call("datastore.update", DATASTORE, config.id, db_payload)
+            # The endpoints and the origins all reach nginx's CORS maps.
+            await (await self.call2(self.s.service.control, "RELOAD", "http")).wait(raise_error=True)
 
         return await self.config()

@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field, IPvAnyAddress, field_validator
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, Multiline, NonEmptyString, excluded_field
 
 __all__ = [
     "ISCSIPortalEntry",
@@ -20,7 +20,7 @@ __all__ = [
 class IscsiPortalIP(BaseModel):
     ip: NonEmptyString = Field(description="IP address for the iSCSI portal to listen on.")
 
-    @field_validator('ip')
+    @field_validator("ip")
     @classmethod
     def check_ip(cls, v):
         IPvAnyAddress(v)
@@ -37,7 +37,7 @@ class ISCSIPortalEntry(BaseModel):
         description="Array of IP address and port combinations for the portal to listen on.",
     )
     tag: int = Field(description="Numeric tag used to associate this portal with iSCSI targets.")
-    comment: str = Field(default='', description="Optional comment describing the portal.")
+    comment: Multiline[str] = Field(default="", description="Optional comment describing the portal.")
 
 
 class ISCSIPortalListenIpChoicesArgs(BaseModel):

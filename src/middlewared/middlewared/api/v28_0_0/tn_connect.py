@@ -7,17 +7,22 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     HttpsOnlyURL,
     LongNonEmptyString,
+    Multiline,
     NonEmptyString,
 )
 
 __all__ = [
-    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
-    'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdate', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
-    'TrueNASConnectGenerateClaimTokenArgs',
-    'TrueNASConnectGenerateClaimTokenResult',
-    'TrueNASConnectConfigChangedEvent',
-    'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
+    "TrueNASConnectEntry",
+    "TrueNASConnectGetRegistrationUriArgs",
+    "TrueNASConnectGetRegistrationUriResult",
+    "TrueNASConnectUpdate",
+    "TrueNASConnectUpdateArgs",
+    "TrueNASConnectUpdateResult",
+    "TrueNASConnectGenerateClaimTokenArgs",
+    "TrueNASConnectGenerateClaimTokenResult",
+    "TrueNASConnectConfigChangedEvent",
+    "TrueNASConnectIpsWithHostnamesArgs",
+    "TrueNASConnectIpsWithHostnamesResult",
 ]
 
 
@@ -28,7 +33,7 @@ class TrueNASConnectEntry(BaseModel):
         description="Object containing registration information and credentials for TrueNAS Connect.",
     )
     status: NonEmptyString = Field(description="Current operational status of the TrueNAS Connect service.")
-    status_reason: NonEmptyString = Field(
+    status_reason: Multiline[NonEmptyString] = Field(
         description="Detailed explanation of the current status, including any error conditions.",
     )
     certificate: int | None = Field(
@@ -42,7 +47,14 @@ class TrueNASConnectEntry(BaseModel):
     heartbeat_url: HttpsOnlyURL = Field(
         description="URL endpoint for sending heartbeat signals to maintain connection status.",
     )
-    tier: Literal['FOUNDATION', 'PLUS', 'BUSINESS'] | None = Field(description="TrueNAS Connect tier.")
+    allowed_origins: list[str] = Field(
+        description=(
+            "Origins, besides the TrueNAS Connect web app, that may read `/api/versions` across origins, such as an "
+            "ephemeral TrueNAS Connect environment or a local copy of a TrueNAS Connect client. Set with the private "
+            "`tn_connect.update_environment`."
+        ),
+    )
+    tier: Literal["FOUNDATION", "PLUS", "BUSINESS"] | None = Field(description="TrueNAS Connect tier.")
     last_heartbeat_failure_datetime: str | None = Field(
         description=(
             "Datetime of when the current heartbeat failure streak began. Null if heartbeat is not currently failing."

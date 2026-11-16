@@ -14,7 +14,9 @@ from middlewared.test.integration.assets.nfs import nfs_share
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.assets.s3 import s3_bucket
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, enterprise_test, ssh
+
+pytestmark = enterprise_test
 
 S3_OWNER = "tier_s3_owner"
 

@@ -7,6 +7,7 @@ from middlewared.api.base import (
     EmptyDict,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NonEmptyString,
     NotRequired,
     excluded_field,
@@ -67,8 +68,8 @@ class SystemAdvancedEntry(BaseModel):
     )
     debugkernel: bool = Field(description="Enable debug kernel for additional logging and debugging capabilities.")
     fqdn_syslog: bool = Field(description="Include the full domain name in syslog messages.")
-    motd: str = Field(description="Message of the day displayed after login.")
-    login_banner: str = Field(max_length=4096, description="Banner message displayed before login prompt.")
+    motd: Multiline[str] = Field(description="Message of the day displayed after login.")
+    login_banner: Multiline[str] = Field(max_length=4096, description="Banner message displayed before login prompt.")
     powerdaemon: bool = Field(description="Enable the power management daemon for automatic power management.")
     serialconsole: bool = Field(description="Enable serial console access.")
     serialport: str = Field(description="Serial port device for console access.")
@@ -132,7 +133,7 @@ class SystemAdvancedLoginBannerArgs(BaseModel):
 
 
 class SystemAdvancedLoginBannerResult(BaseModel):
-    result: str = Field(description="Current login banner message.")
+    result: Multiline[str] = Field(description="Current login banner message.")
 
 
 class SystemAdvancedSedGlobalPasswordArgs(BaseModel):

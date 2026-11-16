@@ -14,7 +14,13 @@ from truenas_pylibvirt import (
 )
 from truenas_pylibvirt import Error as PyLibvirtError
 
-from middlewared.api.current import ContainerEntry, ContainerNICDevice, ContainerStopOptions, ZFSResourceQuery
+from middlewared.api.current import (
+    ContainerEntry,
+    ContainerFilesystemDevice,
+    ContainerNICDevice,
+    ContainerStopOptions,
+    ZFSResourceQuery,
+)
 from middlewared.plugins.account.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
@@ -91,8 +97,8 @@ def start_on_boot(context: ServiceContext) -> None:
     for container in context.call_sync2(context.s.container.query, [("autostart", "=", True)]):
         try:
             start(context, container.id)
-        except Exception as e:
-            context.logger.error(f"Failed to start {container.name!r} container: {e}")
+        except Exception:
+            context.logger.error('Failed to start %r container', container.name, exc_info=True)
 
 
 async def _stop_one_container(context: ServiceContext, container: typing.Any) -> None:
@@ -127,6 +133,12 @@ def start(context: ServiceContext, id_: int) -> None:
 
     pylibvirt_obj = pylibvirt_container(context, container, True)
 
+    if container.initdir:
+        _check_initdir(pylibvirt_obj.configuration.root, container.initdir, [
+            device.attributes.target for device in container.devices
+            if isinstance(device.attributes, ContainerFilesystemDevice)
+        ])
+
     # Configure hostname files before start so init reads correct values
     try:
         write_etc_hostname(pylibvirt_obj.configuration.root, container.name)
@@ -140,19 +152,56 @@ def start(context: ServiceContext, id_: int) -> None:
         raise CallError(str(e))
 
 
+def _check_initdir(root: str, initdir: str, mount_targets: list[str]) -> None:
+    # Filesystem devices are mounted by libvirt inside the container, so what lies under them is not in the rootfs.
+    path = os.path.normpath(os.path.join("/", initdir))
+    for target in mount_targets:
+        target = os.path.normpath(os.path.join("/", target))
+        if os.path.commonpath([path, target]) == target:
+            return
+
+    try:
+        root_fd = os.open(root, os.O_PATH | os.O_DIRECTORY)
+    except OSError:
+        return
+
+    try:
+        # initdir is a path inside the container, so absolute paths, '..' and symlinks must not escape its root.
+        os.close(truenas_os.openat2(
+            initdir, flags=os.O_PATH | os.O_DIRECTORY, dir_fd=root_fd, resolve=truenas_os.RESOLVE_IN_ROOT,
+        ))
+    except FileNotFoundError:
+        raise CallError(f"Invalid initdir {initdir!r}: no such directory in the container", errno.ENOENT) from None
+    except NotADirectoryError:
+        raise CallError(f"Invalid initdir {initdir!r}: not a directory in the container", errno.ENOTDIR) from None
+    except (OSError, ValueError):
+        # Only a definitely missing or non-directory initdir is reported here; libvirt reports anything else at start.
+        pass
+    finally:
+        os.close(root_fd)
+
+
 def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> None:
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
     pylibvirt_container_obj = pylibvirt_container(context, container)
-    if options.force:
-        context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
-        return
+    containers = context.middleware.libvirt_domains_manager.containers
+    try:
+        if options.force:
+            containers.destroy(pylibvirt_container_obj)
+            return
 
-    context.middleware.libvirt_domains_manager.containers.shutdown(pylibvirt_container_obj)
-    if (
-        options.force_after_timeout
-        and context.run_coroutine(context.call2(context.s.container.get_instance, id_)).status.state == "RUNNING"
-    ):
-        context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
+        containers.shutdown(pylibvirt_container_obj)
+        state = context.run_coroutine(context.call2(context.s.container.get_instance, id_)).status.state
+        if state != "STOPPED":
+            if options.force_after_timeout:
+                containers.destroy(pylibvirt_container_obj)
+            else:
+                raise CallError(
+                    f"Container {container.name!r} did not stop within {container.shutdown_timeout} seconds",
+                    errno.ETIMEDOUT,
+                )
+    except PyLibvirtError as e:
+        raise CallError(str(e))
 
 
 def pylibvirt_container(

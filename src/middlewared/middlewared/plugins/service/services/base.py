@@ -20,6 +20,9 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     async def systemd_extra_units(self) -> list[str]:
         return []
 
+    async def systemd_enabled_units(self, config_db: str | None = None) -> list[str]:
+        return [self.systemd_unit] + await self.systemd_extra_units()
+
     async def get_state(self) -> ServiceState:
         unit_name = self._get_systemd_unit_name()
         state, main_pid = await system_dbus.get_service_state(unit_name)

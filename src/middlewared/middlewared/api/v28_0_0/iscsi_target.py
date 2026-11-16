@@ -14,7 +14,7 @@ from middlewared.api.base import (
     match_validator,
 )
 
-RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
+RE_TARGET_NAME = re.compile(r"^[-a-z0-9\.:]+$")
 
 __all__ = [
     "iSCSITargetEntry",
@@ -35,7 +35,7 @@ class IscsiGroup(BaseModel):
         default=None,
         description="ID of the authorized initiator group or `null` to allow any initiator.",
     )
-    authmethod: IscsiAuthType = Field(default='NONE', description="Authentication method for this target group.")
+    authmethod: IscsiAuthType = Field(default="NONE", description="Authentication method for this target group.")
     auth: int | None = Field(
         default=None,
         description="ID of the authentication credential or `null` if no authentication.",
@@ -56,20 +56,21 @@ class IscsiTargetParameters(BaseModel):
 
 class iSCSITargetEntry(BaseModel):
     id: int = Field(description="Unique identifier for the iSCSI target.")
-    name: Annotated[NonEmptyString,
-                    AfterValidator(
-                        match_validator(
-                            RE_TARGET_NAME,
-                            "Name can only contain lowercase alphanumeric characters"
-                            "plus dot (.), dash (-), and colon (:)",
-                        )
-                    ),
-                    StringConstraints(max_length=120)] = Field(
+    name: Annotated[
+        NonEmptyString,
+        AfterValidator(
+            match_validator(
+                RE_TARGET_NAME,
+                "Name can only contain lowercase alphanumeric charactersplus dot (.), dash (-), and colon (:)",
+            )
+        ),
+        StringConstraints(max_length=120),
+    ] = Field(
         description="Name of the iSCSI target (maximum 120 characters).",
     )
     alias: str | None = Field(default=None, description="Optional alias name for the iSCSI target.")
-    mode: Literal['ISCSI', 'FC', 'BOTH'] = Field(
-        default='ISCSI',
+    mode: Literal["ISCSI", "FC", "BOTH"] = Field(
+        default="ISCSI",
         description=(
             "Protocol mode for the target.\n"
             "\n"

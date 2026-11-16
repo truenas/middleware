@@ -2,7 +2,10 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel
 
-__all__ = ["FCCapableArgs", "FCCapableResult",]
+__all__ = [
+    "FCCapableArgs",
+    "FCCapableResult",
+]
 
 
 class FCCapableArgs(BaseModel):

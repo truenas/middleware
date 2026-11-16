@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    Multiline,
     NonEmptyString,
     NotRequired,
     excluded_field,
@@ -19,30 +20,67 @@ from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 from .zfs_tier import TierInfo
 
 __all__ = [
-    "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",
-    "PoolDatasetCreateResult", "PoolDatasetDetailsArgs", "PoolDatasetDetailsResult",
-    "PoolDatasetEncryptionSummaryArgs", "PoolDatasetEncryptionSummaryResult", "PoolDatasetExportKeysArgs",
-    "PoolDatasetExportKeysResult", "PoolDatasetExportKeysForReplicationArgs",
-    "PoolDatasetExportKeysForReplicationResult", "PoolDatasetExportKeyArgs", "PoolDatasetExportKeyResult",
-    "PoolDatasetLockArgs", "PoolDatasetLockResult", "PoolDatasetUnlockArgs", "PoolDatasetUnlockResult",
-    "PoolDatasetInsertOrUpdateEncryptedRecordArgs", "PoolDatasetInsertOrUpdateEncryptedRecordResult",
-    "PoolDatasetChangeKeyArgs", "PoolDatasetChangeKeyResult", "PoolDatasetInheritParentEncryptionPropertiesArgs",
-    "PoolDatasetInheritParentEncryptionPropertiesResult", "PoolDatasetChecksumChoicesArgs",
-    "PoolDatasetChecksumChoicesResult", "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
-    "PoolDatasetRecommendedZvolBlocksizeArgs", "PoolDatasetRecommendedZvolBlocksizeResult", "PoolDatasetProcessesArgs",
-    "PoolDatasetProcessesResult", "PoolDatasetGetQuotaArgs", "PoolDatasetGetQuotaResult", "PoolDatasetSetQuotaArgs",
-    "PoolDatasetSetQuotaResult", "PoolDatasetRecordsizeChoicesArgs", "PoolDatasetRecordsizeChoicesResult",
-    "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
-    "PoolDatasetDestroySnapshotsArgs", "PoolDatasetDestroySnapshotsResult", "PoolDatasetPromoteArgs",
-    "PoolDatasetPromoteResult", "PoolDatasetRenameArgs", "PoolDatasetRenameResult", "PoolDatasetChangeKeyOptions",
-    "PoolDatasetEncryptionSummary", "PoolDatasetEncryptionSummaryOptions", "PoolDatasetLockOptions",
-    "PoolDatasetUnlock", "PoolDatasetUnlockOptions",
+    "PoolDatasetEntry",
+    "PoolDatasetAttachmentsArgs",
+    "PoolDatasetAttachmentsResult",
+    "PoolDatasetCreateArgs",
+    "PoolDatasetCreateResult",
+    "PoolDatasetDetailsArgs",
+    "PoolDatasetDetailsResult",
+    "PoolDatasetEncryptionSummaryArgs",
+    "PoolDatasetEncryptionSummaryResult",
+    "PoolDatasetExportKeysArgs",
+    "PoolDatasetExportKeysResult",
+    "PoolDatasetExportKeysForReplicationArgs",
+    "PoolDatasetExportKeysForReplicationResult",
+    "PoolDatasetExportKeyArgs",
+    "PoolDatasetExportKeyResult",
+    "PoolDatasetLockArgs",
+    "PoolDatasetLockResult",
+    "PoolDatasetUnlockArgs",
+    "PoolDatasetUnlockResult",
+    "PoolDatasetInsertOrUpdateEncryptedRecordArgs",
+    "PoolDatasetInsertOrUpdateEncryptedRecordResult",
+    "PoolDatasetChangeKeyArgs",
+    "PoolDatasetChangeKeyResult",
+    "PoolDatasetInheritParentEncryptionPropertiesArgs",
+    "PoolDatasetInheritParentEncryptionPropertiesResult",
+    "PoolDatasetChecksumChoicesArgs",
+    "PoolDatasetChecksumChoicesResult",
+    "PoolDatasetCompressionChoicesArgs",
+    "PoolDatasetCompressionChoicesResult",
+    "PoolDatasetRecommendedZvolBlocksizeArgs",
+    "PoolDatasetRecommendedZvolBlocksizeResult",
+    "PoolDatasetProcessesArgs",
+    "PoolDatasetProcessesResult",
+    "PoolDatasetGetQuotaArgs",
+    "PoolDatasetGetQuotaResult",
+    "PoolDatasetSetQuotaArgs",
+    "PoolDatasetSetQuotaResult",
+    "PoolDatasetRecordsizeChoicesArgs",
+    "PoolDatasetRecordsizeChoicesResult",
+    "PoolDatasetUpdateArgs",
+    "PoolDatasetUpdateResult",
+    "PoolDatasetDeleteArgs",
+    "PoolDatasetDeleteResult",
+    "PoolDatasetDestroySnapshotsArgs",
+    "PoolDatasetDestroySnapshotsResult",
+    "PoolDatasetPromoteArgs",
+    "PoolDatasetPromoteResult",
+    "PoolDatasetRenameArgs",
+    "PoolDatasetRenameResult",
+    "PoolDatasetChangeKeyOptions",
+    "PoolDatasetEncryptionSummary",
+    "PoolDatasetEncryptionSummaryOptions",
+    "PoolDatasetLockOptions",
+    "PoolDatasetUnlock",
+    "PoolDatasetUnlockOptions",
 ]
 
 
 def _validate_dataset_name(v: str) -> str:
     if not validate_dataset_name(v):
-        raise ValueError('Please provide a valid dataset name according to ZFS standards')
+        raise ValueError("Please provide a valid dataset name according to ZFS standards")
     return v
 
 
@@ -57,14 +95,14 @@ class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
     parsed: Any = Field(
         description="The ZFS property value parsed into the appropriate type (string, boolean, integer, etc.).",
     )
-    rawvalue: str | None = Field(
+    rawvalue: Multiline[str] | None = Field(
         description="The raw string value of the ZFS property as stored in the pool. Can be null if not set.",
     )
-    value: str | None = Field(
+    value: Multiline[str] | None = Field(
         description="The current effective value of the ZFS property as a string. Can be null if inherited or not set.",
     )
     source: str | None = Field(
-        examples=['LOCAL', 'INHERITED', 'DEFAULT'],
+        examples=["LOCAL", "INHERITED", "DEFAULT"],
         description="Indicates where the property value originates from.",
     )
     source_info: Any = Field(
@@ -93,8 +131,8 @@ class PoolDatasetEntryUserProperties(BaseModel, metaclass=ForUpdateMetaclass):
 
 class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     model_config = ConfigDict(extra="allow", strict=False)
-    id: str = Field(examples=['tank/dataset/child'], description="The full dataset path including pool name.")
-    type: str = Field(examples=['FILESYSTEM', 'VOLUME'], description="The dataset type.")
+    id: str = Field(examples=["tank/dataset/child"], description="The full dataset path including pool name.")
+    type: str = Field(examples=["FILESYSTEM", "VOLUME"], description="The dataset type.")
     name: str = Field(description="The dataset name without the pool prefix.")
     pool: str = Field(description="The name of the ZFS pool containing this dataset.")
     encrypted: bool = Field(description="Whether the dataset is encrypted.")
@@ -236,12 +274,12 @@ class PoolDatasetCreateUserProperty(BaseModel):
     key: Annotated[str, Field(examples=["custom:backup_policy", "org:created_by"], pattern=".*:.*")] = Field(
         description="User property key in namespace:property format.",
     )
-    value: str = Field(description="The value to assign to the user property.")
+    value: Multiline[str] = Field(description="The value to assign to the user property.")
 
 
 class PoolDatasetCreate(BaseModel):
     name: DATASET_NAME = Field(description="The name of the dataset to create.")
-    comments: str = Field(default="INHERIT", description="Comments or description for the dataset.")
+    comments: Multiline[str] = Field(default="INHERIT", description="Comments or description for the dataset.")
     sync: Literal["STANDARD", "ALWAYS", "DISABLED", "INHERIT"] = Field(
         default="INHERIT",
         description="Synchronous write behavior for the dataset.",
@@ -251,13 +289,64 @@ class PoolDatasetCreate(BaseModel):
         description="Controls visibility of volume snapshots under /dev/zvol/.",
     )
     compression: Literal[
-        "ON", "OFF", "LZ4", "GZIP", "GZIP-1", "GZIP-2", "GZIP-3", "GZIP-4", "GZIP-5", "GZIP-6", "GZIP-7", "GZIP-8",
-        "GZIP-9", "ZSTD", "ZSTD-FAST", "ZLE", "LZJB", "ZSTD-1", "ZSTD-2",
-        "ZSTD-3", "ZSTD-4", "ZSTD-5", "ZSTD-6", "ZSTD-7", "ZSTD-8", "ZSTD-9", "ZSTD-10", "ZSTD-11", "ZSTD-12",
-        "ZSTD-13", "ZSTD-14", "ZSTD-15", "ZSTD-16", "ZSTD-17", "ZSTD-18", "ZSTD-19", "ZSTD-FAST-1", "ZSTD-FAST-2",
-        "ZSTD-FAST-3", "ZSTD-FAST-4", "ZSTD-FAST-5", "ZSTD-FAST-6", "ZSTD-FAST-7", "ZSTD-FAST-8", "ZSTD-FAST-9",
-        "ZSTD-FAST-10", "ZSTD-FAST-20", "ZSTD-FAST-30", "ZSTD-FAST-40", "ZSTD-FAST-50", "ZSTD-FAST-60", "ZSTD-FAST-70",
-        "ZSTD-FAST-80", "ZSTD-FAST-90", "ZSTD-FAST-100", "ZSTD-FAST-500", "ZSTD-FAST-1000", "INHERIT"
+        "ON",
+        "OFF",
+        "LZ4",
+        "GZIP",
+        "GZIP-1",
+        "GZIP-2",
+        "GZIP-3",
+        "GZIP-4",
+        "GZIP-5",
+        "GZIP-6",
+        "GZIP-7",
+        "GZIP-8",
+        "GZIP-9",
+        "ZSTD",
+        "ZSTD-FAST",
+        "ZLE",
+        "LZJB",
+        "ZSTD-1",
+        "ZSTD-2",
+        "ZSTD-3",
+        "ZSTD-4",
+        "ZSTD-5",
+        "ZSTD-6",
+        "ZSTD-7",
+        "ZSTD-8",
+        "ZSTD-9",
+        "ZSTD-10",
+        "ZSTD-11",
+        "ZSTD-12",
+        "ZSTD-13",
+        "ZSTD-14",
+        "ZSTD-15",
+        "ZSTD-16",
+        "ZSTD-17",
+        "ZSTD-18",
+        "ZSTD-19",
+        "ZSTD-FAST-1",
+        "ZSTD-FAST-2",
+        "ZSTD-FAST-3",
+        "ZSTD-FAST-4",
+        "ZSTD-FAST-5",
+        "ZSTD-FAST-6",
+        "ZSTD-FAST-7",
+        "ZSTD-FAST-8",
+        "ZSTD-FAST-9",
+        "ZSTD-FAST-10",
+        "ZSTD-FAST-20",
+        "ZSTD-FAST-30",
+        "ZSTD-FAST-40",
+        "ZSTD-FAST-50",
+        "ZSTD-FAST-60",
+        "ZSTD-FAST-70",
+        "ZSTD-FAST-80",
+        "ZSTD-FAST-90",
+        "ZSTD-FAST-100",
+        "ZSTD-FAST-500",
+        "ZSTD-FAST-1000",
+        "INHERIT",
     ] = Field(
         default="INHERIT",
         description=(
@@ -379,11 +468,11 @@ class PoolDatasetCreateFilesystem(PoolDatasetCreate):
         default=NotRequired,
         description="File name case sensitivity setting.",
     )
-    quota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None] = Field(
+    quota: Annotated[int, Field(ge=1024**3)] | Literal[0, None] = Field(
         default=NotRequired,
         description="Maximum disk space this dataset and its children can consume in bytes.",
     )
-    refquota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None] = Field(
+    refquota: Annotated[int, Field(ge=1024**3)] | Literal[0, None] = Field(
         default=NotRequired,
         description="Maximum disk space this dataset itself can consume in bytes.",
     )
@@ -459,6 +548,7 @@ class PoolDatasetEncryptionSummary(BaseModel):
     which based on what system has in database or if a user provided one, validates the key and sets a boolean value \
     for the dataset.
     """
+
     name: str = Field(description="The dataset name.")
     key_format: str = Field(description="The format of the encryption key (hex, raw, or passphrase).")
     key_present_in_database: bool = Field(
@@ -466,7 +556,7 @@ class PoolDatasetEncryptionSummary(BaseModel):
     )
     valid_key: bool = Field(description="Whether the provided key is valid for this dataset.")
     locked: bool = Field(description="Whether the dataset is currently locked.")
-    unlock_error: str | None = Field(
+    unlock_error: Multiline[str] | None = Field(
         description="Error message if unlock would fail, or `null` if unlock would succeed.",
     )
     unlock_successful: bool = Field(description="Whether an unlock operation would be successful.")
@@ -487,7 +577,7 @@ class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
 
 
 class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
-    quota_type: Literal['USER', 'GROUP'] = Field(description="Type identifier for user or group quotas.")
+    quota_type: Literal["USER", "GROUP"] = Field(description="Type identifier for user or group quotas.")
     id: int = Field(description="The UID or GID to which the quota applies.")
     name: str | None = Field(
         description=(
@@ -505,14 +595,14 @@ class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
 
 
 class PoolDatasetDatasetQuota(_PoolDatasetQuota):
-    quota_type: Literal['DATASET'] = Field(description="Type identifier for dataset quotas.")
+    quota_type: Literal["DATASET"] = Field(description="Type identifier for dataset quotas.")
     id: str = Field(description="Name of the dataset.")
     name: str = Field(description="Name of the dataset.")
     refquota: int = Field(description="The dataset's reference quota in bytes.")
 
 
 class PoolDatasetProjectQuota(_PoolDatasetQuota):
-    quota_type: Literal['PROJECT'] = Field(description="Type identifier for project quotas.")
+    quota_type: Literal["PROJECT"] = Field(description="Type identifier for project quotas.")
     id: int = Field(description="The project ID.")
     obj_used: int = Field(description="The number of objects currently owned by `id`.")
     obj_quota: int = Field(
@@ -524,13 +614,12 @@ class PoolDatasetProjectQuota(_PoolDatasetQuota):
 
 
 PoolDatasetQuota = Annotated[
-    PoolDatasetUserGroupQuota | PoolDatasetDatasetQuota | PoolDatasetProjectQuota,
-    Discriminator('quota_type')
+    PoolDatasetUserGroupQuota | PoolDatasetDatasetQuota | PoolDatasetProjectQuota, Discriminator("quota_type")
 ]
 
 
 class PoolDatasetSetQuota(BaseModel):
-    quota_type: Literal['DATASET', 'USER', 'USEROBJ', 'GROUP', 'GROUPOBJ'] = Field(
+    quota_type: Literal["DATASET", "USER", "USEROBJ", "GROUP", "GROUPOBJ"] = Field(
         description=(
             "The type of quota to apply to the dataset. There are three over-arching types of quotas for ZFS datasets:"
             "\n"
@@ -538,7 +627,7 @@ class PoolDatasetSetQuota(BaseModel):
             "* **Dataset quotas and refquotas.** If a `DATASET` quota type is specified in this API call, then the API "
             "acts as a wrapper for `pool.dataset.update`.\n"
             "* **User and group quotas.** These limit the amount of disk space consumed by files that are owned by the "
-            "specified users or groups. If the respective \"object quota\" type is specfied, then the quota limits the "
+            'specified users or groups. If the respective "object quota" type is specfied, then the quota limits the '
             "number of objects that may be owned by the specified user or group.\n"
             "* **Project quotas.** These limit the amount of disk space consumed by files that are owned by the "
             "specified project. *Project quotas are not yet implemented.*"
@@ -599,7 +688,7 @@ class PoolDatasetUnlock(BaseModel):
 
 
 class PoolDatasetUpdateUserProperty(PoolDatasetCreateUserProperty):
-    value: str = Field(
+    value: Multiline[str] = Field(
         default=NotRequired,
         description="New value for the user property. Not required if removing the property.",
     )
@@ -671,17 +760,17 @@ class PoolDatasetCompressionChoicesResult(BaseModel):
 
 class PoolDatasetCreateArgs(BaseModel):
     data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume = Field(
-        discriminator='type',
+        discriminator="type",
         description="Configuration data for creating a new ZFS dataset.",
     )
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def set_default_type(cls, data: Any) -> Any:
         """Default to FILESYSTEM type if not specified (backward compatibility)"""
-        if isinstance(data, dict) and 'data' in data:
-            if isinstance(data['data'], dict) and 'type' not in data['data']:
-                data['data']['type'] = 'FILESYSTEM'
+        if isinstance(data, dict) and "data" in data:
+            if isinstance(data["data"], dict) and "type" not in data["data"]:
+                data["data"]["type"] = "FILESYSTEM"
         return data
 
 
@@ -700,14 +789,15 @@ class PoolDatasetDeleteArgs(BaseModel):
 class PoolDatasetDeleteResult(BaseModel):
     result: Literal[None, True] = Field(
         description=(
-            "Return true on successful deletion or null if the `zfs destroy` command fails with \"dataset does not "
-            "exist\"."
+            'Return true on successful deletion or null if the `zfs destroy` command fails with "dataset does not '
+            'exist".'
         ),
     )
 
 
 class PoolDatasetDetailsArgs(BaseModel):
     """Get detailed information about all datasets."""
+
     pass
 
 
@@ -760,7 +850,7 @@ class PoolDatasetExportKeysForReplicationResult(BaseModel):
 
 class PoolDatasetGetQuotaArgs(BaseModel):
     dataset: str = Field(description="The dataset path to retrieve quotas for.")
-    quota_type: Literal['USER', 'GROUP', 'DATASET', 'PROJECT'] = Field(description="The type of quotas to retrieve.")
+    quota_type: Literal["USER", "GROUP", "DATASET", "PROJECT"] = Field(description="The type of quotas to retrieve.")
     filters: QueryFilters = Field(default=[], description="Query filters to limit the results returned.")
     options: QueryOptions = Field(default=QueryOptions(), description="Query options such as sorting and pagination.")
 
@@ -785,7 +875,7 @@ class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
     id: int | None = Field(default=None, description="The record ID for updates, or null for new records.")
     name: NonEmptyString = Field(description="The dataset name for the encryption record.")
     key_format: str | None = Field(
-        examples=['hex', 'raw', 'passphrase'],
+        examples=["hex", "raw", "passphrase"],
         description="The format of the encryption key.",
     )
 
@@ -845,7 +935,7 @@ class PoolDatasetSetQuotaArgs(BaseModel):
     dataset: str = Field(description="The name of the target ZFS dataset.")
     quotas: list[PoolDatasetSetQuota] = Field(
         max_length=100,
-        default=[PoolDatasetSetQuota(quota_type='USER', id='0', quota_value=0)],
+        default=[PoolDatasetSetQuota(quota_type="USER", id="0", quota_value=0)],
         description=(
             "Specify an array of quota entries to apply to dataset. The array may contain all supported quota types."
         ),

@@ -2,7 +2,10 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel
 
-__all__ = ["PoolDatasetSnapshotCountArgs", "PoolDatasetSnapshotCountResult",]
+__all__ = [
+    "PoolDatasetSnapshotCountArgs",
+    "PoolDatasetSnapshotCountResult",
+]
 
 
 class PoolDatasetSnapshotCountArgs(BaseModel):

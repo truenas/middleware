@@ -17,7 +17,9 @@ import pytest
 
 from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, enterprise_test, ssh
+
+pytestmark = enterprise_test
 
 
 # ----------------------------------------------------------------------------

@@ -1,4 +1,3 @@
-
 from pydantic import Field, Secret, field_validator
 
 from middlewared.api.base import (
@@ -6,6 +5,7 @@ from middlewared.api.base import (
     Excluded,
     ForUpdateMetaclass,
     LongNonEmptyString,
+    Multiline,
     NonEmptyString,
     excluded_field,
     single_argument_args,
@@ -13,27 +13,36 @@ from middlewared.api.base import (
 from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params
 
 __all__ = [
-    'KerberosEntry', 'KerberosRealmEntry', 'KerberosKeytabEntry',
-    'KerberosUpdateArgs', 'KerberosUpdateResult',
-    'KerberosRealmCreateArgs', 'KerberosRealmCreateResult',
-    'KerberosRealmUpdateArgs', 'KerberosRealmUpdateResult',
-    'KerberosRealmDeleteArgs', 'KerberosRealmDeleteResult',
-    'KerberosKeytabCreateArgs', 'KerberosKeytabCreateResult',
-    'KerberosKeytabUpdateArgs', 'KerberosKeytabUpdateResult',
-    'KerberosKeytabDeleteArgs', 'KerberosKeytabDeleteResult',
+    "KerberosEntry",
+    "KerberosRealmEntry",
+    "KerberosKeytabEntry",
+    "KerberosUpdateArgs",
+    "KerberosUpdateResult",
+    "KerberosRealmCreateArgs",
+    "KerberosRealmCreateResult",
+    "KerberosRealmUpdateArgs",
+    "KerberosRealmUpdateResult",
+    "KerberosRealmDeleteArgs",
+    "KerberosRealmDeleteResult",
+    "KerberosKeytabCreateArgs",
+    "KerberosKeytabCreateResult",
+    "KerberosKeytabUpdateArgs",
+    "KerberosKeytabUpdateResult",
+    "KerberosKeytabDeleteArgs",
+    "KerberosKeytabDeleteResult",
 ]
 
 
 class KerberosEntry(BaseModel):
     id: int = Field(description="Unique identifier for the Kerberos configuration.")
-    appdefaults_aux: str = Field(
+    appdefaults_aux: Multiline[str] = Field(
         description=(
             "Advanced field for manually setting additional parameters inside the appdefaults section of the krb5.conf "
             "file. These are generally not required as the required krb5.conf settings are automatically detected and "
             "set for the environment. See manpage for MIT krb5.conf."
         ),
     )
-    libdefaults_aux: str = Field(
+    libdefaults_aux: Multiline[str] = Field(
         description=(
             "Advanced field for manually setting additional parameters inside the libdefaults section of the krb5.conf "
             "file. These are generally not required as the required krb5.conf settings are automatically detected and "
@@ -41,13 +50,13 @@ class KerberosEntry(BaseModel):
         ),
     )
 
-    @field_validator('appdefaults_aux')
+    @field_validator("appdefaults_aux")
     @classmethod
     def validate_appdefaults(cls, v):
         parse_krb_aux_params(KRB5ConfSection.APPDEFAULTS, {}, v)
         return v
 
-    @field_validator('libdefaults_aux')
+    @field_validator("libdefaults_aux")
     @classmethod
     def validate_libdefaults(cls, v):
         parse_krb_aux_params(KRB5ConfSection.LIBDEFAULTS, {}, v)
@@ -102,12 +111,12 @@ class KerberosKeytabEntry(BaseModel):
             "file. Some names are used for internal purposes such as AD_MACHINE_ACCOUNT and IPA_MACHINE_ACCOUNT."
         ),
     )
-    file: Secret[LongNonEmptyString | None] = Field(
+    file: Secret[Multiline[LongNonEmptyString] | None] = Field(
         description="Base64 encoded kerberos keytab entries to append to the system keytab.",
     )
 
 
-@single_argument_args('kerberos_update')
+@single_argument_args("kerberos_update")
 class KerberosUpdateArgs(KerberosEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
