@@ -96,7 +96,7 @@ class NftablesService(Service):
 
         With `replies`, also drops outbound VIP traffic, and SMB traffic both
         ways on all addresses. Use it only right before this controller is
-        reset (see failover.prepare_smb_failover).
+        reset (see failover.prepare_failover).
 
         NOTE:
             Do not call this unless you know what
