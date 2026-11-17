@@ -192,10 +192,6 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     if options.snapshot_hostpaths:
         host_path_mapping = context.run_coroutine(get_hostpaths_datasets(context, app_name))
 
-    # Stop the app itself before we attempt to take snapshots
-    context.call_sync2(context.s.app.stop, app_name).wait_sync()
-    if options.snapshot_hostpaths:
-        take_snapshot_of_hostpath(context, app, host_path_mapping)
     # In order for upgrade to complete, following must happen
     # 1) New version should be copied over to app config's dir
     # 2) Metadata should be updated to reflect new version
@@ -206,6 +202,10 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     # 7) Finally create ix-volumes snapshot for rollback
     with upgrade_config(app_name, upgrade_version):
         config = upgrade_values(app, upgrade_version)
+        # Stop the app itself before we attempt to take snapshots
+        context.call_sync2(context.s.app.stop, app_name).wait_sync()
+        if options.snapshot_hostpaths:
+            take_snapshot_of_hostpath(context, app, host_path_mapping)
         config.update(options.values.get_secret_value())
         new_values = context.run_coroutine(normalize_and_validate_values(
             context, upgrade_version, config, False, get_installed_app_path(app_name), app,
@@ -330,6 +330,9 @@ def upgrade_values(app: AppEntry, upgrade_version: dict[str, Any]) -> dict[str, 
             stdout, stderr = cp.communicate()
 
         migration_file_basename = os.path.basename(migration_file_path)
+        if cp.returncode == os.EX_CONFIG:
+            # The migration refused the upgrade and stderr holds the reason for the user
+            raise CallError(stderr.decode().strip(), errno.EOPNOTSUPP)
         if cp.returncode:
             raise CallError(f'Failed to execute {migration_file_basename!r} migration: {stderr.decode()}')
 
