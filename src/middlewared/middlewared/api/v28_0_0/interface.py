@@ -47,6 +47,8 @@ __all__ = [
     "InterfaceLacpduRateChoicesResult",
     "InterfaceLagPortsChoicesArgs",
     "InterfaceLagPortsChoicesResult",
+    "InterfaceLagSupportedProtocolsArgs",
+    "InterfaceLagSupportedProtocolsResult",
     "InterfaceRollbackArgs",
     "InterfaceRollbackResult",
     "InterfaceSaveNetworkConfigArgs",
@@ -630,6 +632,16 @@ class InterfaceLagPortsChoicesArgs(BaseModel):
 
 class InterfaceLagPortsChoicesResult(BaseModel):
     result: dict[str, str] = Field(description="IDs of available interfaces that can be added to a bond interface.")
+
+
+class InterfaceLagSupportedProtocolsArgs(BaseModel):
+    pass
+
+
+class InterfaceLagSupportedProtocolsResult(BaseModel):
+    result: list[Literal["LACP", "FAILOVER", "LOADBALANCE"]] = Field(
+        description="Link aggregation protocols a new or updated bond interface may use.",
+    )
 
 
 class InterfaceRollbackArgs(BaseModel):
