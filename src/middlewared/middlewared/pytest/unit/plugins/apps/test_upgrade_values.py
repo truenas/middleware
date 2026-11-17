@@ -1,3 +1,5 @@
+import errno
+import os
 import textwrap
 from types import SimpleNamespace
 import unittest.mock
@@ -72,6 +74,26 @@ def test_upgrade_values(mock_get_data_for_upgrade_values, mock_current_config, m
         assert result == expected_dict
     else:
         assert result == APP_CONFIG
+
+
+@pytest.mark.parametrize('returncode, stderr, errmsg, error_number', [
+    (os.EX_CONFIG, b'Upgrading to v2 is not supported.\n', 'Upgrading to v2 is not supported.', errno.EOPNOTSUPP),
+    (1, b'Traceback\n', "Failed to execute 'always.py' migration: Traceback\n", errno.EFAULT),
+])
+@unittest.mock.patch('middlewared.plugins.apps.upgrade.subprocess.Popen')
+@unittest.mock.patch('middlewared.plugins.apps.upgrade.get_data_for_upgrade_values')
+def test_upgrade_values_failure(mock_get_data_for_upgrade_values, mock_popen, returncode, stderr, errmsg, error_number):
+    mock_get_data_for_upgrade_values.return_value = (
+        ['/mnt/.ix-apps/app_configs/plex/versions/1.1.13/migrations/always.py'], safe_yaml_load(APP_CONFIG)
+    )
+    mock_popen.return_value.communicate.return_value = (b'', stderr)
+    mock_popen.return_value.returncode = returncode
+
+    with pytest.raises(CallError) as e:
+        upgrade_values(SimpleNamespace(name='plex'), {'version': '1.1.13'})
+
+    assert e.value.errmsg == errmsg
+    assert e.value.errno == error_number
 
 
 @pytest.mark.parametrize('migration_files, expected', [
