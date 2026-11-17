@@ -1,5 +1,7 @@
 import copy
 import contextlib
+import errno
+import os
 import pathlib
 import typing
 import yaml
@@ -47,6 +49,9 @@ def get_current_app_config(app_name: str, version: str) -> dict:
 
 def render_compose_templates(app_version_path: str, values_file_path: str):
     cp = run(['/usr/bin/apps_render_app', 'render', '--path', app_version_path, '--values', values_file_path])
+    if cp.returncode == os.EX_CONFIG:
+        # The app library refused the values and stderr holds the reason for the user
+        raise CallError(cp.stderr.strip(), errno.EINVAL)
     if cp.returncode != 0:
         # FIXME: We probably want to log app related issues to it's own logging file so as to not spam middleware
         raise CallError(f'Failed to render compose templates: {cp.stderr}')
