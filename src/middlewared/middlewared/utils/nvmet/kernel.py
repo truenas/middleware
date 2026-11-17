@@ -33,6 +33,18 @@ from .render_common import (
 logger = logging.getLogger(__name__)
 
 
+def _entry_name(name):
+    """
+    Check that a configured name (e.g. an NQN) is a single directory entry,
+    so that it cannot be used to create or modify anything outside of the
+    intended configfs directory.
+    """
+    name = str(name)
+    if '/' in name or '\0' in name or name in ('', '.', '..'):
+        raise ValueError(f'{name!r}: invalid nvmet configfs entry name')
+    return name
+
+
 class NvmetConfig(RenderFailures):
 
     directory = None  # Directory below which the entities will be created
@@ -65,7 +77,7 @@ class NvmetConfig(RenderFailures):
         created = []
         for key in add_keys:
             with self.isolate('create', key):
-                pathlib.Path(parent_dir, key).mkdir()
+                pathlib.Path(parent_dir, _entry_name(key)).mkdir()
                 created.append(key)
 
         for key in update_keys:
@@ -483,6 +495,7 @@ class NvmetNamespaceConfig(NvmetConfig):
 
             config_keys = set(namespaces.keys())
             try:
+                _entry_name(subsys_to_subnqn[subsys_id])
                 live_keys = set(os.listdir(parent_dir))
             except Exception:
                 # e.g. the subsystem itself failed to be created
@@ -599,6 +612,8 @@ class NvmetLinkConfig(RenderFailures):
             for entry_name in v:
                 new_link = pathlib.Path(srcdir, entry_name)
                 with self.isolate('create', new_link):
+                    _entry_name(k)
+                    _entry_name(entry_name)
                     new_link.symlink_to(pathlib.Path(dstdir, entry_name))
 
         yield
@@ -700,7 +715,7 @@ def _set_namespace_field(subnqn, nsnum, field, value):
     try:
         pathlib.Path(NVMET_KERNEL_CONFIG_DIR,
                      'subsystems',
-                     subnqn,
+                     _entry_name(subnqn),
                      'namespaces',
                      str(nsnum),
                      field).write_text(f'{value}\n')
