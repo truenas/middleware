@@ -145,6 +145,9 @@ async def zfs_events(middleware, event: ZfsEvent):
         pool = await retrieve_pool_from_db(middleware, event.pool)
         if not pool:
             return
+        # A vdev state change made by ZFS itself (a disk removed, or faulted by the kernel)
+        # posts no config_sync, so this is the only event that tells subscribers about it.
+        middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
     elif isinstance(event, (ZfsChecksumErrorEvent, ZfsDataErrorEvent, ZfsIoErrorEvent, ZfsVdevClearEvent)):
         await middleware.call('cache.pop', VOLUME_STATUS_ALERTS)
     elif isinstance(event, (ZfsConfigSyncEvent, ZfsPoolImportEvent, ZfsPoolDestroyEvent)):
