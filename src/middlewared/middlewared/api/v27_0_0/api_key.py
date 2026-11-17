@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Secret, Field
+from pydantic import Secret, Field, StringConstraints
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
@@ -23,7 +23,9 @@ class AllowListItem(BaseModel):
 
 class ApiKeyEntry(BaseModel):
     id: int = Field(description="Unique identifier for the API key.")
-    name: NonEmptyString = Field(max_length=200, description="Human-readable name for the API key.")
+    name: Annotated[NonEmptyString, StringConstraints(strip_whitespace=True)] = Field(
+        max_length=200, description="Human-readable name for the API key.",
+    )
     username: LocalUsername | RemoteUsername | None = Field(
         description="Username associated with the API key or `null` for system keys.",
     )
