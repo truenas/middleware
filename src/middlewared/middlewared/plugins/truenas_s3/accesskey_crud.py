@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
+from pydantic import Secret
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     S3AccesskeyCreate,
@@ -230,7 +232,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
                 "manage_buckets": data.manage_buckets,
             }
         )
-        return S3AccesskeyEntryWithSecret(**entry.model_dump(), secret=secret)
+        return S3AccesskeyEntryWithSecret(**entry.model_dump(), secret=Secret(secret))
 
     async def do_update(
         self, audit_callback: AuditCallback, id_: int, data: S3AccesskeyUpdate,
@@ -254,7 +256,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
 
         update["secret"] = generate_s3_secret_key()
         entry = await self._update(id_, update)
-        return S3AccesskeyEntryWithSecret(**entry.model_dump(), secret=update["secret"])
+        return S3AccesskeyEntryWithSecret(**entry.model_dump(), secret=Secret(update["secret"]))
 
     async def do_delete(self, audit_callback: AuditCallback, id_: int) -> None:
         entry = await self.get_instance(id_)
