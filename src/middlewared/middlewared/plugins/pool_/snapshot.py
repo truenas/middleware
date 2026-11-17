@@ -63,6 +63,8 @@ class PoolSnapshotService(CRUDService):
     @api_method(
         PoolSnapshotRollbackArgs,
         PoolSnapshotRollbackResult,
+        audit='Pool snapshot rollback',
+        audit_extended=lambda id_, options=None: id_,
         roles=['SNAPSHOT_WRITE', 'POOL_WRITE']
     )
     def rollback(self, id_, options):
@@ -385,7 +387,12 @@ class PoolSnapshotService(CRUDService):
         data['user_properties_update'].extend({'key': k, 'remove': True} for k in data.pop('user_properties_remove'))
         # return self.middleware.call_sync('zfs.snapshot.update', snap_id, data)
 
-    @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
+    @api_method(
+        PoolSnapshotDeleteArgs,
+        PoolSnapshotDeleteResult,
+        audit='Pool snapshot delete',
+        audit_extended=lambda id_, options=None: id_,
+    )
     def do_delete(self, id_, options):
         if '@' not in id_:
             raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')

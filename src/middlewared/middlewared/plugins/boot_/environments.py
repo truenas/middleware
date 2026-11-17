@@ -124,7 +124,13 @@ class BootEnvironmentService(Service):
             )
         return filter_list(results, filters, options)
 
-    @api_method(BootEnvironmentActivateArgs, BootEnvironmentActivateResult, roles=["BOOT_ENV_WRITE"])
+    @api_method(
+        BootEnvironmentActivateArgs,
+        BootEnvironmentActivateResult,
+        audit="Boot environment activate",
+        audit_extended=lambda data: data["id"],
+        roles=["BOOT_ENV_WRITE"],
+    )
     def activate(self, data):
         info = self.validate_be("boot.environment.activate", data["id"])
         if info["activated"]:
