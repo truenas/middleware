@@ -305,6 +305,8 @@ class ReplicationService(CRUDService):
     @api_method(
         ReplicationRunArgs,
         ReplicationRunResult,
+        audit="Replication task run:",
+        audit_extended=lambda id_, options=None: str(id_),
         roles=["REPLICATION_TASK_WRITE"],
     )
     @job(logs=True, read_roles=["REPLICATION_TASK_READ"])
@@ -324,7 +326,13 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.run_replication_task", id_, really_run, job)
 
-    @api_method(ReplicationRunOnetimeArgs, ReplicationRunOnetimeResult, roles=["REPLICATION_TASK_WRITE"])
+    @api_method(
+        ReplicationRunOnetimeArgs,
+        ReplicationRunOnetimeResult,
+        audit="Replication one-time run:",
+        audit_extended=lambda data: data["target_dataset"],
+        roles=["REPLICATION_TASK_WRITE"],
+    )
     @job(logs=True)
     async def run_onetime(self, job, data):
         """
