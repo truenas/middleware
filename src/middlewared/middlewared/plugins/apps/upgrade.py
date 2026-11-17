@@ -1,4 +1,5 @@
 import contextlib
+import errno
 import logging
 import os
 import subprocess
@@ -131,7 +132,6 @@ class AppService(Service):
         job.set_progress(
             20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
         )
-        self.take_snapshot_of_hostpath_and_stop_app(app, options['snapshot_hostpaths'])
         # In order for upgrade to complete, following must happen
         # 1) New version should be copied over to app config's dir
         # 2) Metadata should be updated to reflect new version
@@ -142,6 +142,7 @@ class AppService(Service):
         # 7) Finally create ix-volumes snapshot for rollback
         with upgrade_config(app_name, upgrade_version):
             config = self.upgrade_values(app, upgrade_version)
+            self.take_snapshot_of_hostpath_and_stop_app(app, options['snapshot_hostpaths'])
             config.update(options['values'])
             new_values = self.middleware.call_sync(
                 'app.schema.normalize_and_validate_values', upgrade_version, config, False,
@@ -368,6 +369,9 @@ class AppService(Service):
                 stdout, stderr = cp.communicate()
 
             migration_file_basename = os.path.basename(migration_file_path)
+            if cp.returncode == os.EX_CONFIG:
+                # The migration refused the upgrade and stderr holds the reason for the user
+                raise CallError(stderr.decode().strip(), errno.EOPNOTSUPP)
             if cp.returncode:
                 raise CallError(f'Failed to execute {migration_file_basename!r} migration: {stderr.decode()}')
 
