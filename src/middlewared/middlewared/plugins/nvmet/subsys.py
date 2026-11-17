@@ -1,6 +1,7 @@
 from functools import cache
 
 from middlewared.api import api_method
+from middlewared.api.base.types.nvmet import validate_nqn
 from middlewared.api.current import (
     NVMetSubsysCreateArgs,
     NVMetSubsysCreateResult,
@@ -216,7 +217,14 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
         id_ = old['id'] if old else None
         await self._ensure_unique(verrors, schema_name, 'name', data['name'], id_)
         data['serial'] = await self.subsys_serial(data.get('serial'))
+        derived = data.get('subnqn') in (None, '')
         data['subnqn'] = await self.subsys_subnqn(data.get('subnqn'), data.get('name', ''))
+        if derived:
+            # Generated from name, so has not been through NQN validation
+            try:
+                validate_nqn(data['subnqn'])
+            except ValueError as e:
+                verrors.add(f'{schema_name}.name', f'Cannot generate a valid subnqn from name: {e}')
         if data['ana'] is not None:
             if not await self.middleware.call('failover.licensed'):
                 verrors.add(
