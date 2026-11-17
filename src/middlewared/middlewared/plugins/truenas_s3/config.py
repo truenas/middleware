@@ -110,6 +110,8 @@ class RenderData:
     global_grants: list[RenderedGrant]
     buckets: list[RenderedBucket]
     accesskeys: list[S3AccesskeyEntry]
+    secrets: dict[str, str | None]
+    """Each key's secret by access key id."""
     audit_supported: bool
 
 
@@ -402,6 +404,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             global_grants=_rendered_grants(config.global_grants, "*"),
             buckets=rendered_buckets,
             accesskeys=accesskeys,
+            secrets=await self.middleware.call("s3.accesskey.secrets"),
             audit_supported=(await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)).entitled,
         )
 
