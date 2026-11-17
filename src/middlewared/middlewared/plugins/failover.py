@@ -402,8 +402,8 @@ class FailoverService(ConfigService):
             self.logger.warning('SMB failover preparation: %s', result)
 
     @private
-    async def sync_pools(self):
-        """Sync every imported data pool, in parallel. Returns True if all finished in time."""
+    async def sync_pools(self, timeout=FAILOVER_SYNC_TIMEOUT):
+        """Sync every imported data pool, in parallel. Returns True if all finished within `timeout` seconds."""
         pools = []
         try:
             pools = [
@@ -413,7 +413,7 @@ class FailoverService(ConfigService):
             # A hung pool must not block the reset: stop waiting after the timeout.
             await asyncio.wait_for(
                 asyncio.gather(*(self.middleware.run_in_thread(sync_pool, name) for name in pools)),
-                FAILOVER_SYNC_TIMEOUT,
+                timeout,
             )
         except TimeoutError:
             self.logger.warning('Failover preparation: syncing %s timed out', ', '.join(pools))

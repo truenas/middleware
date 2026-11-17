@@ -92,6 +92,9 @@ class FailoverEventsService(Service):
     # this is the time limit we place on exporting the
     # zpool(s) when becoming the BACKUP node
     ZPOOL_EXPORT_TIMEOUT = 4  # seconds
+    # time limit for syncing the pools before the export. Together they must
+    # stay under the ~11 seconds that fenced on the other node waits
+    ZPOOL_SYNC_TIMEOUT = 5  # seconds
 
     async def service_action(self, service, timeout, verb):
         logger.info('%s %s', verb, service)
@@ -1025,6 +1028,10 @@ class FailoverEventsService(Service):
 
         # setup the zpool cachefile
         # self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
+
+        # Sync first, as become_passive does. The export then has less to write.
+        logger.info('Syncing pools')
+        self.run_call('failover.sync_pools', self.ZPOOL_SYNC_TIMEOUT)
 
         # export zpools in a thread with a timeout of `self.ZPOOL_EXPORT_TIMEOUT`.
         # if the export can't finish in that timeframe (or leaves a pool still
