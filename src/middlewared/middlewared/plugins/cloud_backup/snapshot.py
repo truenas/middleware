@@ -7,7 +7,7 @@ from middlewared.api.current import (
     CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult, CloudBackupListSnapshotDirectoryArgs,
     CloudBackupListSnapshotDirectoryResult, CloudBackupDeleteSnapshotArgs, CloudBackupDeleteSnapshotResult
 )
-from middlewared.plugins.cloud_backup.restic import get_restic_config
+from middlewared.plugins.cloud_backup.restic import get_restic_config, restic_error_message
 from middlewared.service import CallError, job, Service
 
 
@@ -37,7 +37,7 @@ class CloudBackupService(Service):
                 check=True,
             ).stdout)
         except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
+            raise CallError(restic_error_message(e.stderr))
 
         for snapshot in snapshots:
             snapshot["time"] = datetime.fromisoformat(snapshot["time"])
@@ -65,7 +65,7 @@ class CloudBackupService(Service):
                 check=True,
             ).stdout.splitlines()))
         except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
+            raise CallError(restic_error_message(e.stderr))
 
         contents = []
         for item in items[1:]:
@@ -103,4 +103,4 @@ class CloudBackupService(Service):
                 check=True,
             )
         except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
+            raise CallError(restic_error_message(e.stderr))

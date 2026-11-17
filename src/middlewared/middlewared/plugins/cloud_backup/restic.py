@@ -35,6 +35,19 @@ def get_restic_config(cloud_backup):
     return ResticConfig(cmd, env)
 
 
+def restic_error_message(output):
+    for line in output.splitlines():
+        try:
+            message = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        if isinstance(message, dict) and message.get("message_type") == "exit_error":
+            return message["message"].strip()
+
+    return output.strip()
+
+
 def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
     job.logs_fd.write((json.dumps(cmd) + "\n").encode("utf-8", "ignore"))
     proc = subprocess.Popen(
@@ -88,6 +101,7 @@ def restic_check_progress(job, proc, track_progress=False):
     if not track_progress:
         read = proc.stdout.read()
         job.logs_fd.write(read)
+        job.internal_data["messages"] = [restic_error_message(read.decode("utf-8", "ignore"))]
         return
 
     # backup or restore
@@ -151,6 +165,10 @@ def restic_check_progress(job, proc, track_progress=False):
                         ": ",
                         action
                     ])
+                    job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
+
+                case "exit_error":
+                    msg = read["message"].strip()
                     job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
 
             if msg:
