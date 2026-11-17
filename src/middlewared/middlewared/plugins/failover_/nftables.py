@@ -84,7 +84,8 @@ class NftablesService(Service):
         flushed = True
         for i in ('ip', 'ip6'):
             for chain in ('INPUT', 'OUTPUT'):
-                flushed &= not bool(run(['nft', 'flush', 'chain', i, 'filter', chain]).returncode)
+                cp = run(['nft', 'flush', 'chain', i, 'filter', chain], stdout=PIPE, stderr=STDOUT)
+                flushed &= not bool(cp.returncode)
         return flushed
 
     @job(lock=JOB_LOCK)
