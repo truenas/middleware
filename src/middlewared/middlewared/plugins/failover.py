@@ -367,13 +367,7 @@ class FailoverService(ConfigService):
         Each step has a timeout. If step 1 or 2 fails, step 3 is skipped. The caller must reset this controller
         afterwards in all cases.
         """
-        try:
-            smb = (self.middleware.call_sync('smb.config')['stateful_failover']
-                   and self.middleware.call_sync('service.started', 'cifs'))
-        except Exception:
-            self.logger.warning('Failover preparation: checking the SMB service failed', exc_info=True)
-            smb = False
-
+        smb = self.smb_stateful_failover()
         if smb:
             try:
                 fw = self.middleware.call_sync('failover.firewall.drop_all', True)
@@ -384,13 +378,26 @@ class FailoverService(ConfigService):
                 smb = False
 
         synced = self.middleware.call_sync('failover.sync_pools')
-        if not (smb and synced):
-            return
+        if smb and synced:
+            self.smb_mark_synced()
 
+    @private
+    def smb_stateful_failover(self):
+        """True if SMB stateful failover is on and SMB is running."""
+        try:
+            return bool(self.middleware.call_sync('smb.config')['stateful_failover']
+                        and self.middleware.call_sync('service.started', 'cifs'))
+        except Exception:
+            self.logger.warning('Failover preparation: checking the SMB service failed', exc_info=True)
+            return False
+
+    @private
+    def smb_mark_synced(self, timeout=SMB_FAILOVER_MARK_TIMEOUT):
+        """Run `truenas_smbhad mark-synced`: the other controller then keeps SMB durable handles."""
         try:
             cp = subprocess.run(
-                ['truenas_smbhad', 'mark-synced', '--timeout-ms', str(SMB_FAILOVER_MARK_TIMEOUT * 1000)],
-                capture_output=True, text=True, timeout=SMB_FAILOVER_MARK_TIMEOUT + 1,
+                ['truenas_smbhad', 'mark-synced', '--timeout-ms', str(timeout * 1000)],
+                capture_output=True, text=True, timeout=timeout + 1,
             )
         except Exception:
             self.logger.warning('SMB failover preparation: truenas_smbhad mark-synced failed', exc_info=True)
