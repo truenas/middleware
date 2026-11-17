@@ -46,6 +46,8 @@ class BootEnvironmentService(GenericCRUDService[BootEnvironmentEntry, str]):
     @api_method(
         BootEnvironmentActivateArgs,
         BootEnvironmentActivateResult,
+        audit="Boot environment activate",
+        audit_extended=lambda data: data["id"],
         roles=["BOOT_ENV_WRITE"],
         check_annotations=True,
     )

@@ -115,6 +115,8 @@ class ReplicationService(GenericCRUDService[ReplicationEntry]):
     @api_method(
         ReplicationRunArgs,
         ReplicationRunResult,
+        audit="Replication task run:",
+        audit_extended=lambda id_, options=None: str(id_),
         roles=["REPLICATION_TASK_WRITE"],
         check_annotations=True,
     )
@@ -128,6 +130,8 @@ class ReplicationService(GenericCRUDService[ReplicationEntry]):
     @api_method(
         ReplicationRunOnetimeArgs,
         ReplicationRunOnetimeResult,
+        audit="Replication one-time run:",
+        audit_extended=lambda data: data["target_dataset"],
         roles=["REPLICATION_TASK_WRITE"],
         check_annotations=True,
     )
