@@ -19,20 +19,6 @@ from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
 
 LOGGER = getLogger(__name__)
 
-# These maps are used to implement SFM mappings
-FRUIT_CATIA_MAPS = (
-    "0x01:0xf001,0x02:0xf002,0x03:0xf003,0x04:0xf004",
-    "0x05:0xf005,0x06:0xf006,0x07:0xf007,0x08:0xf008",
-    "0x09:0xf009,0x0a:0xf00a,0x0b:0xf00b,0x0c:0xf00c",
-    "0x0d:0xf00d,0x0e:0xf00e,0x0f:0xf00f,0x10:0xf010",
-    "0x11:0xf011,0x12:0xf012,0x13:0xf013,0x14:0xf014",
-    "0x15:0xf015,0x16:0xf016,0x17:0xf017,0x18:0xf018",
-    "0x19:0xf019,0x1a:0xf01a,0x1b:0xf01b,0x1c:0xf01c",
-    "0x1d:0xf01d,0x1e:0xf01e,0x1f:0xf01f",
-    "0x22:0xf020,0x2a:0xf021,0x3a:0xf022,0x3c:0xf023",
-    "0x3e:0xf024,0x3f:0xf025,0x5c:0xf026,0x7c:0xf027"
-)
-
 AD_KEYTAB_PARAMS = (
     f"{SAMBA_KEYTAB_DIR}/krb5.keytab0:account_name:sync_kvno:machine_password",
     f"{SAMBA_KEYTAB_DIR}/krb5.keytab1:sync_spns:sync_kvno:machine_password",
@@ -80,16 +66,8 @@ def __parse_aux_param_list(smbconf: dict, aux: list[str]) -> None:
         smbconf[param] = value
 
 
-def __order_vfs_objects(vfs_objects: set, fruit_enabled: bool):
+def __order_vfs_objects(vfs_objects: set):
     vfs_objects_ordered = []
-
-    if fruit_enabled:
-        # vfs_fruit must be globally enabled
-        vfs_objects.add(TrueNASVfsObjects.FRUIT)
-
-    if TrueNASVfsObjects.FRUIT in vfs_objects:
-        # vfs_fruit requires streams_xattr
-        vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
 
     for obj in TrueNASVfsObjects:
         if obj in vfs_objects:
@@ -175,12 +153,10 @@ def __apply_purpose_and_options(
     match config_in[share_field.PURPOSE]:
         case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.FCP_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
-            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             out['posix locking'] = False
 
         case SMBSharePurpose.TIMEMACHINE_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
-            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             out['fruit:time machine'] = True
             out['posix locking'] = False
             if opts[share_field.AUTO_SNAP]:
@@ -194,7 +170,6 @@ def __apply_purpose_and_options(
 
         case SMBSharePurpose.MULTIPROTOCOL_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
-            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             out['posix locking'] = False
             out['oplocks'] = 'no'
             out['level2 oplocks'] = 'no'
@@ -202,7 +177,6 @@ def __apply_purpose_and_options(
 
         case SMBSharePurpose.PRIVATE_DATASETS_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
-            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             out['zfs_core:zfs_auto_create'] = True
             if opts[share_field.AUTO_QUOTA]:
                 out['zfs_core:dataset_auto_quota'] = f'{opts[share_field.AUTO_QUOTA]}G'
@@ -210,8 +184,6 @@ def __apply_purpose_and_options(
         case SMBSharePurpose.LEGACY_SHARE:
             out['nt acl support'] = opts[share_field.ACL]
             out['guest ok'] = opts[share_field.GUESTOK]
-            if opts[share_field.STREAMS]:
-                vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
 
             if opts[share_field.RECYCLE]:
                 vfs_objects.add(TrueNASVfsObjects.RECYCLE)
@@ -251,13 +223,11 @@ def __apply_purpose_and_options(
 
         case SMBSharePurpose.TIME_LOCKED_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
-            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             vfs_objects.add(TrueNASVfsObjects.WORM)
             out['worm:grace_period'] = opts[share_field.WORM_GRACE]
 
         case SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
-            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             out['posix locking'] = False
             out['block size'] = VEEAM_REPO_BLOCKSIZE
 
@@ -285,12 +255,10 @@ def __apply_purpose_and_options(
 def generate_smb_share_conf_dict(
     ds_type: DSType,
     share_config: dict,
-    smb_service_config: dict,
     io_uring_enabled: bool = True
 ) -> dict:
     # apply any presets to the config here
-    fruit_enabled = smb_service_config['aapl_extensions']
-    vfs_objects = set([TrueNASVfsObjects.ZFS_CORE])
+    vfs_objects = set([TrueNASVfsObjects.ZFS_CORE, TrueNASVfsObjects.FRUIT, TrueNASVfsObjects.STREAMS_XATTR])
 
     if io_uring_enabled:
         vfs_objects.add(TrueNASVfsObjects.IO_URING)
@@ -313,24 +281,15 @@ def generate_smb_share_conf_dict(
     __apply_purpose_and_options(ds_type, vfs_objects, share_config, config_out, acl_check)
 
     if share_config[share_field.OPTS].get(share_field.AAPL_MANGLING):
-        # Apply SFM mangling to share. This takes different form depending
-        # on whether fruit is enabled. The end result is the same.
+        # Apply SFM mangling to share
         vfs_objects.add(TrueNASVfsObjects.CATIA)
-
-        if fruit_enabled:
-            config_out.update({
-                'fruit:encoding': 'native',
-                'mangled names': False
-            })
-        else:
-            config_out.update({
-                'catia:mappings': ','.join(FRUIT_CATIA_MAPS),
-                'mangled names': False
-            })
+        config_out.update({
+            'fruit:encoding': 'native',
+            'mangled names': False
+        })
 
     if share_config[share_field.OPTS].get(share_field.AFP):
         # Parameters for compatibility with how data was written by Netatalk
-        vfs_objects.add(TrueNASVfsObjects.FRUIT)
         vfs_objects.add(TrueNASVfsObjects.CATIA)
         config_out.update({
             'fruit:encoding': 'native',
@@ -355,7 +314,7 @@ def generate_smb_share_conf_dict(
 
             config_out[f'truenas_audit:{key}'] = share_config[share_field.AUDIT][key]
 
-    ordered_vfs_objects = __order_vfs_objects(vfs_objects, fruit_enabled)
+    ordered_vfs_objects = __order_vfs_objects(vfs_objects)
     config_out['vfs objects'] = ordered_vfs_objects
 
     # Apply auxiliary parameters
@@ -463,7 +422,7 @@ def generate_smb_conf_dict(
         'create mask': smb_service_config['filemask'] or '0664',
         'directory mask': smb_service_config['dirmask'] or '0775',
         'ntlm auth': smb_service_config['ntlmv1_auth'],
-        'server multichannel support': smb_service_config['multichannel'],
+        'server multichannel support': True,
         'unix charset': smb_service_config['unixcharset'],
         'local master': smb_service_config['localmaster'],
         'server string': smb_service_config['description'],
@@ -706,7 +665,7 @@ def generate_smb_conf_dict(
 
     for share in smb_shares:
         try:
-            share_conf = generate_smb_share_conf_dict(ds_type, share, smb_service_config, io_uring_enabled)
+            share_conf = generate_smb_share_conf_dict(ds_type, share, io_uring_enabled)
         except FileNotFoundError:
             # Share path doesn't exist, exclude from config
             continue

@@ -8,7 +8,6 @@ BASE_SMB_CONFIG = {
     'description': 'TrueNAS Server',
     'unixcharset': 'UTF-8',
     'syslog': False,
-    'aapl_extensions': False,
     'localmaster': False,
     'guest': 'nobody',
     'filemask': '',
@@ -20,7 +19,6 @@ BASE_SMB_CONFIG = {
     'minimum_protocol': 'SMB2',
     'admin_group': None,
     'next_rid': 0,
-    'multichannel': False,
     'encryption': 'DEFAULT',
     'search_protocols': [],
     'stateful_failover': False,
@@ -28,14 +26,12 @@ BASE_SMB_CONFIG = {
 }
 
 SMB_SYSLOG = BASE_SMB_CONFIG | {'syslog': True}
-SMB_AAPL = BASE_SMB_CONFIG | {'aapl_extensions': True}
 SMB_LOCALMASTER = BASE_SMB_CONFIG | {'localmaster': True}
 SMB_GUEST = BASE_SMB_CONFIG | {'guest': 'mike'}
 SMB_BINDIP = BASE_SMB_CONFIG | {'bindip': ['192.168.0.250', '192.168.0.251']}
 SMB_NTLMV1 = BASE_SMB_CONFIG | {'ntlmv1_auth': True}
 SMB_SMB1 = BASE_SMB_CONFIG | {'minimum_protocol': 'SMB1'}
 SMB_SMB3 = BASE_SMB_CONFIG | {'minimum_protocol': 'SMB3'}
-SMB_MULTICHANNEL = BASE_SMB_CONFIG | {'multichannel': True}
 SMB_OPTIONS = BASE_SMB_CONFIG | {'smb_options': 'canary = bob\n canary2 = bob2 \n #comment\n ;othercomment'}
 SMB_ENCRYPTION_NEGOTIATE = BASE_SMB_CONFIG | {'encryption': 'NEGOTIATE'}
 SMB_ENCRYPTION_DESIRED = BASE_SMB_CONFIG | {'encryption': 'DESIRED'}
@@ -68,7 +64,6 @@ LEGACY_OPTIONS = {
     'hostsallow': [],
     'hostsdeny': [],
     'guestok': False,
-    'streams': True,
     'durablehandle': True,
     'shadowcopy': True,
     'fsrvp': False,
@@ -197,7 +192,7 @@ def test__base_smb():
     assert conf['local master'] is False
     assert conf['ntlm auth'] is False
     assert 'server min protocol' not in conf
-    assert conf['server multichannel support'] is False
+    assert conf['server multichannel support'] is True
     assert conf['idmap config * : backend'] == 'tdb'
     assert conf['idmap config * : range'] == '90000001 - 90010001'
     assert conf['server smb encrypt'] == 'default'
@@ -287,14 +282,6 @@ def test__smb_options():
     )
     assert conf['canary'] == 'bob'
     assert conf['canary2'] == 'bob2'
-
-
-def test__multichannel():
-    conf = generate_smb_conf_dict(
-        DISABLED_DS_CONFIG, SMB_MULTICHANNEL, [],
-        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
-    )
-    assert conf['server multichannel support'] is True
 
 
 def test__homes_share():

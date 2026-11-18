@@ -74,7 +74,6 @@ class SMBModel(sa.Model):
     cifs_srv_unixcharset = sa.Column(sa.String(120), default="UTF-8")
     cifs_srv_debug = sa.Column(sa.Boolean(), default=False)
     cifs_srv_syslog = sa.Column(sa.Boolean(), default=False)
-    cifs_srv_aapl_extensions = sa.Column(sa.Boolean(), default=False)
     cifs_srv_localmaster = sa.Column(sa.Boolean(), default=False)
     cifs_srv_guest = sa.Column(sa.String(120), default="nobody")
     cifs_srv_filemask = sa.Column(sa.String(120))
@@ -86,7 +85,6 @@ class SMBModel(sa.Model):
     cifs_srv_minimum_protocol = sa.Column(sa.String(120), default='SMB2')
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
-    cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
     cifs_srv_encryption = sa.Column(sa.String(120), nullable=True)
     cifs_srv_search_protocols = sa.Column(sa.JSON(list), default=[])
     cifs_srv_stateful_failover = sa.Column(sa.Boolean, default=False)
@@ -122,6 +120,8 @@ class SMBService(ConfigService):
         smb['server_sid'] = smb.pop('cifs_SID')
         smb['dirmask'] = smb['dirmask'] or 'DEFAULT'
         smb['filemask'] = smb['filemask'] or 'DEFAULT'
+        smb['aapl_extensions'] = True
+        smb['multichannel'] = True
         smb.pop('secrets', None)
         return smb
 
@@ -535,20 +535,6 @@ class SMBService(ConfigService):
             except (ValueError, TypeError):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
-        if not new['aapl_extensions']:
-            filters = [['OR', [
-                ['options.afp', '=', True], ['options.timemachine', '=', True],
-                ['purpose', '=', 'TIMEMACHINE_SHARE'],
-                ['purpose', '=', 'FCP_SHARE'],
-            ]]]
-            if await self.middleware.call(
-                'sharing.smb.query', filters, {'count': True, 'select': ['purpose']}
-            ):
-                verrors.add(
-                    'smb_update.aapl_extensions',
-                    'This option must be enabled when AFP, time machine, or Final Cut Pro shares are present'
-                )
-
         if new['minimum_protocol'] == 'SMB1':
             if audited_shares := await self.middleware.call(
                 'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['audit', 'name']}
@@ -573,9 +559,6 @@ class SMBService(ConfigService):
         NOTE: `workgroup` and `netbiosname` should have different values.
 
         `minimum_protocol` sets the minimum SMB protocol version permitted for client connections.
-
-        `aapl_extensions` enables support for SMB2 protocol extensions for MacOS clients. This is not a
-        requirement for MacOS support, but is currently a requirement for time machine support.
 
         `localmaster` when set, determines if the system participates in a browser election.
 
@@ -728,6 +711,8 @@ class SMBService(ConfigService):
             data['filemask'] = ''
 
         data.pop('server_sid')
+        data.pop('aapl_extensions')
+        data.pop('multichannel')
         data['netbiosalias'] = ' '.join(data['netbiosalias'])
         return data
 
@@ -755,7 +740,6 @@ class SharingSMBModel(sa.Model):
     cifs_abe = sa.Column(sa.Boolean())
     cifs_acl = sa.Column(sa.Boolean())
     cifs_durablehandle = sa.Column(sa.Boolean())
-    cifs_streams = sa.Column(sa.Boolean())
     cifs_timemachine = sa.Column(sa.Boolean(), default=False)
     cifs_timemachine_quota = sa.Column(sa.Integer(), default=0)
     cifs_vuid = sa.Column(sa.String(36))
@@ -994,11 +978,6 @@ class SharingSMBService(SharingService):
                 ) from exc
 
         if not new_is_locked:
-            """
-            Enabling AAPL SMB2 extensions globally affects SMB shares. If this
-            happens, the SMB service _must_ be restarted. Skip this step if dataset
-            underlying the new path is encrypted.
-            """
             do_global_reload = guest_changed or await self.must_reload_globals(new)
         else:
             do_global_reload = False
@@ -1391,27 +1370,6 @@ class SharingSMBService(SharingService):
                             'Watch list or ignore list is required to enable '
                             'auditing for an SMB share.')
 
-        if data[share_field.OPTS].get(share_field.AFP) and not smb_config['aapl_extensions']:
-            verrors.add(
-                f'{schema_name}.{share_field.OPTS}.{share_field.AFP}',
-                'Apple SMB2/3 protocol extension support is required by this parameter. '
-                'This feature may be enabled in the general SMB server configuration.'
-            )
-
-        if timemachine and not smb_config['aapl_extensions']:
-            verrors.add(
-                f'{schema_name}.purpose',
-                'Apple SMB2/3 protocol extension support is required by this parameter. '
-                'This feature may be enabled in the general SMB server configuration.'
-            )
-
-        if data[share_field.PURPOSE] == SMBSharePurpose.FCP_SHARE and not smb_config['aapl_extensions']:
-            verrors.add(
-                f'{schema_name}.purpose',
-                'Apple SMB2/3 protocol extension support is required by this parameter. '
-                'This feature may be enabled in the general SMB server configuration.'
-            )
-
         if data[share_field.PURPOSE] == SMBSharePurpose.LEGACY_SHARE:
             await self.legacy_share_validate(data, schema_name, verrors, old)
 
@@ -1511,6 +1469,7 @@ class SharingSMBService(SharingService):
                 data[share_field.HOSTSDENY] = data[share_field.HOSTSDENY].split()
                 data[share_field.PATH_SUFFIX] = data[share_field.PATH_SUFFIX] or None
                 data[share_field.VUID] = data[share_field.VUID] or None
+                data[share_field.STREAMS] = True
                 for param in (
                     share_field.AUTO_QUOTA,
                     share_field.AUTO_DS,
@@ -1546,6 +1505,7 @@ class SharingSMBService(SharingService):
             data[share_field.PATH_SUFFIX] = ''
 
         data[share_field.AAPL_MANGLING] = opts.pop(share_field.AAPL_MANGLING, False)
+        opts.pop(share_field.STREAMS, None)
 
         data['ro'] = data.pop(share_field.RO)
         data['abe'] = data.pop(share_field.ABE)
@@ -1564,7 +1524,7 @@ class SharingSMBService(SharingService):
                 pass
 
         # Set defaults for our legacy fields y4
-        for param in (share_field.DURABLEHANDLE, share_field.SHADOWCOPY, share_field.STREAMS):
+        for param in (share_field.DURABLEHANDLE, share_field.SHADOWCOPY):
             if param not in data:
                 data[param] = True
 
@@ -1580,7 +1540,7 @@ class SharingSMBService(SharingService):
         if data[share_field.PURPOSE] != SMBSharePurpose.LEGACY_SHARE:
             # Make sure to set these keys to defaults for sake of DB consistency
             # These ones default to True
-            for param in (share_field.DURABLEHANDLE, share_field.SHADOWCOPY, share_field.STREAMS, share_field.ACL):
+            for param in (share_field.DURABLEHANDLE, share_field.SHADOWCOPY, share_field.ACL):
                 data[param] = True
 
             # These ones default to False

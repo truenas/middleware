@@ -60,16 +60,6 @@ def enable_guest(smb_info):
 
 
 @pytest.fixture(scope='function')
-def enable_aapl():
-    call('smb.update', {'aapl_extensions': True})
-
-    try:
-        yield
-    finally:
-        call('smb.update', {'aapl_extensions': False})
-
-
-@pytest.fixture(scope='function')
 def enable_smb1():
     call('smb.update', {'minimum_protocol': 'SMB1'})
 
@@ -161,7 +151,7 @@ def test__change_sharing_smd_home_to_true(smb_info):
     assert obey_pam_restrictions is False
 
 
-def test__change_timemachine_to_true(enable_aapl, smb_info):
+def test__change_timemachine_to_true(smb_info):
     smb_id = smb_info['share']['id']
     call('sharing.smb.update', smb_id, {'purpose': 'TIMEMACHINE_SHARE', 'options': {}})
     try:
@@ -223,23 +213,21 @@ def test__recyclebin_functional_test(enable_recycle_bin, smb_info):
             do_recycle_ops(c, True)
 
 
-@pytest.mark.parametrize('smb_config', [
-    {'global': {'aapl_extensions': True}, 'share': {'aapl_name_mangling': True}},
-    {'global': {'aapl_extensions': True}, 'share': {'aapl_name_mangling': False}},
-    {'global': {'aapl_extensions': False}, 'share': {}},
+@pytest.mark.parametrize('share_options', [
+    {'aapl_name_mangling': True},
+    {'aapl_name_mangling': False},
 ])
-def test__recyclebin_functional_test_subdir(smb_info, smb_config):
+def test__recyclebin_functional_test_subdir(smb_info, share_options):
     tmp_ds = f"{pool_name}/recycle_test"
     tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
     tmp_share_name = 'recycle_test'
 
-    call('smb.update', smb_config['global'])
     # basic tests of recyclebin operations
     with create_dataset(tmp_ds, {'share_type': 'SMB'}):
         ssh(f'mkdir {tmp_ds_path}')
         with smb_share(tmp_ds_path, tmp_share_name, {
             'purpose': 'LEGACY_SHARE',
-            'options': {'recyclebin': True} | smb_config['share'],
+            'options': {'recyclebin': True} | share_options,
         }):
             shares = call('sharing.smb.smbconf_list_shares')
             assert tmp_share_name in shares
@@ -261,7 +249,7 @@ def test__recyclebin_functional_test_subdir(smb_info, smb_config):
         ssh(';'.join(ops))
         with smb_share(tmp_ds_path, tmp_share_name, {
             'purpose': 'LEGACY_SHARE',
-            'options': {'recyclebin': True} | smb_config['share'],
+            'options': {'recyclebin': True} | share_options,
         }):
             shares = call('sharing.smb.smbconf_list_shares')
             assert tmp_share_name in shares
