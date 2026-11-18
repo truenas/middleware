@@ -155,12 +155,6 @@ def test__test_presets(setup_for_tests, preset):
     applies them to a single share, and then validates
     that the preset was applied correctly.  """
     mp, ds, SHARE_DICT = setup_for_tests
-    if 'TIMEMACHINE' in preset:
-        call('smb.update', {'aapl_extensions': True})
-    elif preset == 'MULTI_PROTOCOL_NFS':
-        call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {'purpose': 'LEGACY_SHARE'})
-        call('smb.update', {'aapl_extensions': False})
-
     new_conf = call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {
         'purpose': preset
     })
@@ -169,13 +163,8 @@ def test__test_presets(setup_for_tests, preset):
 
 
 def test__reset_smb(setup_for_tests):
-    """
-    Remove all parameters that might turn us into
-    a MacOS-style SMB server (fruit).
-    """
     mp, ds, SHARE_DICT = setup_for_tests
     call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {"purpose": "LEGACY_SHARE"})
-    call('smb.update', {'aapl_extensions': False})
 
 
 def test__test_aux_param_on_update(setup_for_tests):
@@ -226,18 +215,6 @@ def test__test_aux_param_on_update(setup_for_tests):
             ncomments_sent += 1
 
     assert ncomments_sent == ncomments_recv, new_aux
-
-
-@contextlib.contextmanager
-def setup_aapl_extensions(newvalue):
-    oldvalue = call('smb.config')['aapl_extensions']
-    try:
-        if oldvalue != newvalue:
-            call('smb.update', {'aapl_extensions': newvalue})
-        yield
-    finally:
-        if oldvalue != newvalue:
-            call('smb.update', {'aapl_extensions': oldvalue})
 
 
 @pytest.fixture(scope='function')
