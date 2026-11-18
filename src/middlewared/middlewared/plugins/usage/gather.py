@@ -299,7 +299,9 @@ async def gather_system(service: Service, context: GatherContext) -> dict[str, A
         "system": [
             {
                 "users": await service.call2(
-                    service.s.user.query, [["local", "=", True]], QueryOptions(count=True),
+                    service.s.user.query,
+                    [["local", "=", True]],
+                    QueryOptions(count=True),
                 ),
                 "zvols": context["total_zvols"],
                 "datasets": context["total_datasets"],

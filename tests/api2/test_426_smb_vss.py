@@ -297,7 +297,7 @@ def test_050_delete_smb_user(request):
 
 def test_051_disable_smb1(request):
     depends(request, ["VSS_SMB1_ENABLED"])
-    assert call("smb.update", {"minimum_protocol": "SMB2", "aapl_extensions": False})
+    assert call("smb.update", {"minimum_protocol": "SMB2"})
 
 
 def test_052_stopping_smb_service(request):

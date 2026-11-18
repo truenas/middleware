@@ -108,6 +108,32 @@ def test_readonly_can_call_method(method, params):
         c.call(method, *params)
 
 
+def test_webui_dataset_details_hides_unauthorized_sections():
+    def gated_values(c, ds):
+        row = next(row for row in c.call("webui.dataset.details") if row["name"] == ds)
+        return (
+            row["snapshot_count"],
+            list(row["consumers"].values()),
+            list(row["tasks"].values()),
+        )
+
+    with dataset("webui_details_rbac") as ds:
+        with unprivileged_user_client(["DATASET_READ"]) as c:
+            snapshot_count, consumers, tasks = gated_values(c, ds)
+            assert snapshot_count is None
+            assert all(value is None for value in consumers + tasks)
+
+        with unprivileged_user_client(["DATASET_READ", "SNAPSHOT_READ"]) as c:
+            snapshot_count, consumers, tasks = gated_values(c, ds)
+            assert snapshot_count is not None
+            assert all(value is None for value in consumers + tasks)
+
+        with unprivileged_user_client(["READONLY_ADMIN"]) as c:
+            snapshot_count, consumers, tasks = gated_values(c, ds)
+            assert snapshot_count is not None
+            assert all(value is not None for value in consumers + tasks)
+
+
 def test_readonly_can_not_call_method():
     with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         with pytest.raises(CallError) as ve:

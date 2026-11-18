@@ -31,7 +31,7 @@ from middlewared.utils.nvmet.spdk import resize_namespace as spdk_resize_namespa
 from middlewared.utils.nvmet.spdk import unlock_namespace as spdk_unlock_namespace
 from middlewared.utils.service.path import check_path_service_write_allowed
 
-from .constants import NAMESPACE_DEVICE_TYPE
+from .constants import NAMESPACE_DEVICE_TYPE, NVMET_FILE_BLOCK_SIZE
 
 DISABLE_VOLTHREADING_FOR_NVMET = True
 
@@ -269,18 +269,24 @@ class NVMetNamespaceService(SharingService):
                     verrors.add(f'{schema_name}.filesize',
                                 'Must supply filesize if device_path FILE does not exist.')
             else:
-                if old:
-                    if _new_size := data.get('filesize'):
-                        old_size = int(old['filesize'])
-                        new_size = int(_new_size)
+                # Compare against the actual size of the file, as the stored
+                # filesize may be unset (existing file used as-is) or stale.
+                current_size = os.stat(path).st_size
+                new_size = data.get('filesize')
+                if old and path == old['device_path']:
+                    # Only act if the filesize is being changed
+                    if new_size and new_size != old['filesize']:
                         # Only allow expansion
-                        if new_size > old_size:
-                            subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                        if new_size > current_size:
+                            subprocess.run(['truncate', '-s', str(new_size), path])
                             # resync so connected initiators can see the new size
                             self.middleware.call_sync('nvmet.namespace.resize_namespace', data['id'])
-                        elif old_size > new_size:
+                        elif new_size < current_size:
                             verrors.add(f'{schema_name}.filesize',
                                         'Shrinking an namespace file is not allowed. This can lead to data loss.')
+                elif not new_size or (old and new_size == old['filesize']):
+                    # Existing file used without specifying a size, record its actual size
+                    data['filesize'] = current_size
 
             # Split path into dataset and relative_path for FILE type extents
             # May return None if path exists but can't be authoritatively resolved yet
@@ -334,6 +340,26 @@ class NVMetNamespaceService(SharingService):
             case _:
                 verrors.add(f'{schema_name}.device_type', 'Invalid device_type supplied')
 
+    @private
+    def clean_filesize(self, data, schema_name, verrors, old=None):
+        # The size of a FILE namespace must be a whole number of blocks,
+        # whether it is created by us (filesize) or is a pre-existing file.
+        if data.get('device_type') != 'FILE':
+            return
+
+        device_path = data.get('device_path')
+        if (not old or device_path != old['device_path']) and os.path.isfile(device_path):
+            size = os.stat(device_path).st_size
+            if size % NVMET_FILE_BLOCK_SIZE:
+                verrors.add(f'{schema_name}.device_path',
+                            f'Size of existing file ({size}) must be a multiple of '
+                            f'{NVMET_FILE_BLOCK_SIZE} bytes: {device_path}')
+
+        filesize = data.get('filesize')
+        if filesize and (not old or filesize != old['filesize']) and filesize % NVMET_FILE_BLOCK_SIZE:
+            verrors.add(f'{schema_name}.filesize',
+                        f'File size ({filesize}) must be a multiple of {NVMET_FILE_BLOCK_SIZE} bytes')
+
     async def __validate(self, verrors, data, schema_name, old=None):
         try:
             # Create
@@ -359,6 +385,7 @@ class NVMetNamespaceService(SharingService):
                         f"This record already exists (Subsystem ID: {subsys_id}/NSID: {nsid})")
 
         await self.middleware.call('nvmet.namespace.clean_type_and_path', data, schema_name, verrors)
+        await self.middleware.call('nvmet.namespace.clean_filesize', data, schema_name, verrors, old)
 
         # Ensure we're not trying to use a device used elsewhere.
         # First check nvme.namespace

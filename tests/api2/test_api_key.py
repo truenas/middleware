@@ -83,6 +83,15 @@ def test_print_expired_api_key_update_failure():
     assert 'Expiration date is in the past' in ve.value.errors[0].errmsg
 
 
+def test_api_key_name_trailing_whitespace_not_unique():
+    with api_key(name='Unique API key'):
+        with pytest.raises(ValidationErrors) as ve:
+            with api_key(name='Unique API key '):
+                pass
+
+    assert ve.value.errors[0].errmsg == 'name must be unique'
+
+
 def test_api_key_info(sharing_admin_user):
     with api_key(sharing_admin_user.username):
         key_info = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})

@@ -1,6 +1,8 @@
 import contextlib
+import functools
 import smtplib
-from typing import Generator
+import ssl
+from typing import Callable, Generator
 
 from middlewared.api.current import MailEntry
 from middlewared.service import ServiceContext
@@ -23,8 +25,13 @@ def get_smtp_server(
     if not config.outgoingserver or not config.port:
         raise ValueError("You must provide an outgoing mailserver and mail server port when sending mail")
 
+    ssl_context = ssl.create_default_context()
+    if not config.validate_certificate:
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
     if config.security == "SSL":
-        factory: type[smtplib.SMTP] = smtplib.SMTP_SSL
+        factory: Callable[..., smtplib.SMTP] = functools.partial(smtplib.SMTP_SSL, context=ssl_context)
     else:
         factory = smtplib.SMTP
 
@@ -35,7 +42,7 @@ def get_smtp_server(
         local_hostname=local_hostname,
     ) as server:
         if config.security == "TLS":
-            server.starttls()
+            server.starttls(context=ssl_context)
 
         oauth = config.oauth.get_secret_value()
         if oauth and oauth.provider == "outlook":

@@ -186,8 +186,6 @@ def test_status_while_both_daemons_are_stopped(share):
 
 def test_time_machine_and_home_shares_are_not_indexed(share):
     ds = share['dataset']
-    aapl_extensions = call('smb.config')['aapl_extensions']
-    call('smb.update', {'aapl_extensions': True})
     ssh(f"mkdir /mnt/{ds}/timemachine")
     try:
         with (
@@ -206,7 +204,6 @@ def test_time_machine_and_home_shares_are_not_indexed(share):
             assert homes not in rows
     finally:
         ssh(f"rm -r /mnt/{ds}/timemachine")
-        call('smb.update', {'aapl_extensions': aapl_extensions})
 
 
 def test_nested_dataset_has_its_own_index(share):

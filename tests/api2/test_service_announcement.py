@@ -146,20 +146,6 @@ def service_announcement(cfg: dict):
         wait_for_enabled_set(prev)
 
 
-@contextlib.contextmanager
-def ensure_aapl_extensions():
-    """Enable AAPL extensions for the duration of the block."""
-    cur = call("smb.config")["aapl_extensions"]
-    if cur:
-        yield
-        return
-    call("smb.update", {"aapl_extensions": True})
-    try:
-        yield
-    finally:
-        call("smb.update", {"aapl_extensions": False})
-
-
 # ---- module-scoped fixtures ---------------------------------------
 
 @pytest.fixture(autouse=True, scope="module")
@@ -480,7 +466,7 @@ class TestSmbShareServices:
 
     def test_time_machine_share_publishes_adisk_with_txt(self):
         name = f"tm{DIGITS}"
-        with ensure_service_started("cifs"), ensure_aapl_extensions():
+        with ensure_service_started("cifs"):
             with dataset(DATASET_TM) as ds:
                 opts = {
                     "name": name,

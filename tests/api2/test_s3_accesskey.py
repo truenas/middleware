@@ -17,7 +17,6 @@ from middlewared.test.integration.utils import call, client, ssh
 S3_USER = "s3keyuser"
 ACCESS_KEY_RE = re.compile(r"^[A-Z0-9]{20}$")
 SECRET_RE = re.compile(r"^[A-Za-z0-9]{40}$")
-REDACTED = "********"
 CREDENTIALS_CONF = "/etc/truenas_s3/credentials.conf"
 
 
@@ -56,16 +55,17 @@ def test_create_generates_an_aws_shaped_pair(accesskey):
     assert accesskey["status"] == "ENABLED"
 
 
-def test_secret_is_readable_by_write_role_only(accesskey):
-    """The secret stays readable to SHARING_S3_WRITE and is redacted for a
-    read-only role."""
-    entry = call("s3.accesskey.get_instance", accesskey["id"])
-    assert entry["secret"] == accesskey["secret"]
+def test_only_create_and_rotate_return_the_secret(accesskey):
+    """No query returns a secret, to any caller. The create result and a
+    rotation are the only places it appears."""
+    assert "secret" not in call("s3.accesskey.get_instance", accesskey["id"])
+    assert all("secret" not in key for key in call("s3.accesskey.query"))
+    assert "secret" not in call("s3.accesskey.update", accesskey["id"], {"name": "renamed key"})
 
     with unprivileged_user_client(roles=["SHARING_S3_READ"]) as c:
         seen = c.call("s3.accesskey.get_instance", accesskey["id"])
         assert seen["access_key"] == accesskey["access_key"]
-        assert seen["secret"] == REDACTED
+        assert "secret" not in seen
 
         with pytest.raises(CallError):
             c.call("s3.accesskey.update", accesskey["id"], {"rotate": True})
@@ -152,7 +152,8 @@ def test_rotate_keeps_the_access_key(accesskey):
     assert rotated["access_key"] == accesskey["access_key"]
     assert rotated["secret"] != accesskey["secret"]
     assert SECRET_RE.match(rotated["secret"])
-    assert call("s3.accesskey.get_instance", accesskey["id"])["secret"] == rotated["secret"]
+    call("etc.generate", "truenas_s3")
+    assert f"secret_key = {rotated['secret']}" in ssh(f"cat {CREDENTIALS_CONF}")
 
 
 def test_update_cannot_change_the_account_or_the_pair(accesskey):
@@ -171,7 +172,9 @@ def test_update_cannot_change_the_account_or_the_pair(accesskey):
     )
     assert updated["name"] == "renamed key"
     assert updated["status"] == "DISABLED"
-    assert updated["secret"] == accesskey["secret"]
+    assert "secret" not in updated
+    call("etc.generate", "truenas_s3")
+    assert f"secret_key = {accesskey['secret']}" in ssh(f"cat {CREDENTIALS_CONF}")
 
 
 def test_expiry_flips_the_status(s3_user):
@@ -256,7 +259,6 @@ def test_lost_secret_flips_the_status(accesskey):
         f"UPDATE truenas_s3_accesskey SET secret = NULL WHERE id = {accesskey['id']}",
     )
     entry = call("s3.accesskey.get_instance", accesskey["id"])
-    assert entry["secret"] is None
     assert entry["status"] == "SECRET_LOST"
 
     rotated = call("s3.accesskey.update", accesskey["id"], {"rotate": True})

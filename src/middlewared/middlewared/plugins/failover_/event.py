@@ -92,6 +92,11 @@ class FailoverEventsService(Service):
     # this is the time limit we place on exporting the
     # zpool(s) when becoming the BACKUP node
     ZPOOL_EXPORT_TIMEOUT = 4  # seconds
+    # time limits for syncing the pools and marking the SMB durable handles
+    # before the export. With the export they must stay under the ~11 seconds
+    # that fenced on the other node waits
+    ZPOOL_SYNC_TIMEOUT = 4  # seconds
+    SMB_MARK_TIMEOUT = 2  # seconds
 
     async def service_action(self, service, timeout, verb):
         logger.info('%s %s', verb, service)
@@ -996,11 +1001,15 @@ class FailoverEventsService(Service):
         logger.info('Stopping reporting metrics')
         self.run_call('service.control', 'STOP', 'netdata', self.HA_PROPAGATE, job=True)
 
+        # With SMB stateful failover, also block SMB replies, so the SMB durable
+        # handles can be marked as synced after the pool sync below.
+        smb = self.run_call('failover.smb_stateful_failover')
         logger.info('Blocking network traffic.')
-        fw_drop_job = self.run_call('failover.firewall.drop_all')
+        fw_drop_job = self.run_call('failover.firewall.drop_all', smb)
         fw_drop_job.wait_sync()
         if fw_drop_job.error:
             logger.error(f'Error blocking network traffic: {fw_drop_job.error}')
+            smb = False
 
         # restarting keepalived sends a priority 0 advertisement
         # which means any VIP that is on this controller will be
@@ -1025,6 +1034,13 @@ class FailoverEventsService(Service):
 
         # setup the zpool cachefile
         # self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
+
+        # Sync first, as become_passive does. The export then has less to write.
+        logger.info('Syncing pools')
+        synced = self.run_call('failover.sync_pools', self.ZPOOL_SYNC_TIMEOUT)
+        if smb and synced:
+            logger.info('Marking the SMB durable handles as synced')
+            self.run_call('failover.smb_mark_synced', self.SMB_MARK_TIMEOUT)
 
         # export zpools in a thread with a timeout of `self.ZPOOL_EXPORT_TIMEOUT`.
         # if the export can't finish in that timeframe (or leaves a pool still

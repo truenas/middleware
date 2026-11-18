@@ -658,6 +658,11 @@ class ServiceService(CRUDService[ServiceEntry]):
             return [service.systemd_unit] + await service.systemd_extra_units()
         return []
 
+    @private
+    async def systemd_enabled_units(self, name: str, config_db: str | None = None) -> list[str]:
+        service = await self.object(name)
+        return await service.systemd_enabled_units(config_db)
+
 
 class RcLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'rc'

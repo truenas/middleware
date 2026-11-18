@@ -24,7 +24,14 @@ NQN_DATE_PATTERN = re.compile(r"^nqn.\d{4}-\d{2}\..*")
 DOMAIN_PATTERN = re.compile(r'^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,}$')
 
 
-def _validate_nqn(nqn: str) -> str:
+def validate_nqn(nqn: str) -> str:
+    # NQNs are used as directory names below /sys/kernel/config/nvmet,
+    # so must never contain a path separator.
+    if '/' in nqn:
+        raise ValueError(f'{nqn}: must not contain "/"')
+    if any(ord(c) < 0x20 or ord(c) == 0x7f for c in nqn):
+        raise ValueError(f'{nqn!r}: must not contain control characters')
+
     if nqn == NVMET_DISCOVERY_NQN:
         return nqn
     elif nqn.startswith(NVMET_NQN_UUID_PREFIX):
@@ -49,4 +56,4 @@ def _validate_nqn(nqn: str) -> str:
     return nqn
 
 
-NQN = Annotated[str, MinLen(MIN_NQN_LEN), MaxLen(MAX_NQN_LEN), AfterValidator(_validate_nqn)]
+NQN = Annotated[str, MinLen(MIN_NQN_LEN), MaxLen(MAX_NQN_LEN), AfterValidator(validate_nqn)]

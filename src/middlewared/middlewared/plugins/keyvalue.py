@@ -7,7 +7,7 @@ import middlewared.sqlalchemy as sa
 
 
 class KeyValueModel(sa.Model):
-    __tablename__ = 'system_keyvalue'
+    __tablename__ = "system_keyvalue"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     key = sa.Column(sa.String(255), unique=True)
@@ -15,7 +15,6 @@ class KeyValueModel(sa.Model):
 
 
 class KeyValueService(Service):
-
     class Config:
         private = True
 
@@ -29,8 +28,10 @@ class KeyValueService(Service):
     async def get(self, key: str, default: Any | None = None) -> Any:
         try:
             return json.loads(
-                (await self.middleware.call(
-                    "datastore.query", "system.keyvalue", [["key", "=", key]], {"get": True}))["value"])
+                (await self.middleware.call("datastore.query", "system.keyvalue", [["key", "=", key]], {"get": True}))[
+                    "value"
+                ]
+            )
         except IndexError:
             if default is not None:
                 return default

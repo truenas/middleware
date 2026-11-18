@@ -244,6 +244,7 @@ class ZfsTierRewriteJobStatusEventSource(TypedEventSource[ZfsTierRewriteJobStatu
 
     args = ZfsTierRewriteJobStatusEventSourceArgs
     event = ZfsTierRewriteJobStatusEventSourceEvent
+    event_types = ("CHANGED",)
     roles = ["ZFS_RESOURCE_READ"]
 
     def _poll_job_info(self, tier_job_id: str) -> dict[str, typing.Any] | None:
@@ -283,6 +284,7 @@ class ZfsTierRewriteJobQueryEventSource(TypedEventSource[ZfsTierRewriteJobQueryE
 
     args = ZfsTierRewriteJobQueryEventSourceArgs
     event = ZfsTierRewriteJobQueryEventSourceEvent
+    event_types = ("ADDED", "CHANGED", "REMOVED")
     roles = ["ZFS_RESOURCE_READ"]
 
     def run_sync(self) -> None:

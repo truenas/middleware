@@ -12,32 +12,6 @@ from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.io import set_io_uring_enabled
 from middlewared.utils.smb import SMBSharePurpose
 
-BASE_SMB_CONFIG = {
-    'id': 1,
-    'netbiosname': 'TESTSERVER',
-    'netbiosalias': ['BOB', 'LARRY'],
-    'workgroup': 'TESTDOMAIN',
-    'description': 'TrueNAS Server',
-    'unixcharset': 'UTF-8',
-    'syslog': False,
-    'aapl_extensions': False,
-    'localmaster': False,
-    'guest': 'nobody',
-    'filemask': '',
-    'dirmask': '',
-    'smb_options': '',
-    'bindip': [],
-    'server_sid': 'S-1-5-21-732395397-2008429054-3061640861',
-    'ntlmv1_auth': False,
-    'minimum_protocol': 'SMB2',
-    'admin_group': None,
-    'next_rid': 0,
-    'multichannel': False,
-    'encryption': 'DEFAULT',
-    'search_protocols': [],
-    'debug': False
-}
-
 BASE_SHARE = {
     'id': 1,
     'purpose': None,
@@ -67,7 +41,6 @@ LEGACY_SHARE_OPTS = {
     'aapl_name_mangling': False,
     'acl': True,
     'durablehandle': True,
-    'streams': True,
     'timemachine': False,
     'timemachine_quota': 0,
     'vuid': '',
@@ -149,7 +122,7 @@ def disable_io_uring():
 
 
 def test__base_parameters(nfsacl_dataset):
-    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': nfsacl_dataset}, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': nfsacl_dataset})
 
     assert conf['smbd max xattr size'] == 2097152
     assert conf['comment'] == DEFAULT_SHARE['comment']
@@ -158,10 +131,11 @@ def test__base_parameters(nfsacl_dataset):
 
 
 def test__base_smb_nfs4acl(nfsacl_dataset):
-    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': nfsacl_dataset}, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': nfsacl_dataset})
 
     assert conf['path'] == nfsacl_dataset
     assert conf['vfs objects'] == [
+        TrueNASVfsObjects.FRUIT,
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
         TrueNASVfsObjects.IXNAS,
@@ -173,10 +147,11 @@ def test__base_smb_nfs4acl(nfsacl_dataset):
 
 
 def test__base_smb_posixacl(posixacl_dataset):
-    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': posixacl_dataset}, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': posixacl_dataset})
 
     assert conf['path'] == posixacl_dataset
     assert conf['vfs objects'] == [
+        TrueNASVfsObjects.FRUIT,
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
         TrueNASVfsObjects.IXNAS,
@@ -188,10 +163,11 @@ def test__base_smb_posixacl(posixacl_dataset):
 
 
 def test__base_smb_noacl(noacl_dataset):
-    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': noacl_dataset}, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': noacl_dataset})
 
     assert conf['path'] == noacl_dataset
     assert conf['vfs objects'] == [
+        TrueNASVfsObjects.FRUIT,
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
         TrueNASVfsObjects.ZFS_CORE,
@@ -205,7 +181,7 @@ def test__base_smb_locked(nfsacl_dataset):
     conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
         'locked': True
-    }, BASE_SMB_CONFIG)
+    })
 
     assert conf['path'] == nfsacl_dataset
     assert conf['available'] is False
@@ -215,7 +191,7 @@ def test__base_smb_disabled(nfsacl_dataset):
     conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
         'enabled': False
-    }, BASE_SMB_CONFIG)
+    })
 
     assert conf['path'] == nfsacl_dataset
     assert conf['available'] is False
@@ -225,9 +201,10 @@ def test__with_recyclebin_plain(nfsacl_dataset):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options']['recyclebin'] = True
 
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['vfs objects'] == [
+        TrueNASVfsObjects.FRUIT,
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
         TrueNASVfsObjects.IXNAS,
@@ -247,10 +224,11 @@ def test__with_recyclebin_plain(nfsacl_dataset):
 def test__with_recyclebin_ad(nfsacl_dataset, enabled):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options']['recyclebin'] = enabled
-    conf = generate_smb_share_conf_dict(DSType.AD, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(DSType.AD, smb)
 
     if enabled:
         assert conf['vfs objects'] == [
+            TrueNASVfsObjects.FRUIT,
             TrueNASVfsObjects.STREAMS_XATTR,
             TrueNASVfsObjects.SHADOW_COPY_ZFS,
             TrueNASVfsObjects.IXNAS,
@@ -282,7 +260,7 @@ def test__durablehandle(nfsacl_dataset, enabled):
     conf = generate_smb_share_conf_dict(DSType.AD, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
         'durablehandle': enabled,
-    }, BASE_SMB_CONFIG)
+    })
 
     if enabled:
         assert conf['posix locking'] is False
@@ -293,7 +271,7 @@ def test__readonly(nfsacl_dataset, enabled):
     conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
         'readonly': enabled,
-    }, BASE_SMB_CONFIG)
+    })
 
     assert conf['readonly'] is enabled
 
@@ -302,7 +280,7 @@ def test__readonly(nfsacl_dataset, enabled):
 def test__guestok(nfsacl_dataset, enabled):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options'] = LEGACY_SHARE_OPTS | {'guestok': enabled}
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['guest ok'] is enabled
 
@@ -311,7 +289,7 @@ def test__guestok(nfsacl_dataset, enabled):
 def test__acl_support(nfsacl_dataset, enabled):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options'] = LEGACY_SHARE_OPTS.copy() | {'acl': enabled}
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf.get('nt acl support', True) is enabled
 
@@ -319,10 +297,11 @@ def test__acl_support(nfsacl_dataset, enabled):
 def test__fsrvp(nfsacl_dataset):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options'] = LEGACY_SHARE_OPTS.copy() | {'fsrvp': True}
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['path'] == nfsacl_dataset
     assert conf['vfs objects'] == [
+        TrueNASVfsObjects.FRUIT,
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
         TrueNASVfsObjects.IXNAS,
@@ -337,37 +316,26 @@ def test__access_based_share_enum(nfsacl_dataset, enabled):
     conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
         'access_based_share_enumeration': enabled,
-    }, BASE_SMB_CONFIG)
+    })
     assert conf['access based share enum'] is enabled
 
 
-@pytest.mark.parametrize('fruit_enabled', [True, False])
-def test__aapl_name_mangling(nfsacl_dataset, fruit_enabled):
+def test__aapl_name_mangling(nfsacl_dataset):
     smb = DEFAULT_SHARE | {'path': nfsacl_dataset}
     smb['options'] = DEFAULT_SHARE_OPTS | {'aapl_name_mangling': True}
-    conf = generate_smb_share_conf_dict(
-        None, smb,
-        BASE_SMB_CONFIG | {'aapl_extensions': fruit_enabled}
-    )
+    conf = generate_smb_share_conf_dict(None, smb)
 
-    if fruit_enabled:
-        assert TrueNASVfsObjects.FRUIT in conf['vfs objects']
-        assert TrueNASVfsObjects.CATIA in conf['vfs objects']
-        assert conf['fruit:encoding'] == 'native'
-        assert conf['mangled names'] is False
-        assert 'catia:mappings' not in conf
-    else:
-        assert TrueNASVfsObjects.FRUIT not in conf['vfs objects']
-        assert TrueNASVfsObjects.CATIA in conf['vfs objects']
-        assert conf['mangled names'] is False
-        assert 'fruit:encoding' not in conf
-        assert 'catia:mappings' in conf
+    assert TrueNASVfsObjects.FRUIT in conf['vfs objects']
+    assert TrueNASVfsObjects.CATIA in conf['vfs objects']
+    assert conf['fruit:encoding'] == 'native'
+    assert conf['mangled names'] is False
+    assert 'catia:mappings' not in conf
 
 
 def test__afp_share(nfsacl_dataset):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options'] = LEGACY_SHARE_OPTS | {'afp': True}
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['fruit:encoding'] == 'native'
     assert conf['fruit:metadata'] == 'netatalk'
@@ -391,10 +359,7 @@ def test__fruit_convert_adouble_default(nfsacl_dataset):
     skips the per-entry ENOENT openat. Conversion still happens lazily
     via fruit_create_file on actual stream access.
     """
-    conf = generate_smb_share_conf_dict(
-        None, DEFAULT_SHARE | {'path': nfsacl_dataset},
-        BASE_SMB_CONFIG | {'aapl_extensions': True}
-    )
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': nfsacl_dataset})
 
     assert conf['fruit:metadata'] == 'stream'
     assert conf['fruit:resource'] == 'stream'
@@ -409,7 +374,7 @@ def test__fruit_convert_adouble_afp_preserved(nfsacl_dataset):
     """
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options'] = LEGACY_SHARE_OPTS | {'afp': True}
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['fruit:metadata'] == 'netatalk'
     assert conf['fruit:resource'] == 'file'
@@ -426,9 +391,7 @@ def test__fruit_convert_adouble_aux_override(nfsacl_dataset):
     smb['options'] = LEGACY_SHARE_OPTS | {
         'auxsmbconf': 'fruit:convert_adouble = yes'
     }
-    conf = generate_smb_share_conf_dict(
-        None, smb, BASE_SMB_CONFIG | {'aapl_extensions': True}
-    )
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['fruit:convert_adouble'] == 'yes'
 
@@ -444,7 +407,7 @@ def test__timemachine_preset(nfsacl_dataset, tmopts):
         'path': nfsacl_dataset,
         'purpose': 'TIMEMACHINE_SHARE',
         'options': TIMEMACHINE_SHARE_OPTS | tmopts
-    }, BASE_SMB_CONFIG)
+    })
 
     if 'auto_snapshot' in tmopts:
         assert conf['vfs objects'][-1] == TrueNASVfsObjects.TMPROTECT
@@ -466,10 +429,11 @@ def test__worm_preset(nfsacl_dataset, grace):
         'path': nfsacl_dataset,
         'purpose': 'TIME_LOCKED_SHARE',
         'options': {'grace_period': grace}
-    }, BASE_SMB_CONFIG)
+    })
 
     assert conf['path'] == nfsacl_dataset
     assert conf['vfs objects'] == [
+        TrueNASVfsObjects.FRUIT,
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
         TrueNASVfsObjects.IXNAS,
@@ -484,7 +448,7 @@ def test__multiprotocol_nfs_preset(nfsacl_dataset):
     conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
         'purpose': SMBSharePurpose.MULTIPROTOCOL_SHARE,
-    }, BASE_SMB_CONFIG)
+    })
 
     assert conf['path'] == nfsacl_dataset
     assert conf['oplocks'] == 'no'
@@ -494,23 +458,11 @@ def test__multiprotocol_nfs_preset(nfsacl_dataset):
 def test__shadow_copy_off(nfsacl_dataset):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options'] = LEGACY_SHARE_OPTS | {'shadowcopy': False}
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['vfs objects'] == [
+        TrueNASVfsObjects.FRUIT,
         TrueNASVfsObjects.STREAMS_XATTR,
-        TrueNASVfsObjects.IXNAS,
-        TrueNASVfsObjects.ZFS_CORE,
-        TrueNASVfsObjects.IO_URING,
-    ]
-
-
-def test__streams_off(nfsacl_dataset):
-    smb = LEGACY_SHARE | {'path': nfsacl_dataset}
-    smb['options'] = LEGACY_SHARE_OPTS | {'streams': False}
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
-
-    assert conf['vfs objects'] == [
-        TrueNASVfsObjects.SHADOW_COPY_ZFS,
         TrueNASVfsObjects.IXNAS,
         TrueNASVfsObjects.ZFS_CORE,
         TrueNASVfsObjects.IO_URING,
@@ -521,7 +473,7 @@ def test__streams_off(nfsacl_dataset):
 def test__timemachine(nfsacl_dataset, enabled):
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options']['timemachine'] = enabled
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     if enabled:
         assert conf['fruit:time machine'] is True
@@ -539,7 +491,7 @@ def test__hosts(nfsacl_dataset, hostsconfig):
 
     smb = LEGACY_SHARE | {'path': nfsacl_dataset}
     smb['options'][db] = ['jenny']
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf[smbconf] == ['jenny']
 
@@ -552,7 +504,7 @@ def test__hosts_default_share(nfsacl_dataset, hostsconfig):
     db, smbconf = hostsconfig
     smb = DEFAULT_SHARE | {'path': nfsacl_dataset}
     smb['options'][db] = ['jenny']
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf[smbconf] == ['jenny']
 
@@ -564,7 +516,7 @@ def test__homes_standalone(nfsacl_dataset, path_suffix):
         'path_suffix': path_suffix,
         'home': True
     }
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     expected_suffix = path_suffix or '%U'
     assert conf['path'] == os.path.join(nfsacl_dataset, expected_suffix)
@@ -577,7 +529,7 @@ def test__homes_ad(nfsacl_dataset, path_suffix):
         'path_suffix': path_suffix,
         'home': True
     })
-    conf = generate_smb_share_conf_dict(DSType.AD, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(DSType.AD, smb)
 
     expected_suffix = path_suffix or '%D/%U'
     assert conf['path'] == os.path.join(nfsacl_dataset, expected_suffix)
@@ -592,7 +544,7 @@ def test__audit_config(nfsacl_dataset, audit_config):
     conf = generate_smb_share_conf_dict(DSType.AD, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
         'audit': audit_config
-    }, BASE_SMB_CONFIG | {'aapl_extensions': True})
+    })
 
     assert conf['vfs objects'] == [
         TrueNASVfsObjects.TRUENAS_AUDIT,
@@ -614,7 +566,7 @@ def test__audit_config(nfsacl_dataset, audit_config):
 
 
 def test__smb_external_share(nfsacl_dataset):
-    conf = generate_smb_share_conf_dict(DSType.AD, EXTERNAL_SHARE, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(DSType.AD, EXTERNAL_SHARE)
 
     assert conf['path'] == '/var/empty'
     assert conf['msdfs root'] is True
@@ -624,7 +576,7 @@ def test__smb_external_share(nfsacl_dataset):
 def test__disabled_io_uring(nfsacl_dataset, disable_io_uring):
     conf = generate_smb_share_conf_dict(DSType.AD, DEFAULT_SHARE | {
         'path': nfsacl_dataset,
-    }, BASE_SMB_CONFIG, disable_io_uring)
+    }, disable_io_uring)
 
     assert TrueNASVfsObjects.IO_URING not in conf['vfs objects']
 
@@ -640,7 +592,7 @@ def test__aux_param_invalid(nfsacl_dataset):
         'test:three = canary',  # This one should be added
     ])
 
-    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+    conf = generate_smb_share_conf_dict(None, smb)
 
     assert conf['vfs objects'] != 'canary'
     assert 'zfs_core:zfs_block_cloning' not in conf

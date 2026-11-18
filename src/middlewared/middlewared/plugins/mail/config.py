@@ -17,6 +17,7 @@ class MailModel(sa.Model):
     em_outgoingserver = sa.Column(sa.String(120))
     em_port = sa.Column(sa.Integer(), default=25)
     em_security = sa.Column(sa.String(120), default="PLAIN")
+    em_validate_certificate = sa.Column(sa.Boolean(), default=True)
     em_smtp = sa.Column(sa.Boolean())
     em_user = sa.Column(sa.String(120), nullable=True)
     em_pass = sa.Column(sa.EncryptedText(), nullable=True)
