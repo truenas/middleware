@@ -527,6 +527,41 @@ def test_update_immutable_user_username():
     assert "This attribute cannot be changed" in str(ve.value), ve.value
 
 
+def test_update_immutable_user_resubmit_current_values():
+    # A client that sends back the whole form is not changing the immutable attributes.
+    # (`home` is left out: a supplied home is re-validated as a path, and builtin homes such as
+    # /var/spool/news are outside /mnt, so resubmitting one is rejected on those grounds. A user
+    # homed at /var/empty is picked so the update does not try to recreate a missing home.)
+    bu = call(
+        "user.query",
+        [["immutable", "=", True], ["home", "=", "/var/empty"], ["username", "!=", "root"]],
+    )[0]
+    fields = {
+        "group": bu["group"]["id"],
+        "username": bu["username"],
+        "smb": bu["smb"],
+        "userns_idmap": bu["userns_idmap"],
+    }
+
+    call("user.update", bu["id"], fields)
+
+    after = call("user.get_instance", bu["id"])
+    after["group"] = after["group"]["id"]
+    assert {field: after[field] for field in fields} == fields
+
+
+def test_update_builtin_user_with_shell_outside_choices():
+    # Builtin accounts ship with shells such as /bin/false that are not offered as choices;
+    # an update that sends the shell back unchanged must not reject it.
+    choices = call("user.shell_choices", [])
+    bu = next(
+        u for u in call("user.query", [["immutable", "=", True], ["username", "!=", "root"]])
+        if u["shell"] not in choices
+    )
+
+    call("user.update", bu["id"], {"shell": bu["shell"], "full_name": bu["full_name"]})
+
+
 def test_delete_builtin_user():
     bu = _a_builtin_user()
     with pytest.raises(CallError) as ve:
@@ -1064,6 +1099,23 @@ def test_update_user_password_disabled_allowed():
     with user(_vuser(username="covpwdisok")) as u:
         updated = call("user.update", u["id"], {"password_disabled": True})
         assert updated["password_disabled"] is True
+
+
+def test_update_password_of_password_disabled_user():
+    # A stored `password_disabled` leaves the password dormant, not forbidden, so it may still be rotated.
+    # Only a request that disables password login while also sending a password contradicts itself.
+    payload = {"username": "covpwdisrot", "full_name": "cov", "group_create": True,
+               "smb": False, "password_disabled": True}
+    with user(payload) as u:
+        updated = call("user.update", u["id"], {"password": "NewCovPass1!"})
+        assert updated["password_disabled"] is True
+        assert updated["password"] == "NewCovPass1!"
+        assert updated["last_password_change"] is not None
+
+        with pytest.raises(ValidationErrors) as ve:
+            call("user.update", u["id"], {"password_disabled": True, "password": "NewCovPass2!"})
+
+        assert 'Leave "Password" blank when "Disable password login" is checked.' in str(ve.value), ve.value
 
 
 # ---------------------------------------------------------------------------

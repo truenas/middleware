@@ -26,7 +26,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.lang import undefined
 from middlewared.utils.reserved_ids import ReservedXid
 from middlewared.utils.security import PASSWORD_PROMPT_AGE
 from middlewared.utils.sid import db_id_to_rid
@@ -49,9 +48,6 @@ from .user_home import read_authorized_keys, recreate_homedir_if_not_exists, set
 from .user_validate import (
     PasswordUpdate,
     common_validation,
-    supplied,
-    supplied_flag,
-    supplied_or_none,
     validate_sshpubkey_home_access,
     validate_userns_idmap_conflict,
 )
@@ -350,7 +346,7 @@ class UserServicePart(CRUDServicePart[UserEntry]):
         aux_groups = list(data.groups)
         group_ids = ([data.group] if data.group else []) + aux_groups
 
-        password_update = self.run_coroutine(common_validation(self, verrors, data, "user_create", group_ids))
+        password_update = self.run_coroutine(common_validation(self, verrors, data, data, "user_create", group_ids))
 
         if data.sshpubkey and not data.home.startswith("/mnt"):
             verrors.add(
@@ -569,16 +565,15 @@ class UserServicePart(CRUDServicePart[UserEntry]):
 
         verrors = ValidationErrors()
 
-        if supplied_flag(data, "password_disabled"):
+        if data.password_disabled is True:
             try:
                 self.call_sync2(self.s.privilege.before_user_password_disable, entry)
             except CallError as e:
                 verrors.add("user_update.password_disabled", e.errmsg)
 
         group: dict[str, Any]
-        supplied_group = supplied(data, "group")
-        if supplied_group is not undefined:
-            if supplied_group is None:
+        if "group" in data.model_fields_set:
+            if data.group is None:
                 # sending `group` as None is okay in user.create since
                 # it means, during user creation, a new primary group
                 # will automatically be created for said user. However,
@@ -588,9 +583,9 @@ class UserServicePart(CRUDServicePart[UserEntry]):
                 verrors.add("user_update.group", "User must have a primary group", errno.EINVAL)
                 verrors.check()
 
-            groups = self.middleware.call_sync("datastore.query", "account.bsdgroups", [("id", "=", supplied_group)])
+            groups = self.middleware.call_sync("datastore.query", "account.bsdgroups", [("id", "=", data.group)])
             if not groups:
-                verrors.add("user_update.group", f"Group {supplied_group} not found", errno.ENOENT)
+                verrors.add("user_update.group", f"Group {data.group} not found", errno.ENOENT)
                 verrors.check()
 
             group = groups[0]
@@ -602,7 +597,6 @@ class UserServicePart(CRUDServicePart[UserEntry]):
             same_user_logged_in
             and (self.middleware.call_sync("auth.twofactor.config"))["enabled"]
             and not entry.twofactor_auth_configured
-            and not supplied_flag(data, "renew_twofactor_secret")
         ):
             verrors.add(
                 "user_update.renew_twofactor_secret",
@@ -610,14 +604,14 @@ class UserServicePart(CRUDServicePart[UserEntry]):
             )
 
         group_ids = [group["id"]]
-        supplied_groups = supplied(data, "groups")
-        if supplied_groups not in (undefined, None) and supplied_groups:
-            group_ids.extend(supplied_groups)
+        # An empty `groups` keeps checking against the stored membership.
+        if "groups" in data.model_fields_set and data.groups:
+            group_ids.extend(data.groups)
         else:
             group_ids.extend(entry.groups)
 
         # NAS-136301: prevent locking all admin accounts
-        if supplied(data, "locked") is True:
+        if data.locked is True:
             number_admin_remaining = self.call_sync2(
                 self.s.user.query,
                 [
@@ -631,7 +625,9 @@ class UserServicePart(CRUDServicePart[UserEntry]):
             if 0 >= number_admin_remaining:
                 verrors.add("user_update.locked", "After locking this user no local users will have FULL_ADMIN role")
 
-        password_update = self.run_coroutine(common_validation(self, verrors, data, "user_update", group_ids, entry))
+        password_update = self.run_coroutine(
+            common_validation(self, verrors, new, data, "user_update", group_ids, entry)
+        )
 
         try:
             st = os.stat(entry.home).st_mode
@@ -639,17 +635,21 @@ class UserServicePart(CRUDServicePart[UserEntry]):
         except FileNotFoundError:
             old_mode = None
 
-        supplied_home = supplied(data, "home")
-        home = supplied_home if supplied_home not in (undefined, None) else entry.home
+        home_supplied = "home" in data.model_fields_set
+        home_create = data.home_create is True
+        requested_home_mode: str | None = None
+        if "home_mode" in data.model_fields_set:
+            requested_home_mode = data.home_mode
+        home = new.home
         had_home = entry.home != DEFAULT_HOME_PATH
         has_home = home != DEFAULT_HOME_PATH
         # root user and admin users are an exception to the rule
-        if supplied_flag(data, "sshpubkey"):
+        if "sshpubkey" in data.model_fields_set and data.sshpubkey:
             if not (entry.uid in [0, ADMIN_UID] or self.middleware.call_sync("filesystem.is_dataset_path", home)):
                 verrors.add("user_update.sshpubkey", 'Home directory is not writable, leave this blank"')
             elif has_home:
                 new_home = home
-                if supplied_home is not undefined and supplied_flag(data, "home_create"):
+                if home_supplied and home_create:
                     new_home = os.path.join(home, new.username)
 
                 validate_sshpubkey_home_access(
@@ -661,65 +661,62 @@ class UserServicePart(CRUDServicePart[UserEntry]):
                     group["bsdgrp_gid"],
                     group_ids_to_gids(self, group_ids),
                     new_home,
-                    supplied_or_none(data, "home_mode"),
+                    requested_home_mode,
                     None,
                 )
 
         # Do not allow attributes to be changed for builtin user
         if entry.immutable:
-            if supplied(data, "home_mode") is not undefined:
+            if requested_home_mode is not None:
                 verrors.add("user_update.home_mode", "This attribute cannot be changed")
 
-            immutable_now: dict[str, Any] = {
-                "group": entry.group["id"],
-                "home": entry.home,
-                "username": entry.username,
-                "smb": entry.smb,
-                "userns_idmap": entry.userns_idmap,
+            immutable_changes: dict[str, bool] = {
+                "group": group["id"] != entry.group["id"],
+                "home": new.home != entry.home,
+                "username": new.username != entry.username,
+                "smb": new.smb != entry.smb,
+                "userns_idmap": new.userns_idmap != entry.userns_idmap,
             }
-            for field, current in immutable_now.items():
-                requested = supplied(data, field)
-                if requested is not undefined and requested != current:
+            for field, changed in immutable_changes.items():
+                if changed:
                     verrors.add(f"user_update.{field}", "This attribute cannot be changed")
 
-        if not entry.smb and supplied_flag(data, "smb") and not password_update.password:
+        if not entry.smb and new.smb and not password_update.password:
             # Changing from non-smb user to smb user requires re-entering password.
             verrors.add("user_update.smb", "Password must be reset in order to enable SMB authentication")
 
         verrors.check()
 
-        must_change_pdb_entry = False
-        for field, old_val in (("username", entry.username), ("password", None), ("locked", entry.locked)):
-            new_val = password_update.password if field == "password" else supplied_or_none(data, field)
-            if new_val is not None and old_val != new_val:
-                if field == "username":
-                    try:
-                        self.middleware.call_sync("smb.remove_passdb_user", old_val, entry.sid)
-                    except Exception:
-                        self.logger.debug("Failed to remove passdb entry for user [%s]", old_val, exc_info=True)
+        if new.username != entry.username:
+            try:
+                self.middleware.call_sync("smb.remove_passdb_user", entry.username, entry.sid)
+            except Exception:
+                self.logger.debug("Failed to remove passdb entry for user [%s]", entry.username, exc_info=True)
 
-                must_change_pdb_entry = True
+        must_change_pdb_entry = (
+            new.username != entry.username or password_update.password is not None or new.locked != entry.locked
+        )
 
-        if entry.smb is True and supplied(data, "smb") is False:
+        if entry.smb and not new.smb:
             try:
                 must_change_pdb_entry = False
                 self.middleware.call_sync("smb.remove_passdb_user", entry.username, entry.sid)
             except Exception:
                 self.logger.debug("Failed to remove passdb entry for user [%s]", entry.username, exc_info=True)
 
-        if entry.smb is False and supplied(data, "smb") is True:
+        if not entry.smb and new.smb:
             must_change_pdb_entry = True
 
         # Copy the home directory if it changed
         home_old: str | None = None
-        if has_home and supplied_home is not undefined:
-            if supplied_flag(data, "home_create"):
+        if has_home and home_supplied:
+            if home_create:
                 home = os.path.join(home, new.username)
 
             if had_home and entry.home != home:
                 home_old = entry.home
 
-        mode_to_set = supplied_or_none(data, "home_mode") or ("700" if old_mode is None else old_mode)
+        mode_to_set = requested_home_mode or ("700" if old_mode is None else old_mode)
 
         # squelch any potential problems when this occurs
         if has_home:
@@ -727,7 +724,7 @@ class UserServicePart(CRUDServicePart[UserEntry]):
                 self, {"home": home, "username": new.username, "uid": entry.uid}, group, mode_to_set
             )
 
-        home_mode = None if entry.immutable else supplied_or_none(data, "home_mode")
+        home_mode = None if entry.immutable else requested_home_mode
 
         # The payload crosses to the standby as JSON, so it stays a plain dict.
         sshpubkey_user = {"uid": entry.uid, "sshpubkey": new.sshpubkey}
