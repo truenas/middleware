@@ -101,12 +101,7 @@ def initialize_for_smb_tests(request):
                     finally:
                         call('service.control', 'STOP', 'cifs', job=True)
             finally:
-                # In test_140_enable_aapl we turned afp on for the share, so wait until
-                # it has been destroyed before turning off aapl_extensions.
-                call('smb.update', {
-                    'minimum_protocol': 'SMB2',
-                    'aapl_extensions': False
-                })
+                call('smb.update', {'minimum_protocol': 'SMB2'})
 
 
 @pytest.fixture(scope='module')
@@ -624,9 +619,8 @@ def test_95_strip_quota(request):
 
 
 @pytest.mark.dependency(name="AFP_ENABLED")
-def test_140_enable_aapl(request):
+def test_140_enable_afp(request):
     depends(request, ["SMB_SHARE_CREATED"])
-    call('smb.update', {'aapl_extensions': True})
     call('sharing.smb.update', TEST_DATA['share']['id'], {
         'purpose': 'LEGACY_SHARE',
         'options': {'afp': True},
