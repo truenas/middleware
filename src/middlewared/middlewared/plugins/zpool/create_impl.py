@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     from middlewared.api.base import BaseModel
     from middlewared.api.current import ZpoolCreateTopology
+    from middlewared.utils.disks_.disk_class import FormattedPartition
 
 __all__ = (
     "MIN_DISKS_PER_VDEV",
@@ -75,9 +76,13 @@ class ConvertedVdev(TypedDict):
 
 
 class DiskToFormat(TypedDict):
-    """What the format step takes per disk: the device list of the vdev the formatted partition joins."""
+    """What the format step takes per disk: the device list of the vdev the formatted partition joins.
+
+    The format step adds ``formatted``, the partition it made with the disk still locked against
+    udev, for the release step that follows the pool's creation."""
 
     vdev: list[str]
+    formatted: NotRequired[FormattedPartition]
 
 
 # Maps a converted-topology root to the matching create_pool() keyword argument.

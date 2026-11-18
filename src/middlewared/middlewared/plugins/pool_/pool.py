@@ -595,7 +595,6 @@ class PoolService(CRUDService):
 
         disks, vdevs = await self._process_topology('pool_create', data)
         log_disks = [disk for vdev in data['topology'].get('log', []) for disk in vdev['disks']]
-        await self.call2(self.s.zpool.prepare_disks, job, disks, log_disks, data['all_sed'], 'pool_create')
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -637,16 +636,19 @@ class PoolService(CRUDService):
 
         pool_id = encrypted_dataset_pk = None
         created = False
+        await self.call2(self.s.zpool.prepare_disks, job, disks, log_disks, data['all_sed'], 'pool_create')
         try:
-            job.set_progress(90, 'Creating ZFS Pool')
-
-            await self.middleware.call('zfs.pool.create', {
-                'name': data['name'],
-                'vdevs': vdevs,
-                'options': options,
-                'fsoptions': fsoptions,
-            })
-            created = True
+            try:
+                job.set_progress(90, 'Creating ZFS Pool')
+                await self.middleware.call('zfs.pool.create', {
+                    'name': data['name'],
+                    'vdevs': vdevs,
+                    'options': options,
+                    'fsoptions': fsoptions,
+                })
+                created = True
+            finally:
+                await self.call2(self.s.zpool.release_disks, disks)
 
             job.set_progress(95, 'Setting pool options')
             pool_id = await self.call2(self.s.zpool.register, data['name'], data['all_sed'])

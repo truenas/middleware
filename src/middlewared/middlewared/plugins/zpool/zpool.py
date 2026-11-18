@@ -216,6 +216,11 @@ class ZpoolService(Service):
         _create.prepare_disks(self.context, job, disks, log_disks, all_sed, schema, base_percentage, upper_percentage)
 
     @private
+    def release_disks(self, disks: dict[str, DiskToFormat]) -> None:
+        """Hand the disks prepare_disks formatted back to udev; call right after the pool's creation."""
+        _create.release_disks(self.context, disks)
+
+    @private
     def register(self, name: str, all_sed: bool) -> int:
         """Mount a freshly created pool and add its database rows; returns the pool id."""
         return _create.register(self.context, name, all_sed)

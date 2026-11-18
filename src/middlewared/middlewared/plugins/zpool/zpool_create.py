@@ -3,7 +3,6 @@ from __future__ import annotations
 import concurrent.futures
 import errno
 import os
-import time
 from typing import TYPE_CHECKING, Any, Iterable
 
 from fenced.fence import ExitCode as FencedExitCodes
@@ -34,9 +33,9 @@ from .exceptions import ZpoolCreateRejected, ZpoolException
 if TYPE_CHECKING:
     from middlewared.job import Job
     from middlewared.service import ServiceContext
-    from middlewared.utils.disks_.disk_class import DiskEntry
+    from middlewared.utils.disks_.disk_class import DiskEntry, FormattedPartition
 
-__all__ = ("create", "finish", "format_disks", "prepare_disks", "register", "rollback")
+__all__ = ("create", "finish", "format_disks", "prepare_disks", "register", "release_disks", "rollback")
 
 
 def _start_fenced(context: ServiceContext) -> None:
@@ -56,11 +55,11 @@ def _start_fenced(context: ServiceContext) -> None:
     raise CallError(err)
 
 
-def _format_disk(context: ServiceContext, entry: DiskEntry) -> str:
-    """Unlock a self-encrypting disk, write its GPT and return the path of the ZFS partition."""
+def _format_disk(context: ServiceContext, entry: DiskEntry) -> FormattedPartition:
+    """Unlock a self-encrypting disk and write its GPT; the disk stays locked against udev."""
     if context.middleware.call_sync("disk.sed_unlock_impl", entry.name, True) is False:
         raise CallError(f"Failed to unlock {entry.name!r}. Check /var/log/middlewared.log")
-    return f"/dev/disk/by-partuuid/{entry.format()}"
+    return entry.format()
 
 
 def format_disks(
@@ -74,6 +73,8 @@ def format_disks(
 
     The partition table is written from Python. The wipe job, ``sgdisk`` run and udev wait that
     ``pool.format_disks`` spends on each disk added up to tens of minutes on systems with hundreds of disks.
+    Each disk stays locked against udev afterwards, with its partition's link made by hand, until
+    :func:`release_disks` hands it back once ZFS holds the partition.
     """
     entries = {entry.name: entry for entry in context.middleware.call_sync("disk.get_disks", list(disks))}
     for disk in disks:
@@ -82,7 +83,7 @@ def format_disks(
         if entries[disk].dif:
             raise CallError(f"Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).")
 
-    partitions: dict[str, str] = {}
+    partitions: dict[str, FormattedPartition] = {}
     step = (upper_percentage - base_percentage) / len(disks)
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
         futures = {executor.submit(_format_disk, context, entries[disk]): disk for disk in disks}
@@ -92,26 +93,32 @@ def format_disks(
                 partitions[disk] = future.result()
             except Exception as e:
                 executor.shutdown(cancel_futures=True)
+                for other in futures:
+                    if other.done() and not other.cancelled() and other.exception() is None:
+                        other.result().release()
                 if isinstance(e, CallError):
                     raise
                 raise CallError(f"Failed formatting disk {disk!r}: {e}") from e
             job.set_progress(base_percentage + step * done, f"Formatting disks ({done}/{len(disks)})")
 
-    # The kernel knows every partition by now; udev still has to process its events before the
-    # by-partuuid links exist.
-    context.middleware.call_sync("device.settle_udev_events")
-    for disk, path in partitions.items():
-        for _ in range(20):
-            if os.path.exists(path):
-                break
-            time.sleep(0.5)
-            context.middleware.call_sync("device.settle_udev_events")
-        else:
-            raise CallError(f"Partition {path} of {disk!r} did not appear after formatting")
-
-    context.middleware.call_sync("disk.sync_all").wait_sync(raise_error=True)
     for disk, config in disks.items():
-        config["vdev"].append(partitions[disk])
+        config["formatted"] = partitions[disk]
+        config["vdev"].append(partitions[disk].path)
+
+
+def release_disks(context: ServiceContext, disks: dict[str, DiskToFormat]) -> None:
+    """Hand the formatted disks back to udev, once ZFS holds their partitions or creating the pool failed.
+
+    udev then processes the partitions' events, replacing the links the format step made with its own
+    in place. Never raises, since it runs on the failure path too.
+    """
+    for config in disks.values():
+        if (formatted := config.pop("formatted", None)) is not None:
+            formatted.release()
+    try:
+        context.middleware.call_sync("device.settle_udev_events")
+    except Exception:
+        context.logger.warning("Failed waiting for udev after releasing the formatted disks", exc_info=True)
 
 
 def prepare_disks(
@@ -144,8 +151,8 @@ def prepare_disks(
         # will log errors if there are any so it won't crash here (this matches CORE behavior)
         context.middleware.call_sync("disk.resize", {disk: osize for disk in log_disks}, True).wait_sync()
 
-    format_disks(context, job, disks, base_percentage, upper_percentage)
     os.makedirs(os.path.dirname(ZPOOL_CACHE_FILE), exist_ok=True)
+    format_disks(context, job, disks, base_percentage, upper_percentage)
 
 
 def register(context: ServiceContext, name: str, all_sed: bool) -> int:
@@ -155,6 +162,8 @@ def register(context: ServiceContext, name: str, all_sed: bool) -> int:
     "local"), mounts the root, and adds the ``storage.volume`` and default
     ``storage.scrub`` rows. Shared by ``pool.create`` and ``zpool.create``.
     """
+    # The disk records learn the new partitions and the pool only now that udev has processed them.
+    context.middleware.call_sync("disk.sync_all").wait_sync(raise_error=True)
     guid = context.call_sync2(context.s.zpool.list_impl, ZpoolQuery(pool_names=[name]))[0]["guid"]
     context.call_sync2(
         context.s.zfs.resource.set_impl,
@@ -273,16 +282,19 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     pool_id: int | None = None
     created = False
     try:
-        job.set_progress(90, "Creating ZFS Pool")
-        context.call_sync2(
-            context.s.zpool.create_impl,
-            name,
-            vdevs,
-            pool_properties,
-            fs_properties,
-            data.force_topology,
-        )
-        created = True
+        try:
+            job.set_progress(90, "Creating ZFS Pool")
+            context.call_sync2(
+                context.s.zpool.create_impl,
+                name,
+                vdevs,
+                pool_properties,
+                fs_properties,
+                data.force_topology,
+            )
+            created = True
+        finally:
+            release_disks(context, disks)
         job.set_progress(95, "Setting pool options")
         pool_id = register(context, name, data.all_sed)
     except Exception as e:
