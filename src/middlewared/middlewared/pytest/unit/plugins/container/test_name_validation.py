@@ -7,15 +7,15 @@ from middlewared.plugins.container.container import RE_NAME
     # single characters
     'a',
     'Z',
-    '1',
     # simple names
     'test',
     'my-container',
     'abc123',
-    # all-digit labels (RFC 1123 allows)
-    '123',
-    '001',
-    '42',
+    # numeric labels mixed with non-numeric labels
+    'web.123',
+    '0x7g',
+    '0xg.1',
+    '1e3',
     # case variations
     'ALLCAPS',
     'MiXeD',
@@ -80,6 +80,18 @@ def test__valid_container_names(name):
     '0.0.0.0',
     '255.255.255.255',
     '999.999.999.999',
+    # only numeric labels (glibc parses these as IPv4)
+    '1',
+    '123',
+    '001',
+    '42',
+    '123.456',
+    '1.2.3',
+    '1.2.3.4.5',
+    '0x7f',
+    '0X7F.1',
+    '1.0x2',
+    '0x',
     # control characters
     'test\nname',
     'test\tname',

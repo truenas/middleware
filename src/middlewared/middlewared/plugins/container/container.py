@@ -45,7 +45,9 @@ from .utils import container_dataset
 # comfortable headroom for the dataset path prefix and snapshot names.
 RE_NAME = re.compile(
     r"\A"
-    r"(?!\d{1,3}(?:\.\d{1,3}){3}\Z)"                    # reject IPv4 dotted-decimal
+    # glibc resolves a name of only numeric labels (decimal, octal, 0x hex) as an IPv4
+    # literal and skips /etc/hosts, e.g. "123" -> 0.0.0.123, "0x7f.1" -> 127.0.0.1.
+    r"(?!(?:(?:\d+|0x[0-9a-f]*)\.)*(?:\d+|0x[0-9a-f]*)\Z)"
     r"(?=.{1,100}\Z)"                                    # total length 1-100 (see above)
     r"(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)*"     # zero or more non-final labels
     r"[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?"            # final label (1-63 chars)
@@ -245,12 +247,12 @@ class ContainerService(CRUDService):
                 f'{schema_name}.name',
                 'A container with this name already exists.', errno.EEXIST
             )
-        elif not RE_NAME.match(data['name']):
+        elif (old is None or old['name'] != data['name']) and not RE_NAME.match(data['name']):
             verrors.add(
                 f'{schema_name}.name',
                 'Name must be a valid hostname (up to 100 characters total): 1-63 characters per label, '
                 'only letters, digits, and hyphens within each label, labels separated by dots, '
-                'and must not be an IPv4 address.'
+                'and must not consist only of numeric labels.'
             )
 
     @api_method(
