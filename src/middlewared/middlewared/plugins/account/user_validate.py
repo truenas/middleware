@@ -491,7 +491,7 @@ async def common_validation(
     elif old is None and not password_update.password and not new.password_disabled:
         verrors.add(f"{schema}.password", "Password is required")
 
-    if old is None or "home" in operation.model_fields_set:
+    if old is None or new.home != old.home or operation.home_create is True:
         home_create = operation.home_create is True
         if await context.to_thread(validate_homedir_path, context, verrors, schema, new.home, home_create, users):
             await check_path_resides_within_volume(verrors, context.middleware, schema, new.home)

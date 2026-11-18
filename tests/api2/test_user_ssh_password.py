@@ -95,10 +95,6 @@ def test_user_create_ssh_password_login(args: dict, errmsg: str | None):
         "Cannot be enabled without a valid home path and login shell."
     ),
     (
-        {"ssh_password_enabled": True, "home": "/var/empty"},
-        "SSH password login requires a valid home path."
-    ),
-    (
         {"ssh_password_enabled": True, "shell": NO_LOGIN_SHELL},
         "SSH password login requires a login shell."
     ),

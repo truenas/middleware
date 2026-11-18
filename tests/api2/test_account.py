@@ -10,7 +10,7 @@ from middlewared.test.integration.assets.account import (
 )
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 BASE_SYNTHETIC_DATASTORE_ID = 100000000
@@ -528,16 +528,13 @@ def test_update_immutable_user_username():
 
 
 def test_update_immutable_user_resubmit_current_values():
-    # A client that sends back the whole form is not changing the immutable attributes.
-    # (`home` is left out: a supplied home is re-validated as a path, and builtin homes such as
-    # /var/spool/news are outside /mnt, so resubmitting one is rejected on those grounds. A user
-    # homed at /var/empty is picked so the update does not try to recreate a missing home.)
-    bu = call(
-        "user.query",
-        [["immutable", "=", True], ["home", "=", "/var/empty"], ["username", "!=", "root"]],
-    )[0]
+    # A client that sends back the whole form is not changing the immutable attributes, and
+    # the unchanged home (outside /mnt for builtin accounts) is not re-validated as a new path.
+    bu = call("user.query", [["username", "=", "news"]], {"get": True})
+    assert not bu["home"].startswith("/mnt/")
     fields = {
         "group": bu["group"]["id"],
+        "home": bu["home"],
         "username": bu["username"],
         "smb": bu["smb"],
         "userns_idmap": bu["userns_idmap"],
@@ -560,6 +557,26 @@ def test_update_builtin_user_with_shell_outside_choices():
     )
 
     call("user.update", bu["id"], {"shell": bu["shell"], "full_name": bu["full_name"]})
+
+
+def test_update_builtin_user_with_missing_home_outside_mnt():
+    # A builtin account's home outside /mnt may legitimately be absent; updating the account
+    # must not try (and fail) to recreate it there.
+    bu = call("user.query", [["username", "=", "news"]], {"get": True})
+    home = bu["home"]
+    assert not home.startswith("/mnt/")
+
+    original = ssh(f"stat -c '%a %u %g' {home} 2>/dev/null || true").strip()
+    if original:
+        ssh(f"rmdir {home}")
+
+    try:
+        call("user.update", bu["id"], {"full_name": bu["full_name"]})
+        assert ssh(f"test -e {home} && echo present || echo absent").strip() == "absent"
+    finally:
+        if original:
+            mode, uid, gid = original.split()
+            ssh(f"install -d -m {mode} -o {uid} -g {gid} {home}")
 
 
 def test_delete_builtin_user():
@@ -908,6 +925,17 @@ def test_smb_username_case_insensitive_conflict():
         assert "conflicts with existing SMB user" in str(ve.value), ve.value
 
 
+def test_smb_username_case_insensitive_conflict_on_rename():
+    smb_user = {"full_name": "cov", "group_create": True, "smb": True, "password": "SmbPass123!"}
+    with user({**smb_user, "username": "CovSmbRen"}):
+        with user({**smb_user, "username": "covsmbother"}) as other:
+            # Only `username` is sent; the account stays an SMB user, so the rename still conflicts.
+            with pytest.raises(ValidationErrors) as ve:
+                call("user.update", other["id"], {"username": "covsmbren"})
+
+            assert "conflicts with existing SMB user" in str(ve.value), ve.value
+
+
 # ---------------------------------------------------------------------------
 # userns_idmap not allowed on privileged accounts
 # ---------------------------------------------------------------------------
@@ -927,6 +955,24 @@ def test_create_user_userns_idmap_privileged_group():
                 ))
 
             assert "may not be configured for privileged accounts" in str(ve.value), ve.value
+
+
+def test_update_user_userns_idmap_while_clearing_privileged_groups():
+    with group({"name": "covprivclrg", "smb": False}) as g:
+        with privilege({
+            "name": "Cov Priv Clear",
+            "local_groups": [g["gid"]],
+            "ds_groups": [],
+            "roles": ["READONLY_ADMIN"],
+            "web_shell": False,
+        }):
+            with user(_vuser(username="covprivclr", groups=[g["id"]])) as u:
+                # Dropping every auxiliary group in the same request leaves the account unprivileged.
+                call("user.update", u["id"], {"groups": [], "userns_idmap": "DIRECT"})
+
+                after = call("user.get_instance", u["id"])
+                assert after["userns_idmap"] == "DIRECT"
+                assert g["id"] not in after["groups"]
 
 
 # ---------------------------------------------------------------------------

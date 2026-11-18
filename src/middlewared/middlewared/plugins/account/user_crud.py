@@ -604,11 +604,7 @@ class UserServicePart(CRUDServicePart[UserEntry]):
             )
 
         group_ids = [group["id"]]
-        # An empty `groups` keeps checking against the stored membership.
-        if "groups" in data.model_fields_set and data.groups:
-            group_ids.extend(data.groups)
-        else:
-            group_ids.extend(entry.groups)
+        group_ids.extend(new.groups)
 
         # NAS-136301: prevent locking all admin accounts
         if data.locked is True:
@@ -718,8 +714,9 @@ class UserServicePart(CRUDServicePart[UserEntry]):
 
         mode_to_set = requested_home_mode or ("700" if old_mode is None else old_mode)
 
-        # squelch any potential problems when this occurs
-        if has_home:
+        # Builtin accounts cannot change their home, which is managed by the OS rather than
+        # created by us (e.g. /var/spool/news may simply not exist), so it is never recreated.
+        if has_home and not entry.builtin:
             recreate_homedir_if_not_exists(
                 self, {"home": home, "username": new.username, "uid": entry.uid}, group, mode_to_set
             )
