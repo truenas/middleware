@@ -77,3 +77,21 @@ async def check_path_service_share_allowed(
     await middleware.call2(
         middleware.services.sharing.s3.validate_objects_path, verrors, schema_name, path, dataset, relative_path
     )
+
+
+async def check_path_service_immutable_allowed(
+    verrors: ValidationErrors, middleware: Middleware, schema_name: str, path: str
+) -> None:
+    """Refuse a change of the immutable flag on a path where another service owns the flag.
+
+    An S3 bucket's dataset is such a path: the S3 service sets the flag on each version under retention or legal
+    hold, and clears it when the protection ends.
+    """
+    await middleware.call2(middleware.services.sharing.s3.validate_immutable_path, verrors, schema_name, path)
+
+
+def require_path_service_immutable_allowed(middleware: Middleware, schema_name: str, path: str) -> None:
+    """`check_path_service_immutable_allowed` for a worker thread, raising what it refuses."""
+    verrors = ValidationErrors()
+    middleware.run_coroutine(check_path_service_immutable_allowed(verrors, middleware, schema_name, path))
+    verrors.check()
