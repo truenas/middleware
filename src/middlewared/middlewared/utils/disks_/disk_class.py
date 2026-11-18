@@ -519,12 +519,15 @@ class DiskEntry:
             os.close(dev_fd)
 
     @contextlib.contextmanager
-    def _sed_fd(self, dev_fd: int | None, writable: bool) -> typing.Iterator[int]:
+    def _sed_fd(self, dev_fd: int | None, writable: bool, exclusive: bool = False) -> typing.Iterator[int]:
         """Yield an fd for SED operations.
 
         When ``dev_fd`` is provided it is used as-is and left open for the
         caller to manage. Otherwise ``self.devpath`` is opened and closed on
         exit.
+
+        When ``exclusive`` is set, the device is opened with ``O_EXCL``. The
+        open then fails with ``EBUSY`` if ZFS or anything else holds the disk.
 
         ``os.open`` may raise (most notably ``FileNotFoundError`` when the
         device node has gone away because the disk was physically pulled or the
@@ -536,6 +539,8 @@ class DiskEntry:
             yield dev_fd
             return
         flags = os.O_NONBLOCK | (os.O_RDWR if writable else os.O_RDONLY)
+        if exclusive:
+            flags |= os.O_EXCL
         fd = os.open(self.devpath, flags)
         try:
             yield fd
@@ -704,7 +709,8 @@ class DiskEntry:
             (False, error_message) on failure.
         """
         try:
-            with self._sed_fd(dev_fd, writable=True) as fd:
+            # The reset erases the whole disk, so refuse it while the disk is in use.
+            with self._sed_fd(dev_fd, writable=True, exclusive=True) as fd:
                 info = sed.get_device_info(fd)
                 sed.factory_reset(fd, psid.encode("utf-8"), device_info=info)
                 return True, "SUCCESS"
