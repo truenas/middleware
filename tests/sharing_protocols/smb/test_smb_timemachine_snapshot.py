@@ -67,16 +67,7 @@ HISTORY_FILE = 'com.apple.TimeMachine.SnapshotHistory.plist'
 HISTORY_PATH = os.path.join(TM, HISTORY_FILE)
 
 @pytest.fixture(scope='module')
-def aapl_extensions():
-    call('smb.update', {'aapl_extensions': True})
-    try:
-        yield
-    finally:
-        call('smb.update', {'aapl_extensions': False})
-
-
-@pytest.fixture(scope='module')
-def smb_setup(aapl_extensions):
+def smb_setup():
     with dataset('smb-tm', data={'share_type': 'SMB'}) as ds:
         tm_path = os.path.join('/mnt', ds, TM)
         plist_path = os.path.join(tm_path, HISTORY_FILE)
