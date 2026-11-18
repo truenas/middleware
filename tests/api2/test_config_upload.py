@@ -15,6 +15,8 @@ NO_DB = "does not contain a TrueNAS database"
 NO_SEED = "does not include the password secret seed"
 SEED_MISMATCH = "is not the one that encrypted its database"
 INVALID_DB = "Uploaded TrueNAS database file is not valid"
+MIGRATION_FAILED = "Uploaded TrueNAS database file could not be migrated"
+NOT_SQLITE = "Uploaded TrueNAS database file is not a SQLite database"
 
 
 @pytest.fixture(scope="module")
@@ -79,8 +81,15 @@ def test_invalid_database_file(this_system_seed, this_system_pwenc_check):
         "pwenc_secret": this_system_seed,
     }))
 
-    assert INVALID_DB in error
-    assert "Can't locate revision identified by 'invalid'" in error
+    assert MIGRATION_FAILED in error
+    assert "Traceback" not in error
+
+
+def test_upload_of_non_sqlite_database_is_rejected(this_system_seed):
+    error = upload_error(make_tar({"freenas-v1.db": b"not a database", "pwenc_secret": this_system_seed}))
+
+    assert NOT_SQLITE in error
+    assert "Traceback" not in error
 
 
 def test_upload_of_bare_database_is_rejected():

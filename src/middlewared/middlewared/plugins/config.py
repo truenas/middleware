@@ -19,7 +19,7 @@ from middlewared.api.current import (
     ConfigUploadArgs,
     ConfigUploadResult,
 )
-from middlewared.service import CallError, Service, job, private
+from middlewared.service import CallError, Service, ValidationError, job, private
 from middlewared.utils.db import FREENAS_DATABASE, UPLOADED_DB_PATH, query_config_table
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.pwenc import (
@@ -75,6 +75,28 @@ def _check_uploaded_secret(secret_path, db_path):
             'The password secret seed in the uploaded configuration file is not the one that encrypted its database. '
             'Upload the configuration file and the password secret seed that were saved together.'
         )
+
+
+def check_sqlite_db(db_path):
+    try:
+        with open(db_path, 'rb') as f:
+            header = f.read(16)
+    except OSError as e:
+        raise ValidationError(
+            'config.upload', f'Uploaded TrueNAS database file could not be read: {e.strerror}'
+        ) from e
+
+    if header != b'SQLite format 3\x00':
+        raise ValidationError('config.upload', 'Uploaded TrueNAS database file is not a SQLite database.')
+
+    try:
+        with contextlib.closing(sqlite3.connect(db_path)) as conn:
+            result = conn.execute('PRAGMA quick_check').fetchone()[0]
+    except sqlite3.DatabaseError as e:
+        raise ValidationError('config.upload', f'Uploaded TrueNAS database file is not valid: {e}') from e
+
+    if result != 'ok':
+        raise ValidationError('config.upload', 'Uploaded TrueNAS database file is corrupted.')
 
 
 @contextlib.contextmanager
@@ -191,7 +213,7 @@ class ConfigService(Service):
             pathobj = pathlib.Path(temp_dir)
             found_db_file = None
             for i in pathobj.iterdir():
-                if i.name == DATABASE_NAME or i.suffix == '.db':
+                if i.is_file() and not i.is_symlink() and (i.name == DATABASE_NAME or i.suffix == '.db'):
                     # when user saves their config, we put the db in the
                     # archive using the same name as the db on the local
                     # filesystem, however, in the past we did not do this
@@ -206,6 +228,7 @@ class ConfigService(Service):
             if found_db_file is None:
                 raise CallError('The uploaded configuration archive does not contain a TrueNAS database.')
 
+            check_sqlite_db(str(found_db_file.absolute()))
             _check_uploaded_secret(f'{temp_dir}/{PWENC_SECRET_NAME}', str(found_db_file.absolute()))
 
             p = subprocess.run([
@@ -214,8 +237,10 @@ class ConfigService(Service):
                 f'{temp_dir}/{PWENC_SECRET_NAME}',
             ], capture_output=True, text=True)
             if p.returncode != 0:
-                raise CallError(
-                    f'Uploaded TrueNAS database file is not valid:\n{p.stderr}'
+                self.logger.warning('config.upload: migration of uploaded database failed:\n%s', p.stderr)
+                raise ValidationError(
+                    'config.upload',
+                    'Uploaded TrueNAS database file could not be migrated. It may be from a newer TrueNAS version.',
                 )
 
             # now copy uploaded files/dirs to respective location
