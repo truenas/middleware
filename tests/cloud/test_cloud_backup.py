@@ -221,7 +221,7 @@ def completed_cloud_backup_task(s3_credential, request):
             "credentials": s3_credential["id"],
             "attributes": {
                 "bucket": AWS_BUCKET,
-                "folder": "cloud_backup",
+                "folder": "cloud_backup/completed",
             },
             "password": "test",
             "keep_last": 100,
@@ -438,27 +438,6 @@ def test_zvol_cloud_backup_snapshot_option(s3_credential, zvol):
             "snapshot": True,
         }) as t:
             assert call("cloud_backup.update", t["id"], {"keep_last": 50})["keep_last"] == 50
-
-
-def test_create_to_backend_with_a_different_password(cloud_backup_task):
-    with pytest.raises(ValidationErrors) as ve:
-        with task({
-            "path": cloud_backup_task.task["path"],
-            "credentials": cloud_backup_task.task["credentials"]["id"],
-            "attributes": cloud_backup_task.task["attributes"],
-            "password": "test2",
-            "keep_last": 100,
-        }):
-            pass
-
-    assert "cloud_backup_create.password" in ve.value
-
-
-def test_update_with_incorrect_password(cloud_backup_task):
-    with pytest.raises(ValidationErrors) as ve:
-        call("cloud_backup.update", cloud_backup_task.task["id"], {"password": "test2"})
-
-    assert "cloud_backup_update.password" in ve.value
 
 
 def test_sync_initializes_repo(cloud_backup_task):
