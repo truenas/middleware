@@ -28,7 +28,7 @@ from middlewared.utils.memory import get_memory_info
 
 from .bridge import BRIDGE_NAME, configure_container_bridge
 from .dataset import CONTAINER_DS_PARENT_DIR
-from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
+from .utils import configure_hostname, container_instance_dataset_mountpoint
 
 IDMAPPED_ROOT_DIR = "/run/truenas_containers/root"
 
@@ -141,8 +141,7 @@ def start(context: ServiceContext, id_: int) -> None:
 
     # Configure hostname files before start so init reads correct values
     try:
-        write_etc_hostname(pylibvirt_obj.configuration.root, container.name)
-        update_etc_hosts(pylibvirt_obj.configuration.root, container.name)
+        configure_hostname(pylibvirt_obj.configuration.root, container.name)
     except Exception:
         context.logger.warning("Failed to configure hostname for container %r", container.name, exc_info=True)
 
