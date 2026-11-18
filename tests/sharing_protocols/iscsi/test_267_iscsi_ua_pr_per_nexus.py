@@ -12,9 +12,12 @@ implicit transition, and the HA-gated class at the bottom).
 See UA_PR_TEST_SUITE_PLAN.md for the full design.
 """
 
+import contextlib
+
 from assets.websocket.iscsi import alua_enabled
 from auto_config import ha
 from iscsi_ua_pr_utils import (
+    CLIENT_IQN,
     LABEL_B_IQN,
     LU_SCOPE,
     TOPO_DIFF_IDENTITY,
@@ -33,23 +36,28 @@ from iscsi_ua_pr_utils import (
     drain_ua,
     keep_alive,
     node_b_toggles_drop_sessions,
+    open_nexus,
     open_topology,
     pr_check_registered_keys,
     pr_check_reservation,
     pr_clear,
     pr_preempt,
     pr_read_full_status,
+    pr_register_key,
     pr_reservation,
     pr_reserve,
     pr_unregister_key,
+    probe_write,
     register_all,
     registered_sessions,
     resize_zvol,
     resize_zvol_path,
     wait_for_alua_settle,
+    wait_for_no_session,
 )
 from middlewared.test.integration.assets.iscsi import lio_supported
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.pytest import ha_test
 from protocols import iscsi_scsi_connection
 from pyscsi.pyscsi.scsi_cdb_persistentreservein import PR_TYPE
 import pytest
@@ -534,6 +542,100 @@ def test_lun_change_ua_not_lost_behind_pending_ua(configured_lun):
 
 
 # ---------------------------------------------------------------------------
+# Unit attentions are held per session, not per initiator name.
+#
+# The series queues a unit attention on the I_T nexus's session. One raised
+# while the initiator has no session is not held for its next one, and one
+# queued on a session that is then replaced by reinstatement goes with it.
+# Before the series both were held on the node ACL's se_dev_entry and
+# delivered to whichever session came next. The two tests below pin the
+# decision to keep the new behaviour (LIO_UA_PR_LOWS_NOTES.md, Q3): if held
+# unit attentions are ever added back, these two change their expectation, and
+# that is the signal.
+#
+# A is the initiator whose registration is preempted and B takes it. B reserves
+# first: a preempt with no reservation held removes the registration and raises
+# the unit attention but establishes no reservation, so A's write would succeed
+# whatever happens to the unit attention. The probe is a WRITE, which is
+# blocked for a non-holder under write exclusive; TEST UNIT READY is allowed
+# to every non-holder under a persistent reservation and could not show the
+# conflict. Every command goes through python-scsi, so nothing probes the LUN
+# behind the test's back (open-iscsi would, and its TEST UNIT READY takes the
+# unit attention first).
+# ---------------------------------------------------------------------------
+
+Q3_A_QUALIFIER = 1
+Q3_B_QUALIFIER = 2
+Q3_A_KEY = 0xA0A0000000000001
+Q3_B_KEY = 0xB0B0000000000002
+
+
+def _assert_conflict_without_ua(outcomes, who):
+    """The probe was refused with RESERVATION CONFLICT and no unit attention
+    was reported for the preempted registration first."""
+    assert outcomes and outcomes[-1] == "CONFLICT", (
+        f"{who}: expected RESERVATION CONFLICT from the write, got {outcomes}"
+    )
+    assert "0x2A05" not in outcomes, (
+        f"{who}: the REGISTRATIONS PREEMPTED unit attention queued while this initiator had no session "
+        f"was delivered to its next one: {outcomes}"
+    )
+
+
+def _b_reserves_and_preempts_a(b):
+    pr_register_key(b, Q3_B_KEY)
+    pr_reserve(b, PR_TYPE.WRITE_EXCLUSIVE, Q3_B_KEY)
+    pr_preempt(b, PR_TYPE.WRITE_EXCLUSIVE, Q3_B_KEY, Q3_A_KEY)
+
+
+def _q3_no_session_when_preempted(iqn, a_host, b_host, remote_wait=False):
+    """Scenario 1: A has no session when the preempt arrives."""
+    with open_nexus(b_host, iqn, initiator_name=LABEL_B_IQN, qualifier=Q3_B_QUALIFIER, label="B") as b:
+        with open_nexus(a_host, iqn, qualifier=Q3_A_QUALIFIER, label="A") as a:
+            pr_register_key(a, Q3_A_KEY)
+        # Leaving the block closed A's TCP connection (python-scsi sends no
+        # Logout), and with ErrorRecoveryLevel 0 the target closes the
+        # session on the spot. Wait for that rather than sleeping.
+        wait_for_no_session(iqn, CLIENT_IQN, remote=remote_wait)
+        _b_reserves_and_preempts_a(b)
+        with open_nexus(a_host, iqn, qualifier=Q3_A_QUALIFIER, label="A") as a2:
+            outcomes = probe_write(a2)
+    _assert_conflict_without_ua(outcomes, "A, new session after the gap")
+
+
+def _q3_stale_session_reinstated(iqn, a_host, b_host):
+    """Scenario 2: the preempt queues a unit attention on A's live session and
+    a second login with the same name and ISID then replaces that session.
+
+    The first connection's lifetime is managed by hand. It is never used after
+    the second login: libiscsi reconnects silently on the next command, with
+    the same ISID, and that would reinstate the second session and spoil the
+    test. It is not under keep_alive() either (the idle window before LIO drops
+    an unserviced session is long against a reserve and a preempt), and
+    closing it may raise, since the target has already closed it."""
+    with open_nexus(b_host, iqn, initiator_name=LABEL_B_IQN, qualifier=Q3_B_QUALIFIER, label="B") as b:
+        first = open_nexus(a_host, iqn, qualifier=Q3_A_QUALIFIER, label="A")
+        a1 = first.__enter__()
+        try:
+            pr_register_key(a1, Q3_A_KEY)
+            _b_reserves_and_preempts_a(b)
+            with open_nexus(a_host, iqn, qualifier=Q3_A_QUALIFIER, label="A") as a2:
+                outcomes = probe_write(a2)
+        finally:
+            with contextlib.suppress(Exception):
+                first.__exit__(None, None, None)
+    _assert_conflict_without_ua(outcomes, "A, second login replacing the first session")
+
+
+def test_ua_not_held_for_an_initiator_with_no_session(configured_lun):
+    _q3_no_session_when_preempted(configured_lun.iqn, truenas_server.ip, truenas_server.ip)
+
+
+def test_ua_dropped_with_a_session_replaced_by_reinstatement(configured_lun):
+    _q3_stale_session_reinstated(configured_lun.iqn, truenas_server.ip, truenas_server.ip)
+
+
+# ---------------------------------------------------------------------------
 # HA node-crossing coverage: sessions split across active/standby nodes.
 # Scoped to resize and PR ops -- the two areas with confirmed ha_recv-
 # specific fixes (see UA_PER_NEXUS_REDESIGN.md's "add_lio_alua cherry-pick
@@ -577,3 +679,23 @@ class TestHANodeCrossing:
                 with pr_reservation(actor, pr_type, actor.key, other_sessions=others, check_releaser=True):
                     for s in sessions:
                         drain_ua(s)
+
+
+@ha_test
+class TestHAForwardedUAGap:
+    """The same two scenarios with A's logins on the STANDBY node and B's on
+    the ACTIVE one: A's session is a forwarded one on the ACTIVE node, so its
+    SESSION_DISCONNECT and SESSION_CONNECT (the gap in scenario 1) go through
+    lio_ha. Whether iscsi.global.sessions on the STANDBY stops listing A's
+    session at the same moment as the ACTIVE's synthetic one is not
+    established; the wait looks at the STANDBY, where A is logged in."""
+
+    def test_ua_not_held_for_an_initiator_with_no_session_forwarded(self, lio_alua_configured):
+        node_ips = truenas_server.ha_ips()
+        _q3_no_session_when_preempted(
+            lio_alua_configured.iqn, node_ips["standby"], node_ips["active"], remote_wait=True
+        )
+
+    def test_ua_dropped_with_a_session_replaced_by_reinstatement_forwarded(self, lio_alua_configured):
+        node_ips = truenas_server.ha_ips()
+        _q3_stale_session_reinstated(lio_alua_configured.iqn, node_ips["standby"], node_ips["active"])

@@ -12,6 +12,7 @@ import contextlib
 from dataclasses import dataclass
 import re
 import socket
+import subprocess
 import threading
 from time import monotonic, sleep
 
@@ -895,3 +896,174 @@ def pr_reservation(session, pr_type, key, scope=LU_SCOPE, other_sessions=(), che
     else:
         for other in other_sessions:
             assert_no_ua(other)
+
+
+# ---------------------------------------------------------------------------
+# Kernel session state, via configfs and dmesg -- for the tests that look at
+# what the iSCSI target does with a session (test_270_iscsi_time2retain.py) or
+# at whether a session exists (the unit attention scenarios in test_267).
+# ---------------------------------------------------------------------------
+
+ISCSI_CONFIGFS = "/sys/kernel/config/target/iscsi"
+
+# lio_target_nacl_info_show() prints this when the ACL has no session.
+NO_SESSION_PREFIX = "No active iSCSI Session"
+
+# Kernel messages that mean something went wrong in the code under test.
+_SPLAT_PATTERN = (
+    "KASAN|BUG:|kernel BUG|Oops|general protection|use-after-free|refcount_t|possible circular|"
+    "inconsistent lock state|blocked for more than|WARNING: "
+)
+
+
+def tpg_dir(iqn):
+    """The configfs directory of `iqn`'s only TPG (tpgt_1 outside ALUA)."""
+    out = ssh(f"ls -d {ISCSI_CONFIGFS}/{iqn}/tpgt_*").split()
+    assert len(out) == 1, f"expected one TPG for {iqn}, found {out}"
+    return out[0]
+
+
+def acl_dir(iqn, initiator_name):
+    """The configfs directory of the node ACL for `initiator_name`, matched
+    without regard to case (the middleware may lower-case the name)."""
+    acls = f"{tpg_dir(iqn)}/acls"
+    names = ssh(f"ls {acls}").split()
+    match = [n for n in names if n.lower() == initiator_name.lower()]
+    assert len(match) == 1, f"no ACL for {initiator_name} in {names}"
+    return f"{acls}/{match[0]}"
+
+
+def remove_acl_mappings(iqn, initiator_name):
+    """Remove the ACL's mapped LUN directories, which configfs requires
+    before the ACL itself can be removed (the middleware does the same). The
+    ACL's rmdir is the step that waits for the ACL's sessions."""
+    d = acl_dir(iqn, initiator_name)
+    ssh(f"cd {d} && for l in lun_*; do [ -d $l ] || continue; find $l -type l -delete; rmdir $l; done")
+
+
+def session_info(iqn, initiator_name):
+    """The text of the ACL's `info` file, or None if the ACL has no session.
+    The file describes the one session the ACL points at, which is the newest
+    one; a session that was replaced is not listed."""
+    text = ssh(f"cat {acl_dir(iqn, initiator_name)}/info")
+    return None if text.startswith(NO_SESSION_PREFIX) else text
+
+
+def session_state(iqn, initiator_name):
+    """ "TARG_SESS_STATE_..." for the ACL's session, or None if it has none.
+    A session that lost its last connection without being closed, and is
+    waiting for Time2Retain, is TARG_SESS_STATE_FAILED."""
+    text = session_info(iqn, initiator_name)
+    if text is None:
+        return None
+    m = re.search(r"^Session State: (\S+)", text, re.M)
+    assert m, f"no session state in:\n{text}"
+    return m.group(1)
+
+
+def wait_for_session_state(iqn, initiator_name, state, timeout=10):
+    """Wait until session_state() is `state` (None: no session); return True,
+    or False after `timeout` seconds."""
+    deadline = monotonic() + timeout
+    while True:
+        if session_state(iqn, initiator_name) == state:
+            return True
+        if monotonic() >= deadline:
+            return False
+        sleep(0.5)
+
+
+def wait_for_no_session(iqn, initiator_name, timeout=30, remote=False):
+    """Wait until iscsi.global.sessions stops listing a session of
+    `initiator_name` on `iqn`, which happens once the target has closed it (a
+    session with no connection is not listed). A fixed sleep would either
+    waste time or race the close. Fails if it never goes away. With `remote`,
+    ask the other HA node (the STANDBY, when the test is on the ACTIVE)."""
+    name = initiator_name.lower()
+    deadline = monotonic() + timeout
+    filters = [["target", "=", iqn]]
+    while True:
+        if remote:
+            sessions = call("failover.call_remote", "iscsi.global.sessions", [filters])
+        else:
+            sessions = call("iscsi.global.sessions", filters)
+        listed = [s for s in sessions if s["initiator"].lower() == name]
+        if not listed:
+            return
+        if monotonic() >= deadline:
+            raise AssertionError(f"{initiator_name} still has a session on {iqn} after {timeout}s: {listed}")
+        sleep(0.5)
+
+
+def kernel_splat_count():
+    """How many lines of the kernel log look like a crash, KASAN or lockdep
+    report. Compare a count taken before with one taken after: the log keeps
+    older reports, and a kernel without KASAN or lockdep reports none."""
+    out = ssh(f"dmesg | grep -c -E '{_SPLAT_PATTERN}'", check=False, complete_response=True)
+    return int((out["stdout"] or "0").strip() or 0)
+
+
+def run_bounded(fn, timeout):
+    """Run fn() in a thread and wait up to `timeout` seconds. Returns
+    (finished, result): result is fn's return value, or the exception it
+    raised. A call that hangs in the kernel stays hung (the thread is a
+    daemon); the caller fails the test with finished == False."""
+    box = {}
+
+    def target():
+        try:
+            box["result"] = fn()
+        except BaseException as e:  # noqa: BLE001 - handed back to the caller
+            box["result"] = e
+
+    t = threading.Thread(target=target, daemon=True)
+    t.start()
+    t.join(timeout)
+    return (not t.is_alive()), box.get("result")
+
+
+def ssh_bounded(command, timeout):
+    """ssh(command) with a limit, so that a command stuck in the kernel is
+    reported rather than hanging the test. `timeout` is enforced on the
+    target by timeout(1) and, in case the command sits in uninterruptible
+    sleep and cannot be killed, again here after a margin. Returns (finished,
+    returncode): finished is False when the limit hit."""
+    try:
+        out = ssh(
+            f"timeout -k 5 {timeout} sh -c '{command}'",
+            check=False,
+            complete_response=True,
+            timeout=timeout + 30,
+        )
+    except subprocess.TimeoutExpired:
+        return False, None
+    return out["returncode"] != 124, out["returncode"]
+
+
+def probe_write(session, limit=4):
+    """Send WRITE(16) of one block at LBA 0, repeating while it reports a unit
+    attention, and return what happened as a list: "0xAAQQ" for each unit
+    attention, ending in "CONFLICT" (RESERVATION CONFLICT) or "GOOD". The
+    outcome of a probe is its last element.
+
+    A unit attention is reported before the reservation is checked
+    (target_core_transport.c), so a nexus with one pending sees CHECK
+    CONDITION first and RESERVATION CONFLICT on the retry. That is the
+    difference between a test that the held unit attention was lost and one
+    that it was not, and it is why this keeps going instead of failing on the
+    first CHECK CONDITION: the caller decides what an unexpected unit
+    attention means. The write stores zeros."""
+    outcomes = []
+    for _ in range(limit):
+        try:
+            session.conn.write16(0, 1, bytearray(512))
+        except Exception as e:
+            if e.__class__.__name__ == "ReservationConflict":
+                outcomes.append("CONFLICT")
+                return outcomes
+            m = _UA_CODE_RE.search(str(e))
+            outcomes.append(f"0x{m.group(1).upper()}" if m else str(e))
+            continue
+        outcomes.append("GOOD")
+        return outcomes
+    return outcomes
