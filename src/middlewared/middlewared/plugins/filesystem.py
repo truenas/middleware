@@ -71,7 +71,7 @@ from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.path import FSLocation, is_child_realpath, path_location
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
-from middlewared.utils.service.path import require_path_service_immutable_allowed, require_path_service_write_allowed
+from middlewared.utils.service.path import require_path_service_write_allowed
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -191,13 +191,6 @@ def _require_service_write_allowed(middleware: Middleware, schema_name: str, pat
         require_path_service_write_allowed(middleware, schema_name, real, beneath=False)
 
 
-def _require_service_immutable_allowed(middleware: Middleware, schema_name: str, path: str) -> None:
-    """Only checks paths under /mnt, as `_require_service_write_allowed` does. A path above a bucket's dataset is not
-    refused: recursion stops at dataset boundaries, so a change there never reaches the bucket."""
-    if (real := os.path.realpath(path)).startswith('/mnt/'):
-        require_path_service_immutable_allowed(middleware, schema_name, real)
-
-
 class FilesystemService(Service):
 
     class Config:
@@ -227,8 +220,8 @@ class FilesystemService(Service):
         When recursion is requested, the path is treated as the root of a tree walk, and attributes are
         applied to descendants of the matching type. Recursion stops at dataset boundaries.
 
-        A change of ``immutable`` is refused on the dataset of an S3 bucket. The S3 service sets that flag on
-        each object version under retention or legal hold, and clears it when the protection ends.
+        A path on the dataset of an S3 bucket is refused, whatever attributes the request names. Only the S3
+        service writes a bucket, and it sets ``immutable`` on each object version under retention or legal hold.
         """
         recursive = data.options.recursive
         if recursive is not None and len(recursive) == 0:
@@ -239,12 +232,7 @@ class FilesystemService(Service):
             )
             verrors.check()
 
-        if data.zfs_file_attributes.immutable is not None:
-            _require_service_immutable_allowed(
-                self.middleware,
-                'filesystem.set_zfs_attributes.zfs_file_attributes.immutable',
-                data.path,
-            )
+        _require_service_write_allowed(self.middleware, 'filesystem.set_zfs_attributes.path', data.path)
 
         job.set_progress(0, 'Setting ZFS attributes')
         try:

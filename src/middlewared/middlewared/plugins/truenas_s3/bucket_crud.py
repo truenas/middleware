@@ -475,17 +475,6 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             )
 
     @private
-    async def validate_immutable_path(self, verrors: ValidationErrors, field: str, path: str) -> None:
-        """Refuse a change of the immutable flag anywhere on a BUCKET dataset. Only the S3 service sets and clears
-        the flag there."""
-        if (bucket := await self.bucket_of_path(path)) is not None:
-            verrors.add(
-                field,
-                f"{path} is on the dataset of S3 bucket {bucket.name!r}. Only the S3 service may set or clear the "
-                "immutable flag on a bucket.",
-            )
-
-    @private
     async def writers(self) -> list[LocalPathWriter]:
         """Every writer that may reach a bucket, with its path resolved."""
         found: list[LocalPathWriter] = []

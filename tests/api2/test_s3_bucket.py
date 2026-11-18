@@ -888,31 +888,32 @@ def is_immutable(path):
     return call("filesystem.get_zfs_attributes", path)["immutable"]
 
 
-def test_only_the_service_changes_the_immutable_flag_on_a_bucket(owner):
-    """The S3 service sets and clears the immutable flag on a bucket's
-    files, so a change of that flag anywhere on the bucket's dataset is
-    refused on the attribute, a set or a clear, on one path or recursively.
-    A change of another attribute goes through, and so does a recursive
-    change from the dataset above, which stops at the bucket's mount."""
+def test_only_the_service_changes_file_attributes_on_a_bucket(owner):
+    """Only the S3 service writes a bucket, the flags of its files
+    included: it sets and clears immutable itself, and nounlink or
+    appendonly would refuse its deletes. So a change of any attribute
+    anywhere on the bucket's dataset is refused on the path, a set or a
+    clear, on one path or recursively. A recursive change from the
+    dataset above goes through, and stops at the bucket's mount."""
     with dataset("s3-flag-parent") as parent, bucket(dataset=f"{parent}/inner") as b:
         mountpoint = f"/mnt/{b['dataset']}"
         obj = f"{mountpoint}/s3data/object"
         plain = f"/mnt/{parent}/plain"
         ssh(f"mkdir -p {mountpoint}/s3data && touch {obj} {plain}")
+        before = call("filesystem.get_zfs_attributes", obj)
 
-        for path, value, recursive in (
-            (obj, True, None),
-            (mountpoint, False, ["FILES"]),
-            (f"{mountpoint}/.truenas_s3", False, ["FILES", "DIRECTORIES"]),
+        for path, attributes, recursive in (
+            (obj, {"immutable": True}, None),
+            (obj, {"hidden": True}, None),
+            (mountpoint, {"nounlink": True}, ["FILES"]),
+            (f"{mountpoint}/.truenas_s3", {"appendonly": False}, ["FILES", "DIRECTORIES"]),
         ):
             with pytest.raises(ClientValidationErrors) as ve:
-                zfs_attributes_change(path, {"immutable": value}, recursive)
+                zfs_attributes_change(path, attributes, recursive)
             (error,) = ve.value.errors
-            assert error.attribute == "filesystem.set_zfs_attributes.zfs_file_attributes.immutable", path
-            assert b["name"] in error.errmsg, path
-        assert not is_immutable(obj)
-
-        assert zfs_attributes_change(obj, {"hidden": True})["hidden"]
+            assert error.attribute == "filesystem.set_zfs_attributes.path", (path, attributes)
+            assert b["name"] in error.errmsg, (path, attributes)
+        assert call("filesystem.get_zfs_attributes", obj) == before
 
         zfs_attributes_change(f"/mnt/{parent}", {"immutable": True}, ["FILES"])
         try:
