@@ -287,13 +287,6 @@ class SMBEntry(BaseModel):
             "on TrueNAS."
         ),
     )
-    aapl_extensions: bool = Field(
-        description=(
-            "Enable support for SMB2/3 AAPL protocol extensions. This setting makes the TrueNAS server advertise "
-            "support for Apple protocol extensions as a MacOS server. This is not required for MacOS support "
-            "generally but is currently required for Time Machine support."
-        ),
-    )
     search_protocols: list[SMBSearchProtocol] = Field(
         default=[],
         description=(
@@ -323,7 +316,6 @@ class SMBEntry(BaseModel):
             "cases and may be against regulations in non-home environments."
         ),
     )
-    multichannel: bool = Field(description="Enable SMB3 multi-channel support.")
     encryption: SMBEncryption = Field(
         description=(
             "SMB2/3 transport encryption setting for the TrueNAS SMB server.\n"
@@ -577,14 +569,6 @@ class LegacyOpt(BaseModel):
             "\n"
             "WARNING: Additional client-side configuration downgrading security settings may be required in order to "
             "use this feature."
-        ),
-    )
-    streams: bool = Field(
-        default=True,
-        description=(
-            "If set, support for SMB alternate data streams is enabled.\n"
-            "\n"
-            "WARNING: This value should not be changed once data is written to the SMB share."
         ),
     )
     durablehandle: bool = Field(
@@ -1026,7 +1010,6 @@ class SharingSMBEntry(BaseModel):
             "used for new SMB shares.\n"
             "\n"
             "* `TIMEMACHINE_SHARE`: The SMB share is presented to MacOS clients as a time machine target.\n"
-            "  NOTE: `aapl_extensions` must be set in the global `smb.config`.\n"
             "\n"
             "* `MULTIPROTOCOL_SHARE`: The SMB share is configured for multi-protocol access. Set this if the `path` is "
             "shared through NFS, FTP, or used by containers or apps.\n"
@@ -1051,7 +1034,7 @@ class SharingSMBEntry(BaseModel):
             "\n"
             "* `FCP_SHARE`: The SMB share is a used for Final Cut Pro storage. This feature automatically configures "
             "the share to provide storage according to Apple support guidelines described in "
-            "https://support.apple.com/en-ca/101919. NOTE: `aapl_extensions` must be set in the global `smb.config`. "
+            "https://support.apple.com/en-ca/101919. "
             "WARNING: This feature forcibly enables `aapl_name_mangling` on the SMB share which may cause unexpected "
             "behavior for data that was written without this feature enabled."
         ),
