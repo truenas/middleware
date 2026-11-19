@@ -8,6 +8,8 @@ from middlewared.api.current import CloudBackupCreate, CloudBackupEntry, CloudBa
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
+from middlewared.plugins.cloud.path import get_remote_path
+from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, LocalPathInfo, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -121,6 +123,21 @@ class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackup
 
         if not verrors:
             credentials = resolve_credentials(self, entry.credentials)
+            remote = REMOTES[credentials.provider.type]
+            remote_path = get_remote_path(remote, entry.attributes.model_dump())
+            task_id = None if isinstance(entry, CloudBackupCreate) else entry.id
+            for cloud_backup in self.call_sync2(self.s.cloud_backup.query, [
+                ["id", "!=", task_id],
+                ["credentials.id", "=", credentials.id],
+            ]):
+                if get_remote_path(remote, cloud_backup.attributes.model_dump()) == remote_path:
+                    verrors.add(
+                        f"{name}.attributes.folder",
+                        f"The cloud backup task {cloud_backup.description!r} already uses this folder",
+                    )
+                    break
+
+        if not verrors:
             try:
                 self.call_sync2(self.s.cloud_backup.ensure_initialized, entry, credentials)
             except IncorrectPassword as e:

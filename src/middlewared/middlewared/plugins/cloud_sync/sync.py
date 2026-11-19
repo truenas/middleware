@@ -11,7 +11,6 @@ from middlewared.api.current import (
 from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.service import CallError, ServiceContext, ValidationErrors
-from middlewared.utils.lang import undefined
 from middlewared.utils.service.path import require_task_path_writable
 
 from .crud import CloudSyncTaskFailedAlert
@@ -77,7 +76,7 @@ def _sync(
         FsLockDirection.WRITE: "writing",
     }
 
-    task_id = None if cloud_sync.id is undefined else cloud_sync.id  # type: ignore[comparison-overlap]
+    task_id = None if isinstance(cloud_sync, CloudSyncCreate) else cloud_sync.id
 
     job.set_progress(0, f"Locking local path {local_path!r} for {directions[local_direction]}")
     with local_fs_lock_manager.lock(local_path, local_direction):

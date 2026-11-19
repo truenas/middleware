@@ -219,6 +219,9 @@ class FilesystemService(Service):
 
         When recursion is requested, the path is treated as the root of a tree walk, and attributes are
         applied to descendants of the matching type. Recursion stops at dataset boundaries.
+
+        A path on the dataset of an S3 bucket is refused, whatever attributes the request names. Only the S3
+        service writes a bucket, and it sets ``immutable`` on each object version under retention or legal hold.
         """
         recursive = data.options.recursive
         if recursive is not None and len(recursive) == 0:
@@ -228,6 +231,8 @@ class FilesystemService(Service):
                 'Must be null or a non-empty list of FILES/DIRECTORIES.',
             )
             verrors.check()
+
+        _require_service_write_allowed(self.middleware, 'filesystem.set_zfs_attributes.path', data.path)
 
         job.set_progress(0, 'Setting ZFS attributes')
         try:
@@ -526,7 +531,7 @@ class FilesystemService(Service):
         if st is None:
             raise CallError(f'Path {_path} not found', errno.ENOENT)
 
-        realpath = path.resolve().as_posix() if st['etype'] == 'SYMLINK' else path.absolute().as_posix()
+        realpath = path.resolve().as_posix()
 
         try:
             user: str | None = pwd.getpwuid(st['st'].stx_uid).pw_name

@@ -62,6 +62,7 @@ PROPERTIES = (
     "used",
     "usedbychildren",
     "usedbydataset",
+    "usedbysnapshots",
     "volsize",
 )
 

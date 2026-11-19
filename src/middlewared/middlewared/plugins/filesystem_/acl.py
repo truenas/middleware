@@ -109,7 +109,7 @@ class FilesystemService(Service):
             st = self.middleware.call_sync('filesystem.stat', path)
         except CallError as e:
             if e.errno == errno.EINVAL:
-                verrors.add('f{schema}.path', 'Must be an absolute path')
+                verrors.add(f'{schema}.path', 'Must be an absolute path')
                 return loc
 
             raise e
@@ -129,31 +129,33 @@ class FilesystemService(Service):
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
             return loc
 
-        if any(st.realpath.startswith(prefix)
+        # Compare whole path components of the resolved path
+        real = Path(st.realpath)
+        if any(real.is_relative_to(prefix)
                for prefix in ('/home/admin/.ssh', '/home/truenas_admin/.ssh', '/root/.ssh')):
             return loc
 
-        if not st.realpath.startswith('/mnt/'):
+        if not real.is_relative_to('/mnt') or real == Path('/mnt'):
             verrors.add(
                 f'{schema}.path',
                 "Changes to permissions on paths that are not beneath "
                 f"the directory /mnt are not permitted: {path}"
             )
 
-        elif not internal_ok and has_internal_path(self.middleware.call_sync('filesystem.statfs', st.realpath).source):
+        elif not internal_ok and has_internal_path(self.middleware.call_sync('filesystem.statfs', str(real)).source):
             verrors.add(
                 f'{schema}.path',
                 f'Changes to permissions on paths managed by the system are not permitted: {path}'
             )
 
-        elif len(Path(st.realpath).resolve().parents) == 2:
+        elif len(real.parents) == 2:
             if not pool_mp_ok:
                 verrors.add(
                     f'{schema}.path',
                     f'The specified path is a ZFS pool mountpoint "({path})" '
                 )
 
-        elif self.call_sync2(self.s.zfs.resource.path_is_locked, st.realpath):
+        elif self.call_sync2(self.s.zfs.resource.path_is_locked, str(real)):
             verrors.add(
                 f'{schema}.path',
                 'Path component is currently encrypted and locked'
@@ -178,7 +180,7 @@ class FilesystemService(Service):
         ``s3data``. Administrators manage only ``s3data``; the rest of the dataset belongs to the S3 service.
         ``DATASET`` buckets are not checked.
         """
-        path = os.path.realpath(st.realpath)
+        path = st.realpath
         bucket = self.call_sync2(self.s.sharing.s3.bucket_of_path, path)
         if bucket is not None and bucket.within and not bucket.in_share_root:
             verrors.add(
