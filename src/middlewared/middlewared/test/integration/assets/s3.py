@@ -208,17 +208,17 @@ def s3_account(username: str, *, manage_buckets: bool = False, roles: list[str] 
 # ── grants ───────────────────────────────────────────────────────────
 
 
-def user_grant(uid: int, access: str = "READWRITE") -> dict[str, Any]:
+def user_grant(uid: int, access: str | list[str] = "READWRITE") -> dict[str, Any]:
     """A grant naming one account by uid."""
     return {"principal_type": "USER", "xid": uid, "access": access}
 
 
-def group_grant(gid: int, access: str = "READWRITE") -> dict[str, Any]:
+def group_grant(gid: int, access: str | list[str] = "READWRITE") -> dict[str, Any]:
     """A grant naming one group by gid."""
     return {"principal_type": "GROUP", "xid": gid, "access": access}
 
 
-def everyone_grant(access: str = "READONLY") -> dict[str, Any]:
+def everyone_grant(access: str | list[str] = "READONLY") -> dict[str, Any]:
     """A grant naming every account holding a valid access key."""
     return {"principal_type": "EVERYONE", "access": access}
 
