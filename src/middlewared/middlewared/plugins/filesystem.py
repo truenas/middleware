@@ -526,7 +526,7 @@ class FilesystemService(Service):
         if st is None:
             raise CallError(f'Path {_path} not found', errno.ENOENT)
 
-        realpath = path.resolve().as_posix() if st['etype'] == 'SYMLINK' else path.absolute().as_posix()
+        realpath = path.resolve().as_posix()
 
         try:
             user: str | None = pwd.getpwuid(st['st'].stx_uid).pw_name
