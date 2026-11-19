@@ -15,6 +15,10 @@
 % if row.grant.principal_type != "EVERYONE":
 xid = ${row.grant.xid}
 % endif
+% if isinstance(row.grant.access, list):
+access = ${", ".join(row.grant.access)}
+% else:
 access = ${row.grant.access.lower()}
+% endif
 
 % endfor
