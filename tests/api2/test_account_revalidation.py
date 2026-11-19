@@ -1,4 +1,5 @@
 """Updating one field must not re-validate stored state that the request leaves alone."""
+
 import pytest
 
 from middlewared.service_exception import ValidationErrors
@@ -38,13 +39,15 @@ def test_update_user_whose_sudo_command_disappeared():
 def test_update_idmap_user_after_its_group_was_granted_a_privilege():
     with group({"name": "covrevalpriv", "smb": False}) as g:
         with user(_user(groups=[g["id"]], userns_idmap="DIRECT")) as u:
-            with privilege({
-                "name": "Cov revalidation",
-                "local_groups": [g["gid"]],
-                "ds_groups": [],
-                "roles": ["READONLY_ADMIN"],
-                "web_shell": False,
-            }):
+            with privilege(
+                {
+                    "name": "Cov revalidation",
+                    "local_groups": [g["gid"]],
+                    "ds_groups": [],
+                    "roles": ["READONLY_ADMIN"],
+                    "web_shell": False,
+                }
+            ):
                 call("user.update", u["id"], {"full_name": "cov renamed"})
 
                 with pytest.raises(ValidationErrors) as ve:

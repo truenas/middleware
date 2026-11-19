@@ -517,9 +517,7 @@ async def common_validation(
         if len(new.groups) > 64:
             verrors.add(f"{schema}.groups", "A user cannot belong to more than 64 auxiliary groups.")
 
-        existing_groups = {
-            g["id"]: g for g in await context.middleware.call("datastore.query", "account_bsdgroups")
-        }
+        existing_groups = {g["id"]: g for g in await context.middleware.call("datastore.query", "account_bsdgroups")}
 
         for idx, dbid in enumerate(new.groups):
             if dbid not in existing_groups:
@@ -592,9 +590,7 @@ async def common_validation(
     if new.ssh_password_enabled and (old is None or not old.ssh_password_enabled):
         two_factor_config = await context.middleware.call("auth.twofactor.config")
         if two_factor_config["enabled"] and two_factor_config["services"]["ssh"]:
-            error = (
-                "2FA for this user needs to be explicitly configured before password based SSH access is enabled."
-            )
+            error = "2FA for this user needs to be explicitly configured before password based SSH access is enabled."
             if old is None:
                 verrors.add(
                     f"{schema}.ssh_password_enabled",
