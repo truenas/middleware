@@ -120,8 +120,6 @@ class SMBService(ConfigService):
         smb['server_sid'] = smb.pop('cifs_SID')
         smb['dirmask'] = smb['dirmask'] or 'DEFAULT'
         smb['filemask'] = smb['filemask'] or 'DEFAULT'
-        smb['aapl_extensions'] = True
-        smb['multichannel'] = True
         smb.pop('secrets', None)
         return smb
 
@@ -711,8 +709,6 @@ class SMBService(ConfigService):
             data['filemask'] = ''
 
         data.pop('server_sid')
-        data.pop('aapl_extensions')
-        data.pop('multichannel')
         data['netbiosalias'] = ' '.join(data['netbiosalias'])
         return data
 
@@ -1469,7 +1465,6 @@ class SharingSMBService(SharingService):
                 data[share_field.HOSTSDENY] = data[share_field.HOSTSDENY].split()
                 data[share_field.PATH_SUFFIX] = data[share_field.PATH_SUFFIX] or None
                 data[share_field.VUID] = data[share_field.VUID] or None
-                data[share_field.STREAMS] = True
                 for param in (
                     share_field.AUTO_QUOTA,
                     share_field.AUTO_DS,
@@ -1505,7 +1500,6 @@ class SharingSMBService(SharingService):
             data[share_field.PATH_SUFFIX] = ''
 
         data[share_field.AAPL_MANGLING] = opts.pop(share_field.AAPL_MANGLING, False)
-        opts.pop(share_field.STREAMS, None)
 
         data['ro'] = data.pop(share_field.RO)
         data['abe'] = data.pop(share_field.ABE)
