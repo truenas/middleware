@@ -110,6 +110,7 @@ class AuditEventS3Copy(AuditEventS3):
 
 class AuditEventS3DeleteEventData(AuditEventS3EventData):
     marker: bool | None = None
+    bypass: bool | None = None
 
 
 class AuditEventS3Delete(AuditEventS3):
@@ -126,7 +127,9 @@ class AuditEventS3BatchDeleteEventData(AuditEventS3EventData):
     denied: int | None = None
     errors: int | None = None
     objs: list[str] | None = None
+    obj_vers: list[str | None] | None = None
     truncated: int | None = None
+    bypass: bool | None = None
 
 
 class AuditEventS3BatchDelete(AuditEventS3):
@@ -209,10 +212,20 @@ class AuditEventS3BucketRead(AuditEventS3):
     event_data: AuditEventS3EventData
 
 
+class AuditEventS3ObjectConfigEventData(AuditEventS3EventData):
+    """What a retention or legal-hold write set. `retain_until` is unix
+    seconds; `lock_mode` and `retain_until` are absent when retention was
+    cleared."""
+
+    lock_mode: Literal["GOVERNANCE", "COMPLIANCE"] | None = None
+    retain_until: int | None = None
+    legal_hold: Literal["ON", "OFF"] | None = None
+    bypass: bool | None = None
+
+
 class AuditEventS3ObjectConfig(AuditEventS3):
     """An object's configuration surfaces — tags, retention, legal hold,
-    ACL. The envelope's `obj`/`ver` name the object; the records carry no
-    per-event fields."""
+    ACL. The envelope's `obj`/`ver` name the object."""
 
     event: Literal[
         "GetObjectTagging",
@@ -225,13 +238,13 @@ class AuditEventS3ObjectConfig(AuditEventS3):
         "GetObjectAcl",
         "PutObjectAcl",
     ]
-    event_data: AuditEventS3EventData
+    event_data: AuditEventS3ObjectConfigEventData
 
 
 class AuditEventS3BucketConfig(AuditEventS3):
     """The bucket plane: the bucket ACL pair, the lock-configuration pair
-    (bucket-scoped despite the name), versioning state, and the bucket
-    lifecycle itself. Envelope-only records."""
+    (bucket-scoped despite the name), versioning state, the bucket policy,
+    and the bucket lifecycle itself. Envelope-only records."""
 
     event: Literal[
         "GetBucketAcl",
@@ -241,6 +254,9 @@ class AuditEventS3BucketConfig(AuditEventS3):
         "PutBucketVersioning",
         "CreateBucket",
         "DeleteBucket",
+        "GetBucketPolicy",
+        "PutBucketPolicy",
+        "DeleteBucketPolicy",
     ]
     event_data: AuditEventS3EventData
 

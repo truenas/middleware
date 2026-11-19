@@ -4,7 +4,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypedDict
 
-from middlewared.api.current import S3Access, S3Grant, S3GrantEntry, S3PrincipalType
+from middlewared.api.current import S3Access, S3Grant, S3GrantAction, S3GrantEntry, S3PrincipalType
 from middlewared.service import ValidationErrors
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ class GrantRow(TypedDict):
 
     principal_type: S3PrincipalType
     xid: int | None
-    access: S3Access
+    access: S3Access | list[S3GrantAction]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -111,6 +111,9 @@ async def validate_grants(
                 await middleware.call("group.get_group_obj", {"gid": xid})
             except KeyError:
                 verrors.add(f"{schema}.{i}.xid", f"No group with gid {xid} exists.")
+
+        if isinstance(grant.access, list) and len(set(grant.access)) != len(grant.access):
+            verrors.add(f"{schema}.{i}.access", "An action may only be listed once.")
 
         key = (principal_type, xid)
         if key in seen:
