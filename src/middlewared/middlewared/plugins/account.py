@@ -962,7 +962,7 @@ class UserService(CRUDService):
             )
 
         group_ids = [group['id']]
-        if data.get('groups'):
+        if 'groups' in data:
             group_ids.extend(data['groups'])
         else:
             group_ids.extend(user['groups'])
@@ -1725,7 +1725,7 @@ class UserService(CRUDService):
                     errno.EEXIST
                 )
 
-            if data.get('smb'):
+            if combined['smb']:
                 if filter_list(users, [['username', 'C=', data['username']], ['smb', '=', True]]):
                     verrors.add(
                         f'{schema}.smb',
