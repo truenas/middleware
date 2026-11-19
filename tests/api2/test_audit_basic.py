@@ -316,6 +316,14 @@ class TestAuditOps:
                 r.raise_for_status()
                 assert len(r.content) == st['size']
 
+    @pytest.mark.parametrize('report_name', ['../../../etc/passwd', '/etc/passwd', 'subdir/report', '..', '.', ''])
+    def test_audit_download_invalid_report_name(self, report_name):
+        job_id, path = call("core.download", "audit.download_report", [{"report_name": report_name}], "report.csv")
+        r = requests.get(f"{url()}{path}")
+        assert r.status_code == 422, r.text
+        assert "invalid report name" in r.text
+        assert "root:" not in r.text
+
     @pytest.mark.parametrize('svc', ["MIDDLEWARE", "SMB"])
     def test_audit_timestamps(self, svc):
         """
