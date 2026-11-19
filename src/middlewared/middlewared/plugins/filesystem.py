@@ -518,7 +518,7 @@ class FilesystemService(Service):
         if st is None:
             raise CallError(f'Path {_path} not found', errno.ENOENT)
 
-        realpath = path.resolve().as_posix() if st['etype'] == 'SYMLINK' else path.absolute().as_posix()
+        realpath = path.resolve().as_posix()
 
         stat = {
             'realpath': realpath,
