@@ -876,6 +876,53 @@ def test_recursive_permissions_changes_stop_at_the_bucket(owner):
             permissions_change("filesystem.chown", f"/mnt/{parent}", recursive=True)
 
 
+def zfs_attributes_change(path, attributes, recursive=None):
+    return call(
+        "filesystem.set_zfs_attributes",
+        {"path": path, "zfs_file_attributes": attributes, "options": {"recursive": recursive}},
+        job=True,
+    )
+
+
+def is_immutable(path):
+    return call("filesystem.get_zfs_attributes", path)["immutable"]
+
+
+def test_only_the_service_changes_file_attributes_on_a_bucket(owner):
+    """Only the S3 service writes a bucket, the flags of its files
+    included: it sets and clears immutable itself, and nounlink or
+    appendonly would refuse its deletes. So a change of any attribute
+    anywhere on the bucket's dataset is refused on the path, a set or a
+    clear, on one path or recursively. A recursive change from the
+    dataset above goes through, and stops at the bucket's mount."""
+    with dataset("s3-flag-parent") as parent, bucket(dataset=f"{parent}/inner") as b:
+        mountpoint = f"/mnt/{b['dataset']}"
+        obj = f"{mountpoint}/s3data/object"
+        plain = f"/mnt/{parent}/plain"
+        ssh(f"mkdir -p {mountpoint}/s3data && touch {obj} {plain}")
+        before = call("filesystem.get_zfs_attributes", obj)
+
+        for path, attributes, recursive in (
+            (obj, {"immutable": True}, None),
+            (obj, {"hidden": True}, None),
+            (mountpoint, {"nounlink": True}, ["FILES"]),
+            (f"{mountpoint}/.truenas_s3", {"appendonly": False}, ["FILES", "DIRECTORIES"]),
+        ):
+            with pytest.raises(ClientValidationErrors) as ve:
+                zfs_attributes_change(path, attributes, recursive)
+            (error,) = ve.value.errors
+            assert error.attribute == "filesystem.set_zfs_attributes.path", (path, attributes)
+            assert b["name"] in error.errmsg, (path, attributes)
+        assert call("filesystem.get_zfs_attributes", obj) == before
+
+        zfs_attributes_change(f"/mnt/{parent}", {"immutable": True}, ["FILES"])
+        try:
+            assert is_immutable(plain)
+            assert not is_immutable(obj)
+        finally:
+            zfs_attributes_change(f"/mnt/{parent}", {"immutable": False}, ["FILES"])
+
+
 def refused(method, *args):
     """The attributes the validation errors of `method` name, in the order
     raised. Each error must name the bucket."""
