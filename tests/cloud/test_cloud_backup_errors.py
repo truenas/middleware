@@ -96,19 +96,71 @@ def read_only_task(s3_credentials, cloud_backup_task):
 
 
 def test_create_with_incorrect_password(cloud_backup_task):
+    data = {
+        "path": cloud_backup_task["path"],
+        "credentials": cloud_backup_task["credentials"]["id"],
+        "attributes": {
+            "bucket": "cloud-backup-errors",
+            "folder": "incorrect_password",
+        },
+        "password": "test",
+    }
+    with task(data):
+        pass
+
+    with pytest.raises(ValidationErrors) as ve:
+        with task({**data, "password": "test2"}):
+            pass
+
+    assert ve.value.errors == [
+        ValidationError("cloud_backup_create.password", "Fatal: wrong password or no key found"),
+    ]
+
+
+@pytest.mark.parametrize("folder", ["cloud_backup", "/cloud_backup/"])
+def test_create_with_same_credential_bucket_and_folder(cloud_backup_task, folder):
     with pytest.raises(ValidationErrors) as ve:
         with task(
             {
                 "path": cloud_backup_task["path"],
                 "credentials": cloud_backup_task["credentials"]["id"],
-                "attributes": cloud_backup_task["attributes"],
-                "password": "test2",
+                "attributes": {
+                    "bucket": "cloud-backup-errors",
+                    "folder": folder,
+                },
+                "password": "test",
             }
         ):
             pass
 
     assert ve.value.errors == [
-        ValidationError("cloud_backup_create.password", "Fatal: wrong password or no key found"),
+        ValidationError(
+            "cloud_backup_create.attributes.folder",
+            "The cloud backup task 'Test' already uses this folder",
+        ),
+    ]
+
+
+def test_update_to_same_credential_bucket_and_folder(cloud_backup_task):
+    with task(
+        {
+            "path": cloud_backup_task["path"],
+            "credentials": cloud_backup_task["credentials"]["id"],
+            "attributes": {
+                "bucket": "cloud-backup-errors",
+                "folder": "other",
+            },
+            "password": "test",
+        }
+    ) as t:
+        with pytest.raises(ValidationErrors) as ve:
+            call("cloud_backup.update", t["id"], {"attributes": {**t["attributes"], "folder": "cloud_backup"}})
+
+    assert ve.value.errors == [
+        ValidationError(
+            "cloud_backup_update.attributes.folder",
+            "The cloud backup task 'Test' already uses this folder",
+        ),
     ]
 
 
