@@ -303,4 +303,3 @@ def list_impl(lzh: libzfs_types.ZFS, data: dict[str, typing.Any]) -> list[dict[s
             raise
         results.append(_build_pool_dict(pool, lzh, data))
     return results
-

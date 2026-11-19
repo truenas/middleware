@@ -173,7 +173,7 @@ def register(context: ServiceContext, name: str, all_sed: bool) -> int:
     pool_id: int = context.middleware.call_sync(
         "datastore.insert",
         "storage.volume",
-        {"name": name, "guid": str(guid), "all_sed": all_sed},
+        {"name": name, "guid": guid, "all_sed": all_sed},
         {"prefix": "vol_"},
     )
     context.middleware.call_sync("datastore.insert", "storage.scrub", {"volume": pool_id}, {"prefix": "scrub_"})
@@ -276,7 +276,9 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     collect(verrors, check_spare_sizes, data, ctx)
     verrors.check()
 
-    log_disks = [disk for vdev in data.topology.log for disk in vdev.disks]
+    log_disks: list[str] = []
+    for vdev in data.topology.log:
+        log_disks.extend(vdev.disks)
     prepare_disks(context, job, disks, log_disks, data.all_sed, SCHEMA)
 
     pool_id: int | None = None

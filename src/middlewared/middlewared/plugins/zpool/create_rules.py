@@ -17,7 +17,7 @@ import errno
 import typing
 
 from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
-from middlewared.plugins.zfs.rules_common import reject_bad_acl_combination
+from middlewared.plugins.zfs.rules_common import reject_bad_acl_combination, reject_unentitled_dedup
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.utils.size import format_size
 
@@ -237,7 +237,9 @@ def check_spare_sizes(data: ZpoolCreate, ctx: CreateContext) -> None:
     The service calls this only after the disks are known to be available,
     with their sizes gathered into the context.
     """
-    data_sizes = [ctx.disk_sizes[d] for vdev in data.topology.data for d in vdev.disks if d in ctx.disk_sizes]
+    data_sizes: list[int] = []
+    for vdev in data.topology.data:
+        data_sizes.extend(ctx.disk_sizes[d] for d in vdev.disks if d in ctx.disk_sizes)
     if not data_sizes:
         return
     min_data_size = min(data_sizes)
@@ -257,26 +259,25 @@ def check_spare_sizes(data: ZpoolCreate, ctx: CreateContext) -> None:
 def check_dedup_entitlement(data: ZpoolCreate, ctx: CreateContext) -> None:
     """Deduplication may only be enabled on a system entitled to it.
 
-    The entitlement engine decides and supplies the message. Matches the gate
-    pool.create and zfs.resource.create apply.
+    Matches the gate pool.create and zfs.resource.create apply; the zfs rule
+    supplies the message.
 
     The service calls this only for requests with a dedup value other than off
     and after the entitlement has been gathered.
     """
     assert ctx.dedup_entitlement is not None
-    if not ctx.dedup_entitlement.entitled:
-        raise ValidationError(f"{SCHEMA}.filesystem_properties.dedup", ctx.dedup_entitlement.message, errno.EPERM)
+    reject_unentitled_dedup(f"{SCHEMA}.filesystem_properties.dedup", ctx.dedup_entitlement)
 
 
 def check_sed_entitlement(data: ZpoolCreate, ctx: CreateContext) -> None:
     """An all-SED pool may only be created on a system entitled to SED.
 
-    The service calls this only for requests with ``all_sed`` set and after the
-    entitlement has been gathered.
+    Refused the way pool.create refuses it. The service calls this only for
+    requests with ``all_sed`` set and after the entitlement has been gathered.
     """
     assert ctx.sed_entitlement is not None
     if not ctx.sed_entitlement.entitled:
-        raise ValidationError(f"{SCHEMA}.all_sed", ctx.sed_entitlement.message, errno.EPERM)
+        raise ValidationError(f"{SCHEMA}.all_sed", ctx.sed_entitlement.message, errno.EINVAL)
 
 
 def check_force_entitlement(data: ZpoolCreate, ctx: CreateContext) -> None:
@@ -292,5 +293,5 @@ def check_force_entitlement(data: ZpoolCreate, ctx: CreateContext) -> None:
         raise ValidationError(
             f"{SCHEMA}.force_topology",
             "Bypassing pool topology validation is not permitted on systems with a support entitlement.",
-            errno.EPERM,
+            errno.EINVAL,
         )

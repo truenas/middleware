@@ -594,7 +594,9 @@ class PoolService(CRUDService):
         verrors.check()
 
         disks, vdevs = await self._process_topology('pool_create', data)
-        log_disks = [disk for vdev in data['topology'].get('log', []) for disk in vdev['disks']]
+        log_disks = []
+        for vdev in data['topology'].get('log', []):
+            log_disks.extend(vdev['disks'])
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -788,17 +790,6 @@ class PoolService(CRUDService):
         verrors.check()
 
         return True
-
-    @private
-    async def is_draid_pool(self, pool_name):
-        if pool := await self.call2(self.s.zpool.list_impl, ZpoolQuery(pool_names=[pool_name], topology=True)):
-            if any(
-                group['vdev_type'].startswith('draid')
-                for group in pool[0]['topology']['data'] + pool[0]['topology'].get('special', [])
-            ):
-                return True
-
-        return False
 
 
 async def retaste_disks_on_standby_hook(middleware, *args, **kwargs):

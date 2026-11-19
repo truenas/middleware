@@ -8,23 +8,27 @@ from middlewared.pytest.unit.middleware import FakeJob, Middleware
 from middlewared.service import ServiceContext
 
 
+class Recorder:
+    def __init__(self, calls, name, result=None):
+        self.calls = calls
+        self.name = name
+        self.result = result
+
+    def __call__(self, *args):
+        self.calls.append(self.name)
+        return self.result
+
+
 def test_sed_provisioning_precedes_fencing_and_fencing_precedes_any_write(monkeypatch):
     """Fenced racing SED provisioning corrupts controller state on some SED firmware, and the disks must be fenced
     before they are resized or formatted. pool.create and zpool.create both take their disks through here."""
     calls = []
     middleware = Middleware()
 
-    def record(name, result=None):
-        def method(*args):
-            calls.append(name)
-            return result
-
-        middleware[name] = method
-
     middleware["failover.licensed"] = lambda: True
-    record("disk.setup_sed_disks_for_pool")
-    record("failover.fenced.start", 0)
-    record("disk.resize", Mock())
+    middleware["disk.setup_sed_disks_for_pool"] = Recorder(calls, "disk.setup_sed_disks_for_pool")
+    middleware["failover.fenced.start"] = Recorder(calls, "failover.fenced.start", 0)
+    middleware["disk.resize"] = Recorder(calls, "disk.resize", Mock())
     monkeypatch.setattr(zpool_create, "format_disks", lambda *args: calls.append("format_disks"))
     middleware.services.system.advanced.config = lambda: SimpleNamespace(overprovision=16)
     monkeypatch.setattr(zpool_create, "os", SimpleNamespace(path=os.path, makedirs=Mock()))

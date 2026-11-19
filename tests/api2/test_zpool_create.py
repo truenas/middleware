@@ -99,10 +99,9 @@ def test_create_log_cache_spares_and_an_nfsv4_root():
 
             call("zfs.resource.create", {"path": f"{POOL}/child"})
             props = ["acltype", "aclmode", "aclinherit"]
-            listed = {
-                r["name"]: {p: r["properties"][p]["raw"] for p in props}
-                for r in call("zfs.resource.list", {"paths": [POOL, f"{POOL}/child"], "properties": props})
-            }
+            listed = {}
+            for r in call("zfs.resource.list", {"paths": [POOL, f"{POOL}/child"], "properties": props}):
+                listed[r["name"]] = {p: r["properties"][p]["raw"] for p in props}
             assert listed[POOL] == {"acltype": "nfsv4", "aclmode": "restricted", "aclinherit": "passthrough"}
             assert listed[f"{POOL}/child"] == listed[POOL]
 
@@ -432,7 +431,7 @@ def test_create_force_topology_rejected_when_support_entitled():
         (
             "zpool.create.force_topology",
             "Bypassing pool topology validation is not permitted on systems with a support entitlement.",
-            errno.EPERM,
+            errno.EINVAL,
         )
     ]
 
@@ -442,13 +441,13 @@ def test_create_dedup_rejected_without_entitlement():
         errors = _create_fails(
             {"data": [{"type": "disk", "disks": ["nosuchdisk"]}]}, filesystem_properties={"dedup": "on"}
         )
-    assert [(attr, code) for attr, _, code in errors] == [("zpool.create.filesystem_properties.dedup", errno.EPERM)]
+    assert [(attr, code) for attr, _, code in errors] == [("zpool.create.filesystem_properties.dedup", errno.EINVAL)]
 
 
 def test_create_all_sed_rejected_without_entitlement():
     with entitled("SED", False):
         errors = _create_fails({"data": [{"type": "disk", "disks": ["nosuchdisk"]}]}, all_sed=True)
-    assert [(attr, code) for attr, _, code in errors] == [("zpool.create.all_sed", errno.EPERM)]
+    assert [(attr, code) for attr, _, code in errors] == [("zpool.create.all_sed", errno.EINVAL)]
 
 
 # ---------------------------------------------------------------------------
