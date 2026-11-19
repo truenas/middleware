@@ -506,6 +506,17 @@ def test_mkdir_chmod_failure():
         assert stat.S_IMODE(st["mode"]) == 0o770
 
 
+def test_setperm_root_ssh_dir():
+    """Paths under /root/.ssh are allowed although they are not beneath /mnt."""
+    path = "/root/.ssh/test_setperm_root_ssh_dir"
+    ssh(f"mkdir -p -m 700 /root/.ssh && touch {path} && chmod 644 {path}")
+    try:
+        call("filesystem.setperm", {"path": path, "mode": "600"}, job=True)
+        assert stat.S_IMODE(call("filesystem.stat", path)["mode"]) == 0o600
+    finally:
+        ssh(f"rm -f {path}")
+
+
 def test_listdir_zfs_attrs_and_acl_from_statx():
     """listdir zfs_attrs / acl come from statx; check them against the ioctl and the ACL itself."""
     with (
