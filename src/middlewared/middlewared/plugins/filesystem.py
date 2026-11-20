@@ -13,7 +13,7 @@ from typing import IO, TYPE_CHECKING, Any, Literal, Sequence
 
 import pyinotify
 import truenas_os
-from truenas_os_pyutils.io import safe_open
+from truenas_os_pyutils.io import safe_open, safe_open_raw
 from truenas_os_pyutils.mount import StatmountResultDict, iter_mountinfo, statmount
 from truenas_os_pyutils.truenas_shutil import copysendfile, copysplice
 
@@ -54,6 +54,7 @@ from middlewared.api.current import (
     QueryOptions,
     ZFSFileAttrsData,
 )
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.event_source.manager import Subscriber
 from middlewared.event import TypedEventSource
 from middlewared.plugins.account.constants import SYNTHETIC_CONTAINER_ROOT
@@ -70,10 +71,12 @@ from middlewared.utils.filesystem.stat_x import StatxEtype
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.path import FSLocation, is_child_realpath, path_location
+from middlewared.utils.privilege import app_needs_full_admin_check
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.service.path import require_path_service_write_allowed
 
 if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
     from middlewared.job import Job
     from middlewared.main import Middleware
 
@@ -205,9 +208,10 @@ class FilesystemService(Service):
         audit='Filesystem set ZFS attributes',
         audit_extended=lambda data: data['path'],
         check_annotations=True,
+        pass_app=True,
     )
     @job(lock=lambda args: f'zfs_attrs_change:{args[0]["path"]}')
-    def set_zfs_attributes(self, job: Job, data: FilesystemSetZfsAttributesData) -> ZFSFileAttrsData:
+    def set_zfs_attributes(self, app: App, job: Job, data: FilesystemSetZfsAttributesData) -> ZFSFileAttrsData:
         """
         Set special ZFS-related file flags (MS-DOS attributes and the BSD-style
         ``immutable``/``nounlink``/``appendonly`` flags) on the specified path.
@@ -233,6 +237,8 @@ class FilesystemService(Service):
             verrors.check()
 
         _require_service_write_allowed(self.middleware, 'filesystem.set_zfs_attributes.path', data.path)
+        if app_needs_full_admin_check(app):
+            self._validate_zfs_attributes_path(data.path)
 
         job.set_progress(0, 'Setting ZFS attributes')
         try:
@@ -258,6 +264,16 @@ class FilesystemService(Service):
                 raise CallError('Symlinks are not permitted.', errno.ELOOP)
             raise
 
+    def _validate_zfs_attributes_path(self, path: str) -> None:
+        schema = 'filesystem.set_zfs_attributes.path'
+        verrors = ValidationErrors()
+        self.middleware.run_coroutine(check_path_resides_within_volume(verrors, self.middleware, schema, path))
+        verrors.check()
+
+        if has_internal_path(self.statfs(path).source):
+            verrors.add(schema, f'{path}: path is managed by the system')
+            verrors.check()
+
     @api_method(
         FilesystemGetZfsAttributesArgs,
         FilesystemGetZfsAttributesResult,
@@ -269,15 +285,14 @@ class FilesystemService(Service):
         Get the current ZFS attributes for the file at the given path.
         """
         try:
-            fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+            with safe_open_raw(path) as fd:
+                attr_mask = attrs.fget_zfs_file_attributes(fd)
         except OSError as e:
             if e.errno == errno.ELOOP:
                 raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            if e.errno == errno.EINVAL:
+                raise CallError(f'{path}: not a regular file or directory.', errno.EINVAL)
             raise
-        try:
-            attr_mask = attrs.fget_zfs_file_attributes(fd)
-        finally:
-            os.close(fd)
 
         return ZFSFileAttrsData(**attrs.zfs_attributes_to_dict(attr_mask))
 
@@ -344,8 +359,12 @@ class FilesystemService(Service):
 
         try:
             realpath = os.path.join(os.readlink(f'/proc/self/fd/{parent_fd}'), basename)
-            if not realpath.startswith(
-                ('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')
+            if not (
+                realpath.startswith('/mnt/')
+                or any(
+                    pathlib.PurePosixPath(realpath).is_relative_to(ssh_dir)
+                    for ssh_dir in ('/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')
+                )
             ) or (
                 realpath.startswith('/mnt/')
                 # /mnt itself is a boot-pool dataset, which has_internal_path always treats as internal.
@@ -356,29 +375,30 @@ class FilesystemService(Service):
             _require_service_write_allowed(self.middleware, 'filesystem.mkdir.path', realpath)
 
             os.mkdir(basename, mode=mode, dir_fd=parent_fd)
+            with safe_open_raw(basename, os.O_DIRECTORY, dir_fd=parent_fd) as fd:
+                stat = truenas_os.statx('', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH, mask=stat_x.STATX_DEFAULT_MASK)
+                if statlib.S_IMODE(stat.stx_mode) != mode:
+                    # This may happen if requested mode is greater than umask
+                    # or if underlying dataset has restricted aclmode and ACL is present
+                    try:
+                        os.fchmod(fd, mode)
+                    except Exception:
+                        if data.options.raise_chmod_error:
+                            os.rmdir(basename, dir_fd=parent_fd)
+                            raise
+
+                        self.logger.debug(
+                            '%s: failed to set mode %s on path after mkdir call',
+                            data.path, data.options.mode, exc_info=True
+                        )
+                    else:
+                        stat = truenas_os.statx(
+                            '', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH, mask=stat_x.STATX_DEFAULT_MASK,
+                        )
+
+                acl = acl_is_present(os.listxattr(fd))
         finally:
             os.close(parent_fd)
-
-        st = stat_x.statx_entry_impl(p)
-        if st is None:
-            raise CallError(f'{data.path}: statx entry does not exist', errno.ENOENT)
-
-        stat = st['st']
-
-        if statlib.S_IMODE(stat.stx_mode) != mode:
-            # This may happen if requested mode is greater than umask
-            # or if underlying dataset has restricted aclmode and ACL is present
-            try:
-                os.chmod(data.path, mode)
-            except Exception:
-                if data.options.raise_chmod_error:
-                    os.rmdir(data.path)
-                    raise
-
-                self.logger.debug(
-                    '%s: failed to set mode %s on path after mkdir call',
-                    data.path, data.options.mode, exc_info=True
-                )
 
         return FilesystemDirEntry(
             name=p.parts[-1],
@@ -388,13 +408,13 @@ class FilesystemService(Service):
             size=stat.stx_size,
             allocation_size=stat.stx_blocks * 512,
             mode=stat.stx_mode,
-            acl=acl_is_present(os.listxattr(data.path)),
+            acl=acl,
             uid=stat.stx_uid,
             gid=stat.stx_gid,
             is_mountpoint=False,
             is_ctldir=False,
-            mount_id=st['st'].stx_mnt_id,
-            attributes=st['attributes'],
+            mount_id=stat.stx_mnt_id,
+            attributes=stat_x.statx_attribute_names(stat.stx_attributes),
             xattrs=[],
             zfs_attrs=['ARCHIVE'],
         )

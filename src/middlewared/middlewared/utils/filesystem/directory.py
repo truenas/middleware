@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-import contextlib
 import enum
 import os
 import typing
@@ -84,31 +83,14 @@ def _zfs_attrs_for(st: truenas_os.StatxResult) -> list[
     return zfs_attributes_dump(st.stx_zfsflags)  # type: ignore[return-value]
 
 
-@contextlib.contextmanager
-def _readable_meta_fd(item: truenas_os.IterInstance, item_path: str) -> Iterator[int]:
-    """Yield an fd suitable for stat / listxattr on the entry's
-    target inode.
+def _xattr_target(item: truenas_os.IterInstance, item_path: str) -> int | str:
+    if item.islnk:
+        return item_path
 
-    The three entry shapes the iterator can produce:
+    if item.ismount:
+        return f'/proc/self/fd/{item.fd}'
 
-    * ordinary file or dir — ``item.fd`` is already O_RDONLY-equivalent.
-    * symlink — ``item.fd`` is O_PATH on the link itself; we want the target,
-      so we open ``item_path`` (which follows the link).
-    * mountpoint — ``item.fd`` is O_PATH on the mount root.  statx works but
-      listxattr returns EBADF.  Reopening via ``/proc/self/fd/<fd>``
-      upgrades to O_RDONLY through the procfs magic-link, which is race-free
-      against concurrent mount-table changes.
-    """
-    if not item.islnk and not item.ismount:
-        yield item.fd
-        return
-
-    open_path = f'/proc/self/fd/{item.fd}' if item.ismount else item_path
-    fd = os.open(open_path, os.O_RDONLY)
-    try:
-        yield fd
-    finally:
-        os.close(fd)
+    return item.fd
 
 
 def _build_entry(
@@ -132,7 +114,7 @@ def _build_entry(
         # Follow the link (path-based) so stat / xattr / zfs reflect the target.
         try:
             st = truenas_os.statx(item_path, mask=STATX_DEFAULT_MASK)
-        except FileNotFoundError:
+        except OSError:
             return None
     else:
         st = item.statxinfo
@@ -141,29 +123,23 @@ def _build_entry(
 
     realpath = os.path.realpath(item_path) if mask & DirectoryRequestMask.REALPATH else None
 
-    try:
-        with _readable_meta_fd(item, item_path) as meta_fd:
-            xattrs = None
-            acl = None
-            if mask & DirectoryRequestMask.ACL and not mask & DirectoryRequestMask.XATTRS and statx_acl_is_trivial(st):
-                acl = False
-            elif mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
-                try:
-                    xattr_list = os.listxattr(meta_fd)
-                except OSError:
-                    xattr_list = []
+    xattrs = None
+    acl = None
+    if mask & DirectoryRequestMask.ACL and not mask & DirectoryRequestMask.XATTRS and statx_acl_is_trivial(st):
+        acl = False
+    elif mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
+        try:
+            xattr_list = os.listxattr(_xattr_target(item, item_path))
+        except OSError:
+            xattr_list = []
 
-                if mask & DirectoryRequestMask.XATTRS:
-                    xattrs = xattr_list
+        if mask & DirectoryRequestMask.XATTRS:
+            xattrs = xattr_list
 
-                if mask & DirectoryRequestMask.ACL:
-                    acl = acl_is_present(xattr_list)
+        if mask & DirectoryRequestMask.ACL:
+            acl = acl_is_present(xattr_list)
 
-            zfs_attrs = _zfs_attrs_for(st) if mask & DirectoryRequestMask.ZFS_ATTRS else None
-    except OSError:
-        # Symlink target became unreachable between statx and open, or the
-        # mountpoint's procfs reopen failed.  Skip the entry like a broken link.
-        return None
+    zfs_attrs = _zfs_attrs_for(st) if mask & DirectoryRequestMask.ZFS_ATTRS else None
 
     is_ctldir = path_in_ctldir(item_path) if mask & DirectoryRequestMask.CTLDIR else None
 

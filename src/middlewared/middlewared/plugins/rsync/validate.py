@@ -8,6 +8,7 @@ import shlex
 from typing import TYPE_CHECKING, Any
 
 import asyncssh
+from truenas_os_pyutils.io import atomic_write, safe_open, safe_open_raw
 
 from middlewared.api.current import UserGetUserObj, UserGetUserObjData
 from middlewared.service import CallError, ValidationErrors
@@ -101,6 +102,9 @@ def get_connect_kwargs(
     }
 
 
+KNOWN_HOSTS_MAX_SIZE = 4 * 1024 * 1024
+
+
 def host_key_is_known(known_hosts: asyncssh.SSHKnownHosts, host: str, port: int) -> bool:
     """`known_hosts` stores a non-default port as a `[host]:port` entry, so the port is a part of the lookup."""
     return bool(known_hosts.match(host, "", port)[0])
@@ -118,9 +122,14 @@ async def get_known_hosts(
     pw_uid: int,
     pw_gid: int,
 ) -> asyncssh.SSHKnownHosts | None:
+    def read_known_hosts() -> str:
+        with safe_open(str(known_hosts_path)) as f:
+            text: str = f.read(KNOWN_HOSTS_MAX_SIZE)
+            return text
+
     try:
         try:
-            known_hosts_text = await part.middleware.run_in_thread(known_hosts_path.read_text)
+            known_hosts_text = await part.middleware.run_in_thread(read_known_hosts)
         except FileNotFoundError:
             known_hosts_text = ""
 
@@ -140,7 +149,7 @@ async def get_known_hosts(
 
     known_hosts_text += (
         await run(
-            ["ssh-keyscan", "-p", str(port), host],
+            ["ssh-keyscan", "-p", str(port), "--", host],
             encoding="utf-8",
             errors="ignore",
         )
@@ -149,16 +158,23 @@ async def get_known_hosts(
     # If for whatever reason the dir does not exist, let's create it
     # An example of this is when we run rsync tests we nuke the directory
     def handle_ssh_dir() -> None:
-        try:
-            ssh_dir_path.mkdir(0o700)
-        except FileExistsError:
-            pass
+        with safe_open_raw(str(ssh_dir_path.parent), os.O_DIRECTORY) as home_fd:
+            try:
+                os.mkdir(ssh_dir_path.name, 0o700, dir_fd=home_fd)
+            except FileExistsError:
+                pass
 
-        os.chown(ssh_dir_path.absolute(), pw_uid, pw_gid)
-        known_hosts_path.write_text(known_hosts_text)
-        os.chown(known_hosts_path.absolute(), pw_uid, pw_gid)
+            with safe_open_raw(ssh_dir_path.name, os.O_DIRECTORY, dir_fd=home_fd) as ssh_dir_fd:
+                os.fchown(ssh_dir_fd, pw_uid, pw_gid)
 
-    await part.middleware.run_in_thread(handle_ssh_dir)
+        with atomic_write(str(known_hosts_path), "w", uid=pw_uid, gid=pw_gid, perms=0o600) as f:
+            f.write(known_hosts_text)
+
+    try:
+        await part.middleware.run_in_thread(handle_ssh_dir)
+    except OSError as e:
+        verrors.add(f"{schema}.remotehost", f"Failed to update {known_hosts_path}: {e.strerror}")
+        return None
 
     return asyncssh.SSHKnownHosts(known_hosts_text)
 
