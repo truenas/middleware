@@ -5,6 +5,7 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import (
     user, group, unprivileged_user_client, temporary_update
 )
+from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
@@ -376,3 +377,39 @@ def test_groups_cannot_add_root_to_other_groups(root_user):
 def test_cannot_enable_webshare_for_root_user(root_user):
     with pytest.raises(ValidationErrors, match='not allowed access via webshare'):
         call('user.update', root_user['id'], {"webshare": True})
+
+
+def test_smb_username_case_insensitive_conflict_on_rename():
+    smb_user = {"full_name": "cov", "group_create": True, "smb": True, "password": "SmbPass123!"}
+    with user({**smb_user, "username": "CovSmbRen"}):
+        with user({**smb_user, "username": "covsmbother"}) as other:
+            # Only `username` is sent; the account stays an SMB user, so the rename still conflicts.
+            with pytest.raises(ValidationErrors) as ve:
+                call("user.update", other["id"], {"username": "covsmbren"})
+
+            assert "conflicts with existing SMB user" in str(ve.value), ve.value
+
+
+def test_update_user_userns_idmap_while_clearing_privileged_groups():
+    with group({"name": "covprivclrg", "smb": False}) as g:
+        with privilege({
+            "name": "Cov Priv Clear",
+            "local_groups": [g["gid"]],
+            "ds_groups": [],
+            "roles": ["READONLY_ADMIN"],
+            "web_shell": False,
+        }):
+            with user({
+                "username": "covprivclr",
+                "full_name": "cov user",
+                "group_create": True,
+                "smb": False,
+                "password": "test1234",
+                "groups": [g["id"]],
+            }) as u:
+                # Dropping every auxiliary group in the same request leaves the account unprivileged.
+                call("user.update", u["id"], {"groups": [], "userns_idmap": "DIRECT"})
+
+                after = call("user.get_instance", u["id"])
+                assert after["userns_idmap"] == "DIRECT"
+                assert g["id"] not in after["groups"]
