@@ -176,6 +176,34 @@ def test_readwrite_opens_both(granted, grantee):
     client.delete_object(Bucket=BUCKET, Key="rw/obj.bin")
 
 
+def test_an_action_list_opens_exactly_those_actions(granted, grantee, owner, daemon):
+    client, set_grants = granted
+    client_for(owner.key, daemon).put_object(Bucket=BUCKET, Key="list/seed.bin", Body=b"seed")
+
+    set_grants([user_grant(grantee.uid, ["GetObject", "PutObject"])])
+    entry = call("sharing.s3.query", [["name", "=", BUCKET]], {"get": True})
+    assert entry["grants"][0]["access"] == ["GetObject", "PutObject"]
+    assert client.get_object(Bucket=BUCKET, Key="list/seed.bin")["Body"].read() == b"seed"
+    client.put_object(Bucket=BUCKET, Key="list/new.bin", Body=b"x")
+    assert refusal(lambda: client.list_objects_v2(Bucket=BUCKET)) == "AccessDenied"
+    assert refusal(lambda: client.delete_object(Bucket=BUCKET, Key="list/seed.bin")) == "AccessDenied"
+
+
+@pytest.mark.parametrize("access", [
+    ["ReleaseObjectLegalHold"],
+    ["BypassGovernanceRetention"],
+    ["PutBucketPolicy"],
+    ["GetObject", "GetObject"],
+    [],
+])
+def test_a_list_the_service_would_refuse_is_refused_here(granted, grantee, access):
+    """The service refuses its whole config over one bad name, so the API
+    must refuse it first."""
+    _client, set_grants = granted
+    with pytest.raises(Exception):
+        set_grants([user_grant(grantee.uid, access)])
+
+
 def test_an_everyone_grant_reaches_a_principal_no_row_names(granted, grantee):
     """`EVERYONE` is every account holding a valid access key, so it
     admits a principal the grant list never mentions by uid."""
