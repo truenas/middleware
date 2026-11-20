@@ -172,6 +172,25 @@ def test_container_rename(ubuntu_container):
     assert result, f"ZFS dataset {expected_dataset!r} does not exist after rename"
 
 
+def assert_hostname_configured(container):
+    # container.start only logs a warning if it cannot set these, so check the rootfs directly
+    mountpoint = get_mountpoint(container["dataset"])
+    assert ssh(f"cat {mountpoint}/etc/hostname").strip() == container["name"]
+    hosts = ssh(f"cat {mountpoint}/etc/hosts").splitlines()
+    assert [line for line in hosts if line.split()[:1] == ["127.0.1.1"]] == [f"127.0.1.1\t{container['name']}"]
+
+
+def test_container_hostname(started_ubuntu_container):
+    assert_hostname_configured(started_ubuntu_container)
+
+
+def test_container_hostname_after_rename(ubuntu_container):
+    call("container.update", ubuntu_container["id"], {"name": "renamed-hostname"})
+    call("container.start", ubuntu_container["id"])
+
+    assert_hostname_configured(call("container.get_instance", ubuntu_container["id"]))
+
+
 def test_container_delete_running_refused(started_ubuntu_container):
     with pytest.raises(ClientException) as exc_info:
         call("container.delete", started_ubuntu_container["id"], job=True)
