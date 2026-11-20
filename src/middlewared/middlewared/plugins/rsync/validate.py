@@ -124,7 +124,8 @@ async def get_known_hosts(
 ) -> asyncssh.SSHKnownHosts | None:
     def read_known_hosts() -> str:
         with safe_open(str(known_hosts_path)) as f:
-            return f.read(KNOWN_HOSTS_MAX_SIZE)
+            text: str = f.read(KNOWN_HOSTS_MAX_SIZE)
+            return text
 
     try:
         try:

@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.utils.path import check_path_resides_within_volume_sync
+from middlewared.utils.path import check_path_resides_within_volume_sync, symlink_in_path
 
 
 @pytest.fixture(scope="function")
@@ -41,3 +41,31 @@ def test___check_path_resides_within_volume(setup_mnt, path, should_raise):
             verr.check()
     else:
         verr.check()
+
+
+@pytest.fixture
+def symlink_tree(tmp_path):
+    (tmp_path / 'dir').mkdir()
+    (tmp_path / 'dir' / 'file').touch()
+    (tmp_path / 'link').symlink_to(tmp_path / 'dir')
+    (tmp_path / 'dangling').symlink_to(tmp_path / 'missing')
+    return tmp_path
+
+
+@pytest.mark.parametrize('path,expected', [
+    ('dir', False),
+    ('dir/file', False),
+    ('missing', False),
+    ('missing/file', False),
+    ('link', True),
+    ('link/file', True),
+    ('link/missing', True),
+    ('dangling', True),
+])
+def test_symlink_in_path(symlink_tree, path, expected):
+    assert symlink_in_path(str(symlink_tree / path)) is expected
+
+
+def test_symlink_in_path_raises_other_errors(symlink_tree):
+    with pytest.raises(NotADirectoryError):
+        symlink_in_path(str(symlink_tree / 'dir' / 'file' / 'x'))

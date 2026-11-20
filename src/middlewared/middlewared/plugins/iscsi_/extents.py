@@ -1,11 +1,9 @@
 from collections import defaultdict
-import errno
 import hashlib
 import os
 import pathlib
 import uuid
 
-import truenas_os
 from truenas_os_pyutils.io import safe_makedirs, safe_open_raw
 
 from middlewared.api import api_method
@@ -31,6 +29,7 @@ from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import secrets
 from middlewared.utils.mount import resolve_dataset_path
+from middlewared.utils.path import symlink_in_path
 from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.size import format_size
 
@@ -516,13 +515,7 @@ class iSCSITargetExtentService(SharingService):
                         'You need to specify a filepath not a directory'
                     )
 
-            try:
-                os.close(truenas_os.openat2(path, os.O_PATH | os.O_CLOEXEC, resolve=truenas_os.RESOLVE_NO_SYMLINKS))
-            except FileNotFoundError:
-                pass
-            except OSError as e:
-                if e.errno != errno.ELOOP:
-                    raise
+            if symlink_in_path(path):
                 verrors.add(f'{schema_name}.path', 'Symbolic links are not permitted in the path')
 
             self.middleware.call_sync(
