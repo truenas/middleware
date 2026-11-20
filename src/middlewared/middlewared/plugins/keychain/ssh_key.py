@@ -26,7 +26,9 @@ def generate_ssh_key_pair() -> SSHKeyPair:
 
 async def remote_ssh_host_key_scan(data: KeychainCredentialRemoteSshHostKeyScanArgs) -> str:
     proc = await run(
-        ["ssh-keyscan", "-p", str(data.port), "-T", str(data.connect_timeout), data.host], check=False, encoding="utf8"
+        ["ssh-keyscan", "-p", str(data.port), "-T", str(data.connect_timeout), "--", data.host],
+        check=False,
+        encoding="utf8",
     )
     if proc.returncode == 0:
         if proc.stdout:

@@ -20,7 +20,13 @@ from middlewared.api.base import (
 from middlewared.plugins.smb_.constants import LEGACY_SHARE_FIELDS
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.utils.lang import undefined
-from middlewared.utils.smb import SearchProtocol, SMBSharePurpose, SMBUnixCharset, validate_smb_path_suffix
+from middlewared.utils.smb import (
+    SearchProtocol,
+    SMBSharePurpose,
+    SMBUnixCharset,
+    validate_smb_path_suffix,
+    validate_smb_share_path_suffix,
+)
 
 from .common import QueryFilters, QueryOptions
 from .zfs_tier import TierInfo
@@ -534,7 +540,7 @@ class LegacyOpt(BaseModel):
             "WARNING: Do not use this feature instead of backups or ZFS snapshots."
         ),
     )
-    path_suffix: NonEmptyString | None = Field(
+    path_suffix: Annotated[NonEmptyString, AfterValidator(validate_smb_share_path_suffix)] | None = Field(
         default=None,
         examples=["%D/%U"],
         description=(
