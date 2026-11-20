@@ -10,7 +10,7 @@ from middlewared.test.integration.assets.account import (
 )
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 BASE_SYNTHETIC_DATASTORE_ID = 100000000
@@ -527,6 +527,58 @@ def test_update_immutable_user_username():
     assert "This attribute cannot be changed" in str(ve.value), ve.value
 
 
+def test_update_immutable_user_resubmit_current_values():
+    # A client that sends back the whole form is not changing the immutable attributes, and
+    # the unchanged home (outside /mnt for builtin accounts) is not re-validated as a new path.
+    bu = call("user.query", [["username", "=", "news"]], {"get": True})
+    assert not bu["home"].startswith("/mnt/")
+    fields = {
+        "group": bu["group"]["id"],
+        "home": bu["home"],
+        "username": bu["username"],
+        "smb": bu["smb"],
+        "userns_idmap": bu["userns_idmap"],
+    }
+
+    call("user.update", bu["id"], fields)
+
+    after = call("user.get_instance", bu["id"])
+    after["group"] = after["group"]["id"]
+    assert {field: after[field] for field in fields} == fields
+
+
+def test_update_builtin_user_with_shell_outside_choices():
+    # Builtin accounts ship with shells such as /bin/false that are not offered as choices;
+    # an update that sends the shell back unchanged must not reject it.
+    choices = call("user.shell_choices", [])
+    bu = next(
+        u for u in call("user.query", [["immutable", "=", True], ["username", "!=", "root"]])
+        if u["shell"] not in choices
+    )
+
+    call("user.update", bu["id"], {"shell": bu["shell"], "full_name": bu["full_name"]})
+
+
+def test_update_builtin_user_with_missing_home_outside_mnt():
+    # A builtin account's home outside /mnt may legitimately be absent; updating the account
+    # must not try (and fail) to recreate it there.
+    bu = call("user.query", [["username", "=", "news"]], {"get": True})
+    home = bu["home"]
+    assert not home.startswith("/mnt/")
+
+    original = ssh(f"stat -c '%a %u %g' {home} 2>/dev/null || true").strip()
+    if original:
+        ssh(f"rmdir {home}")
+
+    try:
+        call("user.update", bu["id"], {"full_name": bu["full_name"]})
+        assert ssh(f"test -e {home} && echo present || echo absent").strip() == "absent"
+    finally:
+        if original:
+            mode, uid, gid = original.split()
+            ssh(f"install -d -m {mode} -o {uid} -g {gid} {home}")
+
+
 def test_delete_builtin_user():
     bu = _a_builtin_user()
     with pytest.raises(CallError) as ve:
@@ -873,6 +925,17 @@ def test_smb_username_case_insensitive_conflict():
         assert "conflicts with existing SMB user" in str(ve.value), ve.value
 
 
+def test_smb_username_case_insensitive_conflict_on_rename():
+    smb_user = {"full_name": "cov", "group_create": True, "smb": True, "password": "SmbPass123!"}
+    with user({**smb_user, "username": "CovSmbRen"}):
+        with user({**smb_user, "username": "covsmbother"}) as other:
+            # Only `username` is sent; the account stays an SMB user, so the rename still conflicts.
+            with pytest.raises(ValidationErrors) as ve:
+                call("user.update", other["id"], {"username": "covsmbren"})
+
+            assert "conflicts with existing SMB user" in str(ve.value), ve.value
+
+
 # ---------------------------------------------------------------------------
 # userns_idmap not allowed on privileged accounts
 # ---------------------------------------------------------------------------
@@ -892,6 +955,24 @@ def test_create_user_userns_idmap_privileged_group():
                 ))
 
             assert "may not be configured for privileged accounts" in str(ve.value), ve.value
+
+
+def test_update_user_userns_idmap_while_clearing_privileged_groups():
+    with group({"name": "covprivclrg", "smb": False}) as g:
+        with privilege({
+            "name": "Cov Priv Clear",
+            "local_groups": [g["gid"]],
+            "ds_groups": [],
+            "roles": ["READONLY_ADMIN"],
+            "web_shell": False,
+        }):
+            with user(_vuser(username="covprivclr", groups=[g["id"]])) as u:
+                # Dropping every auxiliary group in the same request leaves the account unprivileged.
+                call("user.update", u["id"], {"groups": [], "userns_idmap": "DIRECT"})
+
+                after = call("user.get_instance", u["id"])
+                assert after["userns_idmap"] == "DIRECT"
+                assert g["id"] not in after["groups"]
 
 
 # ---------------------------------------------------------------------------
@@ -1064,6 +1145,23 @@ def test_update_user_password_disabled_allowed():
     with user(_vuser(username="covpwdisok")) as u:
         updated = call("user.update", u["id"], {"password_disabled": True})
         assert updated["password_disabled"] is True
+
+
+def test_update_password_of_password_disabled_user():
+    # A stored `password_disabled` leaves the password dormant, not forbidden, so it may still be rotated.
+    # Only a request that disables password login while also sending a password contradicts itself.
+    payload = {"username": "covpwdisrot", "full_name": "cov", "group_create": True,
+               "smb": False, "password_disabled": True}
+    with user(payload) as u:
+        updated = call("user.update", u["id"], {"password": "NewCovPass1!"})
+        assert updated["password_disabled"] is True
+        assert updated["password"] == "NewCovPass1!"
+        assert updated["last_password_change"] is not None
+
+        with pytest.raises(ValidationErrors) as ve:
+            call("user.update", u["id"], {"password_disabled": True, "password": "NewCovPass2!"})
+
+        assert 'Leave "Password" blank when "Disable password login" is checked.' in str(ve.value), ve.value
 
 
 # ---------------------------------------------------------------------------

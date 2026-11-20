@@ -129,3 +129,35 @@ def test_can_update_user_with_cli_shell_with_privileges(group_payload):
                 })
         finally:
             call("privilege.delete", privilege["id"])
+
+
+@pytest.mark.parametrize("payload", [
+    {"shell": "/usr/bin/cli", "groups": []},
+    {"groups": []},
+])
+def test_cant_keep_cli_shell_after_leaving_privileged_group(payload):
+    with group({
+        "name": "test_has_privileges",
+    }) as g:
+        privilege = call("privilege.create", {
+            "name": "Test",
+            "local_groups": [g["gid"]],
+            "ds_groups": [],
+            "roles": ["READONLY_ADMIN"],
+            "web_shell": False,
+        })
+        try:
+            with user({
+                "username": "test",
+                "full_name": "Test",
+                "password": "test1234",
+                "group_create": True,
+                "groups": [g["id"]],
+                "shell": "/usr/bin/cli",
+            }) as u:
+                with pytest.raises(ValidationErrors) as ve:
+                    call("user.update", u["id"], payload)
+
+                assert ve.value.errors[0].attribute == "user_update.shell"
+        finally:
+            call("privilege.delete", privilege["id"])

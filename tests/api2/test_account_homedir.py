@@ -366,6 +366,24 @@ def test_sshpubkey_skipped_when_old_home_missing_on_move():
 
 
 # ---------------------------------------------------------------------------
+# a key set together with a home move is checked against the home being created
+# ---------------------------------------------------------------------------
+def test_sshpubkey_validated_against_created_home_on_move():
+    with dataset("cov_ssh_mvkey_a") as a, dataset("cov_ssh_mvkey_b") as b:
+        with user(_home_user(f"/mnt/{a}", username="covsshmk", home_create=True)) as u:
+            # The new parent is world-writable but the home created beneath it is not,
+            # so the update only passes if validation looks at /mnt/b/covsshmk.
+            ssh(f"chmod 777 /mnt/{b}")
+
+            call(
+                "user.update",
+                u["id"],
+                {"home": f"/mnt/{b}", "home_create": True, "sshpubkey": "ssh-rsa AAAAmovekey"},
+            )
+            assert call("user.get_instance", u["id"])["home"] == f"/mnt/{b}/covsshmk"
+
+
+# ---------------------------------------------------------------------------
 # update_sshpubkey tolerates a group name that can't be resolved to a gid
 # ---------------------------------------------------------------------------
 def test_sshpubkey_gid_lookup_failure_tolerated():
