@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import subprocess
 import uuid
 
@@ -100,11 +101,15 @@ def test__format_disk():
             assert False, "Failed to find an unused disk"
 
     # Format the disk with GPT partition table
-    # Note: format() automatically wipes existing partitions if present
-    partition_guid = disk.format()
-
-    # Verify the partition GUID is valid UUID
-    assert isinstance(partition_guid, uuid.UUID)
+    # Note: format() wipes the disk before writing the new table and keeps it locked against udev
+    formatted = disk.format()
+    try:
+        partition_guid = formatted.partition_uuid
+        assert isinstance(partition_guid, uuid.UUID)
+        assert formatted.devname == f"{disk.name}1"
+        assert os.readlink(formatted.path) == f"../../{formatted.devname}"
+    finally:
+        formatted.release()
 
     # Verify the disk now has partitions
     assert disk.partitions() is not None

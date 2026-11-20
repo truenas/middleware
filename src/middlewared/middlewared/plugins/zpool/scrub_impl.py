@@ -39,7 +39,7 @@ def _count_running_scrubs(lzh: libzfs_types.ZFS) -> int:
     """Count the number of pools with an active scan."""
     count = [0]
 
-    def _cb(pool, state):
+    def _cb(pool: libzfs_types.ZFSPool, state: list[int]) -> bool:
         info = pool.scrub_info()
         if info is not None and info.state == libzfs_types.ScanState.SCANNING:
             state[0] += 1
@@ -63,13 +63,11 @@ def _get_scan_function(scan_type: Literal["SCRUB", "ERRORSCRUB"]) -> Literal[
     when a replacement or re-attached vdev is detected.
 
     Raises ZpoolScanInvalidTypeException if scan_type is not recognized."""
-    func = getattr(libzfs_types.ScanFunction, scan_type.upper(), None)
-    if func not in (
-        libzfs_types.ScanFunction.SCRUB,
-        libzfs_types.ScanFunction.ERRORSCRUB,
-    ):
-        raise ZpoolScanInvalidTypeException(scan_type)
-    return func
+    if scan_type.upper() == "SCRUB":
+        return libzfs_types.ScanFunction.SCRUB
+    if scan_type.upper() == "ERRORSCRUB":
+        return libzfs_types.ScanFunction.ERRORSCRUB
+    raise ZpoolScanInvalidTypeException(scan_type)
 
 
 def _get_scan_action(
@@ -186,9 +184,10 @@ def validate_pool(
     zpool = _open_pool_handle(lzh, pool_name)
 
     # Check pool health
-    health = zpool.get_properties(properties={ZPOOLProperty.HEALTH}).health.value
+    health_prop = zpool.get_properties(properties={ZPOOLProperty.HEALTH}).health
+    health = health_prop.value if health_prop is not None else None
     if health not in ("ONLINE", "DEGRADED"):
-        raise ZpoolPoolUnhealthyException(pool_name, health)
+        raise ZpoolPoolUnhealthyException(pool_name, str(health))
 
     # Pre-check: reject if resilver is active or scrub already running
     scan = zpool.scrub_info()

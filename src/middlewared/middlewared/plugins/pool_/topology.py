@@ -52,10 +52,10 @@ class PoolService(Service):
     @private
     def transform_topology(self, x, options=None):
         """
-        Transform topology output from zpool.query_impl to add `device`, `disk`,
+        Transform topology output from zpool.list_impl to add `device`, `disk`,
         `path`, `status`, `type` (uppercase), and `unavail_disk` fields.
 
-        Also converts vdev stats and guid to legacy format.
+        Also converts vdev stats to legacy format.
         """
         options = options or {}
         if isinstance(x, dict):
@@ -80,10 +80,6 @@ class PoolService(Service):
             # Convert vdev stats to legacy format
             if 'stats' in x and isinstance(x['stats'], dict):
                 x['stats'] = _transform_stats(x['stats'])
-
-            # Convert guid to string for legacy compatibility
-            if 'guid' in x and not isinstance(x['guid'], str):
-                x['guid'] = str(x['guid'])
 
             # Add path for leaf vdevs
             if 'path' not in x and 'name' in x:

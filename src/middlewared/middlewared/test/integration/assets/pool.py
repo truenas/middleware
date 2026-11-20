@@ -24,31 +24,17 @@ another_pool_topologies = [
 ]
 
 
-@contextlib.contextmanager
-def another_pool(data=None, topology=None):
-    data = data or {}
-
-    if topology is None:
-        topology = another_pool_topologies[0]
-
+def unused_disks(count):
+    """The names of the unused disks, of which the box must have at least `count`."""
     unused = call("disk.get_unused")
-    if len(unused) < topology[0]:
-        raise RuntimeError(f"At least {topology[0]} unused disks required to test this pool topology")
+    if len(unused) < count:
+        raise RuntimeError(f"At least {count} unused disks required to test this pool topology")
+    return [d["devname"] for d in unused]
 
-    try:
-        pool = call("pool.create", {
-            "name": "test",
-            "encryption": False,
-            "allow_duplicate_serials": True,
-            "topology": topology[1]([d["devname"] for d in unused]),
-            **data,
-        }, job=True)
-    except ValidationErrors as e:
-        if any(error.attribute == "pool_create.name" and error.errcode == errno.EEXIST for error in e.errors):
-            fail("Previous `another_pool` fixture failed to teardown. Aborting tests.")
 
-        raise
-
+@contextlib.contextmanager
+def destroy_on_exit(pool):
+    """Yield a created pool and export it with destroy afterwards."""
     try:
         yield pool
     finally:
@@ -66,6 +52,31 @@ def another_pool(data=None, topology=None):
                 raise
         except InstanceNotFound:
             pass
+
+
+@contextlib.contextmanager
+def another_pool(data=None, topology=None):
+    data = data or {}
+
+    if topology is None:
+        topology = another_pool_topologies[0]
+
+    try:
+        pool = call("pool.create", {
+            "name": "test",
+            "encryption": False,
+            "allow_duplicate_serials": True,
+            "topology": topology[1](unused_disks(topology[0])),
+            **data,
+        }, job=True)
+    except ValidationErrors as e:
+        if any(error.attribute == "pool_create.name" and error.errcode == errno.EEXIST for error in e.errors):
+            fail("Previous `another_pool` fixture failed to teardown. Aborting tests.")
+
+        raise
+
+    with destroy_on_exit(pool):
+        yield pool
 
 
 @contextlib.contextmanager
