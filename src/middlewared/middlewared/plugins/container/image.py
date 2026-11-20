@@ -16,6 +16,12 @@ from middlewared.utils.network import INTERNET_TIMEOUT
 REGISTRY_URL = "https://images.sys.truenas.net/streams"
 
 
+def rootfs_filter(member: tarfile.TarInfo, dest_path: str) -> tarfile.TarInfo:
+    # tar_filter rejects members that land outside dest_path but masks the mode to 0o755.
+    # A rootfs needs its setuid binaries and its sticky 1777 /tmp, so the original mode is put back.
+    return tarfile.tar_filter(member, dest_path).replace(mode=member.mode, deep=False)
+
+
 class ContainerImageService(Service):
     class Config:
         cli_namespace = 'service.container.image'
@@ -132,7 +138,8 @@ class ContainerImageService(Service):
                         members = tar.getmembers()
 
                         for i, member in enumerate(members):
-                            tar.extract(member, path=mountpoint)
+                            # numeric_owner keeps the image uid and gid. A name lookup uses the host /etc/passwd.
+                            tar.extract(member, path=mountpoint, filter=rootfs_filter, numeric_owner=True)
                 finally:
                     # Clean up the tarball file
                     job.set_progress(95, 'Cleaning up temporary files...')
