@@ -6,7 +6,7 @@
     from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
     from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
     from middlewared.api.current import GroupGetGroupObj, NFSEntry, SharingNFSEntry, UserGetUserObj
-    from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
+    from middlewared.plugins.nfs_.utils import leftmost_has_wildcards, path_exportable
 
     def do_map(share: SharingNFSEntry, map_type: str, map_ids: dict[str, int | str], alert_shares: dict[str, list[str]]) -> list[str]:
         output = []
@@ -128,6 +128,13 @@
                 'Skipping generation of share %r as the underlying resource is locked', share.path
             )
             middleware.call_sync2(middleware.services.sharing.nfs.generate_locked_alert, share.id)
+            continue
+
+        if not path_exportable(share.path):
+            middleware.logger.warning(
+                '%r: omitting from NFS exports, as exports(5) cannot carry a double quote, backslash or control '
+                'character in a path', share.path
+            )
             continue
 
         p = Path(share.path)

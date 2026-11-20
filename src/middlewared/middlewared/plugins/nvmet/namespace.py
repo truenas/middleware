@@ -1,8 +1,13 @@
 from asyncio import Lock
+import errno
 import os
 import pathlib
-import subprocess
+import stat
 import uuid
+
+import truenas_os
+from truenas_os_pyutils.io import safe_open_raw
+from truenas_os_pyutils.mount import statmount
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -17,6 +22,8 @@ from middlewared.api.current import (
     ZFSResourceSetArgsData,
     ZFSResourceSetProperties,
 )
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import SharingService, ValidationErrors, private
@@ -43,7 +50,8 @@ NSID_LOCK = Lock()
 def remove_file(data: dict) -> bool:
     if data['device_type'] == 'FILE':
         try:
-            os.unlink(data['device_path'])
+            with safe_open_raw(os.path.dirname(data['device_path']), os.O_DIRECTORY) as dir_fd:
+                os.unlink(os.path.basename(data['device_path']), dir_fd=dir_fd)
         except FileNotFoundError:
             pass
         except Exception as e:
@@ -251,34 +259,33 @@ class NVMetNamespaceService(SharingService):
     def save_file(self, data, schema_name, verrors, old=None):
         if data['device_type'] == 'FILE':
             path = data['device_path']
-            dirs = '/'.join(path.split('/')[:-1])
-
-            # create extent directories
-            try:
-                pathlib.Path(dirs).mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                raise CallError(
-                    f'Failed to create {dirs} with error: {e}'
-                )
 
             # create the file, or perhaps extend it
-            if not os.path.exists(path):
+            try:
+                with safe_open_raw(path) as fd:
+                    st = os.fstat(fd)
+            except FileNotFoundError:
                 if _filesize := data.get('filesize'):
-                    subprocess.run(['truncate', '-s', str(_filesize), path])
+                    with safe_open_raw(path, os.O_WRONLY | os.O_CREAT) as fd:
+                        os.ftruncate(fd, _filesize)
                 else:
                     verrors.add(f'{schema_name}.filesize',
                                 'Must supply filesize if device_path FILE does not exist.')
             else:
+                if not stat.S_ISREG(st.st_mode):
+                    raise CallError(f'{path}: not a regular file', errno.EINVAL)
+
                 # Compare against the actual size of the file, as the stored
                 # filesize may be unset (existing file used as-is) or stale.
-                current_size = os.stat(path).st_size
+                current_size = st.st_size
                 new_size = data.get('filesize')
                 if old and path == old['device_path']:
                     # Only act if the filesize is being changed
                     if new_size and new_size != old['filesize']:
                         # Only allow expansion
                         if new_size > current_size:
-                            subprocess.run(['truncate', '-s', str(new_size), path])
+                            with safe_open_raw(path, os.O_WRONLY) as fd:
+                                os.ftruncate(fd, new_size)
                             # resync so connected initiators can see the new size
                             self.middleware.call_sync('nvmet.namespace.resize_namespace', data['id'])
                         elif new_size < current_size:
@@ -297,17 +304,38 @@ class NVMetNamespaceService(SharingService):
             data['dataset'] = data['relative_path'] = None
 
     @private
-    def _is_dataset_path(self, pathstr: str) -> bool:
-        if not pathstr.startswith('/mnt'):
-            return False
-        root_dev = os.stat('/mnt').st_dev
-        path = pathlib.Path(pathstr)
-        if path.exists():
-            return path.stat().st_dev != root_dev
-        elif path.parent.exists():
-            return path.parent.stat().st_dev != root_dev
-        else:
-            return False
+    def validate_file_path(self, device_path, schema_name, verrors):
+        field = f'{schema_name}.device_path'
+        self.middleware.run_coroutine(check_path_resides_within_volume(verrors, self.middleware, field, device_path))
+        try:
+            try:
+                fd = truenas_os.openat2(
+                    device_path, os.O_PATH | os.O_CLOEXEC, resolve=truenas_os.RESOLVE_NO_SYMLINKS,
+                )
+            except FileNotFoundError:
+                fd = truenas_os.openat2(
+                    os.path.dirname(device_path), os.O_PATH | os.O_DIRECTORY | os.O_CLOEXEC,
+                    resolve=truenas_os.RESOLVE_NO_SYMLINKS,
+                )
+            else:
+                if not stat.S_ISREG(os.fstat(fd).st_mode):
+                    os.close(fd)
+                    verrors.add(field, f'FILE device_path must be a regular file: {device_path}')
+                    return
+        except FileNotFoundError:
+            verrors.add(field, f'FILE device_path must reside in an existing directory on a dataset: {device_path}')
+            return
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                verrors.add(field, f'Symbolic links are not permitted in FILE device_path: {device_path}')
+                return
+            raise
+
+        try:
+            if has_internal_path(statmount(fd=fd)['mount_source']):
+                verrors.add(field, f'FILE device_path is on a dataset managed by the system: {device_path}')
+        finally:
+            os.close(fd)
 
     @private
     def clean_type_and_path(self, data, schema_name, verrors):
@@ -325,13 +353,7 @@ class NVMetNamespaceService(SharingService):
                     verrors.add(f'{schema_name}.device_path',
                                 f'ZVOL device_path must start with "zvol/": {device_path}')
             case 'FILE':
-                if not self._is_dataset_path(device_path):
-                    verrors.add(f'{schema_name}.device_path',
-                                'FILE device_path must reside in an existing directory '
-                                f'on a dataset: {device_path}')
-                elif os.path.isdir(device_path):
-                    verrors.add(f'{schema_name}.device_path',
-                                f'FILE device_path must not be a directory: {device_path}')
+                self.validate_file_path(device_path, schema_name, verrors)
                 self.middleware.run_coroutine(
                     check_path_service_write_allowed(
                         verrors, self.middleware, f'{schema_name}.device_path', device_path, beneath=False

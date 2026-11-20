@@ -142,9 +142,22 @@ def validate_smb_share_name(name: str) -> str:
     return name
 
 
+def path_suffix_stays_beneath(suffix: str) -> bool:
+    return all(component not in ('', '.', '..') for component in suffix.split('/'))
+
+
+def validate_smb_share_path_suffix(suffix: str) -> str:
+    if not path_suffix_stays_beneath(suffix):
+        raise ValueError(f'{suffix}: must be a relative path with no empty, "." or ".." component')
+
+    return suffix
+
+
 def validate_smb_path_suffix(suffix: str) -> str:
     if not suffix:
         raise ValueError('Invalid path schema')
+
+    validate_smb_share_path_suffix(suffix)
 
     components = suffix.split('/')
     if len(components) > 2:

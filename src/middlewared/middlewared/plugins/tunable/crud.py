@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import errno
-import os
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import TunableCreate, TunableEntry, TunableUpdate
@@ -22,8 +21,8 @@ from .utils import (
     set_sysctl,
     set_zfs_parameter,
     update_initramfs,
-    zfs_parameter_path,
     zfs_parameter_value,
+    zfs_parameters,
 )
 
 if TYPE_CHECKING:
@@ -80,7 +79,7 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
             )
 
         if data.type == 'ZFS':
-            if not await self.to_thread(os.path.exists, zfs_parameter_path(data.var)):
+            if data.var not in await self.to_thread(zfs_parameters):
                 verrors.add(
                     'tunable_create.var',
                     f'ZFS module does not accept {data.var!r} parameter.',

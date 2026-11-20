@@ -2,6 +2,7 @@ import gc
 import os
 import pytest
 import stat
+import threading
 
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.filesystem import constants
@@ -175,3 +176,28 @@ def test__directory_is_empty(tmpdir):
     assert directory.directory_is_empty(tmpdir)
     os.mkdir(os.path.join(tmpdir, 'testfile'))
     assert not directory.directory_is_empty(tmpdir)
+
+
+def test__iter_listdir_skips_unresolvable_symlinks(tmpdir):
+    open(os.path.join(tmpdir, 'file'), 'w').close()
+    os.symlink('missing', os.path.join(tmpdir, 'dangling'))
+    os.symlink('loop', os.path.join(tmpdir, 'loop'))
+    os.symlink('file/child', os.path.join(tmpdir, 'notdir'))
+
+    assert [dirent.name for dirent in directory.iter_listdir(tmpdir)] == ['file']
+
+
+def test__iter_listdir_symlink_to_fifo(tmpdir):
+    os.mkfifo(os.path.join(tmpdir, 'fifo'))
+    os.symlink('fifo', os.path.join(tmpdir, 'fifo_sl'))
+    listed = {}
+
+    def listdir():
+        listed.update((dirent.name, dirent) for dirent in directory.iter_listdir(tmpdir))
+
+    thread = threading.Thread(target=listdir, daemon=True)
+    thread.start()
+    thread.join(30)
+    assert not thread.is_alive(), 'listing the directory blocked'
+    assert listed['fifo_sl'].type == 'SYMLINK'
+    assert stat.S_ISFIFO(listed['fifo_sl'].mode)

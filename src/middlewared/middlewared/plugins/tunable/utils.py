@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import os
 import subprocess
 from typing import TYPE_CHECKING, Any
 
@@ -81,8 +82,18 @@ def reset_sysctl(middleware: Middleware, tunable: TunableEntry, ha_propagate: bo
     set_sysctl(middleware, tunable.var, tunable.orig_value, ha_propagate)
 
 
+ZFS_PARAMETERS_DIR = '/sys/module/zfs/parameters'
+
+
+def zfs_parameters() -> set[str]:
+    return set(os.listdir(ZFS_PARAMETERS_DIR))
+
+
 def zfs_parameter_path(name: str) -> str:
-    return f'/sys/module/zfs/parameters/{name}'
+    if '/' in name or name in ('', '.', '..'):
+        raise ValueError(f'{name!r}: not a ZFS module parameter name')
+
+    return os.path.join(ZFS_PARAMETERS_DIR, name)
 
 
 def zfs_parameter_value(name: str) -> str:

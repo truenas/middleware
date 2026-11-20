@@ -8,7 +8,7 @@ import shutil
 import stat
 from typing import TYPE_CHECKING, Any
 
-from truenas_os_pyutils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write, safe_open, safe_open_raw
 from truenas_os_pyutils.truenas_shutil import CopyTreeConfig, CopyTreeStats, copytree
 
 from middlewared.api.current import (
@@ -33,14 +33,17 @@ __all__ = (
 )
 
 
+AUTHORIZED_KEYS_MAX_SIZE = 1024 * 1024
+
+
 def read_authorized_keys(context: ServiceContext, homedir: str) -> str | None:
     # Extravagant zpool / hardware errors may manifest as IO errors during filesystem operations (even though the
     # pool itself imports). Since this is a hot codepath in the `extend` method (which *must not* fail) we
     # suppress the IOError here, and allow other filesystem operations to complain loudly at the user.
     with suppress(FileNotFoundError, IOError):
-        with open(f"{homedir}/.ssh/authorized_keys") as f:
+        with safe_open(f"{homedir}/.ssh/authorized_keys") as f:
             try:
-                return f.read().strip()
+                return f.read(AUTHORIZED_KEYS_MAX_SIZE).strip()
             except UnicodeDecodeError:
                 context.logger.warning("Invalid encoding detected in authorized_keys file")
 
@@ -146,19 +149,13 @@ def update_sshpubkey(context: ServiceContext, homedir: str, user: dict[str, Any]
     pubkey = pubkey.strip()
     if pubkey == "":
         try:
-            os.unlink(keysfile)
+            with safe_open_raw(sshpath, os.O_DIRECTORY) as sshdir_fd:
+                os.unlink("authorized_keys", dir_fd=sshdir_fd)
         except OSError:
             pass
         return
 
-    oldpubkey = ""
-    try:
-        with open(keysfile, "r") as f:
-            oldpubkey = f.read().strip()
-    except Exception:
-        pass
-
-    if pubkey == oldpubkey:
+    if pubkey == read_authorized_keys(context, homedir):
         return
 
     if not os.path.isdir(sshpath):

@@ -8,7 +8,7 @@ from middlewared.api.current import GroupGetGroupObj, QueryOptions, SharingNFSEn
 from middlewared.service import ValidationErrors
 
 from .share_hosts import resolve_hostnames, share_realpath, validate_hosts_and_networks, validate_share_networks
-from .utils import NFSProtocol
+from .utils import NFSProtocol, path_exportable
 from .validators import confirm_unique, sanitize_hosts, sanitize_networks
 
 if TYPE_CHECKING:
@@ -131,6 +131,13 @@ async def validate_share_path(
     A share path centric test. Checks new share path against existing.
     This function checks for common conditions.
     """
+    if not path_exportable(data.path):
+        verrors.add(
+            f"{schema_name}.path",
+            "NFS cannot export a path that contains a double quote, a backslash or a control character.",
+        )
+        return
+
     tgt_stat = await part.middleware.call("filesystem.stat", data.path)
 
     if tgt_stat.type == "SYMLINK":

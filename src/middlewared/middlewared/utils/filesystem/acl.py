@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import enum
-import os
 from types import MappingProxyType
 from typing import Any
 
 import truenas_os
+from truenas_os_pyutils.io import safe_open_raw
 
 ACL_UNDEFINED_ID = -1
 
@@ -411,8 +411,5 @@ def posixacl_obj_to_dict(acl: truenas_os.POSIXACL, uid: int, gid: int) -> dict[s
 
 
 def strip_acl_path(path: str) -> None:
-    fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-    try:
+    with safe_open_raw(path) as fd:
         truenas_os.fsetacl(fd, None)
-    finally:
-        os.close(fd)

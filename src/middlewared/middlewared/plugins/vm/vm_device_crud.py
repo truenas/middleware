@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Any
 
+from truenas_os_pyutils.io import safe_open_raw
 from truenas_pylibvirt.domain.start_validator import check_pci_slot_conflicts
 
 from middlewared.api.base.handler.accept import validate_model
@@ -21,12 +22,21 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDServicePart, ServiceContext, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 if TYPE_CHECKING:
     from middlewared.utils.libvirt.device_factory import DeviceFactory
     from middlewared.utils.types import AuditCallback
+
+
+def unlink_raw_file(path: str) -> None:
+    with safe_open_raw(os.path.dirname(path), os.O_DIRECTORY) as dir_fd:
+        os.unlink(os.path.basename(path), dir_fd=dir_fd)
+
+
+def truncate_raw_file(path: str, size: int) -> None:
+    with safe_open_raw(path, os.O_WRONLY | os.O_CREAT) as fd:
+        os.ftruncate(fd, size)
 
 
 class VMDeviceModel(sa.Model):
@@ -129,7 +139,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
             if not device.attributes.path:
                 raise CallError('RAW device has no path configured')
             try:
-                os.unlink(device.attributes.path)
+                await self.to_thread(unlink_raw_file, device.attributes.path)
             except OSError:
                 raise CallError(f'Failed to destroy {device.attributes.path!r}')
 
@@ -197,9 +207,10 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
             )
         ):
             path = data['attributes']['path']
-            cp = await run(['truncate', '-s', str(data['attributes']['size']), path], check=False)
-            if cp.returncode:
-                raise CallError(f'Failed to create or update raw file {path}: {cp.stderr.decode()}')
+            try:
+                await self.to_thread(truncate_raw_file, path, data['attributes']['size'])
+            except OSError as e:
+                raise CallError(f'Failed to create or update raw file {path}: {e.strerror}')
         return data
 
     async def _reorder_devices(self, id_: int, vm_id: int, order: int | None) -> None:
