@@ -211,7 +211,7 @@ class FilesystemService(Service):
         pass_app=True,
     )
     @job(lock=lambda args: f'zfs_attrs_change:{args[0]["path"]}')
-    def set_zfs_attributes(self, app: App | None, job: Job, data: FilesystemSetZfsAttributesData) -> ZFSFileAttrsData:
+    def set_zfs_attributes(self, app: App, job: Job, data: FilesystemSetZfsAttributesData) -> ZFSFileAttrsData:
         """
         Set special ZFS-related file flags (MS-DOS attributes and the BSD-style
         ``immutable``/``nounlink``/``appendonly`` flags) on the specified path.
