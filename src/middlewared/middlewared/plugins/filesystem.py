@@ -214,6 +214,10 @@ class FilesystemService(Service):
         descendants of the matching type. The root `path` itself is included only if
         its type matches the filter. `null` (the default) preserves the legacy
         single-path behavior. Recursion stops at dataset boundaries.
+
+        A path on the dataset of an S3 bucket is refused, whatever attributes the
+        request names. Only the S3 service writes a bucket, and it sets `immutable`
+        on each object version under retention or legal hold.
         """
         recursive = data['options']['recursive']
         if recursive is not None and len(recursive) == 0:
@@ -223,6 +227,8 @@ class FilesystemService(Service):
                 'Must be null or a non-empty list of FILES/DIRECTORIES.',
             )
             verrors.check()
+
+        _require_service_write_allowed(self.middleware, 'filesystem.set_zfs_attributes.path', data['path'])
 
         job.set_progress(0, 'Setting ZFS attributes')
         try:
