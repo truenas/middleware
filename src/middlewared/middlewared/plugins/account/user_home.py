@@ -43,7 +43,8 @@ def read_authorized_keys(context: ServiceContext, homedir: str) -> str | None:
     with suppress(FileNotFoundError, IOError):
         with safe_open(f"{homedir}/.ssh/authorized_keys") as f:
             try:
-                return f.read(AUTHORIZED_KEYS_MAX_SIZE).strip()
+                keys: str = f.read(AUTHORIZED_KEYS_MAX_SIZE)
+                return keys.strip()
             except UnicodeDecodeError:
                 context.logger.warning("Invalid encoding detected in authorized_keys file")
 
