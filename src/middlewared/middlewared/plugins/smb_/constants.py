@@ -116,6 +116,7 @@ class SMBShareField(enum.StrEnum):
     linter to pick up typos. """
     PURPOSE = 'purpose'
     PATH = 'path'
+    DATASET = 'dataset'
     PATH_SUFFIX = 'path_suffix'
     HOME = 'home'
     NAME = 'name'
