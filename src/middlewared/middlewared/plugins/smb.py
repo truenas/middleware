@@ -375,7 +375,8 @@ class SMBService(ConfigService):
         await self.netif_wait()
 
         config_job.set_progress(30, 'Setting up server SID.')
-        await self.middleware.call('smb.set_system_sid')
+        # IdmapService.restart is a no-op until smb.set_configured, so winbindd is restarted below.
+        winbindd_stale = await self.middleware.call('smb.set_system_sid', False)
 
         config_job.set_progress(40, 'Synchronizing passdb and groupmap.')
         await self.middleware.call('etc.generate', 'user')
@@ -391,6 +392,17 @@ class SMBService(ConfigService):
         # other circumstances are causing our share ACL to get mismatchy.
         await self.middleware.call('smb.sharesec.flush_share_info')
         await self.middleware.call('smb.set_configured')
+
+        if winbindd_stale:
+            # Not fatal: directoryservices.setup waits on this job and would otherwise abort before
+            # its health recovery and the restart of dependent services such as cifs.
+            try:
+                await (await self.middleware.call(
+                    'service.control', 'RESTART', 'idmap', {'silent': False, 'ha_propagate': False}
+                )).wait(raise_error=True)
+            except Exception:
+                self.logger.error('Failed to restart winbindd after changing the local server SID', exc_info=True)
+
         config_job.set_progress(100, 'Finished configuring SMB.')
 
     @private

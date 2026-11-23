@@ -116,11 +116,40 @@ def test_changed_sid_restarts_winbindd(net_setlocalsid_ok):
     """A real change of the local SID under a running winbindd triggers a restart."""
     svc = _smb_service(current_sid=OLD_SID, idmap_started=True)
 
-    svc.set_system_sid()
+    assert svc.set_system_sid() is False
 
     assert net_setlocalsid_ok.called
     assert _restarted(svc)
     svc._restart_job.wait_sync.assert_called_once_with(raise_error=True)
+
+
+@pytest.mark.parametrize("current_sid,sid_exc", [
+    (OLD_SID, None),
+    (None, RuntimeError("tdb locked")),
+])
+def test_deferred_restart_reports_stale_winbindd(net_setlocalsid_ok, current_sid, sid_exc):
+    """
+    smb.configure runs before smb.set_configured, when an idmap RESTART is a no-op, so it
+    passes restart_winbindd=False. The SID is still written, no restart is issued, and the
+    return value tells the caller that winbindd is still on the old SID. A read failure is
+    reported the same way, since the SID may have changed.
+    """
+    svc = _smb_service(current_sid=current_sid, idmap_started=True, sid_exc=sid_exc)
+
+    assert svc.set_system_sid(False) is True
+
+    assert net_setlocalsid_ok.called
+    assert not _restarted(svc)
+
+
+def test_deferred_restart_not_needed_when_winbindd_stopped(net_setlocalsid_ok):
+    """With winbindd stopped there is nothing stale, so the caller is not asked to restart it."""
+    svc = _smb_service(current_sid=OLD_SID, idmap_started=False)
+
+    assert svc.set_system_sid(False) is False
+
+    assert net_setlocalsid_ok.called
+    assert not _restarted(svc)
 
 
 def test_unchanged_sid_is_a_noop(net_setlocalsid_ok):

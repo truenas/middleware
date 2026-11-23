@@ -24,7 +24,11 @@ class SMBService(Service):
         return new_sid
 
     @private
-    def set_system_sid(self):
+    def set_system_sid(self, restart_winbindd=True):
+        """
+        Returns True when winbindd was left running with the previous SID because
+        `restart_winbindd` is False. The caller must then restart idmap.
+        """
         server_sid = self.local_server_sid()
         netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
 
@@ -45,7 +49,7 @@ class SMBService(Service):
             sid_read_failed = True
 
         if current_sid == server_sid:
-            return
+            return False
 
         setsid = subprocess.run([
             SMBCmd.NET.value, '-d', '0',
@@ -60,7 +64,7 @@ class SMBService(Service):
             # nothing stale for winbindd to rebuild) or when winbindd isn't running. When the
             # read failed instead, current_sid is None but sid_read_failed is True, so we fall
             # through and restart -- leaving winbindd on a possibly-stale SID is the worse risk.
-            return
+            return False
 
         # winbindd captures the local SAM domain SID from secrets.tdb when it starts.
         # Changing the SID under a running winbindd leaves its domain list referencing
@@ -71,6 +75,10 @@ class SMBService(Service):
             'winbindd to rebuild its view of the local SAM domain.',
             netbiosname, current_sid, server_sid
         )
+        if not restart_winbindd:
+            return True
+
         self.middleware.call_sync(
             'service.control', 'RESTART', 'idmap', {'silent': False, 'ha_propagate': False}
         ).wait_sync(raise_error=True)
+        return False
