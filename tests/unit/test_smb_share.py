@@ -600,3 +600,57 @@ def test__aux_param_invalid(nfsacl_dataset):
     assert '# test:one' not in conf
     assert '; test:two' not in conf
     assert 'test:three' in conf
+
+
+@pytest.mark.parametrize('dataset', ['dozer/BASE', None])
+def test__share_dataset(nfsacl_dataset, dataset):
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {
+        'path': nfsacl_dataset,
+        'dataset': dataset,
+    })
+
+    if dataset:
+        assert conf['zfs_core:share_dataset'] == dataset
+    else:
+        assert 'zfs_core:share_dataset' not in conf
+
+
+def test__share_dataset_auto_dataset_creation(nfsacl_dataset):
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {
+        'path': nfsacl_dataset,
+        'dataset': 'dozer/BASE',
+        'purpose': 'TIMEMACHINE_SHARE',
+        'options': TIMEMACHINE_SHARE_OPTS | {'auto_dataset_creation': True},
+    })
+
+    assert conf['zfs_core:zfs_auto_create'] is True
+    assert conf['path'] == f'{nfsacl_dataset}/%U'
+    assert conf['zfs_core:share_dataset'] == 'dozer/BASE'
+
+
+def test__share_dataset_unset(nfsacl_dataset):
+    conf = generate_smb_share_conf_dict(None, DEFAULT_SHARE | {'path': nfsacl_dataset})
+
+    assert 'zfs_core:share_dataset' not in conf
+
+
+def test__share_dataset_external():
+    conf = generate_smb_share_conf_dict(DSType.AD, EXTERNAL_SHARE | {'dataset': None})
+
+    assert 'zfs_core:share_dataset' not in conf
+
+
+@pytest.mark.parametrize('dataset', ['dozer/BASE', None])
+def test__share_dataset_aux_param(nfsacl_dataset, dataset):
+    smb = LEGACY_SHARE | {
+        'path': nfsacl_dataset,
+        'dataset': dataset,
+        'options': LEGACY_SHARE_OPTS | {'auxsmbconf': 'zfs_core:share_dataset = boot-pool/ROOT/canary/mnt'},
+    }
+
+    conf = generate_smb_share_conf_dict(None, smb)
+
+    if dataset:
+        assert conf['zfs_core:share_dataset'] == dataset
+    else:
+        assert 'zfs_core:share_dataset' not in conf

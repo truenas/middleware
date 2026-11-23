@@ -289,6 +289,10 @@ def generate_smb_share_conf_dict(
     acl_check = __transform_share_path(ds_type, share_config, config_out)
     __apply_purpose_and_options(ds_type, vfs_objects, share_config, config_out, acl_check)
 
+    if share_config.get(share_field.DATASET):
+        # zfs_core refuses the share if its path is not in this dataset
+        config_out['zfs_core:share_dataset'] = share_config[share_field.DATASET]
+
     if share_config[share_field.OPTS].get(share_field.AAPL_MANGLING):
         # Apply SFM mangling to share
         vfs_objects.add(TrueNASVfsObjects.CATIA)
