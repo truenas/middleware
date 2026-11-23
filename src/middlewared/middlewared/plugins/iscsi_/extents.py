@@ -465,6 +465,13 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.serial', 'Serial number must be unique')
 
     @private
+    async def query_by_zvol(self, zvol_name):
+        return [
+            extent for extent in await self.query([['type', '=', 'DISK']])
+            if zvol_path_to_name(f'/dev/{extent["path"]}') == zvol_name
+        ]
+
+    @private
     async def validate_path_resides_in_volume(self, verrors, schema, path):
         await check_path_resides_within_volume(verrors, self.middleware, schema, path)
 
@@ -493,15 +500,15 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.disk', 'Disk name must start with "zvol/"')
                 raise verrors
 
-            if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', disk]]):
+            device = os.path.join('/dev', disk)
+
+            zvol_name = zvol_path_to_name(device)
+            if namespaces := self.middleware.call_sync('nvmet.namespace.query_by_zvol', zvol_name):
                 ns = namespaces[0]
                 verrors.add(f'{schema_name}.disk',
                             f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
                 raise verrors
 
-            device = os.path.join('/dev', disk)
-
-            zvol_name = zvol_path_to_name(device)
             if not os.path.exists(device):
                 verrors.add(f'{schema_name}.disk', f'Device {device!r} for volume {zvol_name!r} does not exist')
 
@@ -516,6 +523,9 @@ class iSCSITargetExtentService(SharingService):
             if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
                 verrors.add(f'{schema_name}.disk',
                             f'Disk currently in use by extent {used[0]["name"]}')
+
+            if vm_name := self.middleware.call_sync('vm.device.vm_using_storage', 'DISK', device):
+                verrors.add(f'{schema_name}.disk', f'Disk currently in use by VM {vm_name}')
 
         elif extent_type == 'FILE':
             if not path:
@@ -555,6 +565,9 @@ class iSCSITargetExtentService(SharingService):
             if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
                 verrors.add(f'{schema_name}.path',
                             f'File currently in use by extent {used[0]["name"]}')
+
+            if vm_name := self.middleware.call_sync('vm.device.vm_using_storage', 'RAW', path):
+                verrors.add(f'{schema_name}.path', f'File currently in use by VM {vm_name}')
 
         return data
 

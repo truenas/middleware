@@ -15,6 +15,16 @@ from .utils import device_uniqueness_check
 IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
 
 
+def block_share_using_zvol(middleware, zvol_name):
+    if extents := middleware.call_sync('iscsi.extent.query_by_zvol', zvol_name):
+        return f'iSCSI extent {extents[0]["name"]}'
+
+    if namespaces := middleware.call_sync('nvmet.namespace.query_by_zvol', zvol_name):
+        return f'NVMe-oF subsystem {namespaces[0]["subsys"]["name"]} NSID {namespaces[0]["nsid"]}'
+
+    return None
+
+
 class StorageDelegate(DeviceDelegate):
 
     def validate_middleware(
@@ -62,6 +72,18 @@ class RAWDelegate(StorageDelegate):
             verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
 
         self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
+
+        if extents := self.middleware.call_sync('iscsi.extent.query', [['type', '=', 'FILE'], ['path', '=', path]]):
+            verrors.add('attributes.path', f'File currently in use by iSCSI extent {extents[0]["name"]}')
+
+        if namespaces := self.middleware.call_sync(
+            'nvmet.namespace.query', [['device_type', '=', 'FILE'], ['device_path', '=', path]]
+        ):
+            ns = namespaces[0]
+            verrors.add(
+                'attributes.path',
+                f'File currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}',
+            )
 
         super().validate_middleware(device, verrors, old, instance, update)
 
@@ -146,5 +168,7 @@ class DiskDelegate(StorageDelegate):
                         'attributes.path',
                         'Disk resides in an invalid location and is not supported.'
                     )
+                elif share := block_share_using_zvol(self.middleware, zvol_name):
+                    verrors.add('attributes.path', f'Disk currently in use by {share}')
 
         super().validate_middleware(device, verrors, old, instance, update)
