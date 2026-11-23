@@ -29,6 +29,7 @@ AUX_PARAM_BLACKLIST = frozenset([
     'insecure wide links',
     'zfs_core:zfs_block_cloning',
     'zfs_core:zfs_integrity_streams',
+    'zfs_core:share_dataset',
     'shadow:no_dataset_traversal',
     'use sendfile',
     'vfs objects',
