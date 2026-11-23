@@ -1,9 +1,11 @@
 import errno
 import os
 import shutil
+import stat
 import time
 import uuid
 
+from truenas_os_pyutils.io import safe_open
 from truenas_os_pyutils.mount import statmount
 
 from middlewared.api import api_method
@@ -280,18 +282,30 @@ class AuditService(ConfigService):
         else:
             username = 'root'
 
-        target = os.path.join(AUDIT_REPORTS_DIR, username, data['report_name'])
-        if not os.path.exists(target):
+        report_name = data['report_name']
+        # audit.export creates reports directly in the user's report directory
+        if '/' in report_name or '\0' in report_name or report_name in ('', '.', '..'):
+            raise ValidationError('audit.download_report.report_name', f'{report_name!r}: invalid report name.')
+
+        target = os.path.join(AUDIT_REPORTS_DIR, username, report_name)
+        try:
+            # safe_open refuses a symlink anywhere in the path
+            with safe_open(target, 'rb') as f:
+                if not stat.S_ISREG(os.fstat(f.fileno()).st_mode):
+                    raise CallError(f'{target}: unexpected file type.')
+
+                shutil.copyfileobj(f, job.pipes.output.w)
+        except FileNotFoundError:
             raise CallError(
                 f'{target}: audit report does not exist in the report directory of '
                 f'user ({username}).'
-            )
-
-        if not os.path.isfile(target):
-            raise CallError(f'{target}: unexpected file type.')
-
-        with open(target, 'rb') as f:
-            shutil.copyfileobj(f, job.pipes.output.w)
+            ) from None
+        except IsADirectoryError:
+            raise CallError(f'{target}: unexpected file type.') from None
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise CallError(f'{target}: unexpected file type.') from None
+            raise
 
     @private
     def __process_reports_entry(self, entry, cutoff):

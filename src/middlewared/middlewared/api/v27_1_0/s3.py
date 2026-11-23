@@ -28,6 +28,7 @@ __all__ = [
     "S3AccesskeyDeleteArgs",
     "S3AccesskeyDeleteResult",
     "S3Access",
+    "S3GrantAction",
     "S3AuditAction",
     "S3AuditMask",
     "S3Listener",
@@ -88,6 +89,9 @@ S3AuditAction = Literal[
     "PutBucketVersioning",
     "CreateBucket",
     "DeleteBucket",
+    "GetBucketPolicy",
+    "PutBucketPolicy",
+    "DeleteBucketPolicy",
 ]
 """The actions an audit mask may name, spelled exactly as the S3 service
 reads them: its maskable vocabulary in full. The service refuses its
@@ -98,6 +102,40 @@ match no request — so it is the one action name not here."""
 S3AuditMask = list[S3AuditAction] | Literal["ALL"]
 S3AuditOverflow = Literal["DROP", "BACKPRESSURE"]
 S3Access = Literal["READONLY", "WRITEONLY", "READWRITE", "DENY"]
+S3GrantAction = Literal[
+    "GetObject",
+    "PutObject",
+    "DeleteObject",
+    "GetObjectTagging",
+    "PutObjectTagging",
+    "DeleteObjectTagging",
+    "ListBucket",
+    "GetBucketLocation",
+    "ListBucketMultipartUploads",
+    "ListMultipartUploadParts",
+    "AbortMultipartUpload",
+    "PutObjectRetention",
+    "PutObjectLegalHold",
+    "ListAllMyBuckets",
+    "GetObjectAcl",
+    "PutObjectAcl",
+    "GetBucketAcl",
+    "PutBucketAcl",
+    "GetBucketPolicy",
+]
+"""The actions a grant may list: exactly what `READWRITE` allows. The S3
+service refuses its whole config for any other name, so owner-only actions
+such as releasing a legal hold are not here."""
+
+# What READONLY and WRITEONLY allow, for describing a list to older clients.
+_READ_ACTIONS = frozenset({
+    "GetObject", "GetObjectTagging", "GetObjectAcl", "GetBucketAcl", "GetBucketPolicy", "ListBucket",
+    "GetBucketLocation", "ListBucketMultipartUploads", "ListMultipartUploadParts", "ListAllMyBuckets",
+})
+_WRITE_ACTIONS = frozenset({
+    "PutObject", "PutObjectTagging", "DeleteObjectTagging", "AbortMultipartUpload", "ListMultipartUploadParts",
+    "ListAllMyBuckets",
+})
 S3PrincipalType = Literal["USER", "GROUP", "EVERYONE"]
 
 S3PermissionsModel = Literal["S3", "MULTIPROTOCOL"]
@@ -249,12 +287,26 @@ class S3Grant(BaseModel):
             "The uid of the user or the gid of the group. Required for `USER` and `GROUP`, forbidden for `EVERYONE`."
         ),
     )
-    access: S3Access = Field(
+    access: S3Access | Annotated[list[S3GrantAction], Field(min_length=1)] = Field(
         description=(
             "What the grant allows. `READONLY`, `WRITEONLY` and `READWRITE` allow the matching operations. `DENY` "
-            "refuses every operation for the principal and outranks the bucket owner."
+            "refuses every operation for the principal and outranks the bucket owner. A list of actions allows "
+            "exactly those actions."
         ),
     )
+
+    @classmethod
+    def to_previous(cls, value):
+        # Older clients only know presets: show a list as the smallest preset that covers it.
+        if isinstance(value.get("access"), list):
+            actions = set(value["access"])
+            if actions <= _READ_ACTIONS:
+                value["access"] = "READONLY"
+            elif actions <= _WRITE_ACTIONS:
+                value["access"] = "WRITEONLY"
+            else:
+                value["access"] = "READWRITE"
+        return value
 
 
 class S3GrantEntry(S3Grant):

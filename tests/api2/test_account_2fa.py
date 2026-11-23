@@ -286,3 +286,22 @@ def test_update_ssh_password_enabled_requires_user_2fa(sshpw_home):
 
             updated = call("user.update", u["id"], {"ssh_password_enabled": True})
             assert updated["ssh_password_enabled"] is True
+
+
+def test_update_existing_ssh_password_user_after_2fa_enforced(sshpw_home):
+    # 2FA only gates turning SSH password login on. An account that already has it can still be
+    # edited (here with the whole form sent back) after 2FA is enforced for SSH.
+    with user({
+        "username": "cov2fasshkeep",
+        "full_name": "cov 2fa ssh keep",
+        "group_create": True,
+        "smb": False,
+        "password": "test1234",
+        "home": sshpw_home,
+        "home_create": True,
+        "ssh_password_enabled": True,
+    }) as u:
+        with enabled_twofactor_auth(ssh=True):
+            updated = call("user.update", u["id"], {"ssh_password_enabled": True, "full_name": "cov 2fa renamed"})
+            assert updated["ssh_password_enabled"] is True
+            assert updated["full_name"] == "cov 2fa renamed"

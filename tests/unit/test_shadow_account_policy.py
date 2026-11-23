@@ -217,6 +217,13 @@ def password_history():
             }, job=True)
 
 
+@pytest.fixture(scope='function')
+def clear_rate_limit():
+    """ auth.login_ex over TCP is rate limited per IP; logins made by earlier tests must not count """
+    with Client() as c:
+        c.call('rate.limit.cache_clear')
+
+
 def test__new_user_password_change_date(default_security_policy):
     """ This test covers basic shadow file fields and verifies that they are written correctly """
     with create_user('test_user') as u:
@@ -403,6 +410,7 @@ def test__password_history(password_history):
             c.call('user.update', u['id'], {'password': 'Canary'})
 
 
+@pytest.mark.usefixtures('clear_rate_limit')
 def test__password_expired(old_admin):
     """ Verify that expired password gives EXPIRED response type """
     with Client('ws://127.0.0.1/api/current') as c:
@@ -434,6 +442,7 @@ def test__password_expired(old_admin):
             assert resp['response_type'] == 'EXPIRED'
 
 
+@pytest.mark.usefixtures('clear_rate_limit')
 def test__password_expiry_warning(old_admin, set_fips_available):
     """ Verify that account attributes show PASSWORD_CHANGE_REQUIRED """
     with Client('ws://127.0.0.1/api/current') as c:
