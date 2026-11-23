@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Iterable
 from fenced.fence import ExitCode as FencedExitCodes
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import ZFSResourceSetArgsData, ZpoolCreate, ZpoolEntry, ZpoolQuery
+from middlewared.api.current import ZFSResourceSetArgsData, ZpoolCreate, ZpoolEntry, ZpoolListOptions
 from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
 from middlewared.service_exception import CallError, ValidationErrors
 
@@ -164,7 +164,7 @@ def register(context: ServiceContext, name: str, all_sed: bool) -> int:
     """
     # The disk records learn the new partitions and the pool only now that udev has processed them.
     context.middleware.call_sync("disk.sync_all").wait_sync(raise_error=True)
-    guid = context.call_sync2(context.s.zpool.list_impl, ZpoolQuery(pool_names=[name]))[0]["guid"]
+    guid = context.call_sync2(context.s.zpool.list_impl, ZpoolListOptions(pool_names=[name]))[0]["guid"]
     context.call_sync2(
         context.s.zfs.resource.set_impl,
         ZFSResourceSetArgsData(path=name, inherit=["mountpoint"], bypass=True),
@@ -184,7 +184,8 @@ def rollback(context: ServiceContext, name: str, destroy: bool, pool_id: int | N
     """Undo a failed creation: destroy the pool if it got created, drop its row if it got one."""
     if destroy:
         try:
-            context.call_sync2(context.s.zpool.destroy_impl, name)
+            # The root dataset may be mounted and busy by now; force unmounts it anyway.
+            context.call_sync2(context.s.zpool.destroy_impl, name, True)
         except Exception:
             context.logger.warning(
                 "%s: failed to destroy the pool while rolling back its creation", name, exc_info=True
@@ -262,7 +263,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     # an imported pool of that name, registered or not, or a registered but
     # exported one both take the name
     ctx.pool_exists = bool(
-        context.call_sync2(context.s.zpool.list_impl, ZpoolQuery(pool_names=[name]))
+        context.call_sync2(context.s.zpool.list_impl, ZpoolListOptions(pool_names=[name]))
         or context.middleware.call_sync("datastore.query", "storage.volume", [["name", "=", name]], {"prefix": "vol_"})
     )
     collect(verrors, check_pool_absent, data, ctx)

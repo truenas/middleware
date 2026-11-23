@@ -14,7 +14,7 @@ from middlewared.api.current import (
     PoolUpdateResult,
     PoolValidateNameArgs,
     PoolValidateNameResult,
-    ZpoolQuery,
+    ZpoolListOptions,
 )
 from middlewared.plugins.zfs.encryption_keys import resolve_key_options
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
@@ -146,7 +146,7 @@ class PoolService(CRUDService):
             },
         }
 
-        if info := await self.call2(self.s.zpool.list_impl, ZpoolQuery(
+        if info := await self.call2(self.s.zpool.list_impl, ZpoolListOptions(
             pool_names=[pool_name],
             properties=[
                 'size', 'allocated', 'free', 'freeing', 'fragmentation',
@@ -761,7 +761,7 @@ class PoolService(CRUDService):
             properties['dedup_table_quota'] = {'value': dedup_table_quota_value}
 
         zfs_pool = await self.call2(
-            self.s.zpool.list_impl, ZpoolQuery(pool_names=[pool['name']], properties=['ashift'])
+            self.s.zpool.list_impl, ZpoolListOptions(pool_names=[pool['name']], properties=['ashift'])
         )
         if zfs_pool and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
             # https://ixsystems.atlassian.net/browse/NAS-112093

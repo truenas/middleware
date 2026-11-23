@@ -12,7 +12,7 @@ from middlewared.alert.base import (
     UnavailableException,
 )
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.api.current import ZpoolQuery
+from middlewared.api.current import ZpoolListOptions
 
 
 @dataclass(kw_only=True)
@@ -77,11 +77,11 @@ class ZpoolCapacityAlertSource(AlertSource):
         # list_impl with pool_names=None skips boot pools, so we query
         # the boot pool explicitly to ensure capacity alerts still fire.
         pools = await self.middleware.call2(
-            self.middleware.services.zpool.list_impl, ZpoolQuery(properties=["capacity"])
+            self.middleware.services.zpool.list_impl, ZpoolListOptions(properties=["capacity"])
         )
         boot_pool = await self.middleware.call2(self.middleware.services.boot.pool_name)
         pools.extend(await self.middleware.call2(
-            self.middleware.services.zpool.list_impl, ZpoolQuery(pool_names=[boot_pool], properties=["capacity"])
+            self.middleware.services.zpool.list_impl, ZpoolListOptions(pool_names=[boot_pool], properties=["capacity"])
         ))
         for pool in pools:
             try:

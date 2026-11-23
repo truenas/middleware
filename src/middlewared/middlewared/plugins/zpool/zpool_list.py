@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable
 
-from middlewared.api.current import ZpoolEntry, ZpoolQuery
+from middlewared.api.current import ZpoolEntry, ZpoolListOptions
 
 from .list_impl import list_impl as _raw_list
 
@@ -27,7 +27,7 @@ EVENT_PROPERTIES = (
 )
 
 
-def list_impl(tls: Any, data: ZpoolQuery) -> list[dict[str, Any]]:
+def list_impl(tls: Any, data: ZpoolListOptions) -> list[dict[str, Any]]:
     return _raw_list(tls.lzh, data.model_dump())
 
 
@@ -90,7 +90,7 @@ def offline_entries(
     return entries
 
 
-def list_pools(context: ServiceContext, data: ZpoolQuery) -> list[ZpoolEntry]:
+def list_pools(context: ServiceContext, data: ZpoolListOptions) -> list[ZpoolEntry]:
     boot_pool_name = context.call_sync2(context.s.boot.pool_name)
     requested_names = data.pool_names
 
@@ -136,7 +136,7 @@ def send_change_event(
     """
     pools = context.call_sync2(
         context.s.zpool.list,
-        ZpoolQuery(
+        ZpoolListOptions(
             pool_names=[pool_name],
             topology=True,
             scan=True,

@@ -182,15 +182,17 @@ class ZpoolCreateException(ZpoolException):
 
 
 class ZpoolCreateRejected(ZpoolException):
-    """The binding refused a pool creation request before anything was created."""
+    """truenas_pylibzfs refused the request before creating anything.
+
+    ``location`` is where in the ``zpool.create`` request the refusal applies,
+    as the suffix of the attribute (``topology.data.1``, ``name``), or None
+    when the binding faulted something the API does not expose.
+    """
 
     errno = errno.EINVAL
 
     def __init__(self, location: str | None, error: str):
         self.location = location
-        """The request field the binding judged, as a ``zpool.create`` attribute suffix
-        (``topology.data.1``, ``name``, ``filesystem_properties``), or None when it
-        faulted something the request does not expose."""
         self.message = error
         super().__init__(location, error)
 

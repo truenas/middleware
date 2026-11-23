@@ -29,7 +29,7 @@ from collections import defaultdict
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Coroutine
 
-from middlewared.api.current import QueryOptions, VMDisplayDevice, ZFSResourceQuery, ZpoolQuery
+from middlewared.api.current import QueryOptions, VMDisplayDevice, ZFSResourceQuery, ZpoolListOptions
 from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
 if TYPE_CHECKING:
@@ -319,7 +319,7 @@ async def gather_pools(service: Service, context: GatherContext) -> dict[str, An
     ]
     for p in await service.call2(
         service.s.zpool.list_impl,
-        ZpoolQuery(pool_names=db_pools, properties=["size"], topology=True),
+        ZpoolListOptions(pool_names=db_pools, properties=["size"], topology=True),
     ):
         props = p["properties"]
         total_raw_capacity += props["size"]["value"]

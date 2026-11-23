@@ -6,6 +6,7 @@ Nothing here touches middleware or the libzfs handle except ``validate_impl``,
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 
 from truenas_pylibzfs import (
@@ -46,16 +47,18 @@ __all__ = (
 # TrueNAS asks for more disks per vdev than ZFS itself accepts (a two-disk
 # RAIDZ1 is legal but pointless), so this is product policy on top of the
 # binding's own minimums rather than a copy of them.
-MIN_DISKS_PER_VDEV = {
-    "disk": 1,
-    "mirror": 2,
-    "draid1": 2,
-    "draid2": 3,
-    "draid3": 4,
-    "raidz1": 3,
-    "raidz2": 4,
-    "raidz3": 5,
-}
+MIN_DISKS_PER_VDEV = MappingProxyType(
+    {
+        "disk": 1,
+        "mirror": 2,
+        "draid1": 2,
+        "draid2": 3,
+        "draid3": 4,
+        "raidz1": 3,
+        "raidz2": 4,
+        "raidz3": 5,
+    }
+)
 
 VdevRoot = Literal["data", "log", "special", "dedup", "cache", "spares"]
 VDEV_ROOTS: tuple[VdevRoot, ...] = ("data", "log", "special", "dedup")
@@ -86,15 +89,17 @@ class DiskToFormat(TypedDict):
 
 
 # Maps a converted-topology root to the matching create_pool() keyword argument.
-ROOT_TO_KWARG: dict[VdevRoot, str] = {
-    "data": "storage_vdevs",
-    "cache": "cache_vdevs",
-    "log": "log_vdevs",
-    "special": "special_vdevs",
-    "dedup": "dedup_vdevs",
-    "spares": "spare_vdevs",
-}
-KWARG_TO_ROOT = {kwarg: root for root, kwarg in ROOT_TO_KWARG.items()}
+ROOT_TO_KWARG: MappingProxyType[VdevRoot, str] = MappingProxyType(
+    {
+        "data": "storage_vdevs",
+        "cache": "cache_vdevs",
+        "log": "log_vdevs",
+        "special": "special_vdevs",
+        "dedup": "dedup_vdevs",
+        "spares": "spare_vdevs",
+    }
+)
+KWARG_TO_ROOT = MappingProxyType({kwarg: root for root, kwarg in ROOT_TO_KWARG.items()})
 
 # create_pool() arguments that are request fields of the same name
 DIRECT_ARGUMENTS = ("name", "properties", "filesystem_properties")
@@ -283,10 +288,12 @@ def create_impl(
         raise ZpoolCreateException(name, str(e)) from e
 
 
-def destroy_impl(lzh: libzfs_types.ZFS, name: str) -> None:
-    """Destroy a pool through ``truenas_pylibzfs``, unmounting it by force first.
+def destroy_impl(lzh: libzfs_types.ZFS, name: str, force: bool = False) -> None:
+    """Destroy a pool through ``truenas_pylibzfs``.
 
-    Used to roll back a creation that failed after the pool existed, so the
-    new namespace never falls back to the legacy binding.
+    ``force`` unmounts the pool's datasets even while they are busy, as
+    ``zpool destroy -f`` does. Used to roll back a creation that failed after
+    the pool existed, so the new namespace never falls back to the legacy
+    binding.
     """
-    lzh.destroy_pool(name=name, force=True)
+    lzh.destroy_pool(name=name, force=force)

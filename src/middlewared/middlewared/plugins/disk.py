@@ -10,7 +10,7 @@ from middlewared.api.current import (
     DiskQueryRemovedEvent,
     DiskUpdateArgs,
     DiskUpdateResult,
-    ZpoolQuery,
+    ZpoolListOptions,
 )
 from middlewared.service import CRUDService, ValidationError, filterable_api_method, private
 import middlewared.sqlalchemy as sa
@@ -166,7 +166,7 @@ class DiskService(CRUDService):
         if context['pools']:
             context['boot_pool_name'] = await self.call2(self.s.boot.pool_name)
 
-            for pool in await self.call2(self.s.zpool.list_impl, ZpoolQuery(topology=True)):
+            for pool in await self.call2(self.s.zpool.list_impl, ZpoolListOptions(topology=True)):
                 topology = await self.middleware.call('pool.transform_topology_lightweight', pool['topology'])
                 for vdev in await self.middleware.call('pool.flatten_topology', topology):
                     if vdev['type'] == 'DISK':

@@ -12,7 +12,7 @@ from middlewared.alert.base import (
     AlertLevel,
     ThreadedAlertSource,
 )
-from middlewared.api.current import ZpoolQuery
+from middlewared.api.current import ZpoolListOptions
 from middlewared.plugins.zfs.utils import special_vdev_thresholds
 
 
@@ -235,7 +235,7 @@ class TierJobAlertSource(ThreadedAlertSource):
     def _check_special_vdev_usage(self, warning_pct: int, critical_pct: int) -> list[Alert[Any]]:
         pools = self.middleware.call_sync2(
             self.middleware.services.zpool.list_impl,
-            ZpoolQuery(properties=["class_special_usable", "class_special_used"]),
+            ZpoolListOptions(properties=["class_special_usable", "class_special_used"]),
         )
 
         alerts: list[Alert[Any]] = []

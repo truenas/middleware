@@ -184,10 +184,10 @@ def validate_pool(
     zpool = _open_pool_handle(lzh, pool_name)
 
     # Check pool health
-    health_prop = zpool.get_properties(properties={ZPOOLProperty.HEALTH}).health
-    health = health_prop.value if health_prop is not None else None
-    if health not in ("ONLINE", "DEGRADED"):
-        raise ZpoolPoolUnhealthyException(pool_name, str(health))
+    health = zpool.get_properties(properties={ZPOOLProperty.HEALTH}).health
+    assert health is not None  # requested just above
+    if health.raw not in ("ONLINE", "DEGRADED"):
+        raise ZpoolPoolUnhealthyException(pool_name, health.raw)
 
     # Pre-check: reject if resilver is active or scrub already running
     scan = zpool.scrub_info()

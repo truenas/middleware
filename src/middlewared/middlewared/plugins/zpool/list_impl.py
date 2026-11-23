@@ -279,7 +279,7 @@ def list_impl(lzh: libzfs_types.ZFS, data: dict[str, typing.Any]) -> list[dict[s
 
     Args:
         lzh: pylibzfs handle (from tls.lzh or truenas_pylibzfs.open_handle()).
-        data: dict with keys matching ZpoolQuery fields:
+        data: dict with keys matching ZpoolListOptions fields:
             pool_names, properties, topology, scan, expand, features.
 
     Returns:

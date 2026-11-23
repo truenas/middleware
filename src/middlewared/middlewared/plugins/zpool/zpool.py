@@ -12,9 +12,9 @@ from middlewared.api.current import (
     ZpoolListAddedEvent,
     ZpoolListArgs,
     ZpoolListChangedEvent,
+    ZpoolListOptions,
     ZpoolListRemovedEvent,
     ZpoolListResult,
-    ZpoolQuery,
 )
 from middlewared.service import Service, job, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -61,11 +61,11 @@ class ZpoolService(Service):
 
     @private
     @pass_thread_local_storage
-    def list_impl(self, tls: Any, data: ZpoolQuery) -> builtins.list[dict[str, Any]]:
+    def list_impl(self, tls: Any, data: ZpoolListOptions) -> builtins.list[dict[str, Any]]:
         return _list.list_impl(tls, data)
 
     @api_method(ZpoolListArgs, ZpoolListResult, roles=["POOL_READ"], check_annotations=True)
-    def list(self, data: ZpoolQuery) -> builtins.list[ZpoolEntry]:
+    def list(self, data: ZpoolListOptions) -> builtins.list[ZpoolEntry]:
         """
         List ZFS pools with flexible options for properties, topology, scan, and features.
 
@@ -138,8 +138,8 @@ class ZpoolService(Service):
 
     @private
     @pass_thread_local_storage
-    def destroy_impl(self, tls: Any, name: str) -> None:
-        destroy_impl(tls.lzh, name)
+    def destroy_impl(self, tls: Any, name: str, force: bool = False) -> None:
+        destroy_impl(tls.lzh, name, force)
 
     @private
     @pass_thread_local_storage

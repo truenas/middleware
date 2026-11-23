@@ -168,7 +168,7 @@ class DiskEntry:
             # fallback to 512 always
             return 512
 
-    @functools.cached_property
+    @property
     def dif(self) -> bool:
         """Whether a SCSI disk is formatted with T10 Protection Information (DIF), which ZFS cannot use"""
         for path in glob.glob(f"/sys/block/{self.name}/device/scsi_disk/*/protection_type"):
@@ -609,10 +609,13 @@ class DiskEntry:
                         raise
                     time.sleep(0.1)
             devname = f"{self.name}p1" if self.name[-1].isdigit() else f"{self.name}1"
-            # udev makes no link while the disk is locked; it replaces this one in place afterwards.
+            # udev makes no link while the disk is locked. When the caller releases the lock, with the
+            # pool holding the partition, udev's own link lands on this path by rename, so the path
+            # is never missing.
             os.makedirs("/dev/disk/by-partuuid", exist_ok=True)
             os.symlink(f"../../{devname}", f"/dev/disk/by-partuuid/{part_uuid}")
-        except BaseException:
+        except Exception:
+            # No finally: on success the lock lives on in the result until the caller releases it.
             lock.close()
             raise
         return FormattedPartition(partition_uuid=part_uuid, devname=devname, lock=lock)

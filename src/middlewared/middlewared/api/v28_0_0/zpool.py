@@ -15,7 +15,7 @@ __all__ = (
     "ZpoolTopology",
     "ZpoolFeature",
     "ZpoolEntry",
-    "ZpoolQuery",
+    "ZpoolListOptions",
     "ZpoolListArgs",
     "ZpoolListResult",
     "ZpoolListAddedEvent",
@@ -200,7 +200,7 @@ class ZpoolEntry(BaseModel):
         return value
 
 
-class ZpoolQuery(BaseModel):
+class ZpoolListOptions(BaseModel):
     pool_names: list[str] | None = Field(
         default=None,
         description="Pool names to query. `null` queries all imported pools.",
@@ -218,7 +218,7 @@ class ZpoolQuery(BaseModel):
 
 
 class ZpoolListArgs(BaseModel):
-    data: ZpoolQuery = Field(default=ZpoolQuery(), description="Query parameters.")
+    data: ZpoolListOptions = Field(default=ZpoolListOptions(), description="Which pools to list and what to include.")
 
 
 class ZpoolListResult(BaseModel):

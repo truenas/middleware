@@ -51,7 +51,7 @@ from middlewared.api.current import (
     ZfsTierRewriteJobStatusResult,
     ZfsTierUpdateArgs,
     ZfsTierUpdateResult,
-    ZpoolQuery,
+    ZpoolListOptions,
 )
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.event import TypedEventSource
@@ -701,7 +701,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         try:
             pools = await self.call2(
                 self.s.zpool.list_impl,
-                ZpoolQuery(
+                ZpoolListOptions(
                     pool_names=[pool_name],
                     properties=[
                         "class_special_usable",
