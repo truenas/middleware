@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.common.block_storage import (
     BlockStorageAttachment,
     BlockStorageDelegate,
@@ -19,11 +21,19 @@ class BlockStorageService(Service):
             raise ValueError(f"{delegate.namespace!r} delegate is already registered with Block Storage Service")
         self.DELEGATES[delegate.namespace] = delegate
 
-    async def get_in_use(self) -> list[BlockStorageAttachment]:
-        uses = []
-        for delegate in self.DELEGATES.values():
-            for use in await delegate.get_in_use():
-                uses.append((delegate.namespace, use))
+    async def get_in_use(
+        self,
+        kind: str | None = None,
+        skip_namespace: str | None = None,
+    ) -> list[BlockStorageAttachment]:
+        delegates = [delegate for delegate in self.DELEGATES.values() if delegate.namespace != skip_namespace]
+        results = await asyncio.gather(*(delegate.get_in_use() for delegate in delegates))
+        uses = [
+            (delegate.namespace, use)
+            for delegate, result in zip(delegates, results)
+            for use in result
+            if kind is None or use.kind == kind
+        ]
 
         return await self.middleware.run_in_thread(self._attachments, uses)
 
@@ -53,9 +63,7 @@ class BlockStorageService(Service):
             exclude_key = (exclude[0], exclude[1])
 
         key = await self.middleware.run_in_thread(canonical_key, kind, path)
-        for attachment in await self.get_in_use():
-            if attachment.namespace == whitelist_namespace:
-                continue
+        for attachment in await self.get_in_use(kind, whitelist_namespace):
             if attachment.key == key and (attachment.namespace, attachment.id) != exclude_key:
                 return attachment
 
