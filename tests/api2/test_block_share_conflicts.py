@@ -335,19 +335,11 @@ def test_convert_image_rejects_zvol_used_by_iscsi_extent():
             ]
 
 
-def test_vm_disk_rejects_zvol_used_by_other_vm(conflict_vm):
+def test_vm_disk_can_be_shared_between_two_vms(conflict_vm):
     with zvol("conflict_zvol") as ds, vm({"name": "other_vm"}) as other:
         with vm_device(other["id"], {"dtype": "DISK", "path": f"/dev/zvol/{ds}"}):
-            with pytest.raises(ValidationErrors) as ve:
-                call(
-                    "vm.device.create",
-                    {
-                        "vm": conflict_vm["id"],
-                        "attributes": {"dtype": "DISK", "path": f"/dev/zvol/{ds}"},
-                    },
-                )
-
-            assert ve.value.errors == [ValidationError("attributes.path", "Disk currently in use by VM other_vm")]
+            with vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{ds}"}):
+                pass
 
 
 def test_disk_choices_follow_block_storage_registry(conflict_vm):
@@ -384,3 +376,11 @@ def test_convert_image_into_unused_zvol():
         image = f"/mnt/{ds}/source.raw"
         ssh(f"truncate -s 1M {image}")
         call("vm.device.convert", {"source": image, "destination": f"/dev/zvol/{zv}"}, job=True)
+
+
+def test_convert_image_into_zvol_attached_to_stopped_vm(conflict_vm):
+    with dataset("conflict_files") as ds, zvol("conflict_zvol") as zv:
+        image = f"/mnt/{ds}/source.raw"
+        ssh(f"truncate -s 1M {image}")
+        with vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{zv}"}):
+            call("vm.device.convert", {"source": image, "destination": f"/dev/zvol/{zv}"}, job=True)

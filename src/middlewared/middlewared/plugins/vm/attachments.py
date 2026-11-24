@@ -261,9 +261,11 @@ class VMBlockStorageDelegate(BlockStorageDelegate):
     namespace = 'vm.device'
 
     async def get_in_use(self) -> list[BlockStorageUse]:
-        vms = {vm['id']: vm['name'] for vm in await self.middleware.call('vm.query')}
+        vms = {vm['id']: vm['name'] for vm in await self.middleware.call('datastore.query', 'vm.vm')}
         uses = []
-        for device in await self.middleware.call('vm.device.query', [['attributes.dtype', 'in', ['DISK', 'RAW']]]):
+        for device in await self.middleware.call(
+            'vm.device.query', [['vm', 'in', list(vms)], ['attributes.dtype', 'in', ['DISK', 'RAW']]]
+        ):
             path = device['attributes'].get('path')
             if not path:
                 continue

@@ -46,6 +46,7 @@ class BlockStorageService(Service):
         kind: str,
         path: str,
         exclude: tuple[str, int] | None = None,
+        whitelist_namespace: str | None = None,
     ) -> BlockStorageAttachment | None:
         exclude_key: tuple[str, int] | None = None
         if exclude is not None:
@@ -53,6 +54,8 @@ class BlockStorageService(Service):
 
         key = await self.middleware.run_in_thread(canonical_key, kind, path)
         for attachment in await self.get_in_use():
+            if attachment.namespace == whitelist_namespace:
+                continue
             if attachment.key == key and (attachment.namespace, attachment.id) != exclude_key:
                 return attachment
 
@@ -65,9 +68,10 @@ class BlockStorageService(Service):
         path: str,
         exclude: tuple[str, int] | None = None,
         raise_error: bool = False,
+        whitelist_namespace: str | None = None,
     ) -> ValidationErrors | None:
         verrors = ValidationErrors()
-        if attachment := await self.in_use_by(kind, path, exclude):
+        if attachment := await self.in_use_by(kind, path, exclude, whitelist_namespace):
             if kind == "ZVOL":
                 noun = "Disk"
             else:

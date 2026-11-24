@@ -63,10 +63,11 @@ class RAWDelegate(StorageDelegate):
 
         self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
 
-        exclude = None
-        if old:
-            exclude = ('vm.device', old['id'])
-        verrors.extend(self.middleware.call_sync('blockstorage.validate', 'attributes.path', 'FILE', path, exclude))
+        verrors.extend(
+            self.middleware.call_sync(
+                'blockstorage.validate', 'attributes.path', 'FILE', path, None, False, 'vm.device'
+            )
+        )
 
         super().validate_middleware(device, verrors, old, instance, update)
 
@@ -152,11 +153,10 @@ class DiskDelegate(StorageDelegate):
                         'Disk resides in an invalid location and is not supported.'
                     )
                 else:
-                    exclude = None
-                    if old:
-                        exclude = ('vm.device', old['id'])
                     verrors.extend(
-                        self.middleware.call_sync('blockstorage.validate', 'attributes.path', 'ZVOL', path, exclude)
+                        self.middleware.call_sync(
+                            'blockstorage.validate', 'attributes.path', 'ZVOL', path, None, False, 'vm.device'
+                        )
                     )
 
         super().validate_middleware(device, verrors, old, instance, update)
