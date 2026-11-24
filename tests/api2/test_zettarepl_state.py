@@ -185,7 +185,8 @@ def test_deleted_task_ignores_late_state():
 def test_task_id_that_returns_reports_state_again():
     """A task that comes back with a deleted task's id reports its own runs.
 
-    A config restore brings deleted rows back with their old ids.
+    Ids only come back when the database rolls back, for example through a config restore. The guard that
+    drops late reports for a deleted task must lift once the id is active again.
     """
     with dataset("return_src") as src:
         with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
@@ -260,3 +261,32 @@ def test_global_error_replaces_every_task_state():
                 call("zettarepl.update_tasks")
 
             assert call("pool.snapshottask.get_instance", st["id"])["state"]["state"] == "FINISHED"
+
+
+def test_onetime_replication_task_leaves_no_state():
+    """A one-time replication drops its state once it finishes.
+
+    It has no row to keep the state for, and nothing reads it after the job ends.
+    """
+    with dataset("onetime_src") as src, dataset("onetime_dst") as dst:
+        with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
+            run_snapshot_task(st["id"])
+
+            call(
+                "replication.run_onetime",
+                {
+                    "direction": "PUSH",
+                    "transport": "LOCAL",
+                    "source_datasets": [src],
+                    "target_dataset": dst,
+                    "recursive": False,
+                    "also_include_naming_schema": ["auto-%Y-%m-%d_%H-%M"],
+                    "retention_policy": "NONE",
+                },
+                job=True,
+            )
+
+            job = call(
+                "core.get_jobs", [["method", "=", "replication.run_onetime"]], {"order_by": ["-id"], "get": True}
+            )
+            assert f"replication_job_{job['id']}" not in call("zettarepl.get_state")["tasks"]
