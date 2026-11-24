@@ -182,25 +182,6 @@ def test_deleted_task_ignores_late_state():
         assert task_id not in call("zettarepl.get_state")["tasks"]
 
 
-def test_task_id_that_returns_reports_state_again():
-    """A task that comes back with a deleted task's id reports its own runs.
-
-    Ids only come back when the database rolls back, for example through a config restore. The guard that
-    drops late reports for a deleted task must lift once the id is active again.
-    """
-    with dataset("return_src") as src:
-        with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
-            row = call("datastore.query", "storage.task", [["id", "=", st["id"]]], {"get": True})
-
-        call("datastore.insert", "storage.task", row)
-        try:
-            call("zettarepl.update_tasks")
-
-            assert run_snapshot_task(st["id"])["state"] == "FINISHED"
-        finally:
-            call("pool.snapshottask.delete", st["id"])
-
-
 def test_task_on_a_missing_pool_is_held():
     """A periodic snapshot task whose pool is not on the system reports `HOLD` with the reason.
 

@@ -162,8 +162,6 @@ class ZettareplService(Service, TaskStateMixin):
             if task_id not in active_task_ids and find_task_state_datastore(task_id) is None:
                 self.serializable_state.pop(task_id, None)
 
-        self.removed_tasks -= active_task_ids
-
     def get_internal_task_state(self, task_id):
         return self.state[task_id]
 
@@ -200,8 +198,7 @@ class ZettareplService(Service, TaskStateMixin):
         This should be called when a task is deleted from the database.
 
         A delete can arrive while zettarepl runs the task. zettarepl then reports the final state after the
-        delete. `set_state` and `set_last_snapshot` ignore such reports until the task id returns to the
-        definition.
+        delete. `set_state` and `set_last_snapshot` ignore such reports.
         """
         self.state.pop(task_id, None)
         self.last_snapshot.pop(task_id, None)
