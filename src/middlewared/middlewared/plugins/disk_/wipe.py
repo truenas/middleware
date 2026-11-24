@@ -1,12 +1,15 @@
 import asyncio
+import errno
 import os
 import pathlib
+import stat
 import threading
 import time
 
 from middlewared.api import api_method
 from middlewared.api.current import DiskWipeArgs, DiskWipeResult
 from middlewared.service import Service, job, private
+from middlewared.service_exception import CallError
 
 CHUNK = 1048576  # 1MB binary
 
@@ -58,7 +61,14 @@ class DiskService(Service):
         return startsect
 
     def _wipe_impl(self, job, dev, mode, event):
-        disk_path = f'/dev/{dev.removeprefix("/dev/")}'
+        name = dev.removeprefix('/dev/')
+        if not (name.isascii() and name.isalnum()):
+            raise CallError(f'{dev}: not a disk name', errno.EINVAL)
+
+        disk_path = f'/dev/{name}'
+        if not stat.S_ISBLK(os.stat(disk_path, follow_symlinks=False).st_mode):
+            raise CallError(f'{dev}: not a block device', errno.EINVAL)
+
         with open(os.open(disk_path, os.O_WRONLY | os.O_EXCL), 'wb') as f:
             size = os.lseek(f.fileno(), 0, os.SEEK_END)
             if size == 0:

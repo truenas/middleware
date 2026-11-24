@@ -18,7 +18,7 @@ from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.smb import SearchProtocol, SMBSharePurpose
+from middlewared.utils.smb import SearchProtocol, SMBSharePurpose, path_suffix_stays_beneath
 
 _GUESTOK_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]])
 _FSRVP_FILTER = compile_filters([[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]])
@@ -142,7 +142,7 @@ def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict
             pass
 
     acl_check_path = path
-    if path_suffix:
+    if path_suffix and path_suffix_stays_beneath(path_suffix):
         path = os.path.join(path, path_suffix)
 
     config_out['path'] = path
