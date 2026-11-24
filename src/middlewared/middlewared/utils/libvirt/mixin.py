@@ -197,7 +197,7 @@ class DeviceMixin:
         out = {}
         zvols = await self.middleware.call2(
             self.middleware.services.zfs.resource.unlocked_zvols_fast, [
-                ['OR', [['attachment', '=', None], ['attachment.method', '=', f'{self._service_type}.devices.query']]],
+                ['OR', [['attachment', '=', None], ['attachment.method', '=', f'{self._service_type}.device.query']]],
                 ['ro', '=', False],
             ],
             {}, ['ATTACHMENT', 'RO']

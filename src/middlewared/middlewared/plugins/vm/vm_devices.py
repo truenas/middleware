@@ -30,12 +30,10 @@ from middlewared.api.current import (
     ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.utils import has_internal_path
-from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDService, job, private
 from middlewared.service_exception import InstanceNotFound, ValidationError
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
-from middlewared.utils.libvirt.storage_devices import block_share_using_zvol
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 from middlewared.utils.service.path import require_path_service_write_allowed
 
@@ -204,8 +202,9 @@ class VMDeviceService(CRUDService, DeviceMixin):
             raise ValidationError(schema, f'{ptn!r} is in a protected system path', errno.EACCES)
         elif not os.path.exists(ntp):
             raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
-        elif converting_from_image_to_zvol and (share := block_share_using_zvol(self.middleware, ptn)):
-            raise ValidationError(schema, f'{ptn!r} is in use by {share}', errno.EBUSY)
+
+        if converting_from_image_to_zvol:
+            self.middleware.call_sync('blockstorage.validate', schema, 'ZVOL', ntp, None, True)
 
         logical_sectorsize = None
         for i in self.middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISK']]):
@@ -338,20 +337,6 @@ class VMDeviceService(CRUDService, DeviceMixin):
         Returns disk choices for device type "DISK".
         """
         return await self._disk_choices()
-
-    @private
-    async def vm_using_storage(self, dtype, path):
-        devices = await self.middleware.call('vm.device.query', [['attributes.dtype', '=', dtype]])
-        if dtype == 'DISK':
-            zvol_name = zvol_path_to_name(path)
-            devices = [d for d in devices if zvol_path_to_name(d['attributes']['path']) == zvol_name]
-        else:
-            devices = [d for d in devices if d['attributes']['path'] == path]
-
-        if not devices:
-            return None
-
-        return (await self.middleware.call('vm.get_instance', devices[0]['vm']))['name']
 
     @api_method(VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, roles=['VM_DEVICE_READ'])
     async def iotype_choices(self):

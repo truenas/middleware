@@ -2,6 +2,7 @@ import collections
 import os.path
 
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.block_storage import BlockStorageDelegate, BlockStorageKind, BlockStorageUse
 from middlewared.common.ports import PortDelegate
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import private, Service
@@ -255,7 +256,31 @@ class VMPortDelegate(PortDelegate):
         return ports
 
 
+class VMBlockStorageDelegate(BlockStorageDelegate):
+
+    namespace = 'vm.device'
+
+    async def get_in_use(self) -> list[BlockStorageUse]:
+        vms = {vm['id']: vm['name'] for vm in await self.middleware.call('vm.query')}
+        uses = []
+        for device in await self.middleware.call('vm.device.query', [['attributes.dtype', 'in', ['DISK', 'RAW']]]):
+            path = device['attributes'].get('path')
+            if not path:
+                continue
+            kind: BlockStorageKind
+            if device['attributes']['dtype'] == 'DISK':
+                kind = 'ZVOL'
+            else:
+                kind = 'FILE'
+            uses.append(BlockStorageUse(
+                kind=kind, path=path, id=device['id'], description=f'VM {vms[device["vm"]]}', data=device,
+            ))
+
+        return uses
+
+
 async def setup(middleware):
+    await middleware.call('blockstorage.register_attachment_delegate', VMBlockStorageDelegate(middleware))
     middleware.create_task(
         middleware.call('pool.dataset.register_attachment_delegate', VMFSAttachmentDelegate(middleware))
     )

@@ -675,7 +675,7 @@ class TestNVMe(NVMeRunning):
                 # Try to add the volume a second time, ensure that fails
                 with assert_validation_errors(
                     'nvmet_namespace_create.device_path',
-                    f'This device_path already used by subsystem: {SUBSYS_NAME1}',
+                    f'Disk currently in use by NVMe-oF subsystem {SUBSYS_NAME1} NSID 1',
                 ):
                     with nvmet_namespace(subsys1_id, zvol1_path):
                         pass
@@ -689,7 +689,7 @@ class TestNVMe(NVMeRunning):
                     # Try to add the volume to it, ensure it fails
                     with assert_validation_errors(
                         'nvmet_namespace_create.device_path',
-                        f'This device_path already used by subsystem: {SUBSYS_NAME1}',
+                        f'Disk currently in use by NVMe-oF subsystem {SUBSYS_NAME1} NSID 1',
                     ):
                         with nvmet_namespace(subsys2_id, zvol1_path):
                             pass
@@ -719,8 +719,7 @@ class TestNVMe(NVMeRunning):
                             # Ensure we can't update a namespace with an already used ZVOL
                             with assert_validation_errors(
                                 'nvmet_namespace_update.device_path',
-                                'This device_path already used by '
-                                f'subsystem: {SUBSYS_NAME1}',
+                                f'Disk currently in use by NVMe-oF subsystem {SUBSYS_NAME1} NSID 1',
                             ):
                                 call(
                                     'nvmet.namespace.update',
@@ -746,7 +745,7 @@ class TestNVMe(NVMeRunning):
 
                             with iscsi_extent(iscsi_extent_payload):
                                 # Ensure we can't create using a ZVOL used by iSCSI
-                                in_use_msg = 'This device_path already used by iSCSI extent: nvmet_test_extent'
+                                in_use_msg = 'Disk currently in use by iSCSI extent nvmet_test_extent'
                                 with assert_validation_errors(
                                     'nvmet_namespace_create.device_path', in_use_msg
                                 ):
@@ -1089,7 +1088,7 @@ class TestNVMe(NVMeRunning):
 
                 with iscsi_extent(iscsi_extent_payload, True):
                     # Ensure we can't create using a FILE used by iSCSI
-                    in_use_msg = 'This device_path already used by iSCSI extent: nvmet_test_extent'
+                    in_use_msg = 'File currently in use by iSCSI extent nvmet_test_extent'
                     with assert_validation_errors(
                         'nvmet_namespace_create.device_path', in_use_msg
                     ):

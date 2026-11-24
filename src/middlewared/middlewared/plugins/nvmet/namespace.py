@@ -340,13 +340,6 @@ class NVMetNamespaceService(SharingService):
                 verrors.add(f'{schema_name}.device_type', 'Invalid device_type supplied')
 
     @private
-    async def query_by_zvol(self, zvol_name):
-        return [
-            namespace for namespace in await self.query([['device_type', '=', 'ZVOL']])
-            if zvol_path_to_name(f'/dev/{namespace["device_path"]}') == zvol_name
-        ]
-
-    @private
     def clean_filesize(self, data, schema_name, verrors, old=None):
         # The size of a FILE namespace must be a whole number of blocks,
         # whether it is created by us (filesize) or is a pre-existing file.
@@ -393,35 +386,13 @@ class NVMetNamespaceService(SharingService):
         await self.middleware.call('nvmet.namespace.clean_type_and_path', data, schema_name, verrors)
         await self.middleware.call('nvmet.namespace.clean_filesize', data, schema_name, verrors, old)
 
-        # Ensure we're not trying to use a device used elsewhere.
-        device_path = data.get('device_path')
-        if data.get('device_type') == 'ZVOL':
-            zvol_name = zvol_path_to_name(f'/dev/{device_path}')
-            existing = [
-                namespace for namespace in await self.query_by_zvol(zvol_name)
-                if not old or namespace['id'] != old['id']
-            ]
-            extents = await self.middleware.call('iscsi.extent.query_by_zvol', zvol_name)
-            vm_name = await self.middleware.call('vm.device.vm_using_storage', 'DISK', f'/dev/{device_path}')
-        else:
-            _filter = [('device_path', '=', device_path)]
-            if old:
-                _filter.append(('id', '!=', old['id']))
-            existing = await self.query(_filter, {'force_sql_filters': True})
-            extents = await self.middleware.call(
-                'iscsi.extent.query', [['type', '=', 'FILE'], ['path', '=', device_path]]
-            )
-            vm_name = await self.middleware.call('vm.device.vm_using_storage', 'RAW', device_path)
-
-        if existing:
-            verrors.add(f'{schema_name}.device_path',
-                        f"This device_path already used by subsystem: {existing[0]['subsys']['name']}")
-        if extents:
-            verrors.add(f'{schema_name}.device_path',
-                        f"This device_path already used by iSCSI extent: {extents[0]['name']}")
-        if vm_name:
-            verrors.add(f'{schema_name}.device_path',
-                        f"This device_path already used by VM: {vm_name}")
+        exclude = None
+        if old:
+            exclude = ('nvmet.namespace', old['id'])
+        verrors.extend(await self.middleware.call(
+            'blockstorage.validate', f'{schema_name}.device_path', data.get('device_type'), data.get('device_path'),
+            exclude,
+        ))
 
         if old:
             # If the service is running then can only change items if disabled.
