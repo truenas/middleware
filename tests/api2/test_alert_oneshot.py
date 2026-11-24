@@ -45,3 +45,28 @@ def test_oneshot_delete_keeps_alerts_that_do_not_match_the_query():
 def test_oneshot_delete_nonexistent_alert_is_not_an_error():
     call("alert.oneshot_delete", MOCK_ALERT_CLASS)
     call("alert.oneshot_delete", MOCK_ALERT_CLASS)
+
+
+@pytest.mark.parametrize("reuse,kept_ids", [(True, 2), (False, 0)])
+def test_oneshot_replace_reuse(reuse, kept_ids):
+    with mock("test.test2", f"""
+        from middlewared.alert.source.ups import UPSOnlineAlert
+
+        async def mock(self):
+            job = await self.call2(self.s.alert.oneshot_replace, ["UPSOnline"], [
+                UPSOnlineAlert(ups="first", body=""),
+                UPSOnlineAlert(ups="second", body=""),
+            ], {reuse})
+            await job.wait(raise_error=True)
+    """):
+        call("test.test2")
+        ids = {alert["id"] for alert in get_alerts_by_class("UPSOnline")}
+        assert len(ids) == 2
+
+        call("test.test2")
+
+        new_ids = {alert["id"] for alert in get_alerts_by_class("UPSOnline")}
+        assert len(new_ids) == 2
+        assert len(ids & new_ids) == kept_ids
+
+    call("alert.oneshot_delete", ["UPSOnline", MOCK_ALERT_CLASS])

@@ -64,7 +64,35 @@ async def oneshot_delete(context: ServiceContext, state: AlertState, klass: str 
 
 
 async def oneshot_replace(
-    context: ServiceContext, state: AlertState, klasses: list[str], instance: OneShotAlertClass
+    context: ServiceContext,
+    state: AlertState,
+    klasses: list[str],
+    instances: list[OneShotAlertClass],
+    reuse: bool,
 ) -> None:
-    await oneshot_delete(context, state, klasses)
-    await oneshot_create(context, state, instance)
+    if not reuse:
+        await oneshot_delete(context, state, klasses)
+        for instance in instances:
+            await oneshot_create(context, state, instance)
+        return
+
+    applicability = await context.call2(context.s.alert.applicability)
+    alerts: list[Alert[Any]] = []
+    for instance in instances:
+        alert = Alert(instance)
+        alert.source = ""
+        alert.node = state.node
+
+        handle_alert(context, state, alert, applicability)
+        alerts.append(alert)
+
+    uuids = {alert.uuid for alert in alerts}
+    state.alerts = [
+        a
+        for a in state.alerts
+        if a.uuid not in uuids and not (a.node == state.node and a.instance.config.name in klasses)
+    ] + alerts
+
+    await context.call2(context.s.alert.flush_alerts)
+
+    await context.call2(context.s.alert.send_alerts)
