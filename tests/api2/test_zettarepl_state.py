@@ -1,9 +1,10 @@
 import json
+from datetime import datetime, timezone
 
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.replication import replication_task
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
-from middlewared.test.integration.utils import call, poll
+from middlewared.test.integration.utils import call, poll, ssh
 
 SNAPSHOT_TASK = {
     "recursive": False,
@@ -21,15 +22,16 @@ def persist_task_state(task_id, state):
 
 
 def run_snapshot_task(task_id):
-    """Run a periodic snapshot task and wait until it leaves the `PENDING` state.
+    """Run a periodic snapshot task and wait until it reaches a final state.
 
-    `pool.snapshottask.run` only queues the task for zettarepl, so the state changes later. Waiting for any
-    final state lets the caller assert on `FINISHED` itself.
+    `pool.snapshottask.run` only queues the task for zettarepl, so the state changes later. `RUNNING` is not
+    final: zettarepl reports it before it creates the snapshot. Waiting for any final state lets the caller
+    assert on `FINISHED` itself.
     """
     call("pool.snapshottask.run", task_id)
     return poll(
         lambda: call("pool.snapshottask.get_instance", task_id)["state"],
-        condition=lambda state: state["state"] != "PENDING",
+        condition=lambda state: state["state"] in ("FINISHED", "ERROR"),
         timeout=60,
         message=f"Periodic snapshot task {task_id} did not run",
     )
@@ -134,7 +136,8 @@ def test_load_state_forgets_tasks_without_a_row():
     """`zettarepl.load_state` drops the state of tasks that no longer exist in the database.
 
     The other HA node deletes rows through SQL replication, which does not reach this node's in-memory state.
-    A task id reused by a new task would otherwise inherit the deleted task's state.
+    A task id reused by a new task would otherwise inherit the deleted task's state. `flush_state` skips the
+    state of the missing row instead of failing.
     """
     with dataset("forget_src") as src:
         with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
@@ -144,6 +147,7 @@ def test_load_state_forgets_tasks_without_a_row():
             assert call("zettarepl.get_state")["tasks"][task_id]["state"] == "FINISHED"
 
             call("datastore.delete", "storage.task", st["id"])
+            call("zettarepl.flush_state")
             call("zettarepl.load_state")
 
             assert task_id not in call("zettarepl.get_state")["tasks"]
@@ -156,3 +160,103 @@ def test_deleting_task_forgets_its_state():
             run_snapshot_task(st["id"])
 
         assert f"periodic_snapshot_task_{st['id']}" not in call("zettarepl.get_state")["tasks"]
+
+
+def test_deleted_task_ignores_late_state():
+    """State that zettarepl reports after `pool.snapshottask.delete` does not bring the task back.
+
+    The delete can run while the task is `RUNNING`. Its `FINISHED` report arrives after `zettarepl.remove_task`.
+    """
+    with dataset("late_src") as src:
+        with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
+            pass
+
+        task_id = f"periodic_snapshot_task_{st['id']}"
+        call("zettarepl.set_last_snapshot", task_id, f"{src}@auto-2026-01-01_00-00")
+        call(
+            "zettarepl.set_state",
+            task_id,
+            {"state": "FINISHED", "datetime": datetime(2026, 1, 1, tzinfo=timezone.utc)},
+        )
+
+        assert task_id not in call("zettarepl.get_state")["tasks"]
+
+
+def test_task_id_that_returns_reports_state_again():
+    """A task that comes back with a deleted task's id reports its own runs.
+
+    A config restore brings deleted rows back with their old ids.
+    """
+    with dataset("return_src") as src:
+        with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
+            row = call("datastore.query", "storage.task", [["id", "=", st["id"]]], {"get": True})
+
+        call("datastore.insert", "storage.task", row)
+        try:
+            call("zettarepl.update_tasks")
+
+            assert run_snapshot_task(st["id"])["state"] == "FINISHED"
+        finally:
+            call("pool.snapshottask.delete", st["id"])
+
+
+def test_task_on_a_missing_pool_is_held():
+    """A periodic snapshot task whose pool is not on the system reports `HOLD` with the reason.
+
+    A config restore brings back tasks for pools that are missing from the system.
+    """
+    task_id = call(
+        "datastore.insert", "storage.task", {"dataset": "nopool/held_src", "exclude": []}, {"prefix": "task_"}
+    )
+    try:
+        call("zettarepl.update_tasks")
+
+        state = call("pool.snapshottask.get_instance", task_id)["state"]
+        assert state["state"] == "HOLD"
+        assert state["reason"] == "Pool nopool does not exist."
+    finally:
+        call("datastore.delete", "storage.task", task_id)
+        call("zettarepl.update_tasks")
+
+
+def test_failed_run_reports_error_and_alert():
+    """A run that fails reports `ERROR` with the zfs message and raises `SnapshotFailed`.
+
+    The test destroys the dataset outside middleware, so the task stays and `zfs snapshot` fails.
+    """
+    with dataset("failed_src") as src:
+        with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
+            ssh(f"zfs destroy -r {src}")
+
+            state = run_snapshot_task(st["id"])
+            assert state["state"] == "ERROR"
+            assert src in state["error"]
+
+            alerts = call("alert.run_source", "Replication")
+            assert [alert for alert in alerts if alert["klass"] == "SnapshotFailed" and alert["args"]["name"] == src], (
+                alerts
+            )
+
+
+def test_global_error_replaces_every_task_state():
+    """While zettarepl reports a global error, every task reports that error instead of its own state.
+
+    `zettarepl.update_tasks` clears the error once it builds the definition again.
+    """
+    with dataset("global_error_src") as src:
+        with snapshot_task({**SNAPSHOT_TASK, "dataset": src}) as st:
+            run_snapshot_task(st["id"])
+
+            error = {
+                "state": "ERROR",
+                "datetime": datetime(2026, 1, 1, tzinfo=timezone.utc),
+                "error": "Simulated definition failure",
+            }
+            call("zettarepl.set_error", error)
+            try:
+                assert call("zettarepl.get_state") == {"error": error}
+                assert call("pool.snapshottask.get_instance", st["id"])["state"] == error
+            finally:
+                call("zettarepl.update_tasks")
+
+            assert call("pool.snapshottask.get_instance", st["id"])["state"]["state"] == "FINISHED"
