@@ -1,9 +1,10 @@
 import hashlib
 import os
 import pathlib
-import subprocess
 import uuid
 from collections import defaultdict
+
+from truenas_os_pyutils.io import safe_makedirs, safe_open_raw
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -27,6 +28,7 @@ from middlewared.service import CallError, SharingService, ValidationErrors, pri
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import secrets
 from middlewared.utils.mount import resolve_dataset_path
+from middlewared.utils.path import symlink_in_path
 from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
@@ -38,7 +40,8 @@ EXTENT_DEFAULT_PRODUCT_ID = 'iSCSI Disk'
 def remove_extent_file(data: dict) -> str | bool:
     if data['type'] == 'FILE':
         try:
-            os.unlink(data['path'])
+            with safe_open_raw(os.path.dirname(data['path']), os.O_DIRECTORY) as dir_fd:
+                os.unlink(os.path.basename(data['path']), dir_fd=dir_fd)
         except FileNotFoundError:
             pass
         except Exception as e:
@@ -529,6 +532,9 @@ class iSCSITargetExtentService(SharingService):
                         'You need to specify a filepath not a directory'
                     )
 
+            if symlink_in_path(path):
+                verrors.add(f'{schema_name}.path', 'Symbolic links are not permitted in the path')
+
             self.middleware.call_sync(
                 'iscsi.extent.validate_path_resides_in_volume',
                 verrors, f'{schema_name}.path', path
@@ -642,9 +648,8 @@ class iSCSITargetExtentService(SharingService):
             path = data['path']
             dirs = '/'.join(path.split('/')[:-1])
 
-            # create extent directories
             try:
-                pathlib.Path(dirs).mkdir(parents=True, exist_ok=True)
+                safe_makedirs(dirs, exist_ok=True)
             except Exception as e:
                 raise CallError(
                     f'Failed to create {dirs} with error: {e}'
@@ -653,14 +658,16 @@ class iSCSITargetExtentService(SharingService):
             # create the extent, or perhaps extend it
             if not os.path.exists(path):
                 # create the extent
-                subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                with safe_open_raw(path, os.O_WRONLY | os.O_CREAT) as fd:
+                    os.ftruncate(fd, int(data['filesize']))
             else:
                 if old:
                     old_size = int(old['filesize'])
                     new_size = int(data['filesize'])
                     # Only allow expansion
                     if new_size > old_size:
-                        subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                        with safe_open_raw(path, os.O_WRONLY) as fd:
+                            os.ftruncate(fd, new_size)
                         # resync so connected initiators can see the new size
                         self.middleware.call_sync('iscsi.global.resync_lun_size_for_file', path)
                     elif old_size > new_size:

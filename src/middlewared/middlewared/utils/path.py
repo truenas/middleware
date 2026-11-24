@@ -2,17 +2,20 @@
 from __future__ import annotations
 
 import enum
+import errno
 import logging
 import os
 from pathlib import Path
 from typing import Iterable, TYPE_CHECKING
+
+import truenas_os
 
 from middlewared.utils.filesystem.constants import ZFSCTL
 if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 
 
-__all__ = ["FSLocation", "is_child", "is_child_realpath", "path_location"]
+__all__ = ["FSLocation", "is_child", "is_child_realpath", "path_location", "symlink_in_path"]
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +81,20 @@ def check_path_resides_within_volume_sync(
             "be accessed through the path-based API, then it should be called "
             "directly, e.g. '/mnt/dozer/.zfs/snapshot/mysnap'."
         )
+
+
+def symlink_in_path(path: str) -> bool:
+    """Return whether a component of `path` is a symlink, checking up to the first one that does not exist."""
+    try:
+        os.close(truenas_os.openat2(path, os.O_PATH | os.O_CLOEXEC, resolve=truenas_os.RESOLVE_NO_SYMLINKS))
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        if e.errno != errno.ELOOP:
+            raise
+        return True
+
+    return False
 
 
 def is_child_realpath(child: str, parent: str) -> bool:

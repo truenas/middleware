@@ -29,11 +29,13 @@ from middlewared.api.current import (
     FilesystemPutArgs, FilesystemPutResult,
     FileFollowTailEventSourceArgs, FileFollowTailEventSourceEvent,
 )
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.event_source.manager import Subscriber
 from middlewared.event import EventSource
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import private, CallError, filterable_api_method, Service, job
 from middlewared.service_exception import ValidationErrors
 from middlewared.plugins.filesystem_.utils import apply_zfs_attrs_recursive
@@ -42,11 +44,12 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID, statx_acl_is_trivial
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
-from truenas_os_pyutils.io import safe_open
+from truenas_os_pyutils.io import safe_open, safe_open_raw
 from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from truenas_os_pyutils.truenas_shutil import copysendfile, copysplice
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
+from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.service.path import require_path_service_write_allowed
 
 
@@ -175,10 +178,11 @@ class FilesystemService(Service):
         FilesystemSetZfsAttributesArgs, FilesystemSetZfsAttributesResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set ZFS attributes',
-        audit_extended=lambda data: data['path']
+        audit_extended=lambda data: data['path'],
+        pass_app=True,
     )
     @job(lock=lambda args: f'zfs_attrs_change:{args[0]["path"]}')
-    def set_zfs_attributes(self, job, data):
+    def set_zfs_attributes(self, app, job, data):
         """
         Set special ZFS-related file flags on the specified path.
 
@@ -229,6 +233,8 @@ class FilesystemService(Service):
             verrors.check()
 
         _require_service_write_allowed(self.middleware, 'filesystem.set_zfs_attributes.path', data['path'])
+        if app and not credential_has_full_admin(app.authenticated_credentials):
+            self._validate_zfs_attributes_path(data['path'])
 
         job.set_progress(0, 'Setting ZFS attributes')
         try:
@@ -261,21 +267,30 @@ class FilesystemService(Service):
                 raise CallError('Symlinks are not permitted.', errno.ELOOP)
             raise
 
+    def _validate_zfs_attributes_path(self, path):
+        schema = 'filesystem.set_zfs_attributes.path'
+        verrors = ValidationErrors()
+        self.middleware.run_coroutine(check_path_resides_within_volume(verrors, self.middleware, schema, path))
+        verrors.check()
+
+        if has_internal_path(self.statfs(path)['source']):
+            verrors.add(schema, f'{path}: path is managed by the system')
+            verrors.check()
+
     @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=['FILESYSTEM_ATTRS_READ'])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
         """
         try:
-            fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+            with safe_open_raw(path) as fd:
+                attr_mask = attrs.fget_zfs_file_attributes(fd)
         except OSError as e:
             if e.errno == errno.ELOOP:
                 raise CallError('Symlinks are not permitted.', errno.ELOOP)
+            if e.errno == errno.EINVAL:
+                raise CallError(f'{path}: not a regular file or directory.', errno.EINVAL)
             raise
-        try:
-            attr_mask = attrs.fget_zfs_file_attributes(fd)
-        finally:
-            os.close(fd)
 
         return attrs.zfs_attributes_to_dict(attr_mask)
 
@@ -325,29 +340,42 @@ class FilesystemService(Service):
         if p.exists():
             raise CallError(f'{path}: path already exists.', errno.EEXIST)
 
-        realpath = os.path.realpath(path)
-        if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
+        parent = os.path.realpath(p.parent)
+        realpath = os.path.join(parent, p.name)
+        if not (
+            realpath.startswith('/mnt/')
+            or any(
+                pathlib.PurePosixPath(realpath).is_relative_to(ssh_dir)
+                for ssh_dir in ('/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')
+            )
+        ):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
         _require_service_write_allowed(self.middleware, 'filesystem.mkdir.path', realpath)
 
-        os.mkdir(path, mode=mode)
-        st = stat_x.statx_entry_impl(p)
-        stat = st['st']
+        with safe_open_raw(parent, os.O_DIRECTORY) as parent_fd:
+            os.mkdir(p.name, mode=mode, dir_fd=parent_fd)
+            with safe_open_raw(p.name, os.O_DIRECTORY, dir_fd=parent_fd) as fd:
+                stat = truenas_os.statx('', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH, mask=stat_x.STATX_DEFAULT_MASK)
+                if statlib.S_IMODE(stat.stx_mode) != mode:
+                    # This may happen if requested mode is greater than umask
+                    # or if underlying dataset has restricted aclmode and ACL is present
+                    try:
+                        os.fchmod(fd, mode)
+                    except Exception:
+                        if options['raise_chmod_error']:
+                            os.rmdir(p.name, dir_fd=parent_fd)
+                            raise
 
-        if statlib.S_IMODE(stat.stx_mode) != mode:
-            # This may happen if requested mode is greater than umask
-            # or if underlying dataset has restricted aclmode and ACL is present
-            try:
-                os.chmod(path, mode)
-            except Exception:
-                if options['raise_chmod_error']:
-                    os.rmdir(path)
-                    raise
+                        self.logger.debug(
+                            '%s: failed to set mode %s on path after mkdir call',
+                            path, options['mode'], exc_info=True
+                        )
+                    else:
+                        stat = truenas_os.statx(
+                            '', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH, mask=stat_x.STATX_DEFAULT_MASK,
+                        )
 
-                self.logger.debug(
-                    '%s: failed to set mode %s on path after mkdir call',
-                    path, options['mode'], exc_info=True
-                )
+                acl = acl_is_present(os.listxattr(fd))
 
         return {
             'name': p.parts[-1],
@@ -357,13 +385,13 @@ class FilesystemService(Service):
             'size': stat.stx_size,
             'allocation_size': stat.stx_blocks * 512,
             'mode': stat.stx_mode,
-            'acl': acl_is_present(os.listxattr(path)),
+            'acl': acl,
             'uid': stat.stx_uid,
             'gid': stat.stx_gid,
             'is_mountpoint': False,
             'is_ctldir': False,
-            'mount_id': st['st'].stx_mnt_id,
-            'attributes': st['attributes'],
+            'mount_id': stat.stx_mnt_id,
+            'attributes': stat_x.statx_attribute_names(stat.stx_attributes),
             'xattrs': [],
             'zfs_attrs': ['ARCHIVE']
         }

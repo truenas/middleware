@@ -2,7 +2,7 @@
     import ipaddress
     import socket
     from pathlib import Path
-    from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
+    from middlewared.plugins.nfs_.utils import leftmost_has_wildcards, path_exportable
 
     def do_map(share, map_type, map_ids, alert_shares):
         output = []
@@ -120,6 +120,13 @@
                 'Skipping generation of share %r as the underlying resource is locked', share['path']
             )
             middleware.call_sync('sharing.nfs.generate_locked_alert', share['id'])
+            continue
+
+        if not path_exportable(share['path']):
+            middleware.logger.warning(
+                '%r: omitting from NFS exports, as exports(5) cannot carry a double quote, backslash or control '
+                'character in a path', share['path']
+            )
             continue
 
         p = Path(share['path'])

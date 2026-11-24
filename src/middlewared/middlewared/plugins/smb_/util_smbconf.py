@@ -10,7 +10,7 @@ from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.smb import SMBSharePurpose, SearchProtocol
+from middlewared.utils.smb import SMBSharePurpose, SearchProtocol, path_suffix_stays_beneath
 from middlewared.plugins.account import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
@@ -133,7 +133,7 @@ def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict
             pass
 
     acl_check_path = path
-    if path_suffix:
+    if path_suffix and path_suffix_stays_beneath(path_suffix):
         path = os.path.join(path, path_suffix)
 
     config_out['path'] = path

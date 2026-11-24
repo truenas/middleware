@@ -59,7 +59,7 @@ from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_st
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
 from middlewared.utils.filter_list import filter_list
-from truenas_os_pyutils.io import atomic_write
+from truenas_os_pyutils.io import atomic_write, safe_open, safe_open_raw
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
@@ -93,6 +93,7 @@ from middlewared.utils.filesystem import attrs as fs_attrs
 
 SYNC_NEXT_UID_LOCK = Lock()
 ASYNC_NEXT_GID_LOCK = AsyncioLock()
+AUTHORIZED_KEYS_MAX_SIZE = 1024 * 1024
 
 
 def pw_checkname(verrors, attribute, name):
@@ -288,9 +289,9 @@ class UserService(CRUDService):
         # pool itself imports). Since this is a hot codepath in the user_extend method (which *must not* fail) we
         # suppress the IOError here, and allow other filesystem operations to complain loudly at the user.
         with suppress(FileNotFoundError, IOError):
-            with open(f'{homedir}/.ssh/authorized_keys') as f:
+            with safe_open(f'{homedir}/.ssh/authorized_keys') as f:
                 try:
-                    return f.read().strip()
+                    return f.read(AUTHORIZED_KEYS_MAX_SIZE).strip()
                 except UnicodeDecodeError:
                     self.logger.warning('Invalid encoding detected in authorized_keys file')
 
@@ -1968,19 +1969,13 @@ class UserService(CRUDService):
         pubkey = pubkey.strip()
         if pubkey == '':
             try:
-                os.unlink(keysfile)
+                with safe_open_raw(sshpath, os.O_DIRECTORY) as sshdir_fd:
+                    os.unlink('authorized_keys', dir_fd=sshdir_fd)
             except OSError:
                 pass
             return
 
-        oldpubkey = ''
-        try:
-            with open(keysfile, 'r') as f:
-                oldpubkey = f.read().strip()
-        except Exception:
-            pass
-
-        if pubkey == oldpubkey:
+        if pubkey == self._read_authorized_keys(homedir):
             return
 
         if not os.path.isdir(sshpath):

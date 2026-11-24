@@ -30,8 +30,18 @@ class TunableModel(sa.Model):
 TUNABLE_TYPES = ['SYSCTL', 'UDEV', 'ZFS']
 
 
+ZFS_PARAMETERS_DIR = '/sys/module/zfs/parameters'
+
+
+def zfs_parameters() -> set[str]:
+    return set(os.listdir(ZFS_PARAMETERS_DIR))
+
+
 def zfs_parameter_path(name: str) -> str:
-    return f'/sys/module/zfs/parameters/{name}'
+    if '/' in name or name in ('', '.', '..'):
+        raise ValueError(f'{name!r}: not a ZFS module parameter name')
+
+    return os.path.join(ZFS_PARAMETERS_DIR, name)
 
 
 def zfs_parameter_value(name: str) -> str:
@@ -135,7 +145,7 @@ class TunableService(CRUDService):
             )
 
         if data['type'] == 'ZFS':
-            if not await self.middleware.run_in_thread(os.path.exists, zfs_parameter_path(data['var'])):
+            if data['var'] not in await self.middleware.run_in_thread(zfs_parameters):
                 verrors.add(
                     'tunable_create.var',
                     f'ZFS module does not accept {data["var"]!r} parameter.',

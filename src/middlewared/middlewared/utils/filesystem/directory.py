@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import enum
-import errno
 import os
 import pathlib
 
@@ -208,7 +207,11 @@ class DirectoryIterator(Generic[T_DirEntry]):
     def __check_dir_entry(self, dirent: os.DirEntry[str]) -> StatxEntryResult | None:
         dir_fd = self.dir_fd
         assert dir_fd is not None
-        stat_info = statx_entry_impl(pathlib.Path(dirent.name), dir_fd=dir_fd)
+        try:
+            stat_info = statx_entry_impl(pathlib.Path(dirent.name), dir_fd=dir_fd)
+        except OSError:
+            return None
+
         if stat_info is None:
             # path doesn't exist anymore
             return None
@@ -282,37 +285,25 @@ class DirectoryIterator(Generic[T_DirEntry]):
             dirent = next(self.__path_iter)
 
         if self.__request_mask == 0:
-            # Skip an unnecessary file open/close if we only need stat info
+            # Skip unnecessary realpath and xattr lookups if we only need stat info
             return self.__return_fn(dirent, st, None, None, None, None, None)
 
-        try:
-            fd = os.open(dirent.name, os.O_RDONLY, dir_fd=self.dir_fd)
-        except FileNotFoundError:
-            # `dirent` was most likely deleted while we were generating listing
-            # There's not point in logging an error. Just keep moving on.
-            return self.__next__()
-        except OSError as err:
-            if err.errno in (errno.ENXIO, errno.ENODEV):
-                # this can happen for broken symlinks
-                return self.__next__()
-
-            raise
-
+        entry_path = f'/proc/self/fd/{self.dir_fd}/{dirent.name}'
         try:
             if self.__request_mask & int(DirectoryRequestMask.REALPATH):
-                realpath = os.path.realpath(f'/proc/self/fd/{fd}')
+                realpath = os.path.realpath(entry_path)
             else:
                 realpath = None
 
             if self.__request_mask & int(DirectoryRequestMask.XATTRS):
-                xattrs = os.listxattr(fd)
+                xattrs = os.listxattr(entry_path)
             else:
                 xattrs = None
 
             if self.__request_mask & int(DirectoryRequestMask.ACL):
                 # try to avoid listing xattrs twice
                 acl = not statx_acl_is_trivial(st['st']) and acl_is_present(
-                    os.listxattr(fd) if xattrs is None else xattrs
+                    os.listxattr(entry_path) if xattrs is None else xattrs
                 )
             else:
                 acl = None
@@ -328,8 +319,10 @@ class DirectoryIterator(Generic[T_DirEntry]):
             else:
                 is_in_ctldir = None
 
-        finally:
-            os.close(fd)
+        except FileNotFoundError:
+            # `dirent` was most likely deleted while we were generating listing
+            # There's not point in logging an error. Just keep moving on.
+            return self.__next__()
 
         return self.__return_fn(dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir)
 
