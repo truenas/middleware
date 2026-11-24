@@ -19,6 +19,7 @@ from middlewared.api.current import (
     CloudSyncListDirectory,
     CloudSyncListDirectoryArgs,
     CloudSyncListDirectoryResult,
+    CloudSyncOptions,
     CloudSyncProvider,
     CloudSyncProvidersArgs,
     CloudSyncProvidersResult,
@@ -96,18 +97,20 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         self._svc_part = CloudSyncServicePart(self.context)
 
     @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, check_annotations=True)
-    async def do_create(self, data: CloudSyncCreate) -> CloudSyncEntry:
+    async def do_create(self, data: CloudSyncCreate, options: CloudSyncOptions = CloudSyncOptions()) -> CloudSyncEntry:
         """
         Creates a new cloud_sync entry.
         """
-        return await self._svc_part.do_create(data)
+        return await self._svc_part.do_create(data, options)
 
     @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, check_annotations=True)
-    async def do_update(self, id_: int, data: CloudSyncUpdate) -> CloudSyncEntry:
+    async def do_update(
+        self, id_: int, data: CloudSyncUpdate, options: CloudSyncOptions = CloudSyncOptions()
+    ) -> CloudSyncEntry:
         """
         Updates the cloud_sync entry ``id`` with ``data``.
         """
-        return await self._svc_part.do_update(id_, data)
+        return await self._svc_part.do_update(id_, data, options)
 
     @api_method(CloudSyncDeleteArgs, CloudSyncDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:

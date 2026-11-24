@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from middlewared.api.current import NfsShareCreate, NfsShareUpdate, SharingNFSEntry
+from middlewared.api.current import NfsShareCreate, NfsShareUpdate, SharingNFSEntry, SharingNFSOptions
 from middlewared.service import ServiceChangeMixin, SharingServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.types import AuditCallback
@@ -60,8 +60,10 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
             data.pop(computed, None)
         return data
 
-    async def do_create(self, data: NfsShareCreate) -> SharingNFSEntry:
-        entry = await self._create(await self._validated_row("sharingnfs_create", data))
+    async def do_create(
+        self, data: NfsShareCreate, options: SharingNFSOptions = SharingNFSOptions()
+    ) -> SharingNFSEntry:
+        entry = await self._create(await self._validated_row("sharingnfs_create", data, options))
 
         await sync_share_alerts(self.middleware, entry)
         await self._service_change("nfs", "reload")
@@ -73,12 +75,13 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
         audit_callback: AuditCallback,
         id_: int,
         data: NfsShareUpdate,
+        options: SharingNFSOptions = SharingNFSOptions(),
     ) -> SharingNFSEntry:
         old = await self.get_instance(id_)
         audit_callback(old.path)
 
         new = old.updated(data)
-        entry = await self._update(id_, await self._validated_row("sharingnfs_update", new, exclude_id=id_))
+        entry = await self._update(id_, await self._validated_row("sharingnfs_update", new, options, id_))
 
         await sync_share_alerts(self.middleware, entry)
         await self._service_change("nfs", "reload")
@@ -89,10 +92,13 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
         self,
         schema_name: str,
         data: SharingNFSEntry,
+        options: SharingNFSOptions,
         exclude_id: int | None = None,
     ) -> dict[str, Any]:
         verrors = ValidationErrors()
         await validate_nfs_share(self, data, schema_name, verrors, exclude_id)
+        if data.enabled and not options.force_path_conflicts:
+            await self.call2(self.s.filesystem.compatibility.validate_path, verrors, data.path, "sharing.nfs")
         verrors.check()
 
         row = data.model_dump()

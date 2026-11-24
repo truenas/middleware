@@ -14,6 +14,7 @@ __all__ = [
     "AppAvailableItem",
     "AppEntry",
     "AppCreate",
+    "AppOptions",
     "AppCreateArgs",
     "AppCreateResult",
     "AppUpdateArgs",
@@ -261,8 +262,22 @@ class AppCreate(BaseModel):
     )
 
 
+class AppOptions(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the path is also used by another conflicting consumer. Without it, such a path is "
+        "rejected and the conflicting consumers are named.",
+    )
+
+
 class AppCreateArgs(BaseModel):
     app_create: AppCreate = Field(description="AppCreate parameters.")
+    options: AppOptions = Field(default=AppOptions(), description="Options for the path the app uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class AppCreateResult(BaseModel):
@@ -293,6 +308,12 @@ class AppUpdateArgs(BaseModel):
         default=AppUpdate(),
         description="Updated configuration and settings for the application.",
     )
+    options: AppOptions = Field(default=AppOptions(), description="Options for the path the app uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class AppUpdateResult(BaseModel):
@@ -555,6 +576,12 @@ class AppUpgradeOptions(BaseModel):
         default=False,
         description="Whether to create snapshots of host path volumes before upgrade.",
     )
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if a path the app uses has another conflicting consumer. The check runs only when "
+        "the call includes `values`. An upgrade without `values` keeps the paths the app already has. Without the "
+        "flag, the upgrade rejects such a path and names the conflicting consumers.",
+    )
 
 
 class AppUpgradeArgs(BaseModel):
@@ -563,6 +590,11 @@ class AppUpgradeArgs(BaseModel):
         default=AppUpgradeOptions(),
         description="Options controlling the upgrade process including target version and snapshot behavior.",
     )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"]["force_path_conflicts"] = True
+        return value
 
 
 class AppUpgradeResult(BaseModel):
@@ -575,6 +607,11 @@ class AppUpgradeBulkEntry(BaseModel):
         default=AppUpgradeOptions(),
         description="Upgrade options for this specific application.",
     )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"]["force_path_conflicts"] = True
+        return value
 
 
 class AppUpgradeBulkArgs(BaseModel):

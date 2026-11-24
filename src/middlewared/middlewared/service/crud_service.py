@@ -228,23 +228,23 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         return [self._config.entry.__query_result_item__(**item) for item in result]
 
     @pass_app(message_id=True)
-    async def create(self, app, audit_callback, message_id, data):
+    async def create(self, app, audit_callback, message_id, data, *args):
         await check_full_admin_payload(app, self.do_create, data, None)
         return await self.middleware._call(
             f'{self._config.namespace}.create', self, await self._get_crud_wrapper_func(
                 self.do_create, 'create', 'ADDED',
-            ), [data], app=app, audit_callback=audit_callback, message_id=message_id,
+            ), [data] + list(args), app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
     create.audit_callback = True
 
     @pass_app(message_id=True)
-    async def update(self, app, audit_callback, message_id, id_, data):
+    async def update(self, app, audit_callback, message_id, id_, data, *args):
         await check_full_admin_payload(app, self.do_update, data, functools.partial(self.get_instance, id_))
         return await self.middleware._call(
             f'{self._config.namespace}.update', self, await self._get_crud_wrapper_func(
                 self.do_update, 'update', 'CHANGED', id_,
-            ), [id_, data], app=app, audit_callback=audit_callback, message_id=message_id,
+            ), [id_, data] + list(args), app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
     update.audit_callback = True

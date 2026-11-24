@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 import asyncssh
 from truenas_os_pyutils.io import atomic_write, safe_open, safe_open_raw
 
-from middlewared.api.current import UserGetUserObj, UserGetUserObjData
+from middlewared.api.current import RsyncTaskOptions, UserGetUserObj, UserGetUserObjData
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils import run
 
@@ -283,7 +283,7 @@ async def validate_ssh_task(
 
 
 async def validate_rsync_task(
-    part: RsyncTaskServicePart, data: dict[str, Any], schema: str
+    part: RsyncTaskServicePart, data: dict[str, Any], schema: str, options: RsyncTaskOptions
 ) -> tuple[ValidationErrors, dict[str, Any]]:
     verrors = ValidationErrors()
 
@@ -305,6 +305,8 @@ async def validate_rsync_task(
         raise verrors
 
     await part.validate_path_field(data, schema, verrors, split_path=True)
+    if data["enabled"] and data["direction"] == "PULL" and not options.force_path_conflicts:
+        await part.call2(part.s.filesystem.compatibility.validate_path, verrors, data["path"], "rsynctask")
 
     for i, arg in enumerate(data["extra"]):
         try:

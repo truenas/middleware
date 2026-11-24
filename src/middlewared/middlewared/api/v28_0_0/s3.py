@@ -48,6 +48,7 @@ __all__ = [
     "SharingS3Entry",
     "SharingS3Create",
     "SharingS3Update",
+    "SharingS3Options",
     "SharingS3CreateArgs",
     "SharingS3CreateResult",
     "SharingS3UpdateArgs",
@@ -558,8 +559,24 @@ class SharingS3Update(SharingS3Create, metaclass=ForUpdateMetaclass):
     layout: Excluded = excluded_field()
 
 
+class SharingS3Options(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the dataset is also used by another conflicting consumer. Without it, such a "
+        "dataset is rejected and the conflicting consumers are named.",
+    )
+
+
 class SharingS3CreateArgs(BaseModel):
     data: SharingS3Create = Field(description="Configuration for the new bucket.")
+    options: SharingS3Options = Field(
+        default=SharingS3Options(), description="Options for the dataset the bucket uses."
+    )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingS3CreateResult(BaseModel):
@@ -569,6 +586,14 @@ class SharingS3CreateResult(BaseModel):
 class SharingS3UpdateArgs(BaseModel):
     id: int = Field(description="ID of the bucket to update.")
     data: SharingS3Update = Field(description="Bucket changes to apply. `grants` replaces the whole list.")
+    options: SharingS3Options = Field(
+        default=SharingS3Options(), description="Options for the dataset the bucket uses."
+    )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingS3UpdateResult(BaseModel):

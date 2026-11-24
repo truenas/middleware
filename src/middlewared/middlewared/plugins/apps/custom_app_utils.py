@@ -2,10 +2,12 @@ from typing import Any
 
 import yaml
 
-from middlewared.service import ValidationErrors
+from middlewared.api.current import AppOptions
+from middlewared.service import ServiceContext, ValidationErrors
 from middlewared.utils.yaml import safe_yaml_load
 
 from .compose_utils import validate_compose_config
+from .ix_apps.host_paths import compose_bind_sources
 
 
 def validate_payload(data: dict[str, Any], schema: str) -> dict[str, Any]:
@@ -43,3 +45,15 @@ def validate_payload(data: dict[str, Any], schema: str) -> dict[str, Any]:
 
     assert isinstance(compose_config, dict)
     return compose_config
+
+
+def validate_compose_host_paths(
+    context: ServiceContext, compose_config: dict[str, Any], options: AppOptions,
+) -> None:
+    if options.force_path_conflicts:
+        return
+    verrors = ValidationErrors()
+    context.call_sync2(
+        context.s.filesystem.compatibility.validate_paths, verrors, list(compose_bind_sources(compose_config)), 'app',
+    )
+    verrors.check()

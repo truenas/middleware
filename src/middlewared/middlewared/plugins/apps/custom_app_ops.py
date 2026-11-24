@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING, Any
 
 from catalog_reader.custom_app import get_version_details
 
-from middlewared.api.current import AppDelete, AppEntry
+from middlewared.api.current import AppDelete, AppEntry, AppOptions
 from middlewared.service import CallError, ServiceContext
 
 from .compose_utils import collect_logs, compose_action
-from .custom_app_utils import validate_payload
+from .custom_app_utils import validate_compose_host_paths, validate_payload
 from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_config
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.setup import setup_install_app_dir
@@ -39,17 +39,19 @@ def convert_to_custom_app(context: ServiceContext, job: Job, app_name: str) -> A
         context, app_name, app, AppDelete(remove_images=False, remove_ix_volumes=False), None, False,
     )
 
+    # The app keeps the paths it already has
     return create_custom_app(context, job, {
         'app_name': app_name,
         'custom_compose_config': rendered_config,
         'conversion': True,
-    })
+    }, AppOptions(force_path_conflicts=True))
 
 
 def create_custom_app(
-    context: ServiceContext, job: Job, data: dict[str, Any], progress_base: int = 0,
+    context: ServiceContext, job: Job, data: dict[str, Any], options: AppOptions, progress_base: int = 0,
 ) -> AppEntry:
     compose_config = validate_payload(data, 'app_create')
+    validate_compose_host_paths(context, compose_config, options)
     app_being_converted = data.get('conversion', False)
 
     def update_progress(percentage_done: int, message: str) -> None:

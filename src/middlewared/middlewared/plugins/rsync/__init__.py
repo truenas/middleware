@@ -10,6 +10,7 @@ from middlewared.api.current import (
     RsyncTaskDeleteArgs,
     RsyncTaskDeleteResult,
     RsyncTaskEntry,
+    RsyncTaskOptions,
     RsyncTaskRunArgs,
     RsyncTaskRunResult,
     RsyncTaskUpdate,
@@ -48,14 +49,16 @@ class RsyncTaskService(GenericTaskPathService[RsyncTaskEntry], TaskStateMixin):
         self._svc_part = RsyncTaskServicePart(self.context)
 
     @api_method(RsyncTaskCreateArgs, RsyncTaskCreateResult, check_annotations=True)
-    async def do_create(self, data: RsyncTaskCreate) -> RsyncTaskEntry:
+    async def do_create(self, data: RsyncTaskCreate, options: RsyncTaskOptions = RsyncTaskOptions()) -> RsyncTaskEntry:
         """Create a Rsync Task."""
-        return await self._svc_part.do_create(data)
+        return await self._svc_part.do_create(data, options)
 
     @api_method(RsyncTaskUpdateArgs, RsyncTaskUpdateResult, check_annotations=True)
-    async def do_update(self, id_: int, data: RsyncTaskUpdate) -> RsyncTaskEntry:
+    async def do_update(
+        self, id_: int, data: RsyncTaskUpdate, options: RsyncTaskOptions = RsyncTaskOptions()
+    ) -> RsyncTaskEntry:
         """Update Rsync Task of ``id``."""
-        return await self._svc_part.do_update(id_, data)
+        return await self._svc_part.do_update(id_, data, options)
 
     @api_method(RsyncTaskDeleteArgs, RsyncTaskDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> bool:

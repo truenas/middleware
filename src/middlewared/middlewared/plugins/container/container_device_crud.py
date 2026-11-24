@@ -7,6 +7,7 @@ from middlewared.api.current import (
     ContainerDeviceCreate,
     ContainerDeviceDeleteOptions,
     ContainerDeviceEntry,
+    ContainerDeviceOptions,
     ContainerDeviceUpdate,
 )
 from middlewared.service import CallError, CRUDServicePart, ServiceContext, ValidationErrors
@@ -40,14 +41,17 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
             data['container'] = data['container']['id']
         return data
 
-    async def do_create(self, data: ContainerDeviceCreate) -> ContainerDeviceEntry:
+    async def do_create(
+        self, data: ContainerDeviceCreate, options: ContainerDeviceOptions = ContainerDeviceOptions()
+    ) -> ContainerDeviceEntry:
         data_dict = data.model_dump()
-        await self._validate_device(data_dict)
+        await self._validate_device(data_dict, options)
         id_ = await self.middleware.call('datastore.insert', self._datastore, data_dict)
         return await self.get_instance(id_)
 
     async def do_update(
-        self, id_: int, data: ContainerDeviceUpdate, *, audit_callback: AuditCallback,
+        self, id_: int, data: ContainerDeviceUpdate, options: ContainerDeviceOptions = ContainerDeviceOptions(), *,
+        audit_callback: AuditCallback,
     ) -> ContainerDeviceEntry:
         device = await self.get_instance(id_)
         device_dict = device.model_dump()
@@ -58,7 +62,7 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
         audit_callback(device_dict['attributes']['dtype'])
 
         validate_model(self._entry, device_dict)
-        await self._validate_device(device_dict, device.model_dump())
+        await self._validate_device(device_dict, options, device.model_dump())
         await self.middleware.call('datastore.update', self._datastore, id_, device_dict)
         return await self.get_instance(id_)
 
@@ -79,7 +83,7 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
         return bool(await self.middleware.call('datastore.delete', self._datastore, id_))
 
     async def _validate_device(
-        self, device: dict[str, Any], old: dict[str, Any] | None = None,
+        self, device: dict[str, Any], options: ContainerDeviceOptions, old: dict[str, Any] | None = None,
     ) -> None:
         svc_instance = (await self.call2(
             self.s.container.get_instance, device['container']
@@ -90,3 +94,8 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
         verrors.check()
         device_adapter = self.device_factory.get_device_adapter(device)
         await self.middleware.run_in_thread(device_adapter.validate, old, svc_instance, True)
+        if device['attributes']['dtype'] == 'FILESYSTEM' and not options.force_path_conflicts:
+            await self.call2(
+                self.s.filesystem.compatibility.validate_path, verrors, device['attributes']['source'], 'container',
+            )
+            verrors.check()

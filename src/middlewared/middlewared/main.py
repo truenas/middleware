@@ -119,6 +119,7 @@ from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.dns_client import DNSClientService
 from middlewared.plugins.docker import DockerService
+from middlewared.plugins.filesystem_.compatibility import FilesystemCompatibilityService
 from middlewared.plugins.ftp import FTPService
 from middlewared.plugins.hardware import (
     HardwareMemoryService,
@@ -226,6 +227,12 @@ class AcmeServicesContainer(BaseServiceContainer):
         self.dns = AcmeDnsServicesContainer(middleware)
 
 
+class FilesystemServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.compatibility = FilesystemCompatibilityService(middleware)
+
+
 class HardwareServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -289,6 +296,7 @@ class ServiceContainer(BaseServiceContainer):
         self.cronjob = CronJobService(middleware)
         self.dnsclient = DNSClientService(middleware)
         self.docker = DockerService(middleware)
+        self.filesystem = FilesystemServicesContainer(middleware)
         self.ftp = FTPService(middleware)
         self.group = GroupService(middleware)
         self.hardware = HardwareServicesContainer(middleware)

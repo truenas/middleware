@@ -122,8 +122,10 @@ class GenericSharingTaskService[E, PK = int](GenericCRUDService[E, PK]):
         )
 
     @pass_app(message_id=True)  # type: ignore[misc]  # pass_app is an untyped attribute-tagger decorator
-    async def update(self, app: Any, audit_callback: AuditCallback, message_id: Any, id_: PK, data: Any) -> E:
-        rv = await super().update(app, audit_callback, message_id, id_, data)
+    async def update(
+        self, app: Any, audit_callback: AuditCallback, message_id: Any, id_: PK, data: Any, *args: Any
+    ) -> E:
+        rv = await super().update(app, audit_callback, message_id, id_, data, *args)
         enabled = getattr(rv, self._svc_part.enabled_field)
         locked = getattr(rv, self._svc_part.locked_field)
         if not enabled or not locked:

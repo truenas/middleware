@@ -781,10 +781,10 @@ class SharingSMBService(SharingService):
     @api_method(
         SharingSMBCreateArgs, SharingSMBCreateResult,
         audit='SMB share create',
-        audit_extended=lambda data: data['name'],
+        audit_extended=lambda data, options=None: data['name'],
         pass_app=True,
     )
-    async def do_create(self, app, data):
+    async def do_create(self, app, data, options=None):
         """
         Create an SMB share.
 
@@ -813,7 +813,7 @@ class SharingSMBService(SharingService):
                     'to users with full administrative privileges.'
                 )
 
-        await self.validate(data, 'sharingsmb_create', verrors)
+        await self.validate(data, 'sharingsmb_create', verrors, options)
         await self.legacy_afp_check(data, 'sharingsmb_create', verrors)
 
         verrors.check()
@@ -908,7 +908,7 @@ class SharingSMBService(SharingService):
         audit_callback=True,
         pass_app=True,
     )
-    async def do_update(self, app, audit_callback, id_, data):
+    async def do_update(self, app, audit_callback, id_, data, options=None):
         """
         Update the SMB share identified by ``id``.
 
@@ -936,7 +936,7 @@ class SharingSMBService(SharingService):
         old_aux = old[share_field.OPTS].get(share_field.AUX)
         new_aux = new[share_field.OPTS].get(share_field.AUX)
 
-        await self.validate(new, 'sharingsmb_update', verrors)
+        await self.validate(new, 'sharingsmb_update', verrors, options)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
 
@@ -1319,7 +1319,9 @@ class SharingSMBService(SharingService):
             await self.validate_aux_params(data[share_field.OPTS][share_field.AUX], schema)
 
     @private
-    async def validate(self, data: dict, schema_name: str, verrors: ValidationErrors, old: dict | None = None) -> None:
+    async def validate(
+        self, data: dict, schema_name: str, verrors: ValidationErrors, options: dict | None, old: dict | None = None,
+    ) -> None:
         if await self.query([[share_field.NAME, 'C=', data[share_field.NAME]], ['id', '!=', data.get('id', 0)]]):
             verrors.add(f'{schema_name}.name', 'Share names are case-insensitive and must be unique')
 
@@ -1339,6 +1341,10 @@ class SharingSMBService(SharingService):
                         f'{schema_name}.acl',
                         f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
                         'of SMB share.'
+                    )
+                if data[share_field.ENABLED] and not (options or {}).get('force_path_conflicts'):
+                    await self.call2(
+                        self.s.filesystem.compatibility.validate_path, verrors, data[share_field.PATH], 'sharing.smb',
                     )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:

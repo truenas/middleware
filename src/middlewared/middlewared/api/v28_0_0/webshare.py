@@ -21,6 +21,7 @@ __all__ = [
     "WebshareBindipChoicesResult",
     "SharingWebshareEntry",
     "SharingWebshareCreate",
+    "SharingWebshareOptions",
     "SharingWebshareCreateArgs",
     "SharingWebshareCreateResult",
     "SharingWebshareUpdate",
@@ -143,8 +144,24 @@ class SharingWebshareCreate(SharingWebshareEntry):
     tier: Excluded = excluded_field()
 
 
+class SharingWebshareOptions(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the path is also used by another conflicting consumer. Without it, such a path is "
+        "rejected and the conflicting consumers are named.",
+    )
+
+
 class SharingWebshareCreateArgs(BaseModel):
     data: SharingWebshareCreate = Field(description="Webshare share configuration data for the new share.")
+    options: SharingWebshareOptions = Field(
+        default=SharingWebshareOptions(), description="Options for the path the share uses."
+    )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingWebshareCreateResult(BaseModel):
@@ -158,6 +175,14 @@ class SharingWebshareUpdate(SharingWebshareCreate, metaclass=ForUpdateMetaclass)
 class SharingWebshareUpdateArgs(BaseModel):
     id: int = Field(description="ID of the Webshare share to update.")
     data: SharingWebshareUpdate = Field(description="Updated Webshare share configuration data.")
+    options: SharingWebshareOptions = Field(
+        default=SharingWebshareOptions(), description="Options for the path the share uses."
+    )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingWebshareUpdateResult(BaseModel):

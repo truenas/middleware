@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from pydantic import ValidationError
 import pytest
 
-from middlewared.api.current import AppCreate
+from middlewared.api.current import AppCreate, AppOptions
 from middlewared.job import State
 from middlewared.plugins.apps.crud import apps_being_installed, create_app, to_app_entries, to_app_entry
 from middlewared.plugins.apps.ix_apps.query import get_default_workload_values
@@ -173,6 +173,7 @@ def install(collective_metadata):
             context,
             MagicMock(),
             AppCreate(app_name="budget-two", catalog_app="actual-budget", train="community", version="1.1.13"),
+            AppOptions(),
         )
         yield create_internal
 
@@ -215,6 +216,7 @@ def create(app_name):
             context,
             MagicMock(),
             AppCreate(app_name=app_name, catalog_app="actual-budget", train="community", version="1.1.13"),
+            AppOptions(),
         )
         return create_internal
 

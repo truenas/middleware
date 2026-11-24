@@ -37,6 +37,7 @@ from middlewared.alert.source import (  # noqa: F401
     nfs_exportsd,
     nfs_host,
     ntp,
+    path_used_by_multiple_services,
     pools,
     proactive_support,
     quota,

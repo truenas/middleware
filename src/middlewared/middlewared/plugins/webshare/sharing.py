@@ -10,6 +10,7 @@ from middlewared.api.current import (
     SharingWebshareDeleteArgs,
     SharingWebshareDeleteResult,
     SharingWebshareEntry,
+    SharingWebshareOptions,
     SharingWebshareUpdate,
     SharingWebshareUpdateArgs,
     SharingWebshareUpdateResult,
@@ -45,17 +46,19 @@ class SharingWebshareService(GenericSharingService[SharingWebshareEntry]):
     @api_method(
         SharingWebshareCreateArgs, SharingWebshareCreateResult,
         audit='Webshare share create',
-        audit_extended=lambda data: data['name'],
+        audit_extended=lambda data, options=None: data['name'],
         check_annotations=True,
     )
-    async def do_create(self, data: SharingWebshareCreate) -> SharingWebshareEntry:
+    async def do_create(
+        self, data: SharingWebshareCreate, options: SharingWebshareOptions = SharingWebshareOptions()
+    ) -> SharingWebshareEntry:
         """
         Create a Webshare share that exposes a local ZFS path over the Webshare protocol.
 
         The shared ``path`` must reside under ``/mnt/`` within a ZFS pool. At most one share may set
         ``is_home_base`` to ``true`` to serve as the base path for user home directories.
         """
-        return await self._svc_part.do_create(data)
+        return await self._svc_part.do_create(data, options)
 
     @api_method(
         SharingWebshareUpdateArgs, SharingWebshareUpdateResult,
@@ -68,13 +71,14 @@ class SharingWebshareService(GenericSharingService[SharingWebshareEntry]):
         audit_callback: AuditCallback,
         id_: int,
         data: SharingWebshareUpdate,
+        options: SharingWebshareOptions = SharingWebshareOptions(),
     ) -> SharingWebshareEntry:
         """
         Update the Webshare share identified by ``id``.
 
         Only one share may set ``is_home_base`` to ``true`` to serve as the base path for user home directories.
         """
-        return await self._svc_part.do_update(audit_callback, id_, data)
+        return await self._svc_part.do_update(audit_callback, id_, data, options)
 
     @api_method(
         SharingWebshareDeleteArgs, SharingWebshareDeleteResult,

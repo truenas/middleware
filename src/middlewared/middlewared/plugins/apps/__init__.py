@@ -37,6 +37,7 @@ from middlewared.api.current import (
     AppIpChoicesArgs,
     AppIpChoicesResult,
     AppLatestItem,
+    AppOptions,
     AppOutdatedDockerImagesArgs,
     AppOutdatedDockerImagesResult,
     AppPullImages,
@@ -196,26 +197,26 @@ class AppService(GenericCRUDService[AppEntry, str]):
     @api_method(
         AppCreateArgs, AppCreateResult,
         audit='App: Creating',
-        audit_extended=lambda data: data['app_name'],
+        audit_extended=lambda data, options=None: data['app_name'],
         roles=['APPS_WRITE'],
         check_annotations=True,
     )
     @job(lock=lambda args: f'app_create_{args[0].get("app_name")}', logs=True, abortable=True)
-    def do_create(self, job: Job, data: AppCreate) -> AppEntry:
+    def do_create(self, job: Job, data: AppCreate, options: AppOptions = AppOptions()) -> AppEntry:
         """Create an app with ``app_name`` using ``catalog_app`` with ``train`` and ``version``."""
-        return create_app(self.context, job, data)
+        return create_app(self.context, job, data, options)
 
     @api_method(
         AppUpdateArgs, AppUpdateResult,
         audit='App: Updating',
-        audit_extended=lambda app_name, data: app_name,
+        audit_extended=lambda app_name, data, options=None: app_name,
         roles=['APPS_WRITE'],
         check_annotations=True,
     )
     @job(lock=lambda args: f'app_update_{args[0]}', abortable=True)
-    def do_update(self, job: Job, app_name: str, data: AppUpdate) -> AppEntry:
+    def do_update(self, job: Job, app_name: str, data: AppUpdate, options: AppOptions = AppOptions()) -> AppEntry:
         """Update ``app_name`` app with new configuration."""
-        return update_app(self.context, job, app_name, data)
+        return update_app(self.context, job, app_name, data, options)
 
     @api_method(
         AppDeleteArgs, AppDeleteResult,

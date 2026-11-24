@@ -27,6 +27,7 @@ __all__ = [
     "NfsShareCreate",
     "NfsShareUpdate",
     "SharingNFSEntry",
+    "SharingNFSOptions",
     "SharingNFSCreateArgs",
     "SharingNFSCreateResult",
     "SharingNFSUpdateArgs",
@@ -215,8 +216,22 @@ class NfsShareCreate(SharingNFSEntry):
     tier: Excluded = excluded_field()
 
 
+class SharingNFSOptions(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the path is also used by another conflicting consumer. Without it, such a path is "
+        "rejected and the conflicting consumers are named.",
+    )
+
+
 class SharingNFSCreateArgs(BaseModel):
     data: NfsShareCreate = Field(description="NFS share configuration data for the new share.")
+    options: SharingNFSOptions = Field(default=SharingNFSOptions(), description="Options for the path the share uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingNFSCreateResult(BaseModel):
@@ -230,6 +245,12 @@ class NfsShareUpdate(NfsShareCreate, metaclass=ForUpdateMetaclass):
 class SharingNFSUpdateArgs(BaseModel):
     id: int = Field(description="ID of the NFS share to update.")
     data: NfsShareUpdate = Field(description="Updated NFS share configuration data.")
+    options: SharingNFSOptions = Field(default=SharingNFSOptions(), description="Options for the path the share uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingNFSUpdateResult(BaseModel):

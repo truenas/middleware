@@ -50,6 +50,7 @@ __all__ = [
     "SharingSMBSharePrecheckArgs",
     "SharingSMBSharePrecheckResult",
     "SharingSMBEntry",
+    "SharingSMBOptions",
     "SharingSMBCreateArgs",
     "SharingSMBCreateResult",
     "SharingSMBUpdateArgs",
@@ -1284,8 +1285,22 @@ class SmbShareCreate(SharingSMBEntry):
         return self
 
 
+class SharingSMBOptions(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the path is also used by another conflicting consumer. Without it, such a path is "
+        "rejected and the conflicting consumers are named.",
+    )
+
+
 class SharingSMBCreateArgs(BaseModel):
     data: SmbShareCreate = Field(description="SMB share configuration data for the new share.")
+    options: SharingSMBOptions = Field(default=SharingSMBOptions(), description="Options for the path the share uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingSMBCreateResult(BaseModel):
@@ -1299,6 +1314,12 @@ class SmbShareUpdate(SmbShareCreate, metaclass=ForUpdateMetaclass):
 class SharingSMBUpdateArgs(BaseModel):
     id: int = Field(description="ID of the SMB share to update.")
     data: SmbShareUpdate = Field(description="Updated SMB share configuration data.")
+    options: SharingSMBOptions = Field(default=SharingSMBOptions(), description="Options for the path the share uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class SharingSMBUpdateResult(BaseModel):
