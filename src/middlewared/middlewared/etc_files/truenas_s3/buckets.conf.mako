@@ -10,6 +10,7 @@
 
     data = render_ctx["s3.render_data"]
     config = data.config
+    require_nts = render_ctx["system.security.config"].require_nts
 
     def audit_value(mask: S3AuditMask) -> str:
         # ALL is the daemon's `all`; a list, empty included, is the mask.
@@ -53,6 +54,10 @@ owner_id_seed = ${data.owner_id_seed}
 truenas_version = ${data.truenas_version}
 % endif
 log_level = ${config.log_level.lower()}
+## the clock check behind Object Lock takes a time source without NTS
+## unless the system security configuration requires NTS; always
+## rendered, so the daemon's own default never decides it
+require_nts = ${"true" if require_nts else "false"}
 % if data.audit_supported:
 % if config.default_audit:
 default_audit = ${audit_value(config.default_audit)}

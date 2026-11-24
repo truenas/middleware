@@ -17,6 +17,8 @@ SERVICE = "s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
 POLICIES_CONF = "/etc/truenas_s3/policies.conf"
 CREDENTIALS_CONF = "/etc/truenas_s3/credentials.conf"
+# The NTS server test_ntpserver_nts.py also talks to
+LIVE_NTS_SERVER = "time.cloudflare.com"
 
 
 def parse(path):
@@ -172,6 +174,38 @@ def test_reload_keeps_the_process_and_restart_replaces_it():
                 assert service()["pids"] != pid, "a thread count change is a restart"
                 # every ring binds the address itself, under SO_REUSEPORT
                 assert len(ssh("ss -Hltn sport = :9000").splitlines()) == 2
+
+
+@contextlib.contextmanager
+def nts_required():
+    """`require_nts` set, over a live NTS server: the S3 service restarts
+    once chronyd, restarted for each change, selects it again."""
+    server = call("system.ntpserver.create", {"address": LIVE_NTS_SERVER, "nts": True})
+    try:
+        call("system.security.update", {"require_nts": True}, job=True)
+        try:
+            yield
+        finally:
+            call("system.security.update", {"require_nts": False}, job=True)
+    finally:
+        call("system.ntpserver.delete", server["id"])
+
+
+def test_require_nts_follows_the_security_setting_and_restarts():
+    """The daemon's clock check takes a time source without NTS unless the
+    system security configuration requires NTS, and reads the key once, at
+    start-up, so each change restarts the running service."""
+    with running_service():
+        assert parse(BUCKETS_CONF)["server"]["require_nts"] == "false"
+        pid = service()["pids"]
+
+        with nts_required():
+            assert parse(BUCKETS_CONF)["server"]["require_nts"] == "true"
+            assert service()["pids"] != pid, "a require_nts change is a restart"
+            pid = service()["pids"]
+
+        assert parse(BUCKETS_CONF)["server"]["require_nts"] == "false"
+        assert service()["pids"] != pid, "and so is turning it off"
 
 
 def test_global_grants_render_as_wildcard_rows():

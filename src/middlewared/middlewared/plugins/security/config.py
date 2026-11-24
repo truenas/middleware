@@ -62,6 +62,11 @@ class SystemSecurityConfigServicePart(ConfigServicePart[SystemSecurityEntry]):
         if new.require_nts != old_config.require_nts:
             # chrony's `authselectmode`; service.control restarts chronyd on the other controller too (`ha_propagate`)
             await (await self.call2(self.s.service.control, "RESTART", "ntpd")).wait(raise_error=True)
+            # and whether the S3 service's clock check takes a source without NTS, which it reads only at start-up
+            try:
+                await self.call2(self.s.s3.apply_require_nts)
+            except Exception:
+                self.logger.error("s3: failed to apply require_nts", exc_info=True)
 
         reboot_reason = None
         reboot_other_node = False
