@@ -132,8 +132,8 @@ class DiskService(Service):
             if "Could not create partition" in error:
                 error = (
                     f"Could not create a partition of {size} bytes on disk {disk} because the disk is too small. "
-                    "If you are replacing a disk in a pool, please ensure that the new disk is not smaller than "
-                    "the disk being replaced.\n\n"
+                    "When you replace or attach a disk, the new disk must be at least as large as the smallest "
+                    "ONLINE disk in the vdev. Disks that are not ONLINE are not counted.\n\n"
                     f"{error}"
                 )
             else:
