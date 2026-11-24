@@ -16,6 +16,8 @@ MISSING_ALERT = "S3BucketDatasetMissing"
 CONTROL_SOCKET = "/run/truenas_s3/control"
 # a reload resolves every credential through NSS, so a slow directory makes it slow
 CONTROL_TIMEOUT = 120
+# how long a `require_nts` change waits for chronyd, restarted for the same change, to select a source again
+CLOCK_SYNC_TIMEOUT = 60
 
 _lock = asyncio.Lock()
 
@@ -75,6 +77,35 @@ async def render_and_apply(middleware: Middleware, *, force_restart: bool = Fals
         if not await (await middleware.call("service.control", verb, SERVICE)).wait(raise_error=True):
             raise CallError(f"The {SERVICE} service failed to {verb.lower()}", CallError.ESERVICESTARTFAILURE)
         return verb
+
+
+async def chronyd_selected_source(middleware: Middleware) -> bool:
+    """Whether chronyd has selected a source to synchronize the clock to."""
+    try:
+        return bool(await middleware.call("system.ntpserver.peers", [["state", "=", "BEST"]]))
+    except CallError:
+        # chronyd is still starting
+        return False
+
+
+async def apply_require_nts(middleware: Middleware) -> str | None:
+    """Apply a changed `require_nts`. The daemon's clock check reads it once, at start-up, so a reload answers that
+    the daemon must restart. A running service first waits for chronyd, restarted for the same change, to select a
+    source again: a check that finds it unsynchronized holds every object-locked bucket read-only until the next
+    restart. Returns what `render_and_apply` returns."""
+    svc = await middleware.call("service.query", [["service", "=", SERVICE]], {"get": True})
+    if svc["state"].lower() == "running":
+        for _ in range(CLOCK_SYNC_TIMEOUT):
+            if await chronyd_selected_source(middleware):
+                break
+            await asyncio.sleep(1)
+        else:
+            middleware.logger.warning(
+                "s3: chronyd selected no time source within %d seconds, so the restarted service may hold "
+                "object-locked buckets read-only until it restarts again",
+                CLOCK_SYNC_TIMEOUT,
+            )
+    return await render_and_apply(middleware)
 
 
 async def start_or_restart(middleware: Middleware) -> None:
