@@ -275,9 +275,8 @@ class NetworkConfigurationService(ConfigService):
             except Exception:
                 self.logger.warning('Failed to set hostname on standby storage controller', exc_info=True)
 
-        # dns domain name changed or /etc/hosts table changed
         licensed = await self.middleware.call('failover.licensed')
-        if domainname_changed or hosts_table_changed:
+        if lhost_changed or rhost_changed or domainname_changed or hosts_table_changed:
             await self.middleware.call('etc.generate', 'hosts')
             service_actions.add(('nscd', 'RELOAD'))
             if licensed:
@@ -285,7 +284,7 @@ class NetworkConfigurationService(ConfigService):
                     await self.middleware.call('failover.call_remote', 'etc.generate', ['hosts'])
                 except Exception:
                     self.logger.warning(
-                        'Unexpected failure updating domain name and/or hosts table on standby controller',
+                        'Unexpected failure updating /etc/hosts on standby controller',
                         exc_info=True
                     )
 
