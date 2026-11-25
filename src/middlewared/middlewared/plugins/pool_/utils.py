@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 from types import MappingProxyType
@@ -59,6 +60,27 @@ def _null(x):
     if x == 'none':
         return None
     return x
+
+
+def pool_scan_view(scan: dict | None) -> dict | None:
+    """Convert a `zpool.query_impl` scan, in place, to the shape `pool.query` and the `pool.scan` event return."""
+    if scan is None:
+        return None
+
+    # Convert raw scan timestamps to datetime for the public API.
+    scan['start_time'] = datetime.fromtimestamp(scan['start_time'], tz=timezone.utc)
+    if scan['end_time'] is not None:
+        scan['end_time'] = datetime.fromtimestamp(scan['end_time'], tz=timezone.utc)
+    if scan['pause'] is not None:
+        scan['pause'] = datetime.fromtimestamp(scan['pause'], tz=timezone.utc)
+
+    # Legacy API compatibility: swap bytes_to_process and bytes_processed
+    # to match the old py-libzfs mapping where bytes_to_process = pss_examined
+    # and bytes_processed = pss_to_examine.
+    scan['bytes_to_process'], scan['bytes_processed'] = (
+        scan['bytes_processed'], scan['bytes_to_process']
+    )
+    return scan
 
 
 def pool_dataset_view(row, encryption=True):

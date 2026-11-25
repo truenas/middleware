@@ -3,8 +3,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 import threading
 
-import libzfs
-
 from middlewared.alert.base import (
     AlertCategory,
     AlertClassConfig,
@@ -13,6 +11,7 @@ from middlewared.alert.base import (
     OneShotAlertClass,
 )
 from middlewared.alert.source.pools import PoolUpgradedAlert
+from middlewared.plugins.pool_.utils import pool_scan_view
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -49,8 +48,9 @@ class ScanWatch:
 
     def run(self):
         while not self._cancel.wait(2):
-            with libzfs.ZFS() as zfs:
-                scan = zfs.get(self.pool).scrub.asdict()
+            scan = self.get_scan()
+            if scan is None:
+                break
             if scan['state'] == 'SCANNING':
                 self.send_scan(scan)
             elif scan['state'] == 'FINISHED':
@@ -58,10 +58,14 @@ class ScanWatch:
                 # on devd event arrival
                 break
 
+    def get_scan(self):
+        return pool_scan_view(self.middleware.call_sync('zpool.scan_impl', self.pool))
+
     def send_scan(self, scan=None):
         if not scan:
-            with libzfs.ZFS() as zfs:
-                scan = zfs.get(self.pool).scrub.asdict()
+            scan = self.get_scan()
+            if scan is None:
+                return
 
         self.middleware.send_event('pool.scan', 'CHANGED', fields={
             'scan': scan,

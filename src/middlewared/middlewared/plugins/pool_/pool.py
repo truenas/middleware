@@ -31,6 +31,7 @@ from .utils import (
     RE_DRAID_SPARE_DISKS,
     ZFS_ENCRYPTION_ALGORITHM,
     ZPOOL_CACHE_FILE,
+    pool_scan_view,
     validate_dedup_license,
 )
 
@@ -166,21 +167,7 @@ class PoolService(CRUDService):
             if info['properties']['health']['value'] == 'SUSPENDED':
                 status = 'SUSPENDED'
 
-            # Convert raw scan timestamps to datetime for the public API.
-            scan = info['scan']
-            if scan is not None:
-                scan['start_time'] = datetime.fromtimestamp(scan['start_time'], tz=timezone.utc)
-                if scan['end_time'] is not None:
-                    scan['end_time'] = datetime.fromtimestamp(scan['end_time'], tz=timezone.utc)
-                if scan['pause'] is not None:
-                    scan['pause'] = datetime.fromtimestamp(scan['pause'], tz=timezone.utc)
-
-                # Legacy API compatibility: swap bytes_to_process and bytes_processed
-                # to match the old py-libzfs mapping where bytes_to_process = pss_examined
-                # and bytes_processed = pss_to_examine.
-                scan['bytes_to_process'], scan['bytes_processed'] = (
-                    scan['bytes_processed'], scan['bytes_to_process']
-                )
+            scan = pool_scan_view(info['scan'])
 
             props = info['properties']
 

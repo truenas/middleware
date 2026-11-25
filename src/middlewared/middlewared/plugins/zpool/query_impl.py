@@ -9,7 +9,7 @@ from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl
 from .is_upgraded_impl import is_upgraded_impl
 
-__all__ = ("query_impl",)
+__all__ = ("query_impl", "scan_impl")
 
 SCAN_ETA_MIN_ISSUE_RATE = 10 * 1024 * 1024
 EXPAND_ETA_MAX_SECS = 30 * 24 * 3600
@@ -304,3 +304,18 @@ def query_impl(lzh: libzfs_types.ZFS, data: dict) -> list[dict]:
             raise
         results.append(_build_pool_dict(pool, lzh, data))
     return results
+
+
+def scan_impl(lzh: libzfs_types.ZFS, pool_name: str) -> dict | None:
+    """Return the scan `zpool.query` would report for one pool, or None if it is not imported.
+
+    Reads only the scan stats, skipping the status walk (error log, device paths) that
+    `query_impl` does, because callers poll it every few seconds during a scrub or resilver.
+    """
+    try:
+        pool = lzh.open_pool(name=pool_name)
+    except ZFSException as e:
+        if e.code == ZFSError.EZFS_NOENT:
+            return None
+        raise
+    return _format_scan(pool.scrub_info())

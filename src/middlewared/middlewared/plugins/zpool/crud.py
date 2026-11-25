@@ -13,7 +13,7 @@ from middlewared.api.current import (
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
-from .query_impl import query_impl
+from .query_impl import query_impl, scan_impl
 
 # Properties baked into every emitted `zpool.query` event so that subscribers
 # receive a Pool-shaped payload without having to round-trip another call.
@@ -54,6 +54,11 @@ class ZPoolService(Service):
         if data is None:
             data = dict()
         return query_impl(tls.lzh, data)
+
+    @private
+    @pass_thread_local_storage
+    def scan_impl(self, tls: threading.local, pool_name: str) -> dict[str, Any] | None:
+        return scan_impl(tls.lzh, pool_name)
 
     @private
     def offline_entries(self, db_pools, offline_names):
