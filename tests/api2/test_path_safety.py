@@ -8,6 +8,8 @@ from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, ssh
+from truenas_api_client import ClientException
+from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 
 @pytest.mark.parametrize("name", ["\\056\\056", 'a"b'])
@@ -46,7 +48,7 @@ def test_ssh_keyscan_host_is_not_an_option():
 
 
 def test_zfs_tunable_must_name_a_parameter():
-    with pytest.raises(ValidationErrors, match="ZFS module does not accept"):
+    with pytest.raises(ClientValidationErrors, match="ZFS module does not accept"):
         call(
             "tunable.create",
             {
@@ -62,7 +64,7 @@ def test_zfs_tunable_must_name_a_parameter():
 def test_disk_wipe_refuses_paths():
     ssh("head -c 40M /dev/zero | tr '\\0' A > /tmp/wipe_probe")
     try:
-        with pytest.raises(CallError) as ce:
+        with pytest.raises(ClientException) as ce:
             call("disk.wipe", "../tmp/wipe_probe", "QUICK", False, job=True)
         assert ce.value.errno == errno.EINVAL
         assert ssh("head -c 1 /tmp/wipe_probe") == "A"
@@ -72,17 +74,16 @@ def test_disk_wipe_refuses_paths():
 
 def test_authorized_keys_symlink_is_not_read():
     with dataset("authkeys_symlink") as ds:
-        home = f"/mnt/{ds}/symlinkuser"
         with user(
             {
                 "username": "symlinkuser",
                 "full_name": "symlinkuser",
                 "group_create": True,
-                "home": home,
+                "home": f"/mnt/{ds}",
                 "password": "test1234",
             }
         ) as u:
-            ssh(f"mkdir -p {home}/.ssh && ln -sf /etc/hostname {home}/.ssh/authorized_keys")
+            ssh(f"mkdir -p {u['home']}/.ssh && ln -sf /etc/hostname {u['home']}/.ssh/authorized_keys")
             assert call("user.get_instance", u["id"])["sshpubkey"] is None
 
 
@@ -98,7 +99,7 @@ def test_set_zfs_attributes_needs_full_admin_outside_pools():
     with dataset("zfs_attrs_policy") as ds:
         ssh(f"touch /mnt/{ds}/file")
         with unprivileged_user_client(["SHARING_ADMIN"]) as c:
-            with pytest.raises(ValidationErrors, match="pool mount point"):
+            with pytest.raises(ClientValidationErrors, match="pool mount point"):
                 c.call(
                     "filesystem.set_zfs_attributes",
                     {
