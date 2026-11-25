@@ -386,28 +386,11 @@ class NVMetNamespaceService(SharingService):
         await self.middleware.call('nvmet.namespace.clean_type_and_path', data, schema_name, verrors)
         await self.middleware.call('nvmet.namespace.clean_filesize', data, schema_name, verrors, old)
 
-        # Ensure we're not trying to use a device used elsewhere.
-        # First check nvme.namespace
-        _filter = [('device_path', '=', data.get('device_path'))]
-        if old:
-            _filter.append(('id', '!=', old['id']))
-        existing = await self.query(_filter, {'force_sql_filters': True})
-        if existing:
-            existing_name = existing[0]['subsys']['name']
-            verrors.add(f'{schema_name}.device_path',
-                        f"This device_path already used by subsystem: {existing_name}")
-        # Next check iscsi.extent
-        device_path = data.get('device_path')
-        _filter = [
-            ["OR",
-             [
-                 ["path", "=", device_path],
-                 ["disk", "=", device_path]]]]
-        existing = await self.middleware.call('iscsi.extent.query', _filter)
-        if existing:
-            existing_name = existing[0]['name']
-            verrors.add(f'{schema_name}.device_path',
-                        f"This device_path already used by iSCSI extent: {existing_name}")
+        device_type, device_path = data.get('device_type'), data.get('device_path')
+        verrors.extend(await self.call2(
+            self.s.blockstorage.validate, f'{schema_name}.device_path', device_type, device_path,
+            old=(old['device_type'], old['device_path']) if old else None,
+        ))
 
         if old:
             # If the service is running then can only change items if disabled.

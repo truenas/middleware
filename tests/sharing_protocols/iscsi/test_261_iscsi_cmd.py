@@ -1448,7 +1448,7 @@ def test__test_reuse_extent_zvol():
         with iscsi_extent(extent1_payload):
             extent2_payload = extent1_payload | {'name': 'reuseext2'}
             with assert_validation_errors('iscsi_extent_create.disk',
-                                          'Disk currently in use by extent reuseext1'):
+                                          'Disk currently in use by iSCSI extent reuseext1'):
                 with iscsi_extent(extent2_payload):
                     pass
 
@@ -1467,7 +1467,7 @@ def test__test_reuse_extent_file():
     with iscsi_extent(extent1_payload, True, True):
         extent2_payload = extent1_payload | {'name': 'reuseext2'}
         with assert_validation_errors('iscsi_extent_create.path',
-                                      'File currently in use by extent reuseext1'):
+                                      'File currently in use by iSCSI extent reuseext1'):
             with iscsi_extent(extent2_payload):
                 pass
 

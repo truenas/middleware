@@ -187,7 +187,7 @@ class VMDeviceService(CRUDService, DeviceMixin):
         return st
 
     @private
-    def validate_convert_zvol(self, zvp, schema):
+    def validate_convert_zvol(self, zvp, schema, converting_from_image_to_zvol=False):
         ptn = zvp.removeprefix('/dev/zvol/').replace('+', ' ')
         ntp = os.path.join('/dev/zvol', ptn.replace(' ', '+'))
         zv = self.call_sync2(
@@ -202,6 +202,11 @@ class VMDeviceService(CRUDService, DeviceMixin):
             raise ValidationError(schema, f'{ptn!r} is in a protected system path', errno.EACCES)
         elif not os.path.exists(ntp):
             raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
+
+        if converting_from_image_to_zvol:
+            self.call_sync2(
+                self.s.blockstorage.validate, schema, 'ZVOL', ntp, whitelist_namespace='vm.device',
+            ).check()
 
         logical_sectorsize = None
         for i in self.middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISK']]):
@@ -271,19 +276,23 @@ class VMDeviceService(CRUDService, DeviceMixin):
 
         converting_from_image_to_zvol = False
         if source_is_image:
+            zvol_schema = f'{schema}.destination'
             schema += '.source'
             source_image = data['source']
             zvol = data['destination']
             converting_from_image_to_zvol = True
             progress_desc = "Convert to zvol progress"
         else:
+            zvol_schema = f'{schema}.source'
             schema += '.destination'
             source_image = data['destination']
             zvol = data['source']
             progress_desc = "Convert to disk image progress"
 
         st = self.validate_convert_disk_image(source_image, schema, converting_from_image_to_zvol)
-        zv, abs_zvolpath, logical_sectorsize = self.validate_convert_zvol(zvol, schema)
+        zv, abs_zvolpath, logical_sectorsize = self.validate_convert_zvol(
+            zvol, zvol_schema, converting_from_image_to_zvol
+        )
         cmd_args = ['qemu-img', 'convert', '-p']
         if converting_from_image_to_zvol:
             virtual_size = self.virtual_size_impl(schema, st['realpath'])
@@ -292,7 +301,7 @@ class VMDeviceService(CRUDService, DeviceMixin):
                 vshgb = max(1, math.ceil(virtual_size / (1024 ** 3)))
                 zvhgb = max(1, math.ceil(zv['properties']['volsize']['value'] / (1024 ** 3)))
                 raise ValidationError(
-                    schema,
+                    zvol_schema,
                     f"{zv['name']} too small (~{zvhgb}G). Minimum size must be {vshgb}G",
                     errno.ENOSPC
                 )

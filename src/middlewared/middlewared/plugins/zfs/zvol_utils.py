@@ -5,6 +5,7 @@ import re
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from middlewared.common.block_storage import BlockStorageAttachment
     from middlewared.main import Middleware
 
 __all__ = (
@@ -102,29 +103,11 @@ def unlocked_zvols_fast_impl(
 
 
 def get_zvol_attachments_impl(middleware: Middleware) -> dict[str, dict[str, Any]]:
-    att_data: dict[str, dict[str, Any]] = {
-        "iscsi.extent.query": dict(),
-        "vm.devices.query": dict(),
-        "nvmet.namespace.query": dict(),
-    }
-    for i in middleware.call_sync(
-        "iscsi.extent.query",
-        [("type", "=", "DISK")],
-        {"select": ["path", "type"]},
-    ):
-        ip = zvol_path_to_name(f"/dev/{i['path']}")
-        att_data["iscsi.extent.query"][ip] = i
-
-    for v in middleware.call_sync("vm.device.query", [["attributes.dtype", "=", "DISK"]]):
-        vp = zvol_path_to_name(v["attributes"]["path"])
-        att_data["vm.devices.query"][vp] = v
-
-    for n in middleware.call_sync(
-        "nvmet.namespace.query",
-        [["device_type", "=", "ZVOL"]],
-        {"select": ["device_path"]},
-    ):
-        np = zvol_path_to_name(f"/dev/{n['device_path']}")
-        att_data["nvmet.namespace.query"][np] = n
+    att_data: dict[str, dict[str, Any]] = {}
+    attachments: list[BlockStorageAttachment] = middleware.call_sync2(
+        middleware.services.blockstorage.get_in_use, kind="ZVOL"
+    )
+    for attachment in attachments:
+        att_data.setdefault(attachment.method, {})[attachment.key[1]] = attachment.data
 
     return att_data

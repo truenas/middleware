@@ -29,6 +29,7 @@ from middlewared.utils import secrets
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.size import format_size
+from .block_storage_delegate import extent_block_storage
 from .utils import sanitize_extent
 
 EXTENT_DEFAULT_VENDOR = 'TrueNAS'
@@ -477,13 +478,13 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     def clean_type_and_path(self, data, schema_name, verrors, old=None):
-        not_old_id = ('id', '!=', old['id']) if old else None
         if data['type'] is None:
             return data
 
         extent_type = data['type']
         disk = data['disk']
         path = data['path']
+        old_block_storage = extent_block_storage(old) if old else None
         if extent_type == 'DISK':
             if not disk:
                 verrors.add(f'{schema_name}.disk', 'This field is required')
@@ -491,12 +492,6 @@ class iSCSITargetExtentService(SharingService):
 
             if not disk.startswith('zvol/'):
                 verrors.add(f'{schema_name}.disk', 'Disk name must start with "zvol/"')
-                raise verrors
-
-            if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', disk]]):
-                ns = namespaces[0]
-                verrors.add(f'{schema_name}.disk',
-                            f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
                 raise verrors
 
             device = os.path.join('/dev', disk)
@@ -510,12 +505,11 @@ class iSCSITargetExtentService(SharingService):
             if '@' in zvol_name and not data['ro']:
                 verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')
 
-            filters = [('disk', '=', disk)]
-            if not_old_id:
-                filters.append(not_old_id)
-            if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
-                verrors.add(f'{schema_name}.disk',
-                            f'Disk currently in use by extent {used[0]["name"]}')
+            verrors.extend(
+                self.call_sync2(
+                    self.s.blockstorage.validate, f'{schema_name}.disk', 'ZVOL', disk, old=old_block_storage,
+                )
+            )
 
         elif extent_type == 'FILE':
             if not path:
@@ -543,18 +537,11 @@ class iSCSITargetExtentService(SharingService):
                     'Filepath may not contain space characters'
                 )
 
-            if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', path]]):
-                ns = namespaces[0]
-                verrors.add(f'{schema_name}.path',
-                            f'File currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
-                raise verrors
-
-            filters = [('path', '=', path)]
-            if not_old_id:
-                filters.append(not_old_id)
-            if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
-                verrors.add(f'{schema_name}.path',
-                            f'File currently in use by extent {used[0]["name"]}')
+            verrors.extend(
+                self.call_sync2(
+                    self.s.blockstorage.validate, f'{schema_name}.path', 'FILE', path, old=old_block_storage,
+                )
+            )
 
         return data
 

@@ -3,6 +3,7 @@ import os
 from typing import Any
 
 from middlewared.api.current import ZFSResourceQuery
+from middlewared.common.block_storage import BlockStorageKind
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
@@ -16,6 +17,20 @@ IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
 
 
 class StorageDelegate(DeviceDelegate):
+
+    block_storage_kind: BlockStorageKind
+
+    def validate_block_storage(self, verrors: ValidationErrors, path: str, old: dict[str, Any] | None) -> None:
+        old_block_storage = None
+        if old and (old_path := old['attributes'].get('path')):
+            old_block_storage = (self.block_storage_kind, old_path)
+
+        verrors.extend(
+            self.middleware.call_sync2(
+                self.middleware.services.blockstorage.validate, 'attributes.path', self.block_storage_kind, path,
+                old=old_block_storage, whitelist_namespace='vm.device',
+            )
+        )
 
     def validate_middleware(
         self,
@@ -37,6 +52,8 @@ class StorageDelegate(DeviceDelegate):
 
 class RAWDelegate(StorageDelegate):
 
+    block_storage_kind = 'FILE'
+
     def validate_middleware(
         self,
         device: dict[str, Any],
@@ -46,14 +63,15 @@ class RAWDelegate(StorageDelegate):
         update: bool = True,
     ) -> None:
         path = device['attributes']['path']
-        exists = device['attributes'].get('exists', True)
-        if exists and not os.path.exists(path):
-            verrors.add('attributes.path', 'Path must exist when "exists" is set.')
-        elif not exists:
-            if os.path.exists(path):
-                verrors.add('attributes.path', 'Path must not exist when "exists" is unset.')
-            elif not device['attributes'].get('size'):
-                verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
+        if not (old and path == old['attributes'].get('path')):
+            exists = device['attributes']['exists']
+            if exists and not os.path.exists(path):
+                verrors.add('attributes.path', 'Path must exist when "exists" is set.')
+            elif not exists:
+                if os.path.exists(path):
+                    verrors.add('attributes.path', 'Path must not exist when "exists" is unset.')
+                elif not device['attributes'].get('size'):
+                    verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
 
         if (
             old and old['attributes'].get('size') != device['attributes'].get('size') and
@@ -63,10 +81,14 @@ class RAWDelegate(StorageDelegate):
 
         self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
 
+        self.validate_block_storage(verrors, path, old)
+
         super().validate_middleware(device, verrors, old, instance, update)
 
 
 class DiskDelegate(StorageDelegate):
+
+    block_storage_kind = 'ZVOL'
 
     def validate_middleware(
         self,
@@ -146,5 +168,7 @@ class DiskDelegate(StorageDelegate):
                         'attributes.path',
                         'Disk resides in an invalid location and is not supported.'
                     )
+                else:
+                    self.validate_block_storage(verrors, path, old)
 
         super().validate_middleware(device, verrors, old, instance, update)
