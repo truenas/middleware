@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -16,13 +17,17 @@ from middlewared.api.current import (
 from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (just import to start the service)
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
-from middlewared.utils.functools_ import cache
 
 from .constants import RDMAprotocols
 
 PRODUCT_NAME_PREFIX = 'Product Name: '
 SERIAL_NUMBER_PREFIX = '[SN] Serial number: '
 PART_NUMBER_PREFIX = '[PN] Part number: '
+
+# Keys in the `cache` service.  These lists only change when RDMA links are
+# added or removed, which `rdma.reset_link_choices` is called to announce.
+LINK_CHOICES_CACHE_KEY = 'rdma.link_choices'
+CARD_CHOICES_CACHE_KEY = 'rdma.card_choices'
 
 
 class RdmaLinkConfigArgs(BaseModel):
@@ -37,6 +42,39 @@ class RDMAService(Service):
 
     class Config:
         cli_private = True
+
+    def _cached(self, key, compute):
+        """Return the value cached under `key`, computing and caching it if needed.
+
+        The `cache` service keeps values until reboot, but a value computed by an
+        earlier middlewared process is ignored, so that restarting middlewared still
+        rereads the RDMA links, as it did when these were cached in memory."""
+        try:
+            cached = self.middleware.call_sync('cache.get', key)
+        except KeyError:
+            pass
+        else:
+            if cached['pid'] == os.getpid():
+                return cached['value']
+
+        value = compute()
+        self.middleware.call_sync('cache.put', key, {'pid': os.getpid(), 'value': value})
+        return value
+
+    @private
+    async def reset_link_choices(self):
+        """Forget the cached RDMA link and card choices, on both controllers on HA systems.
+
+        Call this after RDMA links have been added or removed, e.g. a Soft-RoCE link
+        created after boot."""
+        for key in (LINK_CHOICES_CACHE_KEY, CARD_CHOICES_CACHE_KEY):
+            await self.middleware.call('cache.pop', key)
+
+        if await self.middleware.call('failover.licensed') and await self.middleware.call('failover.remote_connected'):
+            for key in (LINK_CHOICES_CACHE_KEY, CARD_CHOICES_CACHE_KEY):
+                await self.middleware.call(
+                    'failover.call_remote', 'cache.pop', [key], {'raise_connect_error': False, 'timeout': 5},
+                )
 
     @private
     def get_pci_vpd(self, pci_addr):
@@ -72,11 +110,13 @@ class RDMAService(Service):
         return list(filter(lambda x: x['netdev'] not in existing, all_links))
 
     @private
-    @cache
     def _get_link_choices(self):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
-        Since these are just the hardware present in the system, we cache the result."""
+        The result is cached until `rdma.reset_link_choices` is called or middlewared restarts."""
+        return self._cached(LINK_CHOICES_CACHE_KEY, self.__fetch_link_choices)
+
+    def __fetch_link_choices(self):
         self.logger.trace('Fetching RDMA link netdev choices')
 
         link_cmd = ['rdma', '-j', 'link']
@@ -96,10 +136,12 @@ class RDMAService(Service):
         return result
 
     @api_method(RDMAGetCardChoicesArgs, RDMAGetCardChoicesResult, roles=['NETWORK_INTERFACE_READ'])
-    @cache
     def get_card_choices(self):
         """Return an array containing details about each RDMA card. Dual cards
         will contain two RDMA links."""
+        return self._cached(CARD_CHOICES_CACHE_KEY, self.__fetch_card_choices)
+
+    def __fetch_card_choices(self):
         self.logger.info('Fetching RDMA card choices')
         links = self.middleware.call_sync('rdma.get_link_choices', True)
         grouper = {}
