@@ -11,6 +11,9 @@ from .is_upgraded_impl import is_upgraded_impl
 
 __all__ = ("query_impl",)
 
+SCAN_ETA_MIN_ISSUE_RATE = 10 * 1024 * 1024
+EXPAND_ETA_MAX_SECS = 30 * 24 * 3600
+
 
 def _convert_vdev_state(vdev: dict) -> None:
     """Recursively convert VDevState enums to strings and children tuples to lists."""
@@ -88,12 +91,16 @@ def _format_scan(s: libzfs_types.struct_zpool_scrub | None) -> dict | None:
         percentage = (s.issued / total) * 100 if total > 0 else 0.0
 
     # total_secs_left — only meaningful while actively scanning.
+    # Like zpool status, give no estimate while paused, before a scrub has issued
+    # or a resilver has repaired anything, or below 10 MiB/s.
     total_secs_left = None
-    if is_scanning:
+    if is_scanning and s.pass_scrub_pause == 0:
         total = s.to_examine - s.skipped
         elapsed = (int(time.time()) - s.pass_start - s.pass_scrub_spent_paused) or 1
-        issue_rate = (s.pass_issued or 1) / elapsed
-        total_secs_left = int((total - s.issued) / issue_rate)
+        issue_rate = s.pass_issued // elapsed
+        started = s.processed > 0 if s.func.name == "RESILVER" else s.issued > 0
+        if started and total >= s.issued and issue_rate >= SCAN_ETA_MIN_ISSUE_RATE:
+            total_secs_left = (total - s.issued) // issue_rate
 
     # pause — unix timestamp when the scan was paused (0 = not paused).
     # Only meaningful while actively scanning and paused.
@@ -135,10 +142,13 @@ def _format_expand(e: libzfs_types.struct_zpool_expand | None) -> dict | None:
     percentage = (e.reflowed / total) * 100
 
     total_secs_left = None
-    if is_scanning:
+    if is_scanning and not e.waiting_for_resilver:
         elapsed = (time.time() - e.start_time) or 1
         rate = (e.reflowed or 1) / elapsed
-        total_secs_left = int((total - e.reflowed) / rate)
+        secs_left = int((total - e.reflowed) / rate)
+        # zpool status stops estimating past 30 days ("copy is slow").
+        if 0 <= secs_left < EXPAND_ETA_MAX_SECS:
+            total_secs_left = secs_left
 
     return {
         "state": e.state.name,
