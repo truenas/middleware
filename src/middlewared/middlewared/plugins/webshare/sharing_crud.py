@@ -5,6 +5,7 @@ from typing import Any
 from middlewared.api.current import (
     SharingWebshareCreate,
     SharingWebshareEntry,
+    SharingWebshareOptions,
     SharingWebshareUpdate,
 )
 from middlewared.service import SharingServicePart, ValidationErrors
@@ -47,8 +48,10 @@ class SharingWebsharePart(SharingServicePart[SharingWebshareEntry]):
     include_tier_info = True
     readonly_field = "readonly"
 
-    async def do_create(self, data: SharingWebshareCreate) -> SharingWebshareEntry:
-        entry = await self._create(await self._validated_row("sharing_webshare_create", data))
+    async def do_create(
+        self, data: SharingWebshareCreate, options: SharingWebshareOptions = SharingWebshareOptions()
+    ) -> SharingWebshareEntry:
+        entry = await self._create(await self._validated_row("sharing_webshare_create", data, options))
 
         await reload_webshare(self)
 
@@ -59,12 +62,13 @@ class SharingWebsharePart(SharingServicePart[SharingWebshareEntry]):
         audit_callback: AuditCallback,
         id_: int,
         data: SharingWebshareUpdate,
+        options: SharingWebshareOptions = SharingWebshareOptions(),
     ) -> SharingWebshareEntry:
         old = await self.get_instance(id_)
         audit_callback(old.name)
 
         new = old.updated(data)
-        entry = await self._update(id_, await self._validated_row("sharing_webshare_update", new, old))
+        entry = await self._update(id_, await self._validated_row("sharing_webshare_update", new, options, old))
 
         await reload_webshare(self)
 
@@ -87,10 +91,13 @@ class SharingWebsharePart(SharingServicePart[SharingWebshareEntry]):
         self,
         schema_name: str,
         data: SharingWebshareEntry,
+        options: SharingWebshareOptions,
         old: SharingWebshareEntry | None = None,
     ) -> dict[str, Any]:
         verrors = ValidationErrors()
         path = await validate_webshare(self, data, schema_name, verrors, old)
+        if data.enabled and not options.force_path_conflicts:
+            await self.call2(self.s.filesystem.compatibility.validate_path, verrors, data.path, "sharing.webshare")
         verrors.check()
 
         return {**data.model_dump(), **path}

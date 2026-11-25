@@ -406,8 +406,8 @@ def test_full_admin_fields_are_enforced(full_admin_args_models, api_method_consu
 
         for location, name, enforces in consumers:
             if name in FULL_ADMIN_WRAPPED_METHODS:
-                # The wrappers only walk the method's *last* parameter, which is where every CRUD and config
-                # method carries its payload. A marked field anywhere else would be silently skipped.
+                # The wrappers only walk the method's payload parameter, the first one that declares a marked
+                # field. A marked field in any other parameter would be silently skipped.
                 # `full_admin_payload_fields` reports paths relative to the payload parameter, so put its
                 # name back on before comparing with the whole-model walk. Sets, not counts: two arms of a
                 # union may legitimately declare the same field.
@@ -416,7 +416,7 @@ def test_full_admin_fields_are_enforced(full_admin_args_models, api_method_consu
                 if payload_paths != paths:
                     errors.append(AssertionError(
                         f"{location} accepts {model}, which declares FullAdmin field(s) {sorted(paths)} outside "
-                        f"its last parameter. CRUDService and ConfigService only check the last one, so the "
+                        f"its payload parameter. CRUDService and ConfigService only check that one, so the "
                         f"marker on the others does nothing. Please, move them into the payload parameter or "
                         f"call {FULL_ADMIN_ENFORCEMENT_HELPER} explicitly."
                     ))

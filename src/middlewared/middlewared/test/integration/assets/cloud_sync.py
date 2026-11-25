@@ -21,7 +21,7 @@ def credential(data):
 
 
 @contextlib.contextmanager
-def task(data):
+def task(data, options=None):
     data = {
         "description": "Test",
         "schedule": {
@@ -34,7 +34,7 @@ def task(data):
         **data
     }
 
-    task = call("cloudsync.create", data)
+    task = call("cloudsync.create", data, options or {})
 
     try:
         yield task

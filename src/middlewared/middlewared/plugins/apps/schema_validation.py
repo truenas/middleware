@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from middlewared.api.current import AppEntry
+from middlewared.api.current import AppEntry, AppOptions
 from middlewared.service import ServiceContext, ValidationErrors
 
 from .ix_apps.path import is_app_mounts_path
@@ -22,7 +22,7 @@ VALIDATION_REF_MAPPING = {
 
 async def validate_values(
     context: ServiceContext, app_version_details: dict[str, Any], new_values: dict[str, Any], update: bool,
-    app_data: AppEntry | None = None,
+    app_data: AppEntry | None, options: AppOptions,
 ) -> dict[str, Any]:
     for k in RESERVED_NAMES:
         new_values.pop(k[0], None)
@@ -40,6 +40,7 @@ async def validate_values(
     questions = {}
     for variable in app_version_details['schema']['questions']:
         questions[variable['variable']] = variable
+    host_paths: list[str] = []
     for key in filter(lambda k: k in questions, new_values):
         await validate_question(
             context=context,
@@ -48,7 +49,11 @@ async def validate_values(
             question=questions[key],
             schema_name=f'{schema_name}.{questions[key]["variable"]}',
             app_data=app_data,
+            host_paths=host_paths,
         )
+
+    if host_paths and not options.force_path_conflicts:
+        await context.call2(context.s.filesystem.compatibility.validate_paths, verrors, host_paths, 'app')
 
     verrors.check()
 
@@ -57,28 +62,29 @@ async def validate_values(
 
 async def validate_question(
     context: ServiceContext, verrors: ValidationErrors, value: Any, question: dict[str, Any], schema_name: str,
-    app_data: AppEntry | None,
+    app_data: AppEntry | None, host_paths: list[str],
 ) -> ValidationErrors:
+    """Collects the `hostpath` values in `host_paths`: the caller checks them in one pass."""
     schema = question['schema']
 
     if schema['type'] == 'dict' and schema.get('attrs') and value:
         dict_attrs = {v['variable']: v for v in schema['attrs']}
         for k in filter(lambda k: k in dict_attrs, value):
-            await validate_question(context, verrors, value[k], dict_attrs[k], f'{schema_name}.{k}', app_data)
+            await validate_question(
+                context, verrors, value[k], dict_attrs[k], f'{schema_name}.{k}', app_data, host_paths,
+            )
 
     elif schema['type'] == 'list' and value:
         for index, item in enumerate(value):
             if schema['items']:
                 await validate_question(
                     context, verrors, item, schema['items'][0],  # We will always have a single item schema
-                    f'{schema_name}.{index}', app_data,
+                    f'{schema_name}.{index}', app_data, host_paths,
                 )
 
-    # FIXME: See if this is valid or not and port appropriately
-    """
-    if schema['type'] == 'hostpath':
-        await self.validate_host_path_field(value, verrors, schema_name)
-    """
+    elif schema['type'] == 'hostpath' and value:
+        host_paths.append(value)
+
     for validator_def in filter(lambda k: k in VALIDATION_REF_MAPPING, schema.get('$ref', [])):
         match validator_def:
             case 'definitions/certificate':

@@ -40,24 +40,23 @@ def full_admin_fields(model: type[BaseModel]) -> tuple[FullAdminField, ...]:
 def full_admin_payload_fields(accepts: type[BaseModel]) -> tuple[str, tuple[FullAdminField, ...]]:
     """The `FullAdmin` fields of the payload that `accepts` wraps.
 
-    Every CRUD and config method takes its payload as its last parameter, so that is the model to walk. The name
-    of that parameter is returned alongside the fields: it is the prefix `accept_params` puts on validation errors
-    for the same payload (`smb_update`, `rsync_task_create`, `data`, ...), so errors raised against these fields
-    read the same way as any other validation error on the endpoint.
+    The payload of a CRUD or config method is the first parameter that declares `FullAdmin` fields: the id before
+    it is a scalar, and the options after it carry none. The name of that parameter is returned alongside the
+    fields: it is the prefix `accept_params` puts on validation errors for the same payload (`smb_update`,
+    `rsync_task_create`, `data`, ...), so errors raised against these fields read the same way as any other
+    validation error on the endpoint.
 
-    Methods whose payload is not the last parameter have to name their model themselves; see `full_admin_fields`.
+    Methods that spread `FullAdmin` fields over several parameters have to name their models themselves; see
+    `full_admin_fields`.
 
     :param accepts: the `new_style_accepts` model of a method.
     :return: the payload parameter's name, and its `FullAdmin` fields. Both are empty if there are none.
     """
-    if not accepts.model_fields:
-        return "", ()
+    for name, field in accepts.model_fields.items():
+        if fields := tuple(_walk(field.annotation, (), frozenset())):
+            return field.alias or name, fields
 
-    name, field = list(accepts.model_fields.items())[-1]
-    if not (fields := tuple(_walk(field.annotation, (), frozenset()))):
-        return "", ()
-
-    return field.alias or name, fields
+    return "", ()
 
 
 def _walk(

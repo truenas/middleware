@@ -11,6 +11,7 @@ from middlewared.api.current import (
     AppCreate,
     AppDelete,
     AppEntry,
+    AppOptions,
     AppUpdate,
     CatalogAppVersionDetails,
     QueryOptions,
@@ -21,7 +22,7 @@ from middlewared.utils.filter_list import filter_list
 
 from .compose_utils import collect_logs, compose_action
 from .custom_app_ops import create_custom_app
-from .custom_app_utils import validate_payload
+from .custom_app_utils import validate_compose_host_paths, validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import get_collective_metadata, update_app_metadata, update_app_metadata_for_portals
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
@@ -227,7 +228,7 @@ def get_app_config(context: ServiceContext, app_name: str) -> dict[str, Any]:
     return get_current_app_config(app_name, app_version(app))
 
 
-def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
+def create_app(context: ServiceContext, job: Job, data: AppCreate, options: AppOptions) -> AppEntry:
     context.call_sync2(context.s.docker.validate_state)
 
     if query_apps(context, [['id', '=', data.app_name]], QueryOptions()) or os.path.exists(
@@ -240,7 +241,7 @@ def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
         raise CallError(f'Application with name {data.app_name} already exists', errno=errno.EEXIST)
 
     if data.custom_app:
-        return create_custom_app(context, job, data.model_dump(expose_secrets=True))
+        return create_custom_app(context, job, data.model_dump(expose_secrets=True), options)
 
     verrors = ValidationErrors()
     if not data.catalog_app:
@@ -282,13 +283,15 @@ def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
                 )
                 verrors.check()
 
-    return create_internal(context, job, app_name, version, data.values.get_secret_value(), complete_app_details)
+    return create_internal(
+        context, job, app_name, version, data.values.get_secret_value(), complete_app_details, options,
+    )
 
 
 @overload
 def create_internal(
     context: ServiceContext, job: Job, app_name: str, version: str,
-    user_values: dict[str, Any], complete_app_details: Any,
+    user_values: dict[str, Any], complete_app_details: Any, options: AppOptions,
     dry_run: Literal[True], migrated_app: bool = False,
 ) -> None: ...
 
@@ -296,14 +299,14 @@ def create_internal(
 @overload
 def create_internal(
     context: ServiceContext, job: Job, app_name: str, version: str,
-    user_values: dict[str, Any], complete_app_details: Any,
+    user_values: dict[str, Any], complete_app_details: Any, options: AppOptions,
     dry_run: Literal[False] = False, migrated_app: bool = False,
 ) -> AppEntry: ...
 
 
 def create_internal(
     context: ServiceContext, job: Job, app_name: str, version: str,
-    user_values: dict[str, Any], complete_app_details: Any,
+    user_values: dict[str, Any], complete_app_details: Any, options: AppOptions,
     dry_run: bool = False, migrated_app: bool = False,
 ) -> AppEntry | None:
     app_version_details = complete_app_details.versions[version]
@@ -313,7 +316,8 @@ def create_internal(
     # The idea is to validate the values provided first and if it passes our validation test, we
     # can move forward with setting up the datasets and installing the catalog item
     new_values = context.run_coroutine(normalize_and_validate_values(
-        context, app_version_details, user_values, False, get_installed_app_path(app_name), None, dry_run is False
+        context, app_version_details, user_values, False, get_installed_app_path(app_name), options, None,
+        dry_run is False,
     ))
 
     job.set_progress(25, 'Initial Validation completed')
@@ -360,22 +364,25 @@ def create_internal(
         return None
 
 
-def update_app(context: ServiceContext, job: Job, app_name: str, data: AppUpdate) -> AppEntry:
+def update_app(
+    context: ServiceContext, job: Job, app_name: str, data: AppUpdate, options: AppOptions,
+) -> AppEntry:
     app = get_usable_instance(context, app_name, QueryOptions(extra={'retrieve_config': True}))
-    app = update_internal(context, job, app, data, trigger_compose=app.state != 'STOPPED')
+    app = update_internal(context, job, app, data, options, trigger_compose=app.state != 'STOPPED')
     context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
     return app
 
 
 def update_internal(
     context: ServiceContext, job: Job, app: AppEntry,
-    data: AppUpdate, progress_keyword: str = 'Update', trigger_compose: bool = True,
+    data: AppUpdate, options: AppOptions, progress_keyword: str = 'Update', trigger_compose: bool = True,
 ) -> AppEntry:
     app_name = app.id
     version = app_version(app)
     if app.custom_app:
         if progress_keyword == 'Update':
             new_values = validate_payload(data.model_dump(expose_secrets=True), 'app_update')
+            validate_compose_host_paths(context, new_values, options)
         else:
             new_values = get_current_app_config(app_name, version)
     else:
@@ -386,7 +393,7 @@ def update_internal(
         )
 
         new_values = context.run_coroutine(normalize_and_validate_values(
-            context, app_version_details, config, True, get_installed_app_path(app_name), app,
+            context, app_version_details, config, True, get_installed_app_path(app_name), options, app,
         ))
         new_values = add_context_to_values(app_name, new_values, app.metadata, update=True)
 

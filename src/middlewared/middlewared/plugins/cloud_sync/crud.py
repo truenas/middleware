@@ -10,7 +10,13 @@ from middlewared.alert.base import (
     AlertLevel,
     OneShotAlertClass,
 )
-from middlewared.api.current import CloudSyncCreate, CloudSyncEntry, CloudSyncListDirectory, CloudSyncUpdate
+from middlewared.api.current import (
+    CloudSyncCreate,
+    CloudSyncEntry,
+    CloudSyncListDirectory,
+    CloudSyncOptions,
+    CloudSyncUpdate,
+)
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
 from middlewared.plugins.cloud.remotes import REMOTES
@@ -128,8 +134,14 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
 
         super()._basic_validate(verrors, name, entry)
 
-    def _validate(self, verrors: ValidationErrors, name: str, entry: CloudSyncCreate | CloudSyncEntry) -> None:
-        super()._validate(verrors, name, entry)
+    def _validate(
+        self,
+        verrors: ValidationErrors,
+        name: str,
+        entry: CloudSyncCreate | CloudSyncEntry,
+        options: CloudSyncOptions | None = None,
+    ) -> None:
+        super()._validate(verrors, name, entry, options)
 
         for i, (limit1, limit2) in enumerate(zip(entry.bwlimit, entry.bwlimit[1:])):
             if limit1.time >= limit2.time:
@@ -144,6 +156,9 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
         # Listing the remote folder is a live provider call; only attempt it once everything cheap has passed.
         if not verrors:
             self._validate_folder(verrors, name, entry)
+
+        if options is not None and not options.force_path_conflicts and entry.direction == "PULL" and entry.enabled:
+            self.call_sync2(self.s.filesystem.compatibility.validate_path, verrors, entry.path, "cloudsync")
 
     def _validate_folder(
         self,

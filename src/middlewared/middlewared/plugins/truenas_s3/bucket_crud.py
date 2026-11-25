@@ -27,6 +27,7 @@ from middlewared.api.current import (
     SharingS3Entry,
     SharingS3ForceDisableVersioningArgs,
     SharingS3ForceDisableVersioningResult,
+    SharingS3Options,
     SharingS3RecoverableBucket,
     SharingS3RecoverableBucketsArgs,
     SharingS3RecoverableBucketsResult,
@@ -715,10 +716,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         SharingS3CreateArgs,
         SharingS3CreateResult,
         audit="S3 bucket create",
-        audit_extended=lambda data: data["name"],
+        audit_extended=lambda data, options=None: data["name"],
         check_annotations=True,
     )
-    async def do_create(self, data: SharingS3Create) -> SharingS3Entry:
+    async def do_create(self, data: SharingS3Create, options: SharingS3Options = SharingS3Options()) -> SharingS3Entry:
         """
         Create an S3 bucket.
 
@@ -760,6 +761,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 and is_written(self.logger, data.dataset, await self.writers())
             ):
                 verrors.add("sharing_s3_create.dataset", WRITERS_REACH_BUCKET)
+            if data.enabled and data.dataset is not None and not options.force_path_conflicts:
+                await self.call2(
+                    self.s.filesystem.compatibility.validate_path, verrors, f"/mnt/{data.dataset}", "sharing.s3"
+                )
             verrors.check()
             assert owner_uid is not None
             assert data.dataset is not None
@@ -798,7 +803,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         audit_callback=True,
         check_annotations=True,
     )
-    async def do_update(self, audit_callback: AuditCallback, id_: int, data: SharingS3Update) -> SharingS3Entry:
+    async def do_update(
+        self, audit_callback: AuditCallback, id_: int, data: SharingS3Update,
+        options: SharingS3Options = SharingS3Options(),
+    ) -> SharingS3Entry:
         """
         Update S3 bucket ``id``.
 
@@ -841,6 +849,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 resolved = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
                 if resolved is not None:
                     owner_uid = resolved
+            if new.enabled and not options.force_path_conflicts:
+                await self.call2(
+                    self.s.filesystem.compatibility.validate_path, verrors, f"/mnt/{new.dataset}", "sharing.s3"
+                )
             verrors.check()
 
             # a new owner is not applied to the s3data directory

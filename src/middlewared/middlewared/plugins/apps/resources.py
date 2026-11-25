@@ -26,6 +26,7 @@ from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import CallError, ServiceContext
 
 from .compose_utils import compose_action
+from .ix_apps.host_paths import get_host_paths
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
@@ -127,12 +128,7 @@ async def gpu_choices_internal(context: ServiceContext) -> list[dict[str, Any]]:
 
 async def get_hostpaths_datasets(context: ServiceContext, app_name: str) -> dict[str, str | None]:
     app_info = await context.call2(context.s.app.get_instance, app_name)
-    host_paths = [
-        volume.source for volume in app_info.active_workloads.volumes
-        if volume.source.startswith(f'{IX_APPS_MOUNT_PATH}/') is False
-    ]
-
-    return await context.to_thread(paths_to_datasets_impl, host_paths)
+    return await context.to_thread(lambda: paths_to_datasets_impl(get_host_paths(app_info)))
 
 
 def get_app_volume_ds(context: ServiceContext, app_name: str) -> str | None:

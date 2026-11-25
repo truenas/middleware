@@ -16,6 +16,7 @@ from middlewared.api.current import (
     ContainerDeviceNicAttachChoices,
     ContainerDeviceNicAttachChoicesArgs,
     ContainerDeviceNicAttachChoicesResult,
+    ContainerDeviceOptions,
     ContainerDeviceUpdate,
     ContainerDeviceUpdateArgs,
     ContainerDeviceUpdateResult,
@@ -56,12 +57,14 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
     @api_method(
         ContainerDeviceCreateArgs, ContainerDeviceCreateResult,
         audit='Container device create',
-        audit_extended=lambda data: f'{data["attributes"]["dtype"]}',
+        audit_extended=lambda data, options=None: f'{data["attributes"]["dtype"]}',
         check_annotations=True,
     )
-    async def do_create(self, data: ContainerDeviceCreate) -> ContainerDeviceEntry:
+    async def do_create(
+        self, data: ContainerDeviceCreate, options: ContainerDeviceOptions = ContainerDeviceOptions()
+    ) -> ContainerDeviceEntry:
         """Create a new device for the container of id ``container``."""
-        return await self._svc_part.do_create(data)
+        return await self._svc_part.do_create(data, options)
 
     @api_method(
         ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
@@ -70,9 +73,10 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
     )
     async def do_update(
         self, audit_callback: AuditCallback, id_: int, data: ContainerDeviceUpdate,
+        options: ContainerDeviceOptions = ContainerDeviceOptions(),
     ) -> ContainerDeviceEntry:
         """Update a container device of ``id``."""
-        return await self._svc_part.do_update(id_, data, audit_callback=audit_callback)
+        return await self._svc_part.do_update(id_, data, options, audit_callback=audit_callback)
 
     @api_method(
         ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult,

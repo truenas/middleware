@@ -22,6 +22,7 @@ __all__ = [
     "ContainerDeviceCreate",
     "ContainerDeviceUpdate",
     "ContainerDeviceDeleteOptions",
+    "ContainerDeviceOptions",
     "ContainerDeviceCreateArgs",
     "ContainerDeviceCreateResult",
     "ContainerDeviceUpdateArgs",
@@ -124,8 +125,24 @@ class ContainerDeviceCreate(ContainerDeviceEntry):
     id: Excluded = excluded_field()
 
 
+class ContainerDeviceOptions(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the path is also used by another conflicting consumer. Without it, such a path is "
+        "rejected and the conflicting consumers are named.",
+    )
+
+
 class ContainerDeviceCreateArgs(BaseModel):
     container_device_create: ContainerDeviceCreate = Field(description="Container device creation parameters.")
+    options: ContainerDeviceOptions = Field(
+        default=ContainerDeviceOptions(), description="Options for the path the device uses."
+    )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class ContainerDeviceCreateResult(BaseModel):
@@ -143,6 +160,14 @@ class ContainerDeviceUpdateArgs(BaseModel):
     container_device_update: ContainerDeviceUpdate = Field(
         description="Updated configuration for the container device.",
     )
+    options: ContainerDeviceOptions = Field(
+        default=ContainerDeviceOptions(), description="Options for the path the device uses."
+    )
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class ContainerDeviceUpdateResult(BaseModel):

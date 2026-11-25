@@ -12,6 +12,7 @@ from middlewared.api.current import (
     SharingNFSDeleteArgs,
     SharingNFSDeleteResult,
     SharingNFSEntry,
+    SharingNFSOptions,
     SharingNFSUpdateArgs,
     SharingNFSUpdateResult,
 )
@@ -50,14 +51,16 @@ class SharingNFSService(GenericSharingService[SharingNFSEntry]):
         SharingNFSCreateArgs,
         SharingNFSCreateResult,
         audit="NFS share create",
-        audit_extended=lambda data: data["path"],
+        audit_extended=lambda data, options=None: data["path"],
         check_annotations=True,
     )
-    async def do_create(self, data: NfsShareCreate) -> SharingNFSEntry:
+    async def do_create(
+        self, data: NfsShareCreate, options: SharingNFSOptions = SharingNFSOptions()
+    ) -> SharingNFSEntry:
         """
         Create a NFS Share.
         """
-        return await self._svc_part.do_create(data)
+        return await self._svc_part.do_create(data, options)
 
     @api_method(
         SharingNFSUpdateArgs,
@@ -71,11 +74,12 @@ class SharingNFSService(GenericSharingService[SharingNFSEntry]):
         audit_callback: AuditCallback,
         id_: int,
         data: NfsShareUpdate,
+        options: SharingNFSOptions = SharingNFSOptions(),
     ) -> SharingNFSEntry:
         """
         Update NFS Share of ``id``.
         """
-        return await self._svc_part.do_update(audit_callback, id_, data)
+        return await self._svc_part.do_update(audit_callback, id_, data, options)
 
     @api_method(
         SharingNFSDeleteArgs,

@@ -44,6 +44,7 @@ from .fc import *
 from .fc_host import *
 from .fcport import *
 from .filesystem import *
+from .filesystem_compatibility import *
 from .ftp import *
 from .group import *
 from .hardware_virtualization import *

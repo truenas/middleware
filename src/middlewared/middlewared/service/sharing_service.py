@@ -291,8 +291,8 @@ class SharingTaskService[E](CRUDService[E]):
         )
 
     @pass_app(message_id=True)
-    async def update(self, app, audit_callback, message_id, id_, data):
-        rv = await super().update(app, audit_callback, message_id, id_, data)
+    async def update(self, app, audit_callback, message_id, id_, data, *args):
+        rv = await super().update(app, audit_callback, message_id, id_, data, *args)
         if isinstance(rv, dict):
             # FIXME: Remove all the cases where this is dict
             enabled = rv[self.enabled_field]

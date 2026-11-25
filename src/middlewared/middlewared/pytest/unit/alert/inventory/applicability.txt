@@ -248,6 +248,9 @@ NoCriticalFailoverInterfaceFound            class   .   .   .   Y   Y   .   Y
 NoCriticalFailoverInterfaceFound            listed  .   .   .   .   .   .   Y
 OldBiosVersion                              class   .   .   .   Y   Y   .   Y
 OldBiosVersion                              listed  .   .   .   Y   Y   .   Y
+PathUsedByMultipleServices                  class   Y   Y   Y   Y   Y   Y   Y
+PathUsedByMultipleServices                  listed  Y   Y   Y   Y   Y   Y   Y
+PathUsedByMultipleServices                  source  Y   Y   Y   Y   Y   Y   Y
 PoolUpgraded                                class   Y   Y   Y   Y   Y   Y   Y
 PoolUpgraded                                listed  Y   Y   Y   Y   Y   Y   Y
 PowerSupply                                 class   .   .   .   Y   Y   .   Y

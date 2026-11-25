@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import AppEntry, AppUpdate, QueryOptions
+from middlewared.api.current import AppEntry, AppOptions, AppUpdate, QueryOptions
 from middlewared.service import ServiceContext
 
 from .compose_utils import compose_action
@@ -49,4 +49,5 @@ def start_app(context: ServiceContext, job: Job, app_name: str) -> None:
 
 def redeploy_app(context: ServiceContext, job: Job, app_name: str) -> AppEntry:
     app = get_usable_instance(context, app_name, QueryOptions(extra={'retrieve_config': True}))
-    return update_internal(context, job, app, AppUpdate(), 'Redeployment')
+    # The app keeps the paths it already has
+    return update_internal(context, job, app, AppUpdate(), AppOptions(force_path_conflicts=True), 'Redeployment')

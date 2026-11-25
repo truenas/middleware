@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from middlewared.api.current import RsyncTaskCreate, RsyncTaskEntry, RsyncTaskUpdate
+from middlewared.api.current import RsyncTaskCreate, RsyncTaskEntry, RsyncTaskOptions, RsyncTaskUpdate
 from middlewared.service import LocalPathInfo, SharingTaskServicePart
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -73,15 +73,17 @@ class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
         convert_schedule_to_db_format(data)
         return data
 
-    async def do_create(self, data: RsyncTaskCreate) -> RsyncTaskEntry:
-        verrors, d = await validate_rsync_task(self, data.model_dump(), "rsync_task_create")
+    async def do_create(self, data: RsyncTaskCreate, options: RsyncTaskOptions = RsyncTaskOptions()) -> RsyncTaskEntry:
+        verrors, d = await validate_rsync_task(self, data.model_dump(), "rsync_task_create", options)
         verrors.check()
 
         entry = await self._create(d)
         await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
 
-    async def do_update(self, id_: int, data: RsyncTaskUpdate) -> RsyncTaskEntry:
+    async def do_update(
+        self, id_: int, data: RsyncTaskUpdate, options: RsyncTaskOptions = RsyncTaskOptions()
+    ) -> RsyncTaskEntry:
         old = (await self.get_instance(id_)).model_dump()
         old.pop(self.locked_field)
         old.pop("job")
@@ -92,7 +94,7 @@ class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
         new.setdefault("validate_rpath", True)
         new.setdefault("ssh_keyscan", False)
 
-        verrors, new = await validate_rsync_task(self, new, "rsync_task_update")
+        verrors, new = await validate_rsync_task(self, new, "rsync_task_update", options)
         verrors.check()
 
         entry = await self._update(id_, new)

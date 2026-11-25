@@ -16,6 +16,7 @@ from middlewared.alert.source.applications import AppUpdateAlert
 from middlewared.api.current import (
     AppBulkUpgradeJobResult,
     AppEntry,
+    AppOptions,
     AppPullImages,
     AppUpgradeBulkEntry,
     AppUpgradeOptions,
@@ -206,9 +207,12 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
         context.call_sync2(context.s.app.stop, app_name).wait_sync()
         if options.snapshot_hostpaths:
             take_snapshot_of_hostpath(context, app, host_path_mapping)
-        config.update(options.values.get_secret_value())
+        user_values = options.values.get_secret_value()
+        config.update(user_values)
+        # Without new values the app keeps the paths it already has
+        app_options = AppOptions(force_path_conflicts=options.force_path_conflicts or not user_values)
         new_values = context.run_coroutine(normalize_and_validate_values(
-            context, upgrade_version, config, False, get_installed_app_path(app_name), app,
+            context, upgrade_version, config, False, get_installed_app_path(app_name), app_options, app,
         ))
         new_values = add_context_to_values(
             app_name, new_values, upgrade_version['app_metadata'], upgrade=True, upgrade_metadata={
@@ -239,6 +243,9 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
             ))
 
             job.set_progress(50, 'Created snapshot for upgrade')
+
+    # An upgrade is not a CRUD action, so the path consumer hooks do not see it
+    context.call_sync2(context.s.alert.alert_source_clear_run, 'PathUsedByMultipleServices')
 
     try:
         compose_action(

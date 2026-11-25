@@ -2,6 +2,7 @@ import logging
 
 import pytest
 
+from middlewared.api.current import AppOptions
 from middlewared.plugins.apps.schema_normalization import normalize_and_validate_values
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ServiceContext
@@ -109,7 +110,7 @@ from middlewared.service import ServiceContext
 async def test_normalize_and_validate(app_detail, values, expected):
     ctx = ServiceContext(Middleware(), logging.getLogger('test'))
     new_values = await normalize_and_validate_values(
-        ctx, app_detail, values, False, '/path/to/app', perform_actions=False,
+        ctx, app_detail, values, False, '/path/to/app', AppOptions(), perform_actions=False,
     )
     # Update expected to include the default from the schema
     expected_with_defaults = {

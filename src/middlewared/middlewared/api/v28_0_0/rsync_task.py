@@ -11,6 +11,7 @@ __all__ = [
     "RsyncTaskEntry",
     "RsyncTaskCreate",
     "RsyncTaskUpdate",
+    "RsyncTaskOptions",
     "RsyncTaskCreateArgs",
     "RsyncTaskCreateResult",
     "RsyncTaskUpdateArgs",
@@ -135,8 +136,22 @@ class RsyncTaskCreate(RsyncTaskEntry):
     job: Excluded = excluded_field()
 
 
+class RsyncTaskOptions(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the path is also used by another conflicting consumer. Without it, such a path is "
+        "rejected and the conflicting consumers are named.",
+    )
+
+
 class RsyncTaskCreateArgs(BaseModel):
     rsync_task_create: RsyncTaskCreate = Field(description="Configuration for creating a new rsync task.")
+    options: RsyncTaskOptions = Field(default=RsyncTaskOptions(), description="Options for the path the task uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class RsyncTaskCreateResult(BaseModel):
@@ -150,6 +165,12 @@ class RsyncTaskUpdate(RsyncTaskCreate, metaclass=ForUpdateMetaclass):
 class RsyncTaskUpdateArgs(BaseModel):
     id: int = Field(description="ID of the rsync task to update.")
     rsync_task_update: RsyncTaskUpdate = Field(description="Updated configuration for the rsync task.")
+    options: RsyncTaskOptions = Field(default=RsyncTaskOptions(), description="Options for the path the task uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class RsyncTaskUpdateResult(BaseModel):

@@ -24,6 +24,7 @@ from middlewared.api.current import (
     WebUIDatasetVM,
     WebUIDatasetWebshareShare,
 )
+from middlewared.plugins.apps.ix_apps.host_paths import get_host_paths
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 
 Resolver = Callable[[str], str | None]
@@ -201,10 +202,7 @@ def match_containers(
 def match_apps(index: DatasetIndex, apps: Iterable[AppEntry], resolve: Resolver) -> dict[str, list[WebUIDatasetApp]]:
     result: dict[str, list[WebUIDatasetApp]] = defaultdict(list)
     for app in apps:
-        for volume in app.active_workloads.volumes:
-            source = volume.source
-            if not source.startswith("/mnt/") or source.startswith("/mnt/.ix-"):
-                continue
+        for source in get_host_paths(app):
             if (owner := index.filesystem_owner(source, None, resolve)) is not None:
                 result[owner].append(WebUIDatasetApp(name=app.name, path=source))
     return result

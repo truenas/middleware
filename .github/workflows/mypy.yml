@@ -83,6 +83,7 @@ jobs:
             middlewared/plugins/zfs/ \
             middlewared/plugins/dns_client.py \
             middlewared/plugins/filesystem.py \
+            middlewared/plugins/filesystem_/compatibility.py \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/pwenc.py \
             middlewared/service/generic_sharing_service.py \

@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import AppEntry, AppRollbackOptions, QueryOptions, ZFSResourceSnapshotRollbackArgsData
+from middlewared.api.current import (
+    AppEntry,
+    AppOptions,
+    AppRollbackOptions,
+    QueryOptions,
+    ZFSResourceSnapshotRollbackArgsData,
+)
 from middlewared.service import ServiceContext, ValidationErrors
 
 from .compose_utils import compose_action
@@ -40,8 +46,10 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
         get_installed_app_version_path(app_name, options.app_version)
     )
     config = get_current_app_config(app_name, options.app_version)
+    # The app keeps the paths it already has
     new_values = context.run_coroutine(normalize_and_validate_values(
-        context, rollback_version, config, False, get_installed_app_path(app_name), app,
+        context, rollback_version, config, False, get_installed_app_path(app_name),
+        AppOptions(force_path_conflicts=True), app,
     ))
     new_values = add_context_to_values(app_name, new_values, rollback_version['app_metadata'], rollback=True)
     update_app_config(app_name, options.app_version, new_values)
@@ -58,6 +66,8 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
     # 5) Roll back ix_volume dataset's snapshots if available
     # 6) Finally update collective metadata config to reflect new version
     update_app_metadata(app_name, rollback_version)
+    # A rollback is not a CRUD action, so the path consumer hooks do not see it
+    context.call_sync2(context.s.alert.alert_source_clear_run, 'PathUsedByMultipleServices')
     context.middleware.send_event(
         'app.query', 'CHANGED', id=app_name,
         fields=context.call_sync2(context.s.app.get_instance, app_name).model_dump()

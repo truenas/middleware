@@ -4,7 +4,7 @@ import functools
 import os
 from typing import Any
 
-from middlewared.api.current import AppEntry
+from middlewared.api.current import AppEntry, AppOptions
 from middlewared.service import ServiceContext
 
 from .ix_apps.path import get_app_volume_path, is_app_volume_path
@@ -23,10 +23,10 @@ REF_MAPPING = {
 
 async def normalize_and_validate_values(
     context: ServiceContext, item_details: dict[str, Any], values: dict[str, Any], update: bool,
-    app_dir: str, app_data: AppEntry | None = None, perform_actions: bool = True,
+    app_dir: str, options: AppOptions, app_data: AppEntry | None = None, perform_actions: bool = True,
 ) -> dict[str, Any]:
     app_name = app_dir.split('/')[-1]
-    new_values = await validate_values(context, item_details, values, update, app_data)
+    new_values = await validate_values(context, item_details, values, update, app_data, options)
     new_values, normalization_context = await normalize_values(
         context, item_details['schema']['questions'], new_values, update, {
             'app': {

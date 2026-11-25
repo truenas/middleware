@@ -26,6 +26,7 @@ __all__ = [
     "CloudSyncProvider",
     "CloudSyncProviderTaskSchemaItem",
     "RestoreOpts",
+    "CloudSyncOptions",
     "CloudSyncCreateArgs",
     "CloudSyncCreateResult",
     "CloudSyncRestoreArgs",
@@ -118,8 +119,22 @@ class CloudSyncCreate(CloudSyncEntry):
     locked: Excluded = excluded_field()
 
 
+class CloudSyncOptions(BaseModel):
+    force_path_conflicts: bool = Field(
+        default=False,
+        description="Proceed even if the path is also used by another conflicting consumer. Without it, such a path is "
+        "rejected and the conflicting consumers are named.",
+    )
+
+
 class CloudSyncCreateArgs(BaseModel):
     cloud_sync_create: CloudSyncCreate = Field(description="Cloud sync task configuration data.")
+    options: CloudSyncOptions = Field(default=CloudSyncOptions(), description="Options for the path the task uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class CloudSyncCreateResult(BaseModel):
@@ -148,6 +163,12 @@ class CloudSyncUpdate(CloudSyncCreate, metaclass=ForUpdateMetaclass):
 class CloudSyncUpdateArgs(BaseModel):
     id: int = Field(description="ID of the cloud sync task to update.")
     cloud_sync_update: CloudSyncUpdate = Field(description="Updated cloud sync task configuration data.")
+    options: CloudSyncOptions = Field(default=CloudSyncOptions(), description="Options for the path the task uses.")
+
+    @classmethod
+    def from_previous(cls, value):
+        value["options"] = {"force_path_conflicts": True}
+        return value
 
 
 class CloudSyncUpdateResult(BaseModel):

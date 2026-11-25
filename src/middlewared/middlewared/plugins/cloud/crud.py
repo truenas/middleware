@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Protocol, Self
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.base.model import model_subset
-from middlewared.api.current import CloudTaskAttributes, CredentialsEntry, ZFSResourceQuery
+from middlewared.api.current import CloudSyncOptions, CloudTaskAttributes, CredentialsEntry, ZFSResourceQuery
 from middlewared.plugins.cloud.rclone.base import BaseRcloneRemote
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs.utils import has_internal_path
@@ -96,16 +96,16 @@ class CloudTaskServiceMixin[
     allow_zvol = False
     schema_prefix: str
 
-    async def do_create(self, data: CreateT) -> EntryT:
-        compressed = await self.to_thread(self._validate_and_compress, f"{self.schema_prefix}_create", data)
+    async def do_create(self, data: CreateT, options: CloudSyncOptions | None = None) -> EntryT:
+        compressed = await self.to_thread(self._validate_and_compress, f"{self.schema_prefix}_create", data, options)
         entry = await self._create(compressed)
         await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
 
-    async def do_update(self, id_: int, data: UpdateT) -> EntryT:
+    async def do_update(self, id_: int, data: UpdateT, options: CloudSyncOptions | None = None) -> EntryT:
         old = await self.get_instance(id_)
         new = old.updated(data)
-        compressed = await self.to_thread(self._validate_and_compress, f"{self.schema_prefix}_update", new)
+        compressed = await self.to_thread(self._validate_and_compress, f"{self.schema_prefix}_update", new, options)
         entry = await self._update(id_, compressed)
         await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
@@ -118,9 +118,14 @@ class CloudTaskServiceMixin[
     async def _pre_delete(self, id_: int) -> None:
         raise NotImplementedError
 
-    def _validate_and_compress(self, schema: str, entry: EntryT | CreateT) -> dict[str, Any]:
+    def _validate_and_compress(
+        self,
+        schema: str,
+        entry: EntryT | CreateT,
+        options: CloudSyncOptions | None = None,
+    ) -> dict[str, Any]:
         verrors = ValidationErrors()
-        self._validate(verrors, schema, entry)
+        self._validate(verrors, schema, entry, options)
         verrors.check()
 
         data = entry.model_dump(expose_secrets=True)
@@ -164,7 +169,13 @@ class CloudTaskServiceMixin[
             remote.validate_task_basic(attributes, credentials.provider, verrors)
             entry.attributes = attributes
 
-    def _validate(self, verrors: ValidationErrors, name: str, entry: EntryT | CreateT) -> None:
+    def _validate(
+        self,
+        verrors: ValidationErrors,
+        name: str,
+        entry: EntryT | CreateT,
+        options: CloudSyncOptions | None = None,
+    ) -> None:
         self._basic_validate(verrors, name, entry)
 
         if not verrors:

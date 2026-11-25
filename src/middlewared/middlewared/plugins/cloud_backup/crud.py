@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
-from middlewared.api.current import CloudBackupCreate, CloudBackupEntry, CloudBackupUpdate
+from middlewared.api.current import CloudBackupCreate, CloudBackupEntry, CloudBackupUpdate, CloudSyncOptions
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
@@ -99,8 +99,14 @@ class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackup
         ):
             raise CallError("Backed up zvol must be used by a local or VMware VM")
 
-    def _validate(self, verrors: ValidationErrors, name: str, entry: CloudBackupCreate | CloudBackupEntry) -> None:
-        super()._validate(verrors, name, entry)
+    def _validate(
+        self,
+        verrors: ValidationErrors,
+        name: str,
+        entry: CloudBackupCreate | CloudBackupEntry,
+        options: CloudSyncOptions | None = None,
+    ) -> None:
+        super()._validate(verrors, name, entry, options)
 
         if entry.snapshot and entry.absolute_paths:
             verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
