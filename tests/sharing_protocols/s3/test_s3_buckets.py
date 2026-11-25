@@ -1,15 +1,7 @@
 """The bucket namespace: what is listed, what is addressable, and what
-every sub-resource probe answers.
+each sub-resource probe answers."""
 
-A client's first act against a new endpoint is to probe the bucket — the
-aws cli asks for `?location`, rclone and s3cmd ask for others, a console
-asks for most of them — and each probe gets one of three answers here.
-Which one is a deliberate choice per sub-resource rather than a default,
-and the risk is not one wrong answer but a *reclassification*: a
-sub-resource sliding from its own 404 to a generic one, or from an empty
-200 to a 404, changes which branch every client takes, and no per-op
-case sees the pattern.
-"""
+import json
 
 from middlewared.test.integration.assets.s3 import s3_endpoint
 import pytest
@@ -19,26 +11,13 @@ from s3_client import code_in, code_of, raw_request, status_of
 
 
 def test_a_signed_call_passes_the_identity_layer(s3):
-    """One signed call before anything else.
-
-    Every failure below the identity layer looks identical from here — a
-    wall of `AccessDenied` that says nothing about which of four things
-    went wrong. `ListBuckets` gates on no bucket and no operation, so a
-    refusal here is about *who the caller is*: the account cannot be
-    resolved, PAM denies it, it is uid 0 (refused on purpose, so a
-    credential cannot become root), or no grant covers it.
-    """
+    """`ListBuckets` gates on no bucket, so a refusal here is about the
+    caller: unresolvable, denied by PAM, uid 0, or under no grant."""
     s3.list_buckets()
 
 
 def test_the_listing_shows_what_serves_and_omits_what_does_not(s3, buckets):
-    """An excluded row has no creation date to report.
-
-    A bucket whose dataset never verified failed before its `statx` and
-    never read one, so it is omitted from the listing even though
-    addressing it answers 503 rather than 404 — the two facts are
-    different and both are true at once.
-    """
+    """An excluded row is left out of the listing, though it answers 503."""
     rows = s3.list_buckets().get("Buckets", [])
     listed = [b["Name"] for b in rows]
 
@@ -51,12 +30,7 @@ def test_the_listing_shows_what_serves_and_omits_what_does_not(s3, buckets):
 
 
 def test_a_denied_bucket_leaves_the_listing_without_erroring_it(s3, buckets):
-    """The kill switch must not take the account listing down.
-
-    A `DENY` grant suspends the principal for that bucket alone, so the
-    call succeeds, the served buckets are rows, and the denied one is
-    filtered out per row rather than failing the whole listing.
-    """
+    """A `DENY` filters its own row out and the listing still succeeds."""
     denied = buckets["denied"]
     names = [b["Name"] for b in s3.list_buckets()["Buckets"]]
     assert buckets["attached"] in names
@@ -76,8 +50,6 @@ def test_a_row_carries_its_region_and_the_filter_holds(s3):
 
 
 def test_an_unsigned_request_is_refused(daemon):
-    """Credentials are the only way in, and a wrong signature is not a
-    hint about what exists."""
     import boto3
     import botocore
     from botocore.config import Config
@@ -103,25 +75,17 @@ def test_an_unsigned_request_is_refused(daemon):
 def test_an_attached_bucket_serves(s3, bucket):
     s3.head_bucket(Bucket=bucket)
     loc = s3.get_bucket_location(Bucket=bucket)
-    # The deployment's default region renders as the *absent* constraint,
-    # which is S3's own encoding of us-east-1 rather than the literal.
+    # us-east-1 renders as the absent constraint, S3's own encoding.
     assert loc.get("LocationConstraint") in (None, "")
 
 
 def test_head_bucket_answers_its_region(s3, bucket):
-    """`x-amz-bucket-region` on the 200 — the header SDKs discover a
-    bucket's region by, matching what `?location` answers."""
+    """`x-amz-bucket-region` on the 200, matching `?location`."""
     assert s3.head_bucket(Bucket=bucket)["BucketRegion"] == "us-east-1"
 
 
 def test_a_failed_registration_is_unservable_not_absent(s3, buckets):
-    """503, never 404.
-
-    The row is addressable — it is configured — and unservable, because
-    its dataset never verified. A 404 would say the bucket does not
-    exist, which is a different fact and the one an operator would debug
-    in the wrong place.
-    """
+    """503, never 404: the row is configured and its dataset is gone."""
     excluded = buckets["excluded"]
     with pytest.raises(Exception) as caught:
         s3.get_bucket_location(Bucket=excluded)
@@ -136,58 +100,48 @@ def test_a_failed_registration_is_unservable_not_absent(s3, buckets):
 
 @pytest.mark.parametrize("op", ["head_bucket", "get_bucket_location"])
 def test_an_unconfigured_name_is_an_ordinary_404(s3, wildcard_grant, op):
-    """A name nothing holds a row for, to a caller authorized for it.
-
-    The wildcard grant is what makes this observable: authorization runs
-    ahead of the engine, so without one the answer is the `403` below
-    and the bucket's own condition is never reached.
-    """
+    """Under `wildcard_grant`, so the `404` is the engine's own."""
     with pytest.raises(Exception) as caught:
         getattr(s3, op)(Bucket="no-such-bucket-configured")
     assert status_of(caught.value) == 404
 
 
-def test_a_name_the_caller_cannot_reach_hides_why(s3, buckets):
-    """`403` precedes existence, and three different facts collapse into
-    it.
-
-    Authorization runs before the engine is consulted, so a caller the
-    grants refuse cannot tell a bucket that does not exist from one that
-    exists and serves from a name that is not a bucket name at all —
-    every one is the same bare `AccessDenied`. That is what stops error
-    codes being used to map what a deployment holds.
-
-    One case rather than three, because what matters is that they are
-    *indistinguishable*, which no single parametrized run can show.
-
-    **A grant is what buys the honest answer**, and the contrast is the
-    point: `main` holds a row on the excluded bucket, so it is told `503
-    ServiceUnavailable` rather than this — see
-    `test_a_failed_registration_is_unservable_not_absent`. The hiding is
-    of what the caller may not reach, not of everything.
-    """
+def test_a_name_no_row_holds_is_absent_to_any_signed_caller(s3, alt_s3):
+    """`404 NoSuchBucket` with no grant reaching the name. A name the
+    grammar refuses answers the same: the grammar is never reached."""
     answers = {}
-    for name, why in (
-        ("no-such-bucket-configured", "nothing holds a row for it"),
-        (buckets["denied"], "a row that stands and serves, refused by a DENY"),
-        ("a..b", "the grammar refuses the name outright"),
+    for who, client, name in (
+        ("main", s3, "no-such-bucket-configured"),
+        ("alt", alt_s3, "no-such-bucket-configured"),
+        ("main", s3, "a..b"),
     ):
         with pytest.raises(Exception) as caught:
-            s3.list_objects_v2(Bucket=name)
-        answers[why] = (status_of(caught.value), code_of(caught.value))
+            client.list_objects_v2(Bucket=name)
+        answers[who, name] = (status_of(caught.value), code_of(caught.value))
+
+    assert set(answers.values()) == {(404, "NoSuchBucket")}, answers
+
+
+def test_a_refusal_says_the_name_is_taken_and_nothing_else(s3, alt_s3, buckets):
+    """The bare `403` wherever a row stands, serving or not. `main`
+    holds a row on the excluded bucket and is told `503` instead."""
+    answers = {}
+    for who, client, name, why in (
+        ("alt", alt_s3, buckets["denied"], "a row that stands and serves"),
+        ("alt", alt_s3, buckets["excluded"], "a row that stands and will not serve"),
+        ("main", s3, buckets["denied"], "a row that stands and serves, refused by a DENY"),
+    ):
+        with pytest.raises(Exception) as caught:
+            client.list_objects_v2(Bucket=name)
+        answers[who, why] = (status_of(caught.value), code_of(caught.value))
 
     assert set(answers.values()) == {(403, "AccessDenied")}, answers
 
 
 @pytest.mark.parametrize("op", ["create_bucket", "delete_bucket"])
 def test_provisioning_without_the_flag_is_walled(s3, op):
-    """403, not 501.
-
-    A key without `manage_buckets` maps to no grantable action at all, so
-    authorization walls these before any connector is consulted — the
-    stronger answer of the two. A 501 would tell a prober the surface
-    exists and is merely unbuilt; this says no principal may perform it.
-    """
+    """403, not 501, and not the `404` above: a key without
+    `manage_buckets` is refused before any name is read."""
     with pytest.raises(Exception) as caught:
         getattr(s3, op)(Bucket="wire-made-bucket")
     assert status_of(caught.value) == 403
@@ -207,18 +161,9 @@ def test_provisioning_without_the_flag_is_walled(s3, op):
     ],
 )
 def test_the_bucket_name_grammar_refuses(s3, wildcard_grant, name):
-    """`InvalidBucketName`, and a 400 rather than a 404.
-
-    A name the grammar refuses is answered before any lookup, so it
-    cannot depend on whether a bucket of that name is configured — and it
-    must not become `NoSuchBucket`, which tells a client to go and create
-    one. Read over a listing rather than a `HEAD`, because HTTP gives a
-    HEAD no body and an error code lives in the body.
-
-    Under `wildcard_grant`, because authorization is answered first: a
-    caller with no grant for the name gets the `403` above instead, and
-    never reaches the grammar.
-    """
+    """`400 InvalidBucketName`, read over a listing because a HEAD has
+    no body. Under `wildcard_grant`: with no grant reaching the name,
+    authorization answers `404 NoSuchBucket` before the grammar."""
     with pytest.raises(Exception) as caught:
         s3.list_objects_v2(Bucket=name)
     assert status_of(caught.value) == 400, name
@@ -229,33 +174,22 @@ def test_the_bucket_name_grammar_refuses(s3, wildcard_grant, name):
 
 
 def probe(s3, bucket, sub, method="GET"):
-    """One signed `<method> /{bucket}?<sub>`, raw.
-
-    Raw because half of these have no botocore model here, and a modeled
-    call would report the SDK's opinion of an unknown element rather than
-    the bytes.
-    """
+    """One signed `<method> /{bucket}?<sub>`, raw: half have no botocore model."""
     return raw_request(s3, method, f"/{bucket}?{sub}")
 
 
-#: Sub-resource -> the error code its absence answers with. Each is a
-#: code S3 defines for that configuration alone, so a client can tell "no
-#: lifecycle rules" from "no such bucket" without a second call.
+#: Sub-resource -> the error code its absence answers with.
 ABSENT = {
     "replication": "ReplicationConfigurationNotFoundError",
     "encryption": "ServerSideEncryptionConfigurationNotFoundError",
     "website": "NoSuchWebsiteConfiguration",
     "cors": "NoSuchCORSConfiguration",
     "lifecycle": "NoSuchLifecycleConfiguration",
-    "policy": "NoSuchBucketPolicy",
-    "policyStatus": "NoSuchBucketPolicy",
     "tagging": "NoSuchTagSet",
     "object-lock": "ObjectLockConfigurationNotFoundError",
 }
 
-#: Sub-resource -> the root element of the empty document it answers. A
-#: 404 here would be wrong: "no notifications configured" is the ordinary
-#: state of a bucket, not a missing resource.
+#: Sub-resource -> the root element of the empty document it answers.
 EMPTY = {
     "logging": "BucketLoggingStatus",
     "notification": "NotificationConfiguration",
@@ -267,15 +201,14 @@ EMPTY = {
     "metrics": "ListMetricsConfigurationsResult",
 }
 
+#: The policy is the bucket's grant rows: a document where a row names
+#: the bucket, `NoSuchBucketPolicy` where none does (`test_s3_grants.py`).
+POLICY = ["policy", "policyStatus"]
+
 
 @pytest.mark.parametrize("sub,code", sorted(ABSENT.items()))
 def test_an_absent_configuration_answers_its_own_code(s3, bucket, sub, code):
-    """404, and the code S3 defines for *this* sub-resource.
-
-    The code is the assertion, not the status: every entry here is a 404,
-    so a sub-resource answering the wrong one of these still looks right
-    to any test that checked only the status.
-    """
+    """404, and the code S3 defines for this sub-resource."""
     resp = probe(s3, bucket, sub)
     assert resp.status_code == 404, f"?{sub} answered {resp.status_code}"
     assert code_in(resp.content) == code, f"?{sub}"
@@ -283,13 +216,7 @@ def test_an_absent_configuration_answers_its_own_code(s3, bucket, sub, code):
 
 @pytest.mark.parametrize("sub,root", sorted(EMPTY.items()))
 def test_an_unset_configuration_answers_an_empty_document(s3, bucket, sub, root):
-    """200 with a well-formed empty document, not a refusal.
-
-    A client that sees a 404 for `?notification` concludes the endpoint
-    does not support notifications; one that sees an empty
-    `<NotificationConfiguration/>` concludes there are none configured,
-    which is the true thing.
-    """
+    """200 with a well-formed empty document, not a refusal."""
     resp = probe(s3, bucket, sub)
     assert resp.status_code == 200, f"?{sub} answered {resp.status_code}: {resp.content[:120]!r}"
     text = resp.content.decode("utf-8", "replace")
@@ -298,25 +225,37 @@ def test_an_unset_configuration_answers_an_empty_document(s3, bucket, sub, root)
     assert "<Error>" not in text, f"?{sub} answered 200 with an error body"
 
 
+def test_the_policy_probes_answer_for_the_grant_rows(s3, bucket, accounts):
+    """One statement per grant row, and this bucket carries one."""
+    main = accounts["main"]
+
+    resp = probe(s3, bucket, "policy")
+    assert resp.status_code == 200, f"?policy answered {resp.status_code}: {resp.content[:120]!r}"
+    [statement] = json.loads(resp.content)["Statement"]
+    assert statement["Effect"] == "Allow"
+    assert statement["Principal"] == {"AWS": f"arn:aws:iam::{main.uid}:user/{main.username}"}
+    assert statement["Resource"] == [f"arn:aws:s3:::{bucket}", f"arn:aws:s3:::{bucket}/*"]
+    assert {"s3:GetObject", "s3:PutObject", "s3:ListBucket"} <= set(statement["Action"]), statement["Action"]
+
+    resp = probe(s3, bucket, "policyStatus")
+    assert resp.status_code == 200, f"?policyStatus answered {resp.status_code}: {resp.content[:120]!r}"
+    assert b"<IsPublic>false</IsPublic>" in resp.content, resp.content
+
+
 def test_the_matrix_has_no_overlaps(s3, bucket):
-    """A guard on the table above rather than on the server: a
-    sub-resource listed in two classes would make one assertion
-    unreachable while still passing."""
-    names = list(ABSENT) + list(EMPTY)
+    """A guard on the tables above: no sub-resource in two classes."""
+    names = list(ABSENT) + list(EMPTY) + POLICY
     assert len(names) == len(set(names)), "a sub-resource is in two classes"
     assert ABSENT and EMPTY
 
 
 def test_the_modeled_probes_answer_the_same_way(s3, bucket):
-    """The probes a client runs through its SDK before it trusts a
-    bucket. Each has to answer in the shape the SDK expects, not a bare
-    error."""
+    """The same probes through the SDK's modeled calls."""
     import botocore
 
     assert s3.get_bucket_location(Bucket=bucket) is not None
 
     for call, code in (
-        ("get_bucket_policy", "NoSuchBucketPolicy"),
         ("get_bucket_tagging", "NoSuchTagSet"),
         ("get_bucket_cors", "NoSuchCORSConfiguration"),
         ("get_bucket_lifecycle_configuration", "NoSuchLifecycleConfiguration"),
@@ -327,9 +266,11 @@ def test_the_modeled_probes_answer_the_same_way(s3, bucket):
             getattr(s3, call)(Bucket=bucket)
         assert code_of(caught.value).startswith(code), f"{call}: {code_of(caught.value)}"
 
-    # The probes AWS answers with a document rather than an absence. The
-    # four list calls answer an empty *list*, which says no configuration
-    # exists — not that one exists and is empty.
+    # The policy pair answers for the grant row this bucket carries.
+    assert json.loads(s3.get_bucket_policy(Bucket=bucket)["Policy"])["Statement"]
+    assert s3.get_bucket_policy_status(Bucket=bucket)["PolicyStatus"]["IsPublic"] is False
+
+    # These answer an empty list rather than an absence.
     for call, field in (
         ("list_bucket_analytics_configurations", "AnalyticsConfigurationList"),
         ("list_bucket_intelligent_tiering_configurations", "IntelligentTieringConfigurationList"),
@@ -345,8 +286,6 @@ def test_the_modeled_probes_answer_the_same_way(s3, bucket):
 
 
 #: Object sub-resources answered `NotImplemented`, whatever the method.
-#: `select` is POST-only at AWS and `torrent` GET-only; the answer here
-#: does not vary by method, which is what the parametrization asserts.
 UNIMPLEMENTED = ["attributes", "policyStatus", "restore", "select", "torrent"]
 
 #: `HEAD` is left out: HTTP gives it no body, and the code lives in one.
@@ -355,7 +294,7 @@ METHODS = ["GET", "PUT", "POST", "DELETE"]
 
 @pytest.fixture(scope="module")
 def probe_object(s3, bucket):
-    """A real object, so a 501 cannot be a 404 wearing a costume."""
+    """A real object, so a 501 is not a 404."""
     key = "subres/object.bin"
     s3.put_object(Bucket=bucket, Key=key, Body=b"body")
     return key
@@ -364,13 +303,8 @@ def probe_object(s3, bucket):
 @pytest.mark.parametrize("method", METHODS)
 @pytest.mark.parametrize("sub", UNIMPLEMENTED)
 def test_an_unimplemented_object_subresource_is_501(s3, bucket, probe_object, sub, method):
-    """`NotImplemented`, with the sub-resource named in the message.
-
-    **Falling through is the failure worth naming.** `PUT
-    /{bucket}/{key}` is a write, and `?restore` is one query parameter
-    away from it — a router that ignored an unknown sub-resource would
-    answer `200` and store a restore request *as the object*.
-    """
+    """`NotImplemented`, naming the sub-resource. A `PUT` that fell
+    through would store the request as the object."""
     resp = raw_request(
         s3,
         method,
@@ -383,36 +317,19 @@ def test_an_unimplemented_object_subresource_is_501(s3, bucket, probe_object, su
 
 
 def test_the_object_is_untouched_by_every_probe(s3, bucket, probe_object):
-    """The assertion the status codes cannot make.
-
-    A `PUT ?restore` that answered 501 *after* writing the body would
-    look identical from the outside, and it is the one failure this
-    matrix exists to catch.
-    """
+    """A `PUT ?restore` that wrote before answering 501 would look the same."""
     got = s3.get_object(Bucket=bucket, Key=probe_object)
     assert got["Body"].read() == b"body"
     assert got["ContentLength"] == 4
 
 
 def test_a_bucket_only_subresource_on_a_key_is_not_the_key(s3, bucket, probe_object):
-    """`?versions` names a bucket listing, so on a key it is a 501 and
-    never the object.
-
-    The sub-resource is implemented — at the level above. A router that
-    matched on the name alone would either run a version listing rooted
-    at a key or serve the object and ignore the parameter, and both are
-    silent.
-    """
+    """`?versions` on a key is a 501, never the object."""
     resp = raw_request(s3, "GET", f"/{bucket}/{probe_object}?versions")
     assert resp.status_code == 501
     assert b"versions" in resp.content
 
 
 def test_the_endpoint_is_the_server_under_test(daemon):
-    """A guard on the fixtures rather than on the server.
-
-    Everything above is meaningless if the client is pointed somewhere
-    else, and an endpoint built from the wrong address fails as a
-    connection error whose message names no bucket.
-    """
+    """A guard on the fixtures: the client points at the server under test."""
     assert daemon == s3_endpoint()

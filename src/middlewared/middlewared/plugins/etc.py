@@ -195,7 +195,10 @@ class EtcService(Service):
             EtcEntry(renderer_type=RendererType.PY, path='truesearchd/truesearch.conf'),
         )),
         'truenas_s3': EtcGroup(
-            ctx=(CtxMethod(method='s3.render_data'),),
+            ctx=(
+                CtxMethod(method='s3.render_data'),
+                CtxMethod(method='system.security.config'),
+            ),
             entries=(
                 # the files describe buckets on user pools, so they wait for the
                 # boot-time bulk import

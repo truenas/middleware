@@ -32,7 +32,7 @@ from middlewared.utils.crypto import generate_token, ssl_uuid4
 
 from .accesskey_crud import S3AccesskeyService
 from .grants import grant_label, grant_principals, label_grants, principal_names, validate_grants
-from .lifecycle import MISSING_ALERT, render_and_apply
+from .lifecycle import MISSING_ALERT, apply_require_nts, render_and_apply
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -454,3 +454,8 @@ class S3Service(SystemServiceService[S3Entry]):
     async def reconfigure(self, force_restart: bool = False) -> str | None:
         """Re-render the S3 service's files and reload or restart it as the change requires."""
         return await render_and_apply(self.middleware, force_restart=force_restart)
+
+    @private
+    async def apply_require_nts(self) -> str | None:
+        """Restart the S3 service under a changed `require_nts` once chronyd follows a source again."""
+        return await apply_require_nts(self.middleware)
