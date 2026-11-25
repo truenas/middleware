@@ -17,7 +17,7 @@ from typing import Any, TypedDict
 
 from websocket._exceptions import WebSocketBadStatusException
 
-from truenas_api_client import Client, ClientException, CALL_TIMEOUT
+from truenas_api_client import Client, ClientException, CALL_TIMEOUT, TCPKeepalive
 from middlewared.plugins.failover_.constants import NETWORK_ERRORS
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationError
@@ -108,7 +108,14 @@ class RemoteClient:
             url = f'ws://{self.remote_ip}:6000/websocket'
 
         try:
-            with Client(url, reserved_ports=True, private_methods=True) as c:
+            # A panicked peer never closes the socket. Detect it within about 6 seconds instead of waiting for
+            # the TCP retransmission timeout.
+            with Client(
+                url,
+                reserved_ports=True,
+                private_methods=True,
+                tcp_keepalive=TCPKeepalive(idle=1, interval=1, count=5),
+            ) as c:
                 self.client = c
                 with self._subscribe_lock:
                     self.connected.set()
