@@ -65,7 +65,6 @@ class ZettareplService(Service, TaskStateMixin):
         self.hold_tasks = {}
         self.last_snapshot = {}
         self.serializable_state = defaultdict(dict)
-        self.removed_tasks = set()
 
     def get_state(self):
         if self.error:
@@ -166,9 +165,6 @@ class ZettareplService(Service, TaskStateMixin):
         return self.state[task_id]
 
     def set_state(self, task_id, state):
-        if task_id in self.removed_tasks:
-            return
-
         self.state[task_id] = state
 
         if state["state"] in ("ERROR", "FINISHED"):
@@ -180,9 +176,6 @@ class ZettareplService(Service, TaskStateMixin):
         self._notify_state_change(task_id)
 
     def set_last_snapshot(self, task_id, last_snapshot):
-        if task_id in self.removed_tasks:
-            return
-
         self.last_snapshot[task_id] = last_snapshot
 
         if task_id not in self.serializable_state:
@@ -196,16 +189,12 @@ class ZettareplService(Service, TaskStateMixin):
         """
         Remove all state for a task that has been deleted.
         This should be called when a task is deleted from the database.
-
-        A delete can arrive while zettarepl runs the task. zettarepl then reports the final state after the
-        delete. `set_state` and `set_last_snapshot` ignore such reports.
         """
         self.state.pop(task_id, None)
         self.last_snapshot.pop(task_id, None)
         self.serializable_state.pop(task_id, None)
         self.definition_errors.pop(task_id, None)
         self.hold_tasks.pop(task_id, None)
-        self.removed_tasks.add(task_id)
 
     def _notify_state_change(self, task_id):
         state = self._get_task_state(task_id, self._get_state_context())
@@ -262,4 +251,6 @@ class ZettareplService(Service, TaskStateMixin):
                     {task_state_datastore.column: ejson.dumps(state)}
                 )
             except NoRowsWereUpdatedException:
-                pass
+                # A delete can arrive while zettarepl runs the task. zettarepl then reports the final state after the
+                # delete. Clean up that state from the memory.
+                self.remove_task(task_id)
