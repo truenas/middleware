@@ -1,6 +1,9 @@
 import os
+import stat
 
 from typing import Any
+
+import truenas_os
 
 from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.service import CallError, ValidationErrors
@@ -60,29 +63,43 @@ class CDROMDelegate(DeviceDelegate):
         # b) Change ownership of the file to libvirt user as libvirt would eventually do
         # 3) Check if libvirt user can access the file
         libvirt_user = self.middleware.call_sync('user.get_user_obj', {"username": LIBVIRT_USER})
-        current_owner = os.stat(path)
-        is_valid = False
-        if current_owner.st_uid != libvirt_user['pw_uid']:
-            if self.middleware.call_sync('filesystem.can_access_as_user', LIBVIRT_USER, path, ['READ']):
-                is_valid = True
-            else:
-                os.chown(path, libvirt_user['pw_uid'], libvirt_user['pw_gid'])
-        if not is_valid:
-            try:
-                self.middleware.call_sync(
-                    'filesystem.check_path_execute', path, 'USER', libvirt_user['pw_uid'], False
-                )
-            except CallError as e:
-                verrors.add('attributes.path', e.errmsg)
+        try:
+            fd = truenas_os.openat2(path, os.O_PATH | os.O_CLOEXEC, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
+        except OSError as e:
+            verrors.add('attributes.path', f'{path!r}: {e.strerror}')
+            return
 
-            if not self.middleware.call_sync(
-                    'filesystem.can_access_as_user', LIBVIRT_USER, path, ['READ']
-            ):
-                verrors.add(
-                    'attributes.path',
-                    f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
-                    'permissions are specified.'
-                )
-            # Now that we know libvirt user would not be able to read the file in any case,
-            # let's rollback the chown change we did
-            os.chown(path, current_owner.st_uid, current_owner.st_gid)
+        try:
+            current_owner = os.fstat(fd)
+            if not stat.S_ISREG(current_owner.st_mode):
+                verrors.add('attributes.path', f'{path!r} is not a regular file.')
+                return
+
+            fd_path = f'/proc/self/fd/{fd}'
+            is_valid = False
+            if current_owner.st_uid != libvirt_user['pw_uid']:
+                if self.middleware.call_sync('filesystem.can_access_as_user', LIBVIRT_USER, path, ['READ']):
+                    is_valid = True
+                else:
+                    os.chown(fd_path, libvirt_user['pw_uid'], libvirt_user['pw_gid'])
+            if not is_valid:
+                try:
+                    self.middleware.call_sync(
+                        'filesystem.check_path_execute', path, 'USER', libvirt_user['pw_uid'], False
+                    )
+                except CallError as e:
+                    verrors.add('attributes.path', e.errmsg)
+
+                if not self.middleware.call_sync(
+                        'filesystem.can_access_as_user', LIBVIRT_USER, path, ['READ']
+                ):
+                    verrors.add(
+                        'attributes.path',
+                        f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
+                        'permissions are specified.'
+                    )
+                # Now that we know libvirt user would not be able to read the file in any case,
+                # let's rollback the chown change we did
+                os.chown(fd_path, current_owner.st_uid, current_owner.st_gid)
+        finally:
+            os.close(fd)

@@ -33,6 +33,7 @@ from middlewared.utils.filesystem.acl import (
     strip_acl_path,
 )
 from middlewared.utils.filesystem.directory import directory_is_empty
+from truenas_os_pyutils.io import safe_open_raw
 from truenas_os_pyutils.mount import iter_mountinfo, statmount
 from middlewared.utils.path import FSLocation, path_location
 from .utils import (
@@ -270,16 +271,11 @@ class FilesystemService(Service):
         self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
 
-        fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-        )
-        try:
+        with safe_open_raw(data['path']) as fd:
             os.fchown(fd, uid, gid)
             if options['recursive']:
                 job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
                 AclTool(fd, AclToolAction.CHOWN, uid, gid, ATChownOptions(traverse=options['traverse']), job).run()
-        finally:
-            os.close(fd)
         job.set_progress(100, 'Finished changing owner.')
 
     @api_method(
@@ -368,10 +364,7 @@ class FilesystemService(Service):
 
         strip_acl_path(data['path'])
 
-        fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-        )
-        try:
+        with safe_open_raw(data['path']) as fd:
             if mode:
                 os.fchmod(fd, mode)
 
@@ -381,18 +374,13 @@ class FilesystemService(Service):
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 AclTool(fd, AclToolAction.STRIP, uid, gid,
                         ATPermOptions(traverse=options['traverse'], target_mode=mode), job).run()
-        finally:
-            os.close(fd)
         job.set_progress(100, 'Finished setting permissions.')
 
     @private
     def getacl_nfs4(self, path, simplified, resolve_ids):
-        fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-        try:
+        with safe_open_raw(path) as fd:
             acl_obj = truenas_os.fgetacl(fd)
             st = os.fstat(fd)
-        finally:
-            os.close(fd)
 
         output = nfs4acl_obj_to_dict(acl_obj, st.st_uid, st.st_gid, simplified)
         output['path'] = path
@@ -412,12 +400,9 @@ class FilesystemService(Service):
 
     @private
     def getacl_posix1e(self, path, simplified, resolve_ids):
-        fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-        try:
+        with safe_open_raw(path) as fd:
             acl_obj = truenas_os.fgetacl(fd)
             st = os.fstat(fd)
-        finally:
-            os.close(fd)
 
         ret = posixacl_obj_to_dict(acl_obj, st.st_uid, st.st_gid)
         ret['acltype'] = FS_ACL_Type.POSIX1E
@@ -568,10 +553,7 @@ class FilesystemService(Service):
                 data['path'], data['dacl'], uid_to_check, gid_to_check, True
             )
 
-        fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-        )
-        try:
+        with safe_open_raw(data['path']) as fd:
             if not do_strip:
                 try:
                     acl_obj = nfs4acl_dict_to_obj(data['dacl'], aclflags=None)
@@ -596,8 +578,6 @@ class FilesystemService(Service):
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
                 AclTool(fd, action, data['uid'], data['gid'], acl_opts, job).run()
-        finally:
-            os.close(fd)
 
         job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
@@ -657,10 +637,7 @@ class FilesystemService(Service):
         if do_strip:
             strip_acl_path(data['path'])
 
-        fd = truenas_os.openat2(
-            data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-        )
-        try:
+        with safe_open_raw(data['path']) as fd:
             if acl_obj is not None:
                 try:
                     truenas_os.validate_acl(fd, acl_obj)
@@ -680,8 +657,6 @@ class FilesystemService(Service):
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
                 AclTool(fd, action, data['uid'], data['gid'], acl_opts, job).run()
-        finally:
-            os.close(fd)
 
         job.set_progress(100, 'Finished setting POSIX1e ACL.')
 

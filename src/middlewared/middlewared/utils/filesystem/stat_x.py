@@ -47,6 +47,14 @@ STATX_DEFAULT_MASK = (
 )
 
 
+def statx_attribute_names(stx_attributes: int) -> list[str]:
+    return [
+        attr.name
+        for attr in StatxAttr
+        if stx_attributes & attr.value and attr.name is not None
+    ]
+
+
 class StatxEntryResult(TypedDict, total=False):
     """Return type for statx_entry_impl"""
     st: truenas_os.StatxResult

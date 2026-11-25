@@ -24,7 +24,9 @@ from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_ import release
-from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+from middlewared.plugins.nfs_.utils import (
+    get_domain, leftmost_has_wildcards, get_wildcard_domain, path_exportable
+)
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.plugins.nfs_.validators import (
     confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
@@ -905,6 +907,13 @@ class SharingNFSService(SharingService):
         A share path centric test. Checks new share path against existing.
         This function checks for common conditions.
         """
+        if not path_exportable(data["path"]):
+            verrors.add(
+                f"{schema_name}.path",
+                "NFS cannot export a path that contains a double quote, a backslash or a control character."
+            )
+            return
+
         # We test other shares that are sharing the same path
         tgt_stat = await self.middleware.call('filesystem.stat', data["path"])
 

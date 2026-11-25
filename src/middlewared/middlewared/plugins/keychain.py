@@ -518,8 +518,10 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        proc = await run(["ssh-keyscan", "-p", str(data["port"]), "-T", str(data["connect_timeout"]), data["host"]],
-                         check=False, encoding="utf8")
+        proc = await run(
+            ["ssh-keyscan", "-p", str(data["port"]), "-T", str(data["connect_timeout"]), "--", data["host"]],
+            check=False, encoding="utf8",
+        )
         if proc.returncode == 0:
             if proc.stdout:
                 try:

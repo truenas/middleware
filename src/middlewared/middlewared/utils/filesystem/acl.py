@@ -1,8 +1,8 @@
 import enum
-import os
 from types import MappingProxyType
 
 import truenas_os
+from truenas_os_pyutils.io import safe_open_raw
 
 from typing import Any
 
@@ -406,8 +406,5 @@ def posixacl_obj_to_dict(acl: 'truenas_os.POSIXACL', uid: int, gid: int) -> dict
 
 
 def strip_acl_path(path: str) -> None:
-    fd = truenas_os.openat2(path, flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
-    try:
+    with safe_open_raw(path) as fd:
         truenas_os.fsetacl(fd, None)
-    finally:
-        os.close(fd)

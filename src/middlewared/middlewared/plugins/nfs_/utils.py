@@ -16,6 +16,10 @@ def get_domain(hostname):
     return None
 
 
+def path_exportable(path: str) -> bool:
+    return not any(c in '"\\' or ord(c) < 0x20 or c == '\x7f' for c in path)
+
+
 def leftmost_has_wildcards(hostname):
     """
     A bool that returns True if the left most level contains wildcards

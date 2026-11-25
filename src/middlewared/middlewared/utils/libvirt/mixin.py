@@ -5,12 +5,13 @@ from logging import Logger
 import os
 import typing
 
+from truenas_os_pyutils.io import safe_open_raw
+
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, private, ValidationErrors
-from middlewared.utils import run
 from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.types import AuditCallback
 
@@ -20,6 +21,16 @@ from .utils import ACTIVE_STATES
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
     from .device_factory import DeviceFactory
+
+
+def unlink_raw_file(path: str) -> None:
+    with safe_open_raw(os.path.dirname(path), os.O_DIRECTORY) as dir_fd:
+        os.unlink(os.path.basename(path), dir_fd=dir_fd)
+
+
+def truncate_raw_file(path: str, size: int) -> None:
+    with safe_open_raw(path, os.O_WRONLY | os.O_CREAT) as fd:
+        os.ftruncate(fd, size)
 
 
 class DeviceMixin:
@@ -137,7 +148,7 @@ class DeviceMixin:
             if device_dtype != 'RAW':
                 raise CallError('Device is not of RAW type.')
             try:
-                os.unlink(device['attributes']['path'])
+                await self.middleware.run_in_thread(unlink_raw_file, device['attributes']['path'])
             except OSError:
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
@@ -171,9 +182,10 @@ class DeviceMixin:
             )
         ):
             path = data['attributes']['path']
-            cp = await run(['truncate', '-s', str(data['attributes']['size']), path], check=False)
-            if cp.returncode:
-                raise CallError(f'Failed to create or update raw file {path}: {cp.stderr.decode()}')
+            try:
+                await self.middleware.run_in_thread(truncate_raw_file, path, data['attributes']['size'])
+            except OSError as e:
+                raise CallError(f'Failed to create or update raw file {path}: {e.strerror}')
 
         return data
 
