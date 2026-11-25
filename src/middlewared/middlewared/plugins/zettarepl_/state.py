@@ -156,8 +156,10 @@ class ZettareplService(Service, TaskStateMixin):
             if task_id not in active_task_ids:
                 self.last_snapshot.pop(task_id, None)
 
-        # DO NOT clear serializable_state here - it should persist for disabled tasks
-        # serializable_state will be cleared when tasks are explicitly deleted via remove_task()
+        # Clean up one-time tasks
+        for task_id in list(self.serializable_state.keys()):
+            if task_id not in active_task_ids and find_task_state_datastore(task_id) is None:
+                self.serializable_state.pop(task_id, None)
 
     def get_internal_task_state(self, task_id):
         return self.state[task_id]
@@ -249,4 +251,6 @@ class ZettareplService(Service, TaskStateMixin):
                     {task_state_datastore.column: ejson.dumps(state)}
                 )
             except NoRowsWereUpdatedException:
-                pass
+                # A delete can arrive while zettarepl runs the task. zettarepl then reports the final state after the
+                # delete. Clean up that state from the memory.
+                self.remove_task(task_id)
