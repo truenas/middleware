@@ -86,8 +86,15 @@ class HttpService(PseudoServiceBase):
         await self.middleware.call("system.general.update_ui_allowlist")
         await system_dbus.systemd_unit("nginx", "restart")
 
+    async def _readvertise(self):
+        """Advertise the UI's ports over mDNS as nginx now serves them."""
+        await (
+            await self.middleware.call("service.control", "RELOAD", "discovery", {"ha_propagate": False})
+        ).wait()
+
     async def after_restart(self):
         await self._register_new_port()
+        await self._readvertise()
 
     async def reload(self):
         await self.middleware.call("system.general.update_ui_allowlist")
@@ -95,6 +102,7 @@ class HttpService(PseudoServiceBase):
 
     async def after_reload(self):
         await self._register_new_port()
+        await self._readvertise()
 
 
 class NetworkService(PseudoServiceBase):
