@@ -459,3 +459,98 @@ def test_vm_disk_already_sharing_zvol_with_iscsi_extent_stays_editable(conflict_
             assert ve.value.errors == [
                 ValidationError("attributes.path", "Disk currently in use by iSCSI extent conflict_extent_other")
             ]
+
+
+def test_iscsi_extent_already_sharing_file_with_vm_raw_stays_editable(conflict_vm):
+    with dataset("conflict_files") as ds:
+        free, used, other = (f"/mnt/{ds}/{name}.img" for name in ("free", "used", "other"))
+        with (
+            iscsi_extent({"name": "conflict_extent", "type": "FILE", "path": free, "filesize": MiB}) as extent,
+            vm_device(conflict_vm["id"], {"dtype": "RAW", "path": used, "exists": False, "size": MiB}),
+            vm_device(conflict_vm["id"], {"dtype": "RAW", "path": other, "exists": False, "size": MiB}),
+        ):
+            call(
+                "datastore.update", "services.iscsitargetextent", extent["id"],
+                {"iscsi_target_extent_path": used},
+            )
+
+            call("iscsi.extent.update", extent["id"], {"comment": "still editable"})
+            call("iscsi.extent.update", extent["id"], {"path": used, "comment": "still editable"})
+            call("iscsi.extent.update", extent["id"], {"enabled": False})
+
+            with pytest.raises(ValidationErrors) as ve:
+                call("iscsi.extent.update", extent["id"], {"path": other})
+
+            assert ve.value.errors == [
+                ValidationError("iscsi_extent_update.path", "File currently in use by VM conflict_vm")
+            ]
+
+
+def test_nvmet_namespace_already_sharing_file_with_vm_raw_stays_editable(conflict_vm):
+    with dataset("conflict_files") as ds, nvmet_subsys("conflict_subsys") as subsys:
+        free, used, other = (f"/mnt/{ds}/{name}.img" for name in ("free", "used", "other"))
+        with (
+            nvmet_namespace(subsys["id"], free, device_type="FILE", filesize=MiB) as ns,
+            vm_device(conflict_vm["id"], {"dtype": "RAW", "path": used, "exists": False, "size": MiB}),
+            vm_device(conflict_vm["id"], {"dtype": "RAW", "path": other, "exists": False, "size": MiB}),
+        ):
+            call(
+                "datastore.update", "services.nvmet_namespace", ns["id"],
+                {"nvmet_namespace_device_path": used},
+            )
+
+            call("nvmet.namespace.update", ns["id"], {"device_path": used})
+            call("nvmet.namespace.update", ns["id"], {"enabled": False})
+
+            with pytest.raises(ValidationErrors) as ve:
+                call("nvmet.namespace.update", ns["id"], {"device_path": other})
+
+            assert ve.value.errors == [
+                ValidationError("nvmet_namespace_update.device_path", "File currently in use by VM conflict_vm")
+            ]
+
+
+def test_vm_raw_already_sharing_file_with_iscsi_extent_stays_editable(conflict_vm):
+    with dataset("conflict_files") as ds:
+        free, used, other = (f"/mnt/{ds}/{name}.img" for name in ("free", "used", "other"))
+        with (
+            iscsi_extent({"name": "conflict_extent", "type": "FILE", "path": used, "filesize": MiB}),
+            iscsi_extent({"name": "conflict_extent_other", "type": "FILE", "path": other, "filesize": MiB}),
+            vm_device(conflict_vm["id"], {"dtype": "RAW", "path": free, "exists": False, "size": MiB}) as device,
+        ):
+            call(
+                "datastore.update", "vm.device", device["id"],
+                {"attributes": {**device["attributes"], "path": used}},
+            )
+
+            call("vm.device.update", device["id"], {"attributes": {"path": used}})
+            call("vm.device.update", device["id"], {"order": 1005})
+
+            with pytest.raises(ValidationErrors) as ve:
+                call("vm.device.update", device["id"], {"attributes": {"path": other}})
+
+            assert ve.value.errors == [
+                ValidationError("attributes.path", "File currently in use by iSCSI extent conflict_extent_other")
+            ]
+
+
+def test_nvmet_namespace_already_sharing_zvol_with_vm_stays_editable_when_respelled(conflict_vm):
+    # A zvol with a space in its name is reachable both as `zvol/pool/conflict zvol` and, the way udev
+    # spells it, `zvol/pool/conflict+zvol`. Resubmitting the other spelling is not a new claim.
+    with (
+        zvol("conflict_free") as free, zvol("conflict zvol") as used,
+        nvmet_subsys("conflict_subsys") as subsys,
+    ):
+        link = f"zvol/{pool}/conflict+zvol"
+        with (
+            nvmet_namespace(subsys["id"], f"zvol/{free}") as ns,
+            vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/{link}"}),
+        ):
+            call(
+                "datastore.update", "services.nvmet_namespace", ns["id"],
+                {"nvmet_namespace_device_path": f"zvol/{used}"},
+            )
+
+            call("nvmet.namespace.update", ns["id"], {"device_path": link})
+
+            assert call("nvmet.namespace.get_instance", ns["id"])["device_path"] == link

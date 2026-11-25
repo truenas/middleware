@@ -386,14 +386,11 @@ class NVMetNamespaceService(SharingService):
         await self.middleware.call('nvmet.namespace.clean_type_and_path', data, schema_name, verrors)
         await self.middleware.call('nvmet.namespace.clean_filesize', data, schema_name, verrors, old)
 
-        exclude = None
-        if old:
-            exclude = ('nvmet.namespace', old['id'])
         device_type, device_path = data.get('device_type'), data.get('device_path')
-        if not old or (old['device_type'], old['device_path']) != (device_type, device_path):
-            verrors.extend(await self.call2(
-                self.s.blockstorage.validate, f'{schema_name}.device_path', device_type, device_path, exclude=exclude,
-            ))
+        verrors.extend(await self.call2(
+            self.s.blockstorage.validate, f'{schema_name}.device_path', device_type, device_path,
+            old=(old['device_type'], old['device_path']) if old else None,
+        ))
 
         if old:
             # If the service is running then can only change items if disabled.

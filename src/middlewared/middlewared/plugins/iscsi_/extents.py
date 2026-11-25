@@ -29,6 +29,7 @@ from middlewared.utils import secrets
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.size import format_size
+from .block_storage_delegate import extent_block_storage
 from .utils import sanitize_extent
 
 EXTENT_DEFAULT_VENDOR = 'TrueNAS'
@@ -483,9 +484,7 @@ class iSCSITargetExtentService(SharingService):
         extent_type = data['type']
         disk = data['disk']
         path = data['path']
-        exclude = None
-        if old:
-            exclude = ('iscsi.extent', old['id'])
+        old_block_storage = extent_block_storage(old) if old else None
         if extent_type == 'DISK':
             if not disk:
                 verrors.add(f'{schema_name}.disk', 'This field is required')
@@ -506,12 +505,11 @@ class iSCSITargetExtentService(SharingService):
             if '@' in zvol_name and not data['ro']:
                 verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')
 
-            if not old or old['type'] != extent_type or old['disk'] != disk:
-                verrors.extend(
-                    self.call_sync2(
-                        self.s.blockstorage.validate, f'{schema_name}.disk', 'ZVOL', disk, exclude=exclude,
-                    )
+            verrors.extend(
+                self.call_sync2(
+                    self.s.blockstorage.validate, f'{schema_name}.disk', 'ZVOL', disk, old=old_block_storage,
                 )
+            )
 
         elif extent_type == 'FILE':
             if not path:
@@ -539,12 +537,11 @@ class iSCSITargetExtentService(SharingService):
                     'Filepath may not contain space characters'
                 )
 
-            if not old or old['type'] != extent_type or old['path'] != path:
-                verrors.extend(
-                    self.call_sync2(
-                        self.s.blockstorage.validate, f'{schema_name}.path', 'FILE', path, exclude=exclude,
-                    )
+            verrors.extend(
+                self.call_sync2(
+                    self.s.blockstorage.validate, f'{schema_name}.path', 'FILE', path, old=old_block_storage,
                 )
+            )
 
         return data
 

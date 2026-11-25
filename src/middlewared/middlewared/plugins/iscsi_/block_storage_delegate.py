@@ -1,9 +1,17 @@
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.common.block_storage import BlockStorageDelegate, BlockStorageKind, BlockStorageUse
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+
+
+def extent_block_storage(extent: dict[str, Any]) -> tuple[BlockStorageKind, str]:
+    """The `(kind, path)` an extent claims, spelled the way `iscsi.extent` stores it."""
+    if extent["type"] == "DISK":
+        return "ZVOL", extent["path"]
+
+    return "FILE", extent["path"]
 
 
 class ISCSIExtentBlockStorageDelegate(BlockStorageDelegate):
@@ -12,15 +20,11 @@ class ISCSIExtentBlockStorageDelegate(BlockStorageDelegate):
     async def get_in_use(self) -> list[BlockStorageUse]:
         uses = []
         for extent in await self.middleware.call("iscsi.extent.query"):
-            kind: BlockStorageKind
-            if extent["type"] == "DISK":
-                kind = "ZVOL"
-            else:
-                kind = "FILE"
+            kind, path = extent_block_storage(extent)
             uses.append(
                 BlockStorageUse(
                     kind=kind,
-                    path=extent["path"],
+                    path=path,
                     id=extent["id"],
                     description=f"iSCSI extent {extent['name']}",
                     data=extent,
