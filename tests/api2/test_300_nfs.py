@@ -1210,13 +1210,17 @@ class TestNFSops:
         then check the syslog and daemon.log for rpc.mountd messages.
         The mountd filter is applied to syslog and daemon.log.
 
-        Stays on SSH_NFS (kernel ``mount.nfs`` even with vers=4 issues a
-        compat-mountd RPC that ``rpc.mountd`` logs); pynfs's NFSv4
-        client goes straight to PUTROOTFH/LOOKUP and never touches
-        mountd, so it can't trigger the log entries we're filtering.
+        Uses a kernel NFSv3 mount.  Every MNT3 request makes rpc.mountd
+        log "authenticated mount request" at NOTICE, so the test asserts
+        on that line.  No other rpc.mountd output is a reliable signal:
+        NFSv4 mounts only produce the inotify-driven "v4.x client
+        attached/detached" lines, which are racy.
         """
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
+
+        # NOTICE-level line rpc.mountd logs for every successful MNT3 request
+        mount_notice = 'authenticated mount request'
 
         with nfs_config():
             # Create several rpc.mountd daemons
@@ -1225,13 +1229,13 @@ class TestNFSops:
             # Enable rpc.mountd logging
             call("nfs.update", {"mountd_log": True})
 
-            # Run test:  rpc.mountd messages should not be present
+            # Run test:  rpc.mountd messages should be present
             syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
             daemon_tail = async_SSH_start("tail -n 0 -F /var/log/daemon.log", user, password, truenas_server.ip)
             # This will log to both syslog and daemon.log
             ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - expect mount messages ======"')
 
-            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
+            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=3,
                          user=user, password=password, ip=truenas_server.ip) as n:
                 n.ls('/')
 
@@ -1239,20 +1243,20 @@ class TestNFSops:
             syslog_data, errs = async_SSH_done(syslog_tail, 5)    # 5 second timeout
             daemon_data, errs = async_SSH_done(daemon_tail, 5)    # 5 second timeout
 
-            assert 'rpc.mountd' in syslog_data, \
-                f"Unexpectedly did not find rpc.mountd messages in syslog:\n{syslog_data}"
-            assert 'rpc.mountd' in daemon_data, \
-                f"Unexpectedly did not find rpc.mountd messages in daemon.log:\n{daemon_data}"
+            assert mount_notice in syslog_data, \
+                f"Unexpectedly did not find rpc.mountd '{mount_notice}' in syslog:\n{syslog_data}"
+            assert mount_notice in daemon_data, \
+                f"Unexpectedly did not find rpc.mountd '{mount_notice}' in daemon.log:\n{daemon_data}"
 
             # Disable rpc.mountd logging
             call("nfs.update", {"mountd_log": False})
 
-            # Run test: rpc.mountd messages should be present
+            # Run test: rpc.mountd messages should not be present
             syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
             daemon_tail = async_SSH_start("tail -n 0 -F /var/log/daemon.log", user, password, truenas_server.ip)
             ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - no mountd messages ======"')
 
-            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
+            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=3,
                          user=user, password=password, ip=truenas_server.ip) as n:
                 n.ls('/')
 
@@ -1260,10 +1264,10 @@ class TestNFSops:
             syslog_data, errs = async_SSH_done(syslog_tail, 5)    # 5 second timeout
             daemon_data, errs = async_SSH_done(daemon_tail, 5)    # 5 second timeout
 
-            assert 'rpc.mountd' not in syslog_data, \
-                f"Unexpectedly found rcp.mountd messages in syslog:\n{syslog_data}"
-            assert 'rpc.mountd' not in daemon_data, \
-                f"Unexpectedly found rcp.mountd messages in daemon.log:\n{daemon_data}"
+            assert mount_notice not in syslog_data, \
+                f"Unexpectedly found rpc.mountd '{mount_notice}' in syslog:\n{syslog_data}"
+            assert mount_notice not in daemon_data, \
+                f"Unexpectedly found rpc.mountd '{mount_notice}' in daemon.log:\n{daemon_data}"
 
     def test_client_status(self, start_nfs, nfs_dataset_and_share,
                            nfs_allow_nonroot):
