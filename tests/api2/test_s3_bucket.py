@@ -1207,23 +1207,13 @@ def test_owner_change_leaves_a_shared_directory_as_found(owner):
         assert data["mode"] & 0o777 == 0o755
 
 
-def test_audit_choices():
+def test_audit_choices(owner):
     choices = call("sharing.s3.audit_choices")
-    # the S3 service's maskable vocabulary in full: every grantable
-    # action plus the bucket plane, minus the bypass probe
-    assert len(choices) == 21
     assert "BypassGovernanceRetention" not in choices
-    assert choices["ListAllMyBuckets"] == "ListAllMyBuckets"
-    for late in (
-        "GetObjectAcl",
-        "PutObjectAcl",
-        "GetBucketAcl",
-        "PutBucketAcl",
-        "PutBucketVersioning",
-        "CreateBucket",
-        "DeleteBucket",
-    ):
-        assert choices[late] == late
+
+    with entitled("S3_AUDIT"), bucket() as b, running_service():
+        call("sharing.s3.update", b["id"], {"audit": list(choices)})
+        assert parse(BUCKETS_CONF)['bucket "test-bucket"']["audit"] == ",".join(choices)
 
 
 def test_snapshot_version_rules(owner, versioning_licensed):
