@@ -3,6 +3,7 @@ import asyncio
 from middlewared.common.block_storage import (
     BlockStorageAttachment,
     BlockStorageDelegate,
+    BlockStorageKind,
     BlockStorageUse,
     canonical_key,
 )
@@ -23,7 +24,7 @@ class BlockStorageService(Service):
 
     async def get_in_use(
         self,
-        kind: str | None = None,
+        kind: BlockStorageKind | None = None,
         skip_namespace: str | None = None,
     ) -> list[BlockStorageAttachment]:
         delegates = [delegate for delegate in self.DELEGATES.values() if delegate.namespace != skip_namespace]
@@ -53,18 +54,14 @@ class BlockStorageService(Service):
 
     async def in_use_by(
         self,
-        kind: str,
+        kind: BlockStorageKind,
         path: str,
         exclude: tuple[str, int] | None = None,
         whitelist_namespace: str | None = None,
     ) -> BlockStorageAttachment | None:
-        exclude_key: tuple[str, int] | None = None
-        if exclude is not None:
-            exclude_key = (exclude[0], exclude[1])
-
         key = await self.middleware.run_in_thread(canonical_key, kind, path)
         for attachment in await self.get_in_use(kind, whitelist_namespace):
-            if attachment.key == key and (attachment.namespace, attachment.id) != exclude_key:
+            if attachment.key == key and (attachment.namespace, attachment.id) != exclude:
                 return attachment
 
         return None
@@ -72,22 +69,18 @@ class BlockStorageService(Service):
     async def validate(
         self,
         schema: str,
-        kind: str,
+        kind: BlockStorageKind,
         path: str,
         exclude: tuple[str, int] | None = None,
-        raise_error: bool = False,
         whitelist_namespace: str | None = None,
-    ) -> ValidationErrors | None:
+    ) -> ValidationErrors:
+        """
+        `exclude` is the `(namespace, id)` of the item being edited, so that it does not conflict with itself.
+        `whitelist_namespace` ignores every use reported by that delegate (e.g. VMs may share a zvol among VMs).
+        """
         verrors = ValidationErrors()
         if attachment := await self.in_use_by(kind, path, exclude, whitelist_namespace):
-            if kind == "ZVOL":
-                noun = "Disk"
-            else:
-                noun = "File"
+            noun = "Disk" if kind == "ZVOL" else "File"
             verrors.add(schema, f"{noun} currently in use by {attachment.description}")
-
-        if raise_error:
-            verrors.check()
-            return None
 
         return verrors

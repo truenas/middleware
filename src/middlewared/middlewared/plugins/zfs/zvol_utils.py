@@ -104,7 +104,9 @@ def unlocked_zvols_fast_impl(
 
 def get_zvol_attachments_impl(middleware: Middleware) -> dict[str, dict[str, Any]]:
     att_data: dict[str, dict[str, Any]] = {}
-    attachments: list[BlockStorageAttachment] = middleware.call_sync("blockstorage.get_in_use", "ZVOL")
+    attachments: list[BlockStorageAttachment] = middleware.call_sync2(
+        middleware.services.blockstorage.get_in_use, kind="ZVOL"
+    )
     for attachment in attachments:
         att_data.setdefault(attachment.method, {})[attachment.key[1]] = attachment.data
 

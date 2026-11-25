@@ -64,8 +64,9 @@ class RAWDelegate(StorageDelegate):
         self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
 
         verrors.extend(
-            self.middleware.call_sync(
-                'blockstorage.validate', 'attributes.path', 'FILE', path, None, False, 'vm.device'
+            self.middleware.call_sync2(
+                self.middleware.services.blockstorage.validate, 'attributes.path', 'FILE', path,
+                whitelist_namespace='vm.device',
             )
         )
 
@@ -154,8 +155,9 @@ class DiskDelegate(StorageDelegate):
                     )
                 else:
                     verrors.extend(
-                        self.middleware.call_sync(
-                            'blockstorage.validate', 'attributes.path', 'ZVOL', path, None, False, 'vm.device'
+                        self.middleware.call_sync2(
+                            self.middleware.services.blockstorage.validate, 'attributes.path', 'ZVOL', path,
+                            whitelist_namespace='vm.device',
                         )
                     )
 

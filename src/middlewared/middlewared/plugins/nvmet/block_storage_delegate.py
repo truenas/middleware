@@ -23,4 +23,6 @@ class NVMetNamespaceBlockStorageDelegate(BlockStorageDelegate):
 
 
 async def setup(middleware: "Middleware") -> None:
-    await middleware.call("blockstorage.register_attachment_delegate", NVMetNamespaceBlockStorageDelegate(middleware))
+    await middleware.call2(
+        middleware.services.blockstorage.register_attachment_delegate, NVMetNamespaceBlockStorageDelegate(middleware)
+    )

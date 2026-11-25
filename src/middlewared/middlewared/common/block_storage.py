@@ -34,7 +34,7 @@ class BlockStorageAttachment(BlockStorageUse):
         return f"{self.namespace}.query"
 
 
-def canonical_key(kind: str, path: str) -> tuple[str, str]:
+def canonical_key(kind: BlockStorageKind, path: str) -> tuple[str, str]:
     if kind == "ZVOL":
         if not path.startswith("/dev/"):
             path = f"/dev/{path}"

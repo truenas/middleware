@@ -204,7 +204,9 @@ class VMDeviceService(CRUDService, DeviceMixin):
             raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
 
         if converting_from_image_to_zvol:
-            self.middleware.call_sync('blockstorage.validate', schema, 'ZVOL', ntp, None, True, 'vm.device')
+            self.call_sync2(
+                self.s.blockstorage.validate, schema, 'ZVOL', ntp, whitelist_namespace='vm.device',
+            ).check()
 
         logical_sectorsize = None
         for i in self.middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISK']]):

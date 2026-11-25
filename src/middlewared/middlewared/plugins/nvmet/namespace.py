@@ -389,9 +389,9 @@ class NVMetNamespaceService(SharingService):
         exclude = None
         if old:
             exclude = ('nvmet.namespace', old['id'])
-        verrors.extend(await self.middleware.call(
-            'blockstorage.validate', f'{schema_name}.device_path', data.get('device_type'), data.get('device_path'),
-            exclude,
+        verrors.extend(await self.call2(
+            self.s.blockstorage.validate, f'{schema_name}.device_path', data.get('device_type'),
+            data.get('device_path'), exclude=exclude,
         ))
 
         if old:

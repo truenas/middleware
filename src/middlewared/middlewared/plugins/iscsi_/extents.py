@@ -507,7 +507,7 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')
 
             verrors.extend(
-                self.middleware.call_sync('blockstorage.validate', f'{schema_name}.disk', 'ZVOL', disk, exclude)
+                self.call_sync2(self.s.blockstorage.validate, f'{schema_name}.disk', 'ZVOL', disk, exclude=exclude)
             )
 
         elif extent_type == 'FILE':
@@ -537,7 +537,7 @@ class iSCSITargetExtentService(SharingService):
                 )
 
             verrors.extend(
-                self.middleware.call_sync('blockstorage.validate', f'{schema_name}.path', 'FILE', path, exclude)
+                self.call_sync2(self.s.blockstorage.validate, f'{schema_name}.path', 'FILE', path, exclude=exclude)
             )
 
         return data

@@ -282,7 +282,9 @@ class VMBlockStorageDelegate(BlockStorageDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('blockstorage.register_attachment_delegate', VMBlockStorageDelegate(middleware))
+    await middleware.call2(
+        middleware.services.blockstorage.register_attachment_delegate, VMBlockStorageDelegate(middleware)
+    )
     middleware.create_task(
         middleware.call('pool.dataset.register_attachment_delegate', VMFSAttachmentDelegate(middleware))
     )
