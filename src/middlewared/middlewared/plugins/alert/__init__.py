@@ -155,17 +155,29 @@ class AlertService(Service):
         lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
         transient=True,
     )
-    async def oneshot_replace(self, job: Job, klasses: builtins.list[str], instance: OneShotAlertClass) -> None:
+    async def oneshot_replace(
+        self,
+        job: Job,
+        klasses: builtins.list[str],
+        instances: builtins.list[OneShotAlertClass],
+        reuse: bool = True,
+    ) -> None:
         """
-        Deletes one-shot alerts of the given `klasses` and creates `instance` while holding the alerts lock.
+        Deletes one-shot alerts of the given `klasses` and creates `instances` while holding the alerts lock.
 
         A separate `oneshot_delete` and `oneshot_create` are two queued jobs, so another caller can run between
         them. Mutually exclusive alerts (the state of one UPS, for example) must not leave such a window.
 
+        With `reuse`, an instance that matches an existing alert (same class and key) continues that alert.
+
+        Without `reuse`, the method runs `oneshot_delete` with no query, then `oneshot_create` for every instance.
+        Each step sends its own changes.
+
         :param klasses: one-shot alert class names (without the `AlertClass` suffix) to delete.
-        :param instance: an instance of an `AlertClass` subclass that also inherits from `OneShotAlertClass`.
+        :param instances: instances of `AlertClass` subclasses that also inherit from `OneShotAlertClass`.
+        :param reuse: continue an existing alert that matches an instance.
         """
-        await oneshot.oneshot_replace(self.context, self._state, klasses, instance)
+        await oneshot.oneshot_replace(self.context, self._state, klasses, instances, reuse)
 
     @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True, check_annotations=True)
     @job(

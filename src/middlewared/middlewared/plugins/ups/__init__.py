@@ -70,7 +70,7 @@ class UPSService(SystemServiceService[UPSEntry]):
 
     @private
     async def replace_alert(self, instance: OneShotAlertClass) -> None:
-        await self.call2(self.s.alert.oneshot_replace, alert_class_names(), instance)
+        await self.call2(self.s.alert.oneshot_replace, alert_class_names(), [instance], False)
 
     @private
     async def upssched_event(self, notify_type: str) -> None:
