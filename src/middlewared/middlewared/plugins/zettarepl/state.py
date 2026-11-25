@@ -155,6 +155,11 @@ class ZettareplStatePart(ServicePart):
             if task_id not in active_task_ids:
                 self.last_snapshot.pop(task_id, None)
 
+        # A one-time task has no row to keep the state for, and nothing reads it after the job ends
+        for task_id in list(self.serializable_state.keys()):
+            if task_id not in active_task_ids and find_task_state_datastore(task_id) is None:
+                self.serializable_state.pop(task_id, None)
+
     def get_internal_task_state(self, task_id: str) -> dict[str, Any]:
         return self.state[task_id]
 
@@ -237,4 +242,6 @@ class ZettareplStatePart(ServicePart):
                     {task_state_datastore.column: ejson.dumps(state)}
                 )
             except NoRowsWereUpdatedException:
-                pass
+                # A delete can arrive while zettarepl runs the task. zettarepl then reports the final state after the
+                # delete. Clean up that state from the memory.
+                self.remove_task(task_id)
