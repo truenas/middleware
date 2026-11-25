@@ -398,7 +398,9 @@ def test_iscsi_extent_already_sharing_zvol_with_vm_stays_editable(conflict_vm):
             vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{other}"}),
         ):
             call(
-                "datastore.update", "services.iscsitargetextent", extent["id"],
+                "datastore.update",
+                "services.iscsitargetextent",
+                extent["id"],
                 {"iscsi_target_extent_path": f"zvol/{used}"},
             )
 
@@ -418,7 +420,9 @@ def test_iscsi_extent_already_sharing_zvol_with_vm_stays_editable(conflict_vm):
 
 def test_nvmet_namespace_already_sharing_zvol_with_vm_stays_editable(conflict_vm):
     with (
-        zvol("conflict_free") as free, zvol("conflict_used") as used, zvol("conflict_other") as other,
+        zvol("conflict_free") as free,
+        zvol("conflict_used") as used,
+        zvol("conflict_other") as other,
         nvmet_subsys("conflict_subsys") as subsys,
     ):
         with (
@@ -427,7 +431,9 @@ def test_nvmet_namespace_already_sharing_zvol_with_vm_stays_editable(conflict_vm
             vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{other}"}),
         ):
             call(
-                "datastore.update", "services.nvmet_namespace", ns["id"],
+                "datastore.update",
+                "services.nvmet_namespace",
+                ns["id"],
                 {"nvmet_namespace_device_path": f"zvol/{used}"},
             )
 
@@ -450,7 +456,9 @@ def test_vm_disk_already_sharing_zvol_with_iscsi_extent_stays_editable(conflict_
             vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{free}"}) as device,
         ):
             call(
-                "datastore.update", "vm.device", device["id"],
+                "datastore.update",
+                "vm.device",
+                device["id"],
                 {"attributes": {**device["attributes"], "path": f"/dev/zvol/{used}"}},
             )
 
@@ -474,7 +482,9 @@ def test_iscsi_extent_already_sharing_file_with_vm_raw_stays_editable(conflict_v
             vm_device(conflict_vm["id"], {"dtype": "RAW", "path": other, "exists": False, "size": MiB}),
         ):
             call(
-                "datastore.update", "services.iscsitargetextent", extent["id"],
+                "datastore.update",
+                "services.iscsitargetextent",
+                extent["id"],
                 {"iscsi_target_extent_path": used},
             )
 
@@ -499,7 +509,9 @@ def test_nvmet_namespace_already_sharing_file_with_vm_raw_stays_editable(conflic
             vm_device(conflict_vm["id"], {"dtype": "RAW", "path": other, "exists": False, "size": MiB}),
         ):
             call(
-                "datastore.update", "services.nvmet_namespace", ns["id"],
+                "datastore.update",
+                "services.nvmet_namespace",
+                ns["id"],
                 {"nvmet_namespace_device_path": used},
             )
 
@@ -523,7 +535,9 @@ def test_vm_raw_already_sharing_file_with_iscsi_extent_stays_editable(conflict_v
             vm_device(conflict_vm["id"], {"dtype": "RAW", "path": free, "exists": False, "size": MiB}) as device,
         ):
             call(
-                "datastore.update", "vm.device", device["id"],
+                "datastore.update",
+                "vm.device",
+                device["id"],
                 {"attributes": {**device["attributes"], "path": used}},
             )
 
@@ -542,7 +556,8 @@ def test_nvmet_namespace_already_sharing_zvol_with_vm_stays_editable_when_respel
     # A zvol with a space in its name is reachable both as `zvol/pool/conflict zvol` and, the way udev
     # spells it, `zvol/pool/conflict+zvol`. Resubmitting the other spelling is not a new claim.
     with (
-        zvol("conflict_free") as free, zvol("conflict zvol") as used,
+        zvol("conflict_free") as free,
+        zvol("conflict zvol") as used,
         nvmet_subsys("conflict_subsys") as subsys,
     ):
         link = f"zvol/{pool}/conflict+zvol"
@@ -551,7 +566,9 @@ def test_nvmet_namespace_already_sharing_zvol_with_vm_stays_editable_when_respel
             vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/{link}"}),
         ):
             call(
-                "datastore.update", "services.nvmet_namespace", ns["id"],
+                "datastore.update",
+                "services.nvmet_namespace",
+                ns["id"],
                 {"nvmet_namespace_device_path": f"zvol/{used}"},
             )
 

@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 
 class BlockStorageService(Service):
-
     class Config:
         namespace = "blockstorage"
         private = True
