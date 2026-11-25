@@ -26,6 +26,7 @@ ROWS = [
     {"ROW_ID": 4, "event_data": None},  # NULL column
     {"ROW_ID": 5, "event_data": "123"},  # valid JSON, not an object
     {"ROW_ID": 6, "event_data": ""},  # empty string
+    {"ROW_ID": 7, "event_data": '{"params": [1]}'},
 ]
 
 
@@ -74,6 +75,20 @@ def test_guard_handles_or_nested_json_filters():
         guard=True,
     )
     assert result == [1, 2]
+
+
+@pytest.mark.parametrize(
+    "filters,expected",
+    [
+        ([["$.event_data.passwordType", "in", ["NTLMv1", "NTLMv2"]]], [1, 2]),
+        ([["$.event_data.passwordType", "nin", ["NTLMv1"]]], [2]),
+        ([["$.event_data.params", "in", [[1], [2]]]], [7]),
+        ([["$.event_data.params", "nin", [[2]]]], [7]),
+        ([["$.event_data.params", "=", [1]]], [7]),
+    ],
+)
+def test_json_filter_compares_each_candidate(filters, expected):
+    assert _run(_seeded_engine(), filters, guard=True) == expected
 
 
 @pytest.mark.parametrize("value", ["SMB", "NTLMv1"])
