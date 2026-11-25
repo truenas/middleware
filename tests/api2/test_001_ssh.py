@@ -124,7 +124,7 @@ def test_008_check_root_dataset_settings(ws_client):
     if not data['result']:
         fail('Failed to determine whether developer mode enabled')
 
-    is_dev = data['stdout'] == 'on'
+    is_dev = data['stdout'].strip() == 'on'
 
     for entry in ds_schema:
         fhs_entry = entry['fhs_entry']
