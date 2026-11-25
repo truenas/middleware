@@ -20,7 +20,7 @@ import time
 import pytest
 from assets.websocket.service import ensure_service_started
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, session, ssh, url
 
 from protocols import smb_share
 
@@ -517,9 +517,9 @@ class TestSmbShareServices:
 # ---- always-on services ------------------------------------------
 
 class TestAlwaysOnServices:
-    """DEV_INFO and HTTP are rendered unconditionally on SINGLE /
+    """DEV_INFO, HTTP and TRUENAS_API are rendered unconditionally on SINGLE /
     MASTER appliances (no service-started gating in the renderer),
-    so both should appear in the mDNS services list at baseline."""
+    so all three should appear in the mDNS services list at baseline."""
 
     @staticmethod
     def _entries_of(status: dict, service_type: str) -> list[dict]:
@@ -546,6 +546,23 @@ class TestAlwaysOnServices:
         assert entries, "_http._tcp missing — HTTP renderer gated?"
         expected_port = int(call("system.general.config")["ui_port"])
         assert all(e["port"] == expected_port for e in entries), entries
+
+    def test_truenas_api_service_on_https_port(self):
+        status = get_discovery_status()
+        assert status is not None
+        entries = self._entries_of(status, "_truenas-api._tcp")
+        assert entries, "_truenas-api._tcp missing — TRUENAS_API renderer gated?"
+        expected_port = int(call("system.general.config")["ui_httpsport"])
+        with session() as s:
+            versions = s.get(f"{url()}/api/versions").json()
+        expected_txt = {
+            "txtvers": "1",
+            "api": f"min={versions[0]},max={versions[-1]}",
+            "mech": ",".join(m.removesuffix("_PLAIN") for m in call("auth.mechanism_choices")),
+        }
+        for entry in entries:
+            assert entry["port"] == expected_port, entry
+            assert entry.get("txt") == expected_txt, entry
 
 
 # ---- gated-on services -------------------------------------------

@@ -2,6 +2,7 @@ import asyncio
 
 from truenas_connect_utils.status import Status
 
+from middlewared.api.current import ServiceOptions
 from middlewared.plugins.service.services.base import SimpleService
 from middlewared.plugins.service.services.base_interface import ServiceInterface
 from middlewared.plugins.service.services.base_state import ServiceState
@@ -86,8 +87,15 @@ class HttpService(PseudoServiceBase):
         await self.middleware.call("system.general.update_ui_allowlist")
         await system_dbus.systemd_unit("nginx", "restart")
 
+    async def _readvertise(self) -> None:
+        """Advertise the UI's ports over mDNS as nginx now serves them."""
+        await (
+            await self.call2(self.s.service.control, "RELOAD", "discovery", ServiceOptions(ha_propagate=False))
+        ).wait()
+
     async def after_restart(self) -> None:
         await self._register_new_port()
+        await self._readvertise()
 
     async def reload(self) -> None:
         await self.middleware.call("system.general.update_ui_allowlist")
@@ -95,6 +103,7 @@ class HttpService(PseudoServiceBase):
 
     async def after_reload(self) -> None:
         await self._register_new_port()
+        await self._readvertise()
 
 
 class NetworkService(PseudoServiceBase):
