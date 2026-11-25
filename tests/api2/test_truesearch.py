@@ -14,7 +14,7 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call, host, mock, ssh
+from middlewared.test.integration.utils import call, client, host, mock, ssh
 
 USERNAME = 'alex'
 PASSWORD = 'password'
@@ -182,6 +182,48 @@ def test_status_while_both_daemons_are_stopped(share):
         call('truesearch.configure')
 
     expect_status(share['dataset'])
+
+
+def wait_for(condition, timeout=60):
+    for i in range(timeout):
+        if result := condition():
+            return result
+        time.sleep(1)
+
+    assert False, timeout
+
+
+def status_events(c) -> list[dict]:
+    events = []
+    c.subscribe('truesearch.status', lambda event_type, **kwargs: events.append(kwargs['fields']))
+    return events
+
+
+def test_status_event(share):
+    status, _ = expect_status(share['dataset'])
+    subscribers = "ps -T -o comm= -p $(systemctl show -p MainPID --value truesearch-indexer) | grep -c '^tsi-sub-'"
+    with client() as c1, client() as c2:
+        events1, events2 = status_events(c1), status_events(c2)
+        wait_for(lambda: events1 and events2, 10)
+        assert events1[0].keys() == status.keys()
+        # One indexer subscription serves both. The indexer lets a closed one go at its next status, within 30 s.
+        wait_for(lambda: ssh(subscribers, check=False).strip() == '1', 40)
+
+
+def test_status_event_follows_a_build(share):
+    def built():
+        return next((
+            d for event in events for d in event['datasets']
+            if d['dataset'] == ds and d['state'] == 'READY' and d['last_pass']
+        ), None)
+
+    with client() as c:
+        events = status_events(c)
+        with dataset('truesearch_event', data={'share_type': 'SMB'}) as ds:
+            with another_share(f"/mnt/{ds}", 'truesearch_event'):
+                entry = wait_for(built)
+                assert entry['progress'] is None
+                assert (entry['last_pass']['type'], entry['last_pass']['finished']) == ('BUILD', True)
 
 
 def test_time_machine_and_home_shares_are_not_indexed(share):

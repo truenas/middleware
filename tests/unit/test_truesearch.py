@@ -4,6 +4,7 @@ tests/api2/test_truesearch.py.
 """
 
 from datetime import datetime, timezone
+from unittest.mock import Mock
 
 import pytest
 from truesearch_client.config import TargetRow
@@ -50,7 +51,7 @@ def test_query_options_take_only_a_limit(options):
 )
 def test_processed_directories_for_directory(directory, datasets, result):
     mountpoints = {f"/mnt/{name}": DatasetInfo(name, "1") for name in datasets}
-    assert TruesearchService(None)._processed_directories_for_directory(mountpoints, directory) == result
+    assert TruesearchService(Mock())._processed_directories_for_directory(mountpoints, directory) == result
 
 
 def test_a_time_that_datetime_cannot_hold_has_no_value():

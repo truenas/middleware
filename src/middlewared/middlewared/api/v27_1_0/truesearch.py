@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, NonEmptyString
+from middlewared.api.base import BaseModel, Multiline, NonEmptyString
 
 from .common import QueryFilters
 from .filesystem import FileType
@@ -16,10 +16,15 @@ __all__ = [
     "TruesearchEntryType",
     "TruesearchQueryResult",
     "TruesearchState",
+    "TruesearchPassType",
+    "TruesearchPassProgress",
+    "TruesearchPassResult",
     "TruesearchDatasetStatus",
     "TruesearchStatusData",
     "TruesearchStatusArgs",
     "TruesearchStatusResult",
+    "TruesearchStatusEventSourceArgs",
+    "TruesearchStatusEventSourceEvent",
 ]
 
 
@@ -99,6 +104,33 @@ class TruesearchQueryResult(BaseModel):
 
 
 TruesearchState = Literal["READY", "INDEXING", "UNAVAILABLE", "STOPPED"]
+TruesearchPassType = Literal["BUILD", "REBUILD", "FULL", "DIRECTORY"]
+
+_PASS_TYPE_DESCRIPTION = (
+    "The kind of pass:\n\n"
+    "* `BUILD`: First build of the index. Searches find nothing in this dataset until it ends.\n"
+    "* `REBUILD`: Rebuild of the index. Searches use the old index until it ends.\n"
+    "* `FULL`: Pass over all files.\n"
+    "* `DIRECTORY`: Pass over all directories."
+)
+
+
+class TruesearchPassProgress(BaseModel):
+    type: TruesearchPassType = Field(description=_PASS_TYPE_DESCRIPTION)
+    started: datetime = Field(description="When the pass began.")
+    entries: int = Field(description="Entries read so far. A `DIRECTORY` pass counts only directories.")
+    total: int | None = Field(description="Estimated number of entries the pass reads, or `null` if unknown.")
+    percent: int | None = Field(description="Estimated percent done, or `null` if unknown.")
+
+
+class TruesearchPassResult(BaseModel):
+    type: TruesearchPassType = Field(description=_PASS_TYPE_DESCRIPTION)
+    started: datetime = Field(description="When the pass began.")
+    ended: datetime = Field(description="When the pass ended.")
+    finished: bool = Field(description="Whether the pass ran to the end. `false` if it failed or was stopped.")
+    entries: int = Field(description="Entries read. A `DIRECTORY` pass counts only directories.")
+    errors: int = Field(description="Entries that could not be read.")
+    error: Multiline[str] | None = Field(description="Why the pass failed, or `null`.")
 
 
 class TruesearchDatasetStatus(BaseModel):
@@ -126,6 +158,10 @@ class TruesearchDatasetStatus(BaseModel):
         description="The time that the last pass over all directories ended.",
     )
     index_size: int | None = Field(description="The size of the index of this dataset, in bytes.")
+    progress: TruesearchPassProgress | None = Field(description="The pass running on this index, or `null`.")
+    last_pass: TruesearchPassResult | None = Field(
+        description="The last pass to end since the indexer started, or `null`.",
+    )
 
 
 class TruesearchStatusData(BaseModel):
@@ -147,4 +183,12 @@ class TruesearchStatusArgs(BaseModel):
 
 
 class TruesearchStatusResult(BaseModel):
+    result: TruesearchStatusData = Field(description="The indexing status of TrueSearch.")
+
+
+class TruesearchStatusEventSourceArgs(BaseModel):
+    pass
+
+
+class TruesearchStatusEventSourceEvent(BaseModel):
     result: TruesearchStatusData = Field(description="The indexing status of TrueSearch.")

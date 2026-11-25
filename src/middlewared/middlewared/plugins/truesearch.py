@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import errno
 import os
 import stat
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Literal
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Iterator, Literal
 
 from truenas_pylicensed.features import LicenseFeature
 from truesearch_client import Busy, Client, Identity, NoIndex, OpenRequest, Refused, TruesearchError
@@ -18,7 +18,11 @@ from truesearch_client.control import (
     INDEXER_CONTROL,
     RELEASE_TIMEOUT,
     IndexerStatus,
+    IndexerSubscription,
     IndexerTarget,
+    PassResult,
+    Progress,
+    SubscriptionRefused,
     UnindexedTarget,
     devices_of,
     indexer_status,
@@ -32,31 +36,39 @@ from middlewared.api.current import (
     TruesearchDatasetStatus,
     TruesearchEntry,
     TruesearchEntryType,
+    TruesearchPassProgress,
+    TruesearchPassResult,
+    TruesearchPassType,
     TruesearchQuery,
     TruesearchQueryArgs,
     TruesearchQueryResult,
     TruesearchState,
     TruesearchStatusArgs,
     TruesearchStatusData,
+    TruesearchStatusEventSourceArgs,
+    TruesearchStatusEventSourceEvent,
     TruesearchStatusResult,
     UserGetUserObj,
     ZFSResourceQuery,
 )
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.event import EventSource
 from middlewared.plugins.service.services.truesearch import alive as units_alive
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.utils import is_time_machine_share
-from middlewared.service import CallError, Service, ValidationError, private
+from middlewared.service import CallError, Service, ValidationError, ValidationErrors, private
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.utils.smb import SearchProtocol, SMBSharePurpose
 from middlewared.utils.truesearch_filters import spotlight_query
 from middlewared.utils.zfs import query_imported_fast_impl
 
 STATUS_TIMEOUT = 10  # seconds
+RESUBSCRIBE_DELAY = 5  # seconds
 # The schema name in the validation errors of truesearch.query.
 _SCHEMA = 'truesearch_query'
 
 if TYPE_CHECKING:
+    from middlewared.common.event_source.manager import Subscriber
     from middlewared.main import Middleware
 
 
@@ -74,10 +86,75 @@ class DatasetInfo:
     guid: str | None
 
 
+class TruesearchStatusEventSource(EventSource):
+    """
+    TrueSearch indexing status, as returned by ``truesearch.status``. Sent on subscribe, on each change, and every
+    few seconds while a pass runs.
+    """
+    args = TruesearchStatusEventSourceArgs
+    event = TruesearchStatusEventSourceEvent
+    roles = ['SERVICE_READ']
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._subscription: IndexerSubscription | None = None
+        self._last: dict[str, Any] | None = None
+        self._refused = False
+
+    async def validate_arg(self) -> None:
+        # An arg would start another instance, and another indexer subscription.
+        if self.arg is not None:
+            verrors = ValidationErrors()
+            verrors.add('', 'This event takes no arguments.')
+            raise verrors
+        await super().validate_arg()
+
+    async def send_initial_state(self, subscriber: Subscriber) -> None:
+        if self._last is not None:
+            subscriber.send_event('ADDED', fields=self._last)
+
+    async def cancel(self) -> None:
+        await super().cancel()
+        if (subscription := self._subscription) is not None:
+            await self.middleware.run_in_thread(subscription.close)
+
+    def run_sync(self) -> None:
+        while not self._cancel_sync.is_set():
+            for indexer in self._statuses():
+                self._publish(None if indexer.draining else indexer)
+            if not self._cancel_sync.is_set():
+                self._publish(_indexer())
+                self._cancel_sync.wait(RESUBSCRIBE_DELAY)
+
+    def _statuses(self) -> Iterator[IndexerStatus]:
+        try:
+            with IndexerSubscription() as subscription:
+                self._subscription = subscription
+                if self._cancel_sync.is_set():
+                    return
+                self._refused = False
+                yield from subscription
+        except SubscriptionRefused as e:
+            if e.answer.startswith('busy') and not self._refused:
+                self._refused = True
+                self.middleware.logger.warning('truesearch.status: indexer refused subscription: %s', e.answer)
+        except (OSError, ValueError):
+            pass
+        finally:
+            self._subscription = None
+
+    def _publish(self, indexer: IndexerStatus | None) -> None:
+        fields = _status(indexer).model_dump()
+        if fields != self._last and not self._cancel_sync.is_set():
+            self._last = fields
+            self.send_event('ADDED', fields=fields)
+
+
 class TruesearchService(Service):
     class Config:
         namespace = 'truesearch'
         cli_namespace = 'system.truesearch'
+        event_sources = {'truesearch.status': TruesearchStatusEventSource}
 
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
@@ -666,29 +743,75 @@ class TruesearchService(Service):
 
         For each dataset, the status gives the state of the index, the number of entries in it, and the time of the
         last update. It also tells whether searches use the index.
-        """
-        # The daemons index and serve the enabled rows of the configuration file.
-        rows = [row for row in read_config() or [] if row.enabled]
-        try:
-            indexer = indexer_status(STATUS_TIMEOUT)
-        except (OSError, ValueError):
-            indexer = None
-        try:
-            served = served_ids(STATUS_TIMEOUT)
-        except (OSError, ValueError):
-            served = set()
 
-        return TruesearchStatusData(
-            running=indexer is not None,
-            index_bytes=None if indexer is None else indexer.index_bytes,
-            free_bytes=None if indexer is None else indexer.free_bytes,
-            space_low=None if indexer is None else indexer.space_low,
-            datasets=[_dataset_status(row, indexer, served) for row in rows],
-        )
+        Subscribe to the ``truesearch.status`` event for changes.
+        """
+        return _status(_indexer())
+
+
+def _indexer() -> IndexerStatus | None:
+    try:
+        return indexer_status(STATUS_TIMEOUT)
+    except (OSError, ValueError):
+        return None
+
+
+def _status(indexer: IndexerStatus | None) -> TruesearchStatusData:
+    # The daemons index and serve the enabled rows of the configuration file.
+    rows = [row for row in read_config() or [] if row.enabled]
+    try:
+        served = served_ids(STATUS_TIMEOUT)
+    except (OSError, ValueError):
+        served = set()
+
+    return TruesearchStatusData(
+        running=indexer is not None,
+        index_bytes=None if indexer is None else indexer.index_bytes,
+        free_bytes=None if indexer is None else indexer.free_bytes,
+        space_low=None if indexer is None else indexer.space_low,
+        datasets=[_dataset_status(row, indexer, served) for row in rows],
+    )
 
 
 def _when(seconds: int) -> datetime | None:
     return datetime.fromtimestamp(seconds, tz=timezone.utc) if seconds else None
+
+
+_PASS_TYPES: dict[str, TruesearchPassType] = {
+    'build': 'BUILD',
+    'rebuild': 'REBUILD',
+    'full': 'FULL',
+    'directory': 'DIRECTORY',
+}
+
+
+def _progress(progress: Progress | None) -> TruesearchPassProgress | None:
+    if progress is None or (pass_type := _PASS_TYPES.get(progress.kind)) is None:
+        return None
+
+    fraction = progress.fraction
+    return TruesearchPassProgress(
+        type=pass_type,
+        started=datetime.fromtimestamp(progress.started, tz=timezone.utc),
+        entries=progress.entries,
+        total=progress.total,
+        percent=None if fraction is None else int(fraction * 100),
+    )
+
+
+def _last_pass(result: PassResult | None) -> TruesearchPassResult | None:
+    if result is None or (pass_type := _PASS_TYPES.get(result.kind)) is None:
+        return None
+
+    return TruesearchPassResult(
+        type=pass_type,
+        started=datetime.fromtimestamp(result.started, tz=timezone.utc),
+        ended=datetime.fromtimestamp(result.ended, tz=timezone.utc),
+        finished=result.finished,
+        entries=result.entries,
+        errors=result.errors,
+        error=result.error,
+    )
 
 
 def _dataset_status(row: TargetRow, indexer: IndexerStatus | None, served: set[str]) -> TruesearchDatasetStatus:
@@ -722,6 +845,8 @@ def _dataset_status(row: TargetRow, indexer: IndexerStatus | None, served: set[s
         last_full_pass=None if counted is None else _when(counted.last_full),
         last_directory_pass=None if counted is None else _when(counted.last_dirs),
         index_size=None if counted is None else counted.size,
+        progress=None if counted is None else _progress(counted.progress),
+        last_pass=None if counted is None else _last_pass(counted.last_pass),
     )
 
 

@@ -1,5 +1,9 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import CallError
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.roles import common_checks
 
 
@@ -24,3 +28,14 @@ def test_truesearch_query_role(unprivileged_user_fixture, role, should_work):
         valid_role_exception=True,
         method_args=[{"path": "/mnt/truesearch_roles_not_indexed"}],
     )
+
+
+@pytest.mark.parametrize("role,should_work", [("SERVICE_READ", True), ("FILESYSTEM_ATTRS_READ", False)])
+def test_truesearch_status_event_role(role, should_work):
+    with unprivileged_user_client([role]) as c:
+        if should_work:
+            c.subscribe("truesearch.status", lambda *args, **kwargs: None)
+        else:
+            with pytest.raises(CallError) as ce:
+                c.subscribe("truesearch.status", lambda *args, **kwargs: None)
+            assert ce.value.errno == errno.EACCES
