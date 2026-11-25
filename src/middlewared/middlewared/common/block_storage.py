@@ -43,7 +43,7 @@ def canonical_key(kind: BlockStorageKind, path: str) -> tuple[str, str]:
     if os.path.exists(path):
         return "FILE", os.path.realpath(path)
 
-    return "FILE", path
+    return "FILE", os.path.normpath(path)
 
 
 class BlockStorageDelegate(ABC):

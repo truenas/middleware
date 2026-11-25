@@ -331,7 +331,11 @@ def test_convert_image_rejects_zvol_used_by_iscsi_extent():
                 call("vm.device.convert", {"source": image, "destination": f"/dev/zvol/{zv}"}, job=True)
 
             assert ve.value.errors == [
-                ("vm.device.convert.source", "Disk currently in use by iSCSI extent conflict_extent", errno.EINVAL),
+                (
+                    "vm.device.convert.destination",
+                    "Disk currently in use by iSCSI extent conflict_extent",
+                    errno.EINVAL,
+                ),
             ]
 
 
