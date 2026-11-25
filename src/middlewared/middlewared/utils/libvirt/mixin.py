@@ -165,15 +165,16 @@ class DeviceMixin:
                 ds_options['volblocksize'] = zvol_blocksize
 
                 await self.middleware.call('pool.dataset.create', ds_options)
-        elif device_dtype == 'RAW' and (
-            not data['attributes'].pop('exists', True) or (
-                old and old['attributes']['size'] != data['attributes']['size']
-            )
-        ):
+        elif device_dtype == 'RAW':
             path = data['attributes']['path']
-            cp = await run(['truncate', '-s', str(data['attributes']['size']), path], check=False)
-            if cp.returncode:
-                raise CallError(f'Failed to create or update raw file {path}: {cp.stderr.decode()}')
+            create = not data['attributes'].pop('exists')
+            if old and path == old['attributes'].get('path'):
+                create = False
+
+            if create or (old and old['attributes']['size'] != data['attributes']['size']):
+                cp = await run(['truncate', '-s', str(data['attributes']['size']), path], check=False)
+                if cp.returncode:
+                    raise CallError(f'Failed to create or update raw file {path}: {cp.stderr.decode()}')
 
         return data
 

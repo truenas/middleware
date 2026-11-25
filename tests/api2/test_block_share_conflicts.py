@@ -545,7 +545,7 @@ def test_vm_raw_already_sharing_file_with_iscsi_extent_stays_editable(conflict_v
             call("vm.device.update", device["id"], {"order": 1005})
 
             with pytest.raises(ValidationErrors) as ve:
-                call("vm.device.update", device["id"], {"attributes": {"path": other}})
+                call("vm.device.update", device["id"], {"attributes": {"path": other, "exists": True}})
 
             assert ve.value.errors == [
                 ValidationError("attributes.path", "File currently in use by iSCSI extent conflict_extent_other")

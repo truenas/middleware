@@ -63,14 +63,15 @@ class RAWDelegate(StorageDelegate):
         update: bool = True,
     ) -> None:
         path = device['attributes']['path']
-        exists = device['attributes'].get('exists', True)
-        if exists and not os.path.exists(path):
-            verrors.add('attributes.path', 'Path must exist when "exists" is set.')
-        elif not exists:
-            if os.path.exists(path):
-                verrors.add('attributes.path', 'Path must not exist when "exists" is unset.')
-            elif not device['attributes'].get('size'):
-                verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
+        if not (old and path == old['attributes'].get('path')):
+            exists = device['attributes']['exists']
+            if exists and not os.path.exists(path):
+                verrors.add('attributes.path', 'Path must exist when "exists" is set.')
+            elif not exists:
+                if os.path.exists(path):
+                    verrors.add('attributes.path', 'Path must not exist when "exists" is unset.')
+                elif not device['attributes'].get('size'):
+                    verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
 
         if (
             old and old['attributes'].get('size') != device['attributes'].get('size') and
