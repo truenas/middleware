@@ -27,6 +27,12 @@ def nin(col: Column, value: Iterable):
     return expr
 
 
+def json_extract_operand(value: Any) -> Any:
+    if isinstance(value, (list, dict)):
+        return json.dumps(value, separators=(',', ':'), sort_keys=True)
+    return value
+
+
 FiltersList = Iterable[list | tuple[str, str, Any] | tuple[Literal['OR'], 'FiltersList']]
 
 
@@ -91,11 +97,13 @@ class FilterMixin(SchemaMixin):
                 if op not in opmap:
                     raise ValueError('Invalid operation: {0}'.format(op))
 
-                # When filtering on json_extract results, we need to serialize list/dict values
-                # to JSON strings for proper comparison, since json_extract returns JSON strings
-                # Sample filter: [['$.event_data.params', '=', [1]]]
-                if is_json_extract and isinstance(value, (list, dict)):
-                    value = json.dumps(value, separators=(',', ':'), sort_keys=True)
+                # json_extract returns arrays and objects as JSON strings. Serialize list and dict operands so they
+                # compare equal. Sample filter: [['$.event_data.params', '=', [1]]]
+                if is_json_extract:
+                    if op in ('in', 'nin') and isinstance(value, list):
+                        value = [json_extract_operand(v) for v in value]
+                    else:
+                        value = json_extract_operand(value)
 
                 q = opmap[op](col, value)
                 if is_json_extract and guard_malformed_json:
