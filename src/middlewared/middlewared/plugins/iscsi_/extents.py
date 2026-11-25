@@ -477,15 +477,15 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     def clean_type_and_path(self, data, schema_name, verrors, old=None):
-        exclude = None
-        if old:
-            exclude = ('iscsi.extent', old['id'])
         if data['type'] is None:
             return data
 
         extent_type = data['type']
         disk = data['disk']
         path = data['path']
+        exclude = None
+        if old:
+            exclude = ('iscsi.extent', old['id'])
         if extent_type == 'DISK':
             if not disk:
                 verrors.add(f'{schema_name}.disk', 'This field is required')
@@ -506,9 +506,12 @@ class iSCSITargetExtentService(SharingService):
             if '@' in zvol_name and not data['ro']:
                 verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')
 
-            verrors.extend(
-                self.call_sync2(self.s.blockstorage.validate, f'{schema_name}.disk', 'ZVOL', disk, exclude=exclude)
-            )
+            if not old or old['type'] != extent_type or old['disk'] != disk:
+                verrors.extend(
+                    self.call_sync2(
+                        self.s.blockstorage.validate, f'{schema_name}.disk', 'ZVOL', disk, exclude=exclude,
+                    )
+                )
 
         elif extent_type == 'FILE':
             if not path:
@@ -536,9 +539,12 @@ class iSCSITargetExtentService(SharingService):
                     'Filepath may not contain space characters'
                 )
 
-            verrors.extend(
-                self.call_sync2(self.s.blockstorage.validate, f'{schema_name}.path', 'FILE', path, exclude=exclude)
-            )
+            if not old or old['type'] != extent_type or old['path'] != path:
+                verrors.extend(
+                    self.call_sync2(
+                        self.s.blockstorage.validate, f'{schema_name}.path', 'FILE', path, exclude=exclude,
+                    )
+                )
 
         return data
 

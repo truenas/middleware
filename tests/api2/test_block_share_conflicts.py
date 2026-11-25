@@ -384,3 +384,78 @@ def test_convert_image_into_zvol_attached_to_stopped_vm(conflict_vm):
         ssh(f"truncate -s 1M {image}")
         with vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{zv}"}):
             call("vm.device.convert", {"source": image, "destination": f"/dev/zvol/{zv}"}, job=True)
+
+
+def test_iscsi_extent_already_sharing_zvol_with_vm_stays_editable(conflict_vm):
+    with zvol("conflict_free") as free, zvol("conflict_used") as used, zvol("conflict_other") as other:
+        with (
+            iscsi_extent({"name": "conflict_extent", "type": "DISK", "disk": f"zvol/{free}"}) as extent,
+            vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{used}"}),
+            vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{other}"}),
+        ):
+            call(
+                "datastore.update", "services.iscsitargetextent", extent["id"],
+                {"iscsi_target_extent_path": f"zvol/{used}"},
+            )
+
+            call("iscsi.extent.update", extent["id"], {"comment": "still editable"})
+            call("iscsi.extent.update", extent["id"], {"disk": f"zvol/{used}", "comment": "still editable"})
+            call("pool.dataset.update", used, {"readonly": "ON"})
+            assert call("iscsi.extent.get_instance", extent["id"])["ro"] is True
+            call("iscsi.extent.update", extent["id"], {"enabled": False})
+
+            with pytest.raises(ValidationErrors) as ve:
+                call("iscsi.extent.update", extent["id"], {"disk": f"zvol/{other}"})
+
+            assert ve.value.errors == [
+                ValidationError("iscsi_extent_update.disk", "Disk currently in use by VM conflict_vm")
+            ]
+
+
+def test_nvmet_namespace_already_sharing_zvol_with_vm_stays_editable(conflict_vm):
+    with (
+        zvol("conflict_free") as free, zvol("conflict_used") as used, zvol("conflict_other") as other,
+        nvmet_subsys("conflict_subsys") as subsys,
+    ):
+        with (
+            nvmet_namespace(subsys["id"], f"zvol/{free}") as ns,
+            vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{used}"}),
+            vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{other}"}),
+        ):
+            call(
+                "datastore.update", "services.nvmet_namespace", ns["id"],
+                {"nvmet_namespace_device_path": f"zvol/{used}"},
+            )
+
+            call("nvmet.namespace.update", ns["id"], {"device_path": f"zvol/{used}"})
+            call("nvmet.namespace.update", ns["id"], {"enabled": False})
+
+            with pytest.raises(ValidationErrors) as ve:
+                call("nvmet.namespace.update", ns["id"], {"device_path": f"zvol/{other}"})
+
+            assert ve.value.errors == [
+                ValidationError("nvmet_namespace_update.device_path", "Disk currently in use by VM conflict_vm")
+            ]
+
+
+def test_vm_disk_already_sharing_zvol_with_iscsi_extent_stays_editable(conflict_vm):
+    with zvol("conflict_free") as free, zvol("conflict_used") as used, zvol("conflict_other") as other:
+        with (
+            iscsi_extent({"name": "conflict_extent", "type": "DISK", "disk": f"zvol/{used}"}),
+            iscsi_extent({"name": "conflict_extent_other", "type": "DISK", "disk": f"zvol/{other}"}),
+            vm_device(conflict_vm["id"], {"dtype": "DISK", "path": f"/dev/zvol/{free}"}) as device,
+        ):
+            call(
+                "datastore.update", "vm.device", device["id"],
+                {"attributes": {**device["attributes"], "path": f"/dev/zvol/{used}"}},
+            )
+
+            call("vm.device.update", device["id"], {"attributes": {"path": f"/dev/zvol/{used}"}})
+            call("vm.device.update", device["id"], {"order": 1005})
+
+            with pytest.raises(ValidationErrors) as ve:
+                call("vm.device.update", device["id"], {"attributes": {"path": f"/dev/zvol/{other}"}})
+
+            assert ve.value.errors == [
+                ValidationError("attributes.path", "Disk currently in use by iSCSI extent conflict_extent_other")
+            ]

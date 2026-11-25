@@ -17,6 +17,9 @@ IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
 
 class StorageDelegate(DeviceDelegate):
 
+    def block_storage_changed(self, device: dict[str, Any], old: dict[str, Any] | None) -> bool:
+        return old is None or old['attributes'].get('path') != device['attributes'].get('path')
+
     def validate_middleware(
         self,
         device: dict[str, Any],
@@ -63,12 +66,13 @@ class RAWDelegate(StorageDelegate):
 
         self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
 
-        verrors.extend(
-            self.middleware.call_sync2(
-                self.middleware.services.blockstorage.validate, 'attributes.path', 'FILE', path,
-                whitelist_namespace='vm.device',
+        if self.block_storage_changed(device, old):
+            verrors.extend(
+                self.middleware.call_sync2(
+                    self.middleware.services.blockstorage.validate, 'attributes.path', 'FILE', path,
+                    whitelist_namespace='vm.device',
+                )
             )
-        )
 
         super().validate_middleware(device, verrors, old, instance, update)
 
@@ -153,7 +157,7 @@ class DiskDelegate(StorageDelegate):
                         'attributes.path',
                         'Disk resides in an invalid location and is not supported.'
                     )
-                else:
+                elif self.block_storage_changed(device, old):
                     verrors.extend(
                         self.middleware.call_sync2(
                             self.middleware.services.blockstorage.validate, 'attributes.path', 'ZVOL', path,

@@ -74,13 +74,12 @@ class BlockStorageService(Service):
         exclude: tuple[str, int] | None = None,
         whitelist_namespace: str | None = None,
     ) -> ValidationErrors:
-        """
-        `exclude` is the `(namespace, id)` of the item being edited, so that it does not conflict with itself.
-        `whitelist_namespace` ignores every use reported by that delegate (e.g. VMs may share a zvol among VMs).
-        """
         verrors = ValidationErrors()
         if attachment := await self.in_use_by(kind, path, exclude, whitelist_namespace):
-            noun = "Disk" if kind == "ZVOL" else "File"
+            if kind == "ZVOL":
+                noun = "Disk"
+            else:
+                noun = "File"
             verrors.add(schema, f"{noun} currently in use by {attachment.description}")
 
         return verrors
