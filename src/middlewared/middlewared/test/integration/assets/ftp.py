@@ -8,14 +8,20 @@ from middlewared.test.integration.utils import call, ssh
 
 @contextlib.contextmanager
 def ftp_server(config=None):
-    if config is not None:
+    config = config or {}
+    original = call("ftp.config")
+    if config:
         call("ftp.update", config)
-    call("service.control", "START", "ftp", job=True)
 
     try:
-        yield
+        call("service.control", "START", "ftp", job=True)
+        try:
+            yield
+        finally:
+            call("service.control", "STOP", "ftp", job=True)
     finally:
-        call("service.control", "STOP", "ftp", job=True)
+        if config:
+            call("ftp.update", {key: original[key] for key in config})
 
 
 @contextlib.contextmanager
