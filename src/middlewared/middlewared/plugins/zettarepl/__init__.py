@@ -130,8 +130,17 @@ class ZettareplService(Service, TaskStateMixin):
     def get_state(self) -> dict[str, Any]:
         return self.state.get_state()
 
+    def set_error(self, error: dict[str, Any] | None) -> None:
+        self.state.set_error(error)
+
     def set_definition_errors(self, definition_errors: dict[str, Any]) -> None:
         self.state.set_definition_errors(definition_errors)
+
+    def set_state(self, task_id: str, state: dict[str, Any]) -> None:
+        self.state.set_state(task_id, state)
+
+    def set_last_snapshot(self, task_id: str, last_snapshot: str) -> None:
+        self.state.set_last_snapshot(task_id, last_snapshot)
 
     def remove_task(self, task_id: str) -> None:
         self.state.remove_task(task_id)
