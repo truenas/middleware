@@ -20,6 +20,7 @@ def render(service, middleware, render_ctx):
             conf["ui_address"],
         )
 
+    api_versions = middleware.public_api_versions
     try:
         cfg = ServiceConfig(
             service_type="_truenas-api._tcp",
@@ -27,7 +28,7 @@ def render(service, middleware, render_ctx):
             interfaces=interfaces,
             txt={
                 "txtvers": "1",
-                "api": f"min={middleware.api_versions[0].version},max={middleware.api_versions[-1].version}",
+                "api": f"min={api_versions[0]},max={api_versions[-1]}",
                 "mech": ",".join(m.removesuffix("_PLAIN") for m in render_ctx["auth.mechanism_choices"]),
             },
         )

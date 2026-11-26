@@ -1646,9 +1646,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             content_type="application/json",
         )
 
+    @property
+    def public_api_versions(self) -> list[str]:
+        # v24.10 exists only to convert legacy `/websocket` calls. Clients must not select it.
+        return [version.version for version in self.api_versions if version.version != "v24.10"]
+
     async def api_versions_handler(self, request):
         return web.Response(
-            body=json.dumps([version.version for version in self.api_versions if version.version != "v24.10"]),
+            body=json.dumps(self.public_api_versions),
             content_type="application/json",
         )
 
