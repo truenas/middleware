@@ -19,4 +19,8 @@ override_dh_install:
 	mkdir -p debian/middlewared/data
 	cp freenas-v1.db debian/middlewared/data/factory-v1.db
 
+override_dh_fixperms:
+	dh_fixperms
+	chmod 600 debian/middlewared/data/factory-v1.db
+
 override_dh_auto_test:
