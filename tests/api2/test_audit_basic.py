@@ -218,10 +218,17 @@ class TestAuditConfig:
         new_config = call('audit.update', {'quota': 0})
         assert new_config['quota'] == 0
 
+        new_config = call('audit.update', {
+            'quota_fill_warning': AUDIT_CONFIG.defaults['quota_fill_warning'],
+            'quota_fill_critical': AUDIT_CONFIG.defaults['quota_fill_critical']
+        })
+        assert new_config['quota_fill_warning'] == AUDIT_CONFIG.defaults['quota_fill_warning']
+        assert new_config['quota_fill_critical'] == AUDIT_CONFIG.defaults['quota_fill_critical']
+
     @ha_test
     def test_audit_config_remote_node(self, init_audit):
         """ Confirm audit dataset changes are mirrored to the remote node"""
-        (unused, ds_config) = init_audit
+        ds_config = call('audit.get_audit_dataset')
         # New temporary setting that's different from current
         new_setting = ds_config['org.freenas:refquota_warning'] + 5
 
