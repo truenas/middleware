@@ -4,27 +4,31 @@ import collections
 import contextlib
 import dataclasses
 import errno
+import fcntl
 import functools
+import glob
 import hashlib
+import io
 import json
 import logging
 import os
 import re
 import string
 import subprocess
+import time
 import typing
 import uuid
 
 import truenas_pylibsed as sed
 
-from .disk_io import create_gpt_partition, read_gpt, wipe_disk_quick
+from .disk_io import BLKRRPART, create_gpt_partition, read_gpt, wipe_disk_quick
 from .gpt_parts import PART_TYPES, GptPartEntry
 from .identifier import build_identifier, join_serial_lunid
 from .udev import udev_fallback_identity
 
 logger = logging.getLogger(__name__)
 
-__all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
+__all__ = ("DiskEntry", "FormattedPartition", "iterate_disks", "VALID_WHOLE_DISK")
 
 
 RE_SERIAL_STRIP = re.compile(r'[\x00-\x1f\x7f\x22\x5c]')
@@ -74,6 +78,29 @@ class TempEntry:
         over this temperature may cause physical damage to
         the device.
     """
+
+
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class FormattedPartition:
+    """The ZFS partition `DiskEntry.format` wrote, on a disk udev is still locked out of.
+
+    The disk stays under the exclusive flock taken before the write until `release`, so udev
+    neither reads the new table nor processes the partition's events, and the by-partuuid link
+    is the one `format` made. Release once ZFS holds the partition, or once creating the pool
+    has failed; udev then replaces the link in place and catches up on the events. The lock is
+    a file object, so dropping the last reference releases it too."""
+
+    partition_uuid: uuid.UUID
+    devname: str
+    """The partition's kernel name (i.e. 'sda1')"""
+    lock: io.FileIO
+
+    @property
+    def path(self) -> str:
+        return f"/dev/disk/by-partuuid/{self.partition_uuid}"
+
+    def release(self) -> None:
+        self.lock.close()
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -140,6 +167,13 @@ class DiskEntry:
         except Exception:
             # fallback to 512 always
             return 512
+
+    @property
+    def dif(self) -> bool:
+        """Whether a SCSI disk is formatted with T10 Protection Information (DIF), which ZFS cannot use"""
+        for path in glob.glob(f"/sys/block/{self.name}/device/scsi_disk/*/protection_type"):
+            return self.__opener(absolute_path=path) not in (None, "0")
+        return False
 
     @functools.cached_property
     def size_sectors(self) -> int:
@@ -504,19 +538,21 @@ class DiskEntry:
         else:
             wipe_disk_quick(dev_fd, disk_size=self.size_bytes)
 
-    def format(self) -> uuid.UUID:
+    def format(self) -> FormattedPartition:
         """Format the disk with a GPT partition table containing a single ZFS partition.
 
         Creates a complete GPT (GUID Partition Table) structure on the disk,
         including protective MBR, primary and secondary GPT headers, and partition entries.
         The partition is configured for ZFS use with proper alignment and sizing.
 
-        This method automatically wipes any existing partitions before creating the new
-        GPT structure. It opens the device once and reuses the file descriptor for all
-        operations to optimize performance.
+        The disk is wiped first and the whole operation runs under an exclusive flock on the
+        disk, which the returned `FormattedPartition` keeps until the caller releases it. udev
+        takes that lock before it touches a disk, so until the release it neither reads the new
+        table nor processes the partition, and the by-partuuid link is made here. The kernel
+        knows the partition when this returns.
 
         Returns:
-            uuid.UUID: The unique identifier (GUID) of the created partition
+            FormattedPartition: The partition's GUID, kernel name and the lock to release
 
         Raises:
             ValueError: If there's insufficient space on the disk after applying
@@ -526,28 +562,63 @@ class DiskEntry:
         Note:
             - The device must not be mounted or in use
             - Requires root privileges to access block devices
-            - Automatically wipes existing partitions if present
+            - Wipes the first and last 32MiB of the disk, partitioned or not
             - Creates a single partition spanning most of the disk with proper alignment
             - Reserves space at the end of the disk for resilience (up to 2GB or 1% of disk)
             - Uses 1MB alignment for optimal performance
             - For 4K native disks, uses sector 2048 as the first usable sector
-            - Opens device only once for optimal performance
+            - Holds the disk locked against udev until the caller releases the result
+            - Waits up to 30 seconds for another holder of the disk's lock
         """
-        dev_fd = os.open(self.devpath, os.O_RDWR | os.O_EXCL)
+        lock = open(self.devpath, "rb", buffering=0)
         try:
-            if self.partitions(dev_fd):
-                # existing partitions detected
-                # so we need to wipe them before
-                # we format the disk with new ones
+            # udev's workers take a shared flock on a disk before running rules for it, and udevd's
+            # re-read of the table on the close of a written disk takes an exclusive one, so this
+            # keeps udev off the disk until the caller releases the partition. Another holder is
+            # normally a udev worker or a disk tool, gone within seconds.
+            for attempt in range(300):
+                try:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if attempt == 299:
+                        raise OSError(errno.EWOULDBLOCK, f"{self.devpath} is locked by another process")
+                    time.sleep(0.1)
+            dev_fd = os.open(self.devpath, os.O_RDWR | os.O_EXCL)
+            try:
+                # Wipe regardless of a table: a filesystem at 1 MiB of an MBR layout would otherwise
+                # survive inside the new partition and blkid would keep reporting it.
                 self.wipe_quick(dev_fd)
-            return create_gpt_partition(
-                dev_fd,
-                ts_512=self.size_sectors,
-                lbs=self.lbs,
-                pbs=self.pbs,
-            )
-        finally:
-            os.close(dev_fd)
+                part_uuid = create_gpt_partition(
+                    dev_fd,
+                    ts_512=self.size_sectors,
+                    lbs=self.lbs,
+                    pbs=self.pbs,
+                )
+                os.fsync(dev_fd)
+            finally:
+                os.close(dev_fd)
+            # udev cannot have the kernel read the table while the disk is locked, so ask here.
+            # EBUSY means a partition of the old table is still open, normally by udev for a moment.
+            for attempt in range(20):
+                try:
+                    fcntl.ioctl(lock, BLKRRPART)
+                    break
+                except OSError as e:
+                    if e.errno != errno.EBUSY or attempt == 19:
+                        raise
+                    time.sleep(0.1)
+            devname = f"{self.name}p1" if self.name[-1].isdigit() else f"{self.name}1"
+            # udev makes no link while the disk is locked. When the caller releases the lock, with the
+            # pool holding the partition, udev's own link lands on this path by rename, so the path
+            # is never missing.
+            os.makedirs("/dev/disk/by-partuuid", exist_ok=True)
+            os.symlink(f"../../{devname}", f"/dev/disk/by-partuuid/{part_uuid}")
+        except Exception:
+            # No finally: on success the lock lives on in the result until the caller releases it.
+            lock.close()
+            raise
+        return FormattedPartition(partition_uuid=part_uuid, devname=devname, lock=lock)
 
     @contextlib.contextmanager
     def _sed_fd(self, dev_fd: int | None, writable: bool, exclusive: bool = False) -> typing.Iterator[int]:

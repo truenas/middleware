@@ -39,9 +39,7 @@ class DiskService(Service):
             disk['name']: disk for disk in await self.middleware.call('disk.query', [], {'extra': {'sed_status': True}})
         } if await self.middleware.call('system.sed_enabled') else {}
         in_use_disks_imported = {}
-        for in_use_disk, info in (
-            await self.middleware.call('zpool.status', {'real_paths': True})
-        )['disks'].items():
+        for in_use_disk, info in (await self.call2(self.s.zpool.status, real_paths=True))['disks'].items():
             in_use_disks_imported[in_use_disk] = info['pool_name']
 
         in_use_disks_exported = {}

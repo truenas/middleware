@@ -22,11 +22,11 @@ async def test_get_disks_uses_cache():
     state = BootPoolState()
     state.set_name("boot-pool")
     middleware = MagicMock()
-    middleware.call = AsyncMock(return_value={"disks": ["sda", "sdb"]})
+    middleware.call2 = AsyncMock(return_value={"disks": ["sda", "sdb"]})
 
     assert await state.get_disks(middleware) == ["sda", "sdb"]
     assert await state.get_disks(middleware) == ["sda", "sdb"]
-    middleware.call.assert_called_once()  # second read is served from cache
+    middleware.call2.assert_called_once()  # second read is served from cache
 
 
 @pytest.mark.asyncio
@@ -34,14 +34,14 @@ async def test_get_disks_use_cache_false_refetches_and_refills():
     state = BootPoolState()
     state.set_name("boot-pool")
     middleware = MagicMock()
-    middleware.call = AsyncMock(return_value={"disks": ["sda", "sdb"]})
+    middleware.call2 = AsyncMock(return_value={"disks": ["sda", "sdb"]})
     await state.get_disks(middleware)  # fill cache
 
-    middleware.call = AsyncMock(return_value={"disks": ["sda", "sdb", "sdc"]})
+    middleware.call2 = AsyncMock(return_value={"disks": ["sda", "sdb", "sdc"]})
     result = await state.get_disks(middleware, use_cache=False)
 
     assert result == ["sda", "sdb", "sdc"]  # live value returned
-    middleware.call.assert_called_once()  # bypassed the cache and refetched
+    middleware.call2.assert_called_once()  # bypassed the cache and refetched
     assert await state.get_disks(middleware) == ["sda", "sdb", "sdc"]  # cache refilled with the new value
 
 
@@ -64,10 +64,10 @@ async def test_initialize_detects_and_fills_cache(monkeypatch):
     monkeypatch.setattr(pool_mod, "run", fake_run)
     state = BootPoolState()
     middleware = MagicMock()
-    middleware.call = AsyncMock(return_value={"disks": ["sda", "sdv"]})
+    middleware.call2 = AsyncMock(return_value={"disks": ["sda", "sdv"]})
 
     await state.initialize(middleware)
 
     assert state.get_name() == "boot-pool"
     assert await state.get_disks(middleware) == ["sda", "sdv"]  # cache was filled during initialize
-    middleware.call.assert_called_once()  # get_disks hit zpool.status exactly once (via initialize)
+    middleware.call2.assert_called_once()  # get_disks hit zpool.status exactly once (via initialize)

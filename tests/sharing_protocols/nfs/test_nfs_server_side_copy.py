@@ -45,7 +45,7 @@ RECORDSIZE_PROP = {"recordsize": "128K"}
 def _bcloneused():
     """Return pool ``bcloneused`` (bytes) via the zpool query API."""
     res = call(
-        "zpool.query_impl",
+        "zpool.list",
         {
             "pool_names": [pool],
             "properties": ["bcloneused"],

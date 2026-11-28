@@ -6,13 +6,12 @@ import os
 
 from middlewared.service import Service, job, private
 from middlewared.utils.disks_.disk_class import iterate_disks
+from middlewared.utils.disks_.disk_io import BLKRRPART
 
 logger = logging.getLogger(__name__)
 
 
 def taste_it(disk):
-    BLKRRPART = 0x125f  # force reread partition table
-
     try:
         fd = os.open(disk, os.O_WRONLY)
         try:

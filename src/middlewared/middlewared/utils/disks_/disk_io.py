@@ -5,11 +5,12 @@ import zlib
 
 from .gpt_parts import PART_TYPES, GptPartEntry
 
-__all__ = ("read_gpt", "wipe_disk_quick", "create_gpt_partition")
+__all__ = ("BLKRRPART", "read_gpt", "wipe_disk_quick", "create_gpt_partition")
 
 _1MiB = 1048576
 _2GiB = 2147483648
 ZOL_PART_TYPE = "6a898cc3-1dd2-11b2-99a6-080020736631"
+BLKRRPART = 0x125F
 
 
 def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
@@ -210,9 +211,15 @@ def create_gpt_partition(
         )
         secondary_gpt_sectors = (32 * 512) // lbs + 1  # 5 sectors for 4096-byte lbs
         max_end_lba = ts - end_buffer_in_sectors - secondary_gpt_sectors
-        last_usable = _align_sector(max_end_lba, alignment_in_sectors, "down")
+        # The partition ends one sector before the aligned boundary so its length is a whole number of
+        # MiB, as sgdisk makes it; a replacement sized from it in KiB then comes out equal, not smaller.
+        part_end_lba = _align_sector(max_end_lba, alignment_in_sectors, "down") - 1
+        # The header's usable range runs up to the backup table, as sgdisk writes it. sgdisk refuses to
+        # place a partition past this value, so a range ending at the partition would block re-creating
+        # it larger although the disk has room (the oversize pool test helper does exactly that).
+        last_usable = ts - secondary_gpt_sectors - 1
 
-        if last_usable <= first_usable:
+        if part_end_lba <= first_usable:
             raise ValueError(
                 "Not enough space on disk after applying alignment constraints."
             )
@@ -221,7 +228,7 @@ def create_gpt_partition(
         disk_guid = uuid.uuid4()
         partition_guid = uuid.uuid4()
         part_entries, part_entries_crc32 = _create_partition_entries(
-            first_usable, last_usable, partition_guid, lbs, pbs
+            first_usable, part_end_lba, partition_guid, lbs, pbs
         )
         primary_gpt_header = _create_gpt_header(
             True, disk_guid, ts, part_entries_crc32, first_usable, last_usable, lbs, pbs
